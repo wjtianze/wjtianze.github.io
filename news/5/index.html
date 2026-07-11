@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>开源专区正式创建：让数据自由流动 — 天择网</title>
+  <meta name="description" content="天择网新增「开源专区」，将本站自制的数据与服务以开源形式发布，供所有人免费、不限用途使用。本文介绍专区的定位与宗旨。" />
+  <link rel="stylesheet" href="https://wjtianze.netlify.app/assets/css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <div class="bg-mesh"></div>
+
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="https://wjtianze.netlify.app/index.html" aria-label="天择网首页">
+        <span class="logo-mark">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/>
+          </svg>
+        </span>
+        <span class="logo-text">天择网</span>
+      </a>
+      <button class="nav-toggle" aria-label="菜单">☰</button>
+      <nav class="nav">
+        <a href="https://wjtianze.netlify.app/index.html"><span>首页</span></a>
+        <a href="https://wjtianze.netlify.app/news/index.html" class="active"><span>新闻</span></a>
+        <a href="https://wjtianze.netlify.app/blog/index.html"><span>博客</span></a>
+        <a href="https://wjtianze.netlify.app/ai/index.html"><span>AI 专区</span></a>
+        <a href="https://wjtianze.netlify.app/coc/index.html"><span>COC 专区</span></a>
+        <a href="https://wjtianze.netlify.app/open/index.html"><span>开源专区</span></a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <article class="article wrap">
+      <div class="article-head reveal in">
+        <span class="a-tag">专区公告</span>
+        <h1>开源专区正式创建：让数据自由流动</h1>
+        <div class="article-meta">
+          <span>🗓 发布：2026-07-10</span>
+          <span>⏰ 时间：16:50（UTC+8）</span>
+          <span>✍ 作者：天择网</span>
+        </div>
+      </div>
+
+      <div class="article-body reveal in d1">
+        <p>天择网今天新增了一个板块——<strong>开源专区</strong>。这个板块的定位很简单：天择网上所有我自己制作的服务数据，都会开源在这里，供大家免费、不限用途地使用。</p>
+
+        <h2>为什么要做开源专区</h2>
+        <p>我坚信，知识和信息不应被一个人独占，而应被全人类共享，以此推动人类的进步。</p>
+        <p>这句话听起来有点大，但落到实际就是一件具体的事：当我花时间整理出一份有用的数据——比如把一个游戏的全部单位属性整理成结构化的 JSON——与其把它锁在自己手里，不如直接公开出来。可能有人想用它做查询站，可能有人想拿来做数据分析，可能有人只是好奇想看看，这些都很好。数据被用起来，才产生价值；闲着，就只是几个字节。</p>
+
+        <h2>专区里会有什么</h2>
+        <p>只要是「天择网自制」的数据，都会放进来。第一批上架的是：</p>
+        <ul>
+          <li><strong>《部落冲突》单位完整数据</strong>（<code>单位完整数据.json</code>，约 1.9 MB）——覆盖 272 个单位，含兵种、法术、英雄、战宠、装备、建筑、陷阱、守卫、帮手等全部类型，每条带中文介绍、所有等级数值、所需大本营等级与装备技能。</li>
+        </ul>
+        <p>这份数据正是 COC 专区数据查询页所使用的同一份数据源——你在查询页看到的每一个数字，都能在这里下载到原始版本。后续如果有新的自制数据，也会陆续放到这里。</p>
+
+        <h2>使用规则</h2>
+        <ul>
+          <li><strong>免费</strong>：不收费，不需要注册，不需要登记。</li>
+          <li><strong>不限用途</strong>：个人学习、研究、二次开发、商业用途、做成自己的网站或工具，都可以。</li>
+          <li><strong>不附条件</strong>：不要求署名、不要求开源你的衍生作品、不要求反馈。当然，如果你愿意注明数据来源或告诉我你用它做了什么，我会很高兴，但这完全自愿。</li>
+        </ul>
+        <blockquote>唯一的小提醒：数据本身按「现状」提供，不对其准确性或完整性作担保；如果你发现数据有误，欢迎反馈，我会更正后重新发布。</blockquote>
+
+        <h2>技能也开源</h2>
+        <p>除了数据，产出这些数据的「生产工具」也一并开源了。这次上架 AI 专区技能板块的 <strong>coc-units-data-exporter</strong>，就是上面那份《部落冲突》数据的提取工具。任何人都能下载它，用它从任意版本的《部落冲突》安装包里提取数据。工具和数据，两边都开放。</p>
+        <p>关于技能上架的详情，可以看上一篇公告：<a href="https://wjtianze.netlify.app/news/4/index.html" style="color:var(--c-sky); text-decoration:underline;">COC 数据查询页升级，AI 专区上线开源数据导出技能</a>。</p>
+
+        <h2>从哪里进入</h2>
+        <ul>
+          <li>开源专区：<a href="https://wjtianze.netlify.app/open/index.html" style="color:var(--c-sky); text-decoration:underline;">前往开源专区</a></li>
+          <li>数据提取技能：<a href="https://wjtianze.netlify.app/ai/skill/coc-units-data-exporter/index.html" style="color:var(--c-sky); text-decoration:underline;">AI 专区 → 技能 → COC 单位数据导出器</a></li>
+          <li>数据查询页（使用同一份数据）：<a href="https://wjtianze.netlify.app/coc/data/index.html" style="color:var(--c-sky); text-decoration:underline;">COC 专区 → 游戏数据查询</a></li>
+        </ul>
+
+        <p style="margin-top:28px; color:var(--ink-faint); font-size:15px;">知识共享，信息自由。这是开源专区的全部宗旨，也是天择网会一直坚持的事。</p>
+      </div>
+
+      <div class="article-foot">
+        <a class="btn btn--ghost" href="#" data-back data-home="../index.html"><span>← 返回上一页</span></a>
+        <a class="btn" href="https://wjtianze.netlify.app/open/index.html"><span>前往开源专区 →</span></a>
+      </div>
+    </article>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <div>© 2026 天择网 · 物竞天择，适者生存</div>
+      <div class="links">
+        <a href="https://wjtianze.netlify.app/index.html">主页</a>
+        <a href="https://wjtianze.netlify.app/news/index.html">新闻</a>
+        <a href="https://wjtianze.netlify.app/blog/index.html">博客</a>
+        <a href="https://wjtianze.netlify.app/ai/index.html">AI 专区</a>
+        <a href="https://wjtianze.netlify.app/coc/index.html">COC 专区</a>
+        <a href="https://wjtianze.netlify.app/open/index.html">开源专区</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://wjtianze.netlify.app/assets/js/main.js"></script>
+</body>
+</html>

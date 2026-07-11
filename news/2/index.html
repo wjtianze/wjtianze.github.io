@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 专区上线「技能」板块，首个技能「课本学习助手」可在线体验 — 天择网</title>
+  <meta name="description" content="天择网 AI 专区新增「技能」二级专区，上线首个技能 textbook-learning-helper（课本学习助手），并提供狭义相对论在线体验。" />
+  <link rel="stylesheet" href="https://wjtianze.netlify.app/assets/css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <div class="bg-mesh"></div>
+
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="https://wjtianze.netlify.app/index.html" aria-label="天择网首页">
+        <span class="logo-mark">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/>
+          </svg>
+        </span>
+        <span class="logo-text">天择网</span>
+      </a>
+      <button class="nav-toggle" aria-label="菜单">☰</button>
+      <nav class="nav">
+        <a href="https://wjtianze.netlify.app/index.html"><span>首页</span></a>
+        <a href="https://wjtianze.netlify.app/news/index.html" class="active"><span>新闻</span></a>
+        <a href="https://wjtianze.netlify.app/blog/index.html"><span>博客</span></a>
+        <a href="https://wjtianze.netlify.app/ai/index.html"><span>AI 专区</span></a>
+        <a href="https://wjtianze.netlify.app/coc/index.html"><span>COC 专区</span></a>
+        <a href="https://wjtianze.netlify.app/open/index.html"><span>开源专区</span></a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <article class="article wrap">
+      <div class="article-head reveal in">
+        <span class="a-tag">技能上线</span>
+        <h1>AI 专区上线「技能」板块，首个技能「课本学习助手」可在线体验</h1>
+        <div class="article-meta">
+          <span>🗓 发布：2026-07-09</span>
+          <span>⏰ 时间：14:55（UTC+8）</span>
+          <span>✍ 作者：天择网</span>
+        </div>
+      </div>
+
+      <div class="article-body reveal in d1">
+        <p>AI 专区今天新增了<strong>「技能」二级专区</strong>，并上线了第一个技能——<strong>textbook-learning-helper（课本学习助手，TLH）</strong>。这是一个能把教材章节一键转化为可离线打开、可与 DeepSeek 对话的交互式 HTML 学习页的技能，版本 L7.0，由「物竞天择」开发并完全开源。</p>
+
+        <h2>这个技能做什么</h2>
+        <p>把教材某章/节喂给 AI，它会生成一个自包含的 HTML 学习页：两栏布局，左栏可切换「知识点 / 教材原文 / 测验 / 错题本 / 批阅数据」五个视图，右栏是 DeepSeek AI 对话。每个知识点强制附交互式演示，测验覆盖六大题型（单选/多选/不定项/判断/填空/解答），客观题本地判分、主观题 AI 批阅。</p>
+        <blockquote>它把「读教材—理知识点—做题—对答案—问 AI」这条完整学习闭环，浓缩进一个 HTML 文件里。</blockquote>
+
+        <h2>本次上线的三块内容</h2>
+        <p>挂载位置：<strong>AI 专区 → 技能 → 课本学习助手</strong>。专区内提供：</p>
+        <ul>
+          <li><strong>三级专区主页</strong>：技能简要介绍、功能定位与适用场景、核心功能卡片。</li>
+          <li><strong>使用教程</strong>（<code>tlh/about/</code>）：API 文档级别的详细说明，涵盖六步生成流程、五个源文件字段规范、六大题型输入输出格式、公式与演示书写规则、<code>inject.py</code> 参数与行为。</li>
+          <li><strong>在线体验</strong>：填入你自己的 DeepSeek API Key 即可在网页里直接体验——预设教材为「狭义相对论入门教学」，已用本技能生成完整学习页（8 个知识点、8 个交互演示、8 道题）。</li>
+        </ul>
+
+        <h2>在线体验与安全说明</h2>
+        <p>体验区提供 API Key 输入框。需要特别说明的是：<strong>本网站是纯前端站点，没有服务器</strong>，你输入的 Key 只会保存在你的设备（浏览器 localStorage）上，用于把 Key 注入到演示学习页里启用 AI 对话与批阅功能，不会上传到任何地方。如果你仍不放心，也可以下载技能包在本地使用。</p>
+        <p>此外，专区还提供技能压缩包的<strong>直接下载入口</strong>，下载后放入你的 AI Agent 技能目录即可生成任意章节的学习页。</p>
+
+        <h2>接下来</h2>
+        <p>这是 AI 专区「技能」板块的第一个技能。后续若有新的实用技能，会继续在这里上线。欢迎前往 <a href="https://wjtianze.netlify.app/ai/skill/tlh/index.html" style="color:var(--c-sky); text-decoration:underline;">课本学习助手专区</a> 体验，或阅读 <a href="https://wjtianze.netlify.app/ai/skill/tlh/about/index.html" style="color:var(--c-sky); text-decoration:underline;">详细使用教程</a>。</p>
+      </div>
+
+      <div class="article-foot">
+        <a class="btn btn--ghost" href="#" data-back data-home="../index.html"><span>← 返回上一页</span></a>
+        <a class="btn" href="https://wjtianze.netlify.app/ai/skill/tlh/index.html"><span>前往体验 →</span></a>
+      </div>
+    </article>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <div>© 2026 天择网 · 物竞天择，适者生存</div>
+      <div class="links">
+        <a href="https://wjtianze.netlify.app/index.html">主页</a>
+        <a href="https://wjtianze.netlify.app/news/index.html">新闻</a>
+        <a href="https://wjtianze.netlify.app/blog/index.html">博客</a>
+        <a href="https://wjtianze.netlify.app/ai/index.html">AI 专区</a>
+        <a href="https://wjtianze.netlify.app/coc/index.html">COC 专区</a>
+        <a href="https://wjtianze.netlify.app/open/index.html">开源专区</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://wjtianze.netlify.app/assets/js/main.js"></script>
+</body>
+</html>

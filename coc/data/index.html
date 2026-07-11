@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>游戏数据查询 · COC 专区 · 天择网</title>
+  <meta name="description" content="部落冲突全部单位静态游戏数据查询：兵种、建筑、法术、英雄、战宠、装备、陷阱、守卫、帮手等分类浏览与搜索，含各等级数值与所需大本营等级。" />
+  <link rel="stylesheet" href="https://wjtianze.netlify.app/assets/css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <div class="bg-mesh"></div>
+
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="https://wjtianze.netlify.app/index.html" aria-label="天择网首页">
+        <span class="logo-mark">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/>
+          </svg>
+        </span>
+        <span class="logo-text">天择网</span>
+      </a>
+      <button class="nav-toggle" aria-label="菜单">☰</button>
+      <nav class="nav">
+        <a href="https://wjtianze.netlify.app/index.html"><span>首页</span></a>
+        <a href="https://wjtianze.netlify.app/news/index.html"><span>新闻</span></a>
+        <a href="https://wjtianze.netlify.app/blog/index.html"><span>博客</span></a>
+        <a href="https://wjtianze.netlify.app/ai/index.html"><span>AI 专区</span></a>
+        <a href="https://wjtianze.netlify.app/coc/index.html"><span>COC 专区</span></a>
+        <a href="https://wjtianze.netlify.app/open/index.html"><span>开源专区</span></a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="page-head wrap">
+      <div class="crumb reveal in">
+        <a href="https://wjtianze.netlify.app/index.html">主页</a> <span>›</span>
+        <a href="https://wjtianze.netlify.app/coc/index.html">COC 专区</a> <span>›</span>
+        <span>游戏数据查询</span>
+      </div>
+      <h1 class="reveal in d1">游戏数据 <span class="grad">查询</span></h1>
+      <p class="reveal in d2">部落冲突全部单位静态游戏数据，支持分类筛选与关键词搜索。点击任意条目查看中文介绍、基础属性与各等级数值（含所需大本营等级、升级花费与时间）。数据均来自本地整理，不查询玩家信息，不调用任何外部接口。</p>
+    </section>
+
+    <section class="section wrap" style="padding-top:18px;">
+      <div class="dq-toolbar reveal in">
+        <label class="dq-search">
+          <span class="dq-ic">🔍</span>
+          <input id="dqInput" type="text" placeholder="搜索单位中英文名称或关键字…" autocomplete="off" />
+        </label>
+        <span class="dq-count" id="dqCount">加载中…</span>
+      </div>
+
+      <div class="dq-cats reveal in d1" id="dqCats"></div>
+
+      <div class="dq-loading" id="dqLoading">
+        <div class="spinner"></div>
+        <div>正在加载游戏数据…</div>
+      </div>
+
+      <div class="dq-grid" id="dqGrid" style="display:none;"></div>
+
+      <div class="dq-empty" id="dqEmpty" style="display:none;">
+        <div class="de-icon">🔍</div>
+        <h3 style="font-size:18px; font-weight:760; margin-bottom:8px;">没有找到匹配的数据</h3>
+        <p>换个关键词，或选择「全部」分类试试。</p>
+      </div>
+    </section>
+
+    <!-- 底部：指向开源专区 -->
+    <section class="section wrap" style="padding-top:6px;">
+      <a class="card reveal in" href="https://wjtianze.netlify.app/open/index.html" style="padding:20px 26px; display:flex; gap:16px; align-items:center; flex-wrap:wrap; text-decoration:none;">
+        <div style="font-size:30px; flex-shrink:0;">📂</div>
+        <div style="flex:1; min-width:200px;">
+          <h3 style="font-size:16px; font-weight:760; margin-bottom:3px;">本页数据已开源</h3>
+          <p style="font-size:13.5px; color:var(--ink-dim);">本查询页使用的全部游戏数据来自天择网「开源专区」，可免费下载、不限用途。前往开源专区查看与下载原始 JSON。</p>
+        </div>
+        <span class="btn btn--sm" style="flex-shrink:0;"><span>前往开源专区 →</span></span>
+      </a>
+    </section>
+  </main>
+
+  <div class="dq-overlay" id="dqOverlay">
+    <div class="dq-modal" id="dqModal"></div>
+  </div>
+
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <div>© 2026 天择网 · 物竞天择，适者生存</div>
+      <div class="links">
+        <a href="https://wjtianze.netlify.app/index.html">主页</a>
+        <a href="https://wjtianze.netlify.app/news/index.html">新闻</a>
+        <a href="https://wjtianze.netlify.app/blog/index.html">博客</a>
+        <a href="https://wjtianze.netlify.app/ai/index.html">AI 专区</a>
+        <a href="https://wjtianze.netlify.app/coc/index.html">COC 专区</a>
+        <a href="https://wjtianze.netlify.app/open/index.html">开源专区</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://wjtianze.netlify.app/assets/js/main.js"></script>
+  <script>
+  (function () {
+    "use strict";
+
+    /* ---------- 大类配置（细分 category 归并） ---------- */
+    var BIG_CATS = [
+      { key: "troop",  zh: "兵种", emoji: "⚔️", subs: ["圣水兵","超级兵","黑油兵","攻城机器","夜世界兵种"] },
+      { key: "spell",  zh: "法术", emoji: "✨", subs: ["圣水法术","黑油法术"] },
+      { key: "hero",   zh: "英雄", emoji: "👑", subs: ["英雄","夜世界英雄"] },
+      { key: "pet",    zh: "战宠", emoji: "🐾", subs: ["战宠"] },
+      { key: "equip",  zh: "装备", emoji: "🛡️", subs: ["蛮王装备","女王装备","永王装备","王子装备","闰土装备","龙王装备"] },
+      { key: "build",  zh: "建筑", emoji: "🏰", subs: ["防御建筑","科技建筑","资源建筑","其它建筑","夜世界防御建筑","夜世界科技建筑","夜世界资源建筑","夜世界其它建筑"] },
+      { key: "trap",   zh: "陷阱", emoji: "🪤", subs: ["陷阱","夜世界陷阱"] },
+      { key: "guard",  zh: "守卫", emoji: "🧱", subs: ["守卫"] },
+      { key: "helper", zh: "帮手", emoji: "🧰", subs: ["帮手角色"] }
+    ];
+    var SUB2BIG = {};
+    BIG_CATS.forEach(function (c) { c.subs.forEach(function (s) { SUB2BIG[s] = c.key; }); });
+    function bigMeta(key) { for (var i = 0; i < BIG_CATS.length; i++) if (BIG_CATS[i].key === key) return BIG_CATS[i]; return { key: key, zh: key, emoji: "📦" }; }
+
+    /* ---------- 字段翻译 ---------- */
+    var RES_ZH = { Elixir: "圣水", Gold: "金币", DarkElixir: "暗黑重油", BuilderElixir: "建筑大师圣水", BuilderGold: "建筑大师金币" };
+    function resZh(v) { return RES_ZH[v] || v || "-"; }
+    function isBB(sub) { return sub && sub.indexOf("夜世界") === 0; }
+
+    var SA_LABEL = {
+      HousingSpace: "占用人口", Speed: "移动速度", AttackRange: "攻击范围", AttackSpeed: "攻击间隔",
+      IsFlying: "飞行单位", AirTargets: "对空攻击", GroundTargets: "对地攻击", UpgradeResource: "升级资源",
+      ProductionBuilding: "生产建筑", BarrackLevel: "需训练营等级", MovementOffsetSpeed: "移动偏移",
+      DamageRadius: "伤害范围", HousingSpaceAlt: "_alt人口", HousingSpaceSiege: "攻城人口",
+      TrainingTime: "训练时间", TrainingCost: "训练费用", RegenTime: "恢复时间"
+    };
+    var SA_BOOL = { IsFlying: 1, AirTargets: 1, GroundTargets: 1, IsJumper: 1, TriggersTraps: 1 };
+
+    var LV_LABEL = {
+      level: "等级", Level: "等级", VisualLevel: "显示等级", Hitpoints: "生命值", HitPoints: "生命值",
+      DPS: "伤害/秒", Damage: "伤害", Damage2: "伤害2", UpgradeCost: "升级费用", UpgradeCosts: "升级费用",
+      UpgradeTimeH: "升级时间", UpgradeTimeM: "", UpgradeTimeS: "", BuildCost: "建造费用",
+      BuildTimeD: "建造时间", BuildTimeH: "", BuildTimeM: "", BuildTimeS: "",
+      LaboratoryLevel: "需实验室", RequiredBlacksmithLevel: "需铁匠铺", requiredTownHallLevel: "需大本营",
+      RequiredTownHallLevel: "需大本营", TownHallLevel: "大本营等级", BuildingLevel: "建筑等级",
+      TrainingCost: "训练费用", TrainingTime: "训练时间", MainAbilityLevels: "主技能等级",
+      ExtraAbilityLevels: "副技能等级", HousingSpace: "人口", RegenTime: "恢复时间",
+      DamageRadius: "伤害范围", UnitsInCamp: "营内数量", BoostMultiplier: "加成倍数",
+      Cost: "费用", HealOnActivation: "激活治疗", AttackSpeedPercentage: "攻速百分比",
+      HousingSpaceAlt: "_alt人口", HousingSpaceSiege: "攻城人口", CapitalHallLevel: "都城等级",
+      AmmoCost: "弹药费用", PoisonDPS: "毒伤/秒", SpeedBoost: "提速", SpeedBoost2: "提速2",
+      AttackSpeedBoost: "攻速提升", ShieldTime: "护盾时间", InvisibilityTime: "隐身时间",
+      NumberOfHits: "攻击次数", BurstCount: "连发数", SummonTroopCount: "召唤数量", SummonTime: "召唤时间"
+    };
+
+    /* ---------- 时间/费用格式化 ---------- */
+    function num(v) { if (v === undefined || v === null || v === "") return ""; var n = Number(v); return isNaN(n) ? v : n.toLocaleString("en-US"); }
+    function upTime(lv) {
+      var h = Number(lv.UpgradeTimeH || 0), m = Number(lv.UpgradeTimeM || 0);
+      if (!h && !m) return "";
+      var p = []; if (h) p.push(h + "时"); if (m) p.push(m + "分"); return p.join("") || "";
+    }
+    function buildTime(lv) {
+      var d = Number(lv.BuildTimeD || 0), h = Number(lv.BuildTimeH || 0), m = Number(lv.BuildTimeM || 0), s = Number(lv.BuildTimeS || 0);
+      if (!d && !h && !m && !s) return "";
+      var p = []; if (d) p.push(d + "天"); if (h) p.push(h + "时"); if (m) p.push(m + "分"); if (s) p.push(s + "秒"); return p.join("") || "";
+    }
+    function resIcon(res) {
+      if (res === "DarkElixir") return " 🟣"; if (res === "Elixir" || res === "BuilderElixir") return " 💧";
+      if (res === "Gold" || res === "BuilderGold") return " 🪙"; return "";
+    }
+
+    /* ---------- 状态 ---------- */
+    var UNITS = [];
+    var currentBig = "all";
+    var currentKw = "";
+
+    /* ---------- 卡片关键属性 ---------- */
+    function cardStats(u) {
+      var sa = u.staticAttributes || {};
+      var lvs = u.levels || [];
+      var max = lvs.length ? lvs[lvs.length - 1] : {};
+      var out = [];
+      function add(k, v) { if (v !== undefined && v !== null && v !== "" && v !== "0" || (v === "0" && k.indexOf("人口") === -1)) { if (v !== undefined && v !== null && v !== "" && v !== "0" || k === "生命值" || k === "伤害") out.push({ k: k, v: v }); } }
+      var big = SUB2BIG[u.category] || "";
+      if (big === "troop" || big === "hero" || big === "pet" || big === "guard") {
+        add("DPS", max.DPS); add("生命", max.Hitpoints); add("人口", sa.HousingSpace);
+      } else if (big === "spell") {
+        add("伤害", max.Damage); add("人口", sa.HousingSpace);
+      } else if (big === "build") {
+        add("生命", max.Hitpoints); if (max.DPS) add("DPS", max.DPS);
+      } else if (big === "trap") {
+        add("伤害", max.Damage);
+      } else if (big === "equip") {
+        if (max.MainAbilityLevels) add("主技能", max.MainAbilityLevels);
+        if (sa.HousingSpace) add("人口", sa.HousingSpace);
+      } else if (big === "helper") {
+        if (max.BoostMultiplier) add("加成", max.BoostMultiplier);
+      }
+      return out.slice(0, 4);
+    }
+
+    /* ---------- 初始化 ---------- */
+    function init() {
+      fetch("all_game_data_zh.json", { cache: "default" })
+        .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+        .then(function (d) {
+          UNITS = (d && d.units) ? d.units : [];
+          renderCats();
+          render();
+          document.getElementById("dqLoading").style.display = "none";
+          document.getElementById("dqGrid").style.display = "";
+        })
+        .catch(function (err) {
+          document.getElementById("dqLoading").innerHTML =
+            '<div style="font-size:40px; margin-bottom:14px;">⚠️</div>' +
+            '<div>数据加载失败：' + (err.message || err) + '</div>' +
+            '<div style="font-size:13px; margin-top:8px; color:var(--ink-faint);">请通过本地服务器访问本页。</div>';
+        });
+
+      var input = document.getElementById("dqInput"), timer = null;
+      input.addEventListener("input", function () {
+        clearTimeout(timer);
+        timer = setTimeout(function () { currentKw = input.value.trim().toLowerCase(); render(); }, 160);
+      });
+      var overlay = document.getElementById("dqOverlay");
+      overlay.addEventListener("click", function (e) { if (e.target === overlay) closeDetail(); });
+      document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDetail(); });
+    }
+
+    function renderCats() {
+      var box = document.getElementById("dqCats");
+      var html = '<span class="dq-cat active" data-big="all">全部 <span class="ct-num">' + UNITS.length + '</span></span>';
+      BIG_CATS.forEach(function (c) {
+        var n = UNITS.filter(function (u) { return c.subs.indexOf(u.category) !== -1; }).length;
+        html += '<span class="dq-cat" data-big="' + c.key + '">' + c.emoji + ' ' + c.zh + ' <span class="ct-num">' + n + '</span></span>';
+      });
+      box.innerHTML = html;
+      box.querySelectorAll(".dq-cat").forEach(function (el) {
+        el.addEventListener("click", function () {
+          box.querySelectorAll(".dq-cat").forEach(function (x) { x.classList.remove("active"); });
+          el.classList.add("active");
+          currentBig = el.getAttribute("data-big");
+          render();
+        });
+      });
+    }
+
+    function match(u) {
+      if (currentBig !== "all") {
+        var bm = SUB2BIG[u.category];
+        if (bm !== currentBig) return false;
+      }
+      if (currentKw) {
+        var hay = [u.englishName, u.chineseName, u.description, u.category].filter(Boolean).join(" ").toLowerCase();
+        if (hay.indexOf(currentKw) === -1) return false;
+      }
+      return true;
+    }
+
+    function render() {
+      var list = UNITS.filter(match);
+      document.getElementById("dqCount").innerHTML = '共 <b>' + list.length + '</b> 条结果';
+      var grid = document.getElementById("dqGrid"), empty = document.getElementById("dqEmpty");
+      if (!list.length) { grid.innerHTML = ""; grid.style.display = "none"; empty.style.display = ""; return; }
+      empty.style.display = "none"; grid.style.display = "";
+      var frag = "";
+      list.forEach(function (u, idx) {
+        var bm = bigMeta(SUB2BIG[u.category] || "");
+        var zh = u.chineseName || u.englishName || "(未命名)";
+        var en = u.englishName || "";
+        var desc = u.description || "";
+        var stats = cardStats(u);
+        var statsHtml = stats.map(function (s) { return '<span class="dc-stat">' + esc(s.k) + ' <b>' + esc(String(s.v)) + '</b></span>'; }).join("");
+        frag += '' +
+          '<div class="card dq-card" data-idx="' + idx + '">' +
+            '<div class="dc-top">' +
+              '<div class="dc-emoji">' + bm.emoji + '</div>' +
+              '<div class="dc-name">' +
+                '<h3>' + esc(zh) + '</h3>' +
+                (en ? '<div class="dc-en">' + esc(en) + '</div>' : '') +
+              '</div>' +
+            '</div>' +
+            '<span class="dc-pill">' + esc(u.category || "") + '</span>' +
+            (desc ? '<div class="dc-info">' + esc(desc) + '</div>' : '') +
+            (statsHtml ? '<div class="dc-stats">' + statsHtml + '</div>' : '') +
+          '</div>';
+      });
+      grid.innerHTML = frag;
+      grid.querySelectorAll(".dq-card").forEach(function (node, i) {
+        var entry = list[i];
+        node.addEventListener("click", function () { openDetail(entry); });
+      });
+    }
+
+    /* ---------- 详情弹窗 ---------- */
+    function openDetail(u) {
+      var bm = bigMeta(SUB2BIG[u.category] || "");
+      var sa = u.staticAttributes || {};
+      var lvs = u.levels || [];
+      var zh = u.chineseName || u.englishName || "(未命名)";
+      var en = u.englishName || "";
+      var desc = u.description || "";
+
+      // 基础属性（白名单）
+      var attrs = [];
+      Object.keys(SA_LABEL).forEach(function (k) {
+        if (k.charAt(0) === "_") return;
+        var v = sa[k];
+        if (v === undefined || v === null || v === "") return;
+        var d = v;
+        if (SA_BOOL[k]) d = (v === "TRUE" || v === "true") ? "是" : "否";
+        else if (k === "UpgradeResource") d = resZh(v);
+        else if (k === "AttackSpeed") d = num(v) + " ms";
+        else if (k === "Speed") d = num(v);
+        else d = num(v);
+        attrs.push({ k: SA_LABEL[k], v: d });
+      });
+      var attrsHtml = attrs.map(function (a) { return '<div class="dm-attr"><div class="ak">' + esc(a.k) + '</div><div class="av">' + esc(String(a.v)) + '</div></div>'; }).join("");
+
+      // pills
+      var res = sa.UpgradeResource || sa.BuildResource;
+      var pills = '<span class="p">' + esc(u.category || "") + '</span>';
+      pills += '<span class="p">📍 ' + (isBB(u.category) ? "建筑大师基地" : "家乡村庄") + '</span>';
+      if (res) pills += '<span class="p">🔁 ' + resZh(res) + '</span>';
+      if (sa.HousingSpace) pills += '<span class="p">👥 人口 ' + esc(String(sa.HousingSpace)) + '</span>';
+
+      // 等级表
+      var lvHtml = "";
+      if (lvs.length) {
+        // 选列：固定 level + 出现率高的关键列
+        var prefer = ["level","Hitpoints","HitPoints","DPS","Damage","UpgradeCost","UpgradeCosts","UpgradeTimeH","BuildCost","BuildTimeD","LaboratoryLevel","RequiredBlacksmithLevel","requiredTownHallLevel","RequiredTownHallLevel","MainAbilityLevels","HousingSpace","UnitsInCamp","TrainingCost","TrainingTime","BoostMultiplier","Cost","RegenTime","DamageRadius","HealOnActivation","AttackSpeedPercentage"];
+        var cols = [];
+        lvs.forEach(function (lv) { Object.keys(lv).forEach(function (k) { if (cols.indexOf(k) === -1) cols.push(k); }); });
+        // 按 prefer 排序，未在 prefer 里的跳过（避免视觉/效果字段）
+        var showCols = prefer.filter(function (k) { return cols.indexOf(k) !== -1; });
+        // 合并时间列：UpgradeTimeH 显示为"升级时间"，BuildTimeD 显示为"建造时间"
+        var head = showCols.map(function (k) {
+          var lbl = LV_LABEL[k] || k;
+          if (lbl === "") return ""; // 时间子字段不单独成列
+          return '<th>' + esc(lbl) + '</th>';
+        }).join("");
+        var rows = lvs.map(function (lv) {
+          return '<tr>' + showCols.map(function (k) {
+            var lbl = LV_LABEL[k] || k;
+            if (lbl === "") return '<td></td>';
+            var v = lv[k];
+            var d = "";
+            if (v === undefined || v === null || v === "") d = "-";
+            else if (k === "level" || k === "Level") d = '<span class="lv">' + esc(String(v)) + '</span>';
+            else if (k === "UpgradeTimeH") d = upTime(lv) || "-";
+            else if (k === "BuildTimeD") d = buildTime(lv) || "-";
+            else if (k === "UpgradeCost" || k === "BuildCost" || k === "TrainingCost") d = num(v) + resIcon(res);
+            else if (k === "UpgradeCosts") d = esc(String(v)) + resIcon(res);
+            else if (k === "requiredTownHallLevel" || k === "RequiredTownHallLevel" || k === "TownHallLevel" || k === "LaboratoryLevel" || k === "RequiredBlacksmithLevel" || k === "BuildingLevel" || k === "MainAbilityLevels" || k === "UnitsInCamp" || k === "BoostMultiplier") d = esc(String(v));
+            else if (typeof v === "string" && v.length > 30) d = esc(v.slice(0, 28)) + "…";
+            else d = esc(String(v));
+            return '<td>' + d + '</td>';
+          }).join("") + '</tr>';
+        }).join("");
+        lvHtml = '<div class="dm-section-h"><span class="bar"></span>等级数据（共 ' + lvs.length + ' 级）</div>' +
+          '<div class="dm-table-wrap"><table class="dm-table"><thead><tr>' + head + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+
+        // 装备技能
+        var hasSkills = lvs.some(function (lv) { return lv.skills && lv.skills.length; });
+        if (hasSkills) {
+          var maxSkills = lvs[lvs.length - 1].skills || [];
+          var skHtml = maxSkills.map(function (sk) {
+            return '<div class="dm-attr"><div class="ak">' + esc(sk.chineseName || sk.name || "技能") + (sk.type ? " (" + sk.type + ")" : "") + '</div><div class="av">技能等级 ' + esc(String(sk.abilityLevel || "-")) + '</div></div>';
+          }).join("");
+          lvHtml += '<div class="dm-section-h"><span class="bar"></span>满级装备技能</div><div class="dm-attrs">' + skHtml + '</div>';
+        }
+        lvHtml += '<div class="dm-note">数据来自《部落冲突》APK 提取的静态游戏数据，时间已换算为可读格式，资源数量带图标标注。所需大本营等级为该等级解锁的最低大本营等级。</div>';
+      } else {
+        lvHtml = '<div class="dm-section-h"><span class="bar"></span>等级数据</div><div class="dm-note">该单位无等级数据。</div>';
+      }
+
+      document.getElementById("dqModal").innerHTML = '' +
+        '<button class="dq-close" id="dqClose" aria-label="关闭">×</button>' +
+        '<div class="dm-head">' +
+          '<div class="dm-emoji">' + bm.emoji + '</div>' +
+          '<div class="dm-title"><h2>' + esc(zh) + '</h2>' + (en ? '<div class="dm-en">' + esc(en) + '</div>' : '') + '</div>' +
+        '</div>' +
+        '<div class="dm-pills">' + pills + '</div>' +
+        (desc ? '<div class="dm-desc">' + esc(desc) + '</div>' : '') +
+        (attrsHtml ? '<div class="dm-section-h"><span class="bar"></span>基础属性</div><div class="dm-attrs">' + attrsHtml + '</div>' : '') +
+        lvHtml;
+
+      document.getElementById("dqClose").addEventListener("click", closeDetail);
+      var overlay = document.getElementById("dqOverlay");
+      overlay.classList.add("open");
+      document.body.style.overflow = "hidden";
+      overlay.scrollTop = 0;
+    }
+    function closeDetail() {
+      document.getElementById("dqOverlay").classList.remove("open");
+      document.body.style.overflow = "";
+    }
+
+    function esc(s) {
+      return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+
+    init();
+  })();
+  </script>
+</body>
+</html>

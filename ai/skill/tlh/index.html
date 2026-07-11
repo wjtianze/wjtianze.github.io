@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>课本学习助手 (TLH) · 技能 — 天择网</title>
+  <meta name="description" content="textbook-learning-helper（课本学习助手）：把教材章节一键转化为可离线打开的交互式 HTML 学习页，内置知识点演示、六大题型测验、错题本与 DeepSeek 对话。" />
+  <link rel="stylesheet" href="https://wjtianze.netlify.app/assets/css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <div class="bg-mesh"></div>
+
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="https://wjtianze.netlify.app/index.html" aria-label="天择网首页">
+        <span class="logo-mark">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/>
+          </svg>
+        </span>
+        <span class="logo-text">天择网</span>
+      </a>
+      <button class="nav-toggle" aria-label="菜单">☰</button>
+      <nav class="nav">
+        <a href="https://wjtianze.netlify.app/index.html"><span>首页</span></a>
+        <a href="https://wjtianze.netlify.app/news/index.html"><span>新闻</span></a>
+        <a href="https://wjtianze.netlify.app/blog/index.html"><span>博客</span></a>
+        <a href="https://wjtianze.netlify.app/ai/index.html" class="active"><span>AI 专区</span></a>
+        <a href="https://wjtianze.netlify.app/coc/index.html"><span>COC 专区</span></a>
+        <a href="https://wjtianze.netlify.app/open/index.html"><span>开源专区</span></a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- 标题 -->
+    <section class="skill-hero wrap">
+      <div class="sk-badge reveal in">📚 技能 · 三级专区</div>
+      <h1 class="reveal in d1">课本学习助手 <span class="grad">TLH</span></h1>
+      <p class="reveal in d2">把教材某章/节生成一个可离线打开、可与 DeepSeek 对话的交互式 HTML 学习页——两栏布局，左栏切换「知识点 / 教材原文 / 测验 / 错题本 / 批阅数据」五个视图，右栏是 AI 对话；每个知识点强制附交互式演示。</p>
+      <div class="sk-meta reveal in d3">
+        <span class="chip">版本 <b>L7.0</b></span>
+        <span class="chip">开发者 <b>物竞天择</b></span>
+        <span class="chip">协议 <b>完全开源</b></span>
+        <span class="chip">依赖 <b>DeepSeek API</b></span>
+      </div>
+    </section>
+
+    <!-- 功能定位 -->
+    <section class="section wrap">
+      <div class="card reveal in" style="padding:30px 34px;">
+        <div class="section-head" style="margin-bottom:14px;">
+          <h2><span class="bar"></span>功能定位与适用场景</h2>
+        </div>
+        <p style="color:var(--ink-dim); font-size:16px; max-width:820px; line-height:1.95;">
+          课本学习助手（textbook-learning-helper）是一个让 AI 分析教材（含数理化 PDF / 扫描件）、提取指定章节知识点并生成可离线打开的交互式 HTML 学习页的技能。它把「读教材—理知识点—做题—对答案—问 AI」这条完整学习闭环，浓缩进一个自包含的 HTML 文件里。
+        </p>
+        <div class="scenario-list" style="margin-top:20px;">
+          <div class="card sc-row reveal d1">
+            <div class="sc-no">1</div>
+            <div class="sc-tx"><b>自学理工科教材</b>（数学、物理、化学等）：把一章变成带交互演示的知识点 + 题库，比单纯啃书更主动。</div>
+          </div>
+          <div class="card sc-row reveal d2">
+            <div class="sc-no">2</div>
+            <div class="sc-tx"><b>期末复习 / 章节精练</b>：测验一题一屏，答题卡 + 错题本自动收集错题，AI 批阅主观题并给出评语。</div>
+          </div>
+          <div class="card sc-row reveal d2">
+            <div class="sc-no">3</div>
+            <div class="sc-tx"><b>教师 / 助教</b>：批量为学生生成某章节的课后练习与讲解页。</div>
+          </div>
+          <div class="card sc-row reveal d3">
+            <div class="sc-no">4</div>
+            <div class="sc-tx"><b>开发者</b>：在技能基础上二次开发、定制功能（完全开源，含商业用途）。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 核心功能 -->
+    <section class="section wrap">
+      <div class="section-head reveal">
+        <h2><span class="bar"></span>核心功能</h2>
+        <span class="more">更多细节见使用教程</span>
+      </div>
+      <div class="feature-grid">
+        <div class="card feature-item reveal d1">
+          <div class="f-icon">🗂️</div>
+          <h3>五视图两栏布局</h3>
+          <p>左栏切换知识点 / 教材原文 / 测验 / 错题本 / 批阅数据，右栏 DeepSeek 对话；列宽可拖动。</p>
+        </div>
+        <div class="card feature-item reveal d2">
+          <div class="f-icon">✏️</div>
+          <h3>六大题型 + 判分</h3>
+          <p>单选/多选/不定项/判断/填空/解答；客观题本地判分，主观题 AI 批阅；多选漏选但没错选得一半分。</p>
+        </div>
+        <div class="card feature-item reveal d2">
+          <div class="f-icon">🎮</div>
+          <h3>交互式演示</h3>
+          <p>每个知识点强制附 HTML+JS 交互演示，sandboxed iframe 渲染，自动注入 KaTeX + Markdown。</p>
+        </div>
+        <div class="card feature-item reveal d3">
+          <div class="f-icon">🤖</div>
+          <h3>DeepSeek 对话</h3>
+          <p>V4 Flash / V4 Pro，可调思考强度与理解强度，支持出题、AI 详解、AI 重写纠错、引用知识点。</p>
+        </div>
+        <div class="card feature-item reveal d3">
+          <div class="f-icon">∑</div>
+          <h3>公式 + LaTeX 助手</h3>
+          <p>全程 Markdown + KaTeX 渲染；点击任意公式复制 LaTeX 源码；标题栏 LaTeX 助手弹窗按学科 × 难度分类。</p>
+        </div>
+        <div class="card feature-item reveal d4">
+          <div class="f-icon">💾</div>
+          <h3>状态持久化</h3>
+          <p>作答 / 批阅 / 对话 / 滚动位置 / demo 代码全部存入 localStorage，刷新回到原位；Token 统计与余额查询。</p>
+        </div>
+      </div>
+      <p style="margin-top:18px;"><a class="more" href="https://wjtianze.netlify.app/ai/skill/tlh/about/index.html">查看 API 级详细使用教程 →</a></p>
+    </section>
+
+    <!-- 下载 -->
+    <section class="section wrap">
+      <div class="section-head reveal">
+        <h2><span class="bar"></span>下载技能</h2>
+      </div>
+      <div class="card dl-card reveal in">
+        <div class="dl-icon">📦</div>
+        <div class="dl-info">
+          <h3>textbook-learning-helper L7.0</h3>
+          <p>完整技能包，含 SKILL.md、README.md、模板 template.html 与注入脚本 inject.py。放入 AI Agent 技能目录即可使用。</p>
+          <div class="dl-meta">压缩包 · 约 137 KB · 含 references/ 目录 · 当前版本 L7.0</div>
+        </div>
+        <a class="btn" href="https://wjtianze.netlify.app/ai/skill/tlh/textbook-learning-helper-L7.0.zip" download><span>⬇ 下载 ZIP</span></a>
+      </div>
+    </section>
+
+    <!-- 在线体验 -->
+    <section class="section wrap">
+      <div class="section-head reveal">
+        <h2><span class="bar"></span>在线体验</h2>
+        <span class="more">预设教材：狭义相对论入门教学</span>
+      </div>
+
+      <div class="card apikey-box reveal in">
+        <h3>🔑 填入你的 DeepSeek API Key</h3>
+        <p class="ak-sub">填入后即可在线体验技能效果——下方会加载本技能针对「狭义相对论基础」生成的完整学习页（知识点 / 演示 / 测验 / 教材原文 / AI 对话全部可用）。</p>
+
+        <div class="apikey-notice">
+          <span class="ak-ic">🔒</span>
+          <span>本网站为纯前端没有服务器，你可以放心把key输入进去，信息只会存储在你的设备上，不必担心泄露</span>
+        </div>
+
+        <div class="ak-row">
+          <div class="ak-input">
+            <span class="ak-pre">sk-</span>
+            <input type="password" id="apiKey" placeholder="粘贴你的 DeepSeek API Key（sk- 开头）" autocomplete="off" spellcheck="false" />
+          </div>
+          <button class="btn" id="launchBtn"><span>🚀 启动体验</span></button>
+          <button class="btn btn--ghost btn--sm" id="clearKeyBtn" title="清除已保存的 Key"><span>清除</span></button>
+        </div>
+        <div class="ak-status" id="akStatus">尚未启动 · Key 仅保存在本机 localStorage</div>
+        <p style="margin-top:14px; font-size:13px; color:var(--ink-faint);">
+          没有 Key？前往 <a href="https://platform.deepseek.com" target="_blank" rel="noopener" style="color:var(--c-sky); text-decoration:underline;">platform.deepseek.com</a> → API Keys → 创建新 Key（格式 sk-...）。上方输入框已预填 "sk-" 前缀，只需粘贴后半部分。
+        </p>
+      </div>
+
+      <div class="exp-wrap reveal in d1" id="expWrap">
+        <div class="exp-placeholder" id="expPlaceholder">
+          <div>
+            <div class="ph-icon">🚀</div>
+            <h3>体验区尚未启动</h3>
+            <p>在上方填入你的 DeepSeek API Key 并点击「启动体验」，即可加载狭义相对论学习页。知识点、演示、测验无需 Key 即可查看；AI 对话与批阅功能需要 Key。</p>
+          </div>
+        </div>
+        <button class="exp-fs-btn" id="expFsBtn" title="全屏体验（按 Esc 退出）" style="display:none;"><span>⛶ 全屏</span></button>
+        <iframe class="exp-frame" id="expFrame" style="display:none;" title="课本学习助手 · 狭义相对论体验" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-fullscreen"></iframe>
+      </div>
+    </section>
+
+    <!-- 快速导航 -->
+    <section class="section wrap">
+      <div class="grid grid-3">
+        <a class="card zone-card reveal in d1" href="https://wjtianze.netlify.app/ai/skill/tlh/about/index.html">
+          <div class="z-icon">📖</div>
+          <h3>使用教程</h3>
+          <p>API 文档级别的详细说明：参数、调用方式、输入输出格式、源文件结构。</p>
+          <span class="z-go">查看教程 →</span>
+        </a>
+        <a class="card zone-card reveal in d2" href="https://wjtianze.netlify.app/ai/skill/tlh/textbook-learning-helper-L7.0.zip" download>
+          <div class="z-icon">📦</div>
+          <h3>下载技能包</h3>
+          <p>获取完整 L7.0 技能压缩包，放入你的 AI Agent 即可生成任意章节学习页。</p>
+          <span class="z-go">立即下载 →</span>
+        </a>
+        <a class="card zone-card reveal in d3" href="https://platform.deepseek.com" target="_blank" rel="noopener">
+          <div class="z-icon">🔑</div>
+          <h3>获取 API Key</h3>
+          <p>前往 DeepSeek 开放平台创建 API Key，体验 AI 对话与批阅功能。</p>
+          <span class="z-go">前往平台 →</span>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <div>© 2026 天择网 · 物竞天择，适者生存</div>
+      <div class="links">
+        <a href="https://wjtianze.netlify.app/index.html">主页</a>
+        <a href="https://wjtianze.netlify.app/news/index.html">新闻</a>
+        <a href="https://wjtianze.netlify.app/blog/index.html">博客</a>
+        <a href="https://wjtianze.netlify.app/ai/index.html">AI 专区</a>
+        <a href="https://wjtianze.netlify.app/coc/index.html">COC 专区</a>
+        <a href="https://wjtianze.netlify.app/open/index.html">开源专区</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://wjtianze.netlify.app/assets/js/main.js"></script>
+  <script>
+  (function(){
+    var DEMO_URL='relativity-demo.html';
+    var LS_KEY='tz_site_tlh_apikey';
+    var input=document.getElementById('apiKey');
+    var btn=document.getElementById('launchBtn');
+    var clr=document.getElementById('clearKeyBtn');
+    var status=document.getElementById('akStatus');
+    var ph=document.getElementById('expPlaceholder');
+    var frame=document.getElementById('expFrame');
+    var expWrap=document.getElementById('expWrap');
+    var fsBtn=document.getElementById('expFsBtn');
+
+    // 预填历史 Key
+    try{
+      var saved=localStorage.getItem(LS_KEY);
+      if(saved){ input.value='sk-'+saved.replace(/^sk-/,''); }
+    }catch(e){}
+
+    function setStatus(msg,type){status.textContent=msg;if(type){status.className='ak-status '+type;}else{status.className='ak-status';}}
+
+    btn.addEventListener('click',function(){
+      var raw=input.value.trim();
+      if(!raw){setStatus('请先填入 API Key','err');input.focus();return;}
+      var key=raw.indexOf('sk-')===0?raw:('sk-'+raw);
+      if(key.length<10){setStatus('Key 格式似乎不对，请检查（应以 sk- 开头）','err');return;}
+      try{localStorage.setItem(LS_KEY,key);}catch(e){}
+      launch(key);
+    });
+
+    clr.addEventListener('click',function(){
+      input.value='';
+      try{localStorage.removeItem(LS_KEY);}catch(e){}
+      if(document.fullscreenElement){try{document.exitFullscreen();}catch(e){}}
+      frame.src='about:blank';frame.style.display='none';ph.style.display='grid';
+      fsBtn.style.display='none';
+      setStatus('已清除 Key 与体验区','');
+    });
+
+    function launch(key){
+      setStatus('正在加载学习页…','');
+      btn.disabled=true;btn.style.opacity=.6;
+      // 直接用 iframe.src 加载本地 HTML（file:// 与 http:// 均允许 iframe 加载相对 HTML，不依赖 fetch，避免 failed to fetch）
+      frame.onload=function(){
+        var ok=false;
+        try{
+          // 同源时直接把 Key 写入学习页全局变量（模板聊天/批阅/余额函数读取全局 KEY）
+          frame.contentWindow.KEY=key;
+          ok=true;
+        }catch(e){ok=false;}
+        if(ok){
+          setStatus('✅ 已启动！Key 已注入，AI 对话与批阅功能可用','ok');
+        }else{
+          setStatus('⚠️ 学习页已加载，但当前环境（如直接双击打开 file://）无法自动注入 Key。知识点/演示/测验可用；AI 对话请通过本地服务器访问（python -m http.server 8080 → http://127.0.0.1:8080/dev/ai/skill/tlh/index.html）。','err');
+        }
+        btn.disabled=false;btn.style.opacity=1;
+      };
+      frame.onerror=function(){
+        setStatus('加载学习页失败，请确认通过 http 服务器访问本页面','err');
+        btn.disabled=false;btn.style.opacity=1;
+      };
+      frame.src=DEMO_URL;
+      frame.style.display='block';
+      ph.style.display='none';
+      fsBtn.style.display='inline-flex';
+    }
+
+    // 回车启动
+    input.addEventListener('keydown',function(e){if(e.key==='Enter'){btn.click();}});
+
+    // 体验区浏览器全屏切换（全屏后学习页内部的演示「⛶ 全屏」浮层会真正占满整个屏幕）
+    function setFsBtnLabel(){
+      fsBtn.innerHTML = document.fullscreenElement ? '<span>⛶ 退出全屏</span>' : '<span>⛶ 全屏</span>';
+    }
+    fsBtn.addEventListener('click',function(){
+      try{
+        if(document.fullscreenElement){
+          document.exitFullscreen();
+        }else if(expWrap.requestFullscreen){
+          expWrap.requestFullscreen();
+        }else if(expWrap.webkitRequestFullscreen){
+          expWrap.webkitRequestFullscreen();
+        }
+      }catch(e){}
+    });
+    document.addEventListener('fullscreenchange',setFsBtnLabel);
+    document.addEventListener('webkitfullscreenchange',setFsBtnLabel);
+  })();
+  </script>
+</body>
+</html>

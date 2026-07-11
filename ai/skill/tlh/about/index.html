@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>使用教程 · 课本学习助手 (TLH) — 天择网</title>
+  <meta name="description" content="textbook-learning-helper 使用教程：API 文档级别的详细说明，涵盖参数、调用方式、输入输出格式、源文件结构与注入脚本。" />
+  <link rel="stylesheet" href="https://wjtianze.netlify.app/assets/css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <div class="bg-mesh"></div>
+
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="https://wjtianze.netlify.app/index.html" aria-label="天择网首页">
+        <span class="logo-mark">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/>
+          </svg>
+        </span>
+        <span class="logo-text">天择网</span>
+      </a>
+      <button class="nav-toggle" aria-label="菜单">☰</button>
+      <nav class="nav">
+        <a href="https://wjtianze.netlify.app/index.html"><span>首页</span></a>
+        <a href="https://wjtianze.netlify.app/news/index.html"><span>新闻</span></a>
+        <a href="https://wjtianze.netlify.app/blog/index.html"><span>博客</span></a>
+        <a href="https://wjtianze.netlify.app/ai/index.html" class="active"><span>AI 专区</span></a>
+        <a href="https://wjtianze.netlify.app/coc/index.html"><span>COC 专区</span></a>
+        <a href="https://wjtianze.netlify.app/open/index.html"><span>开源专区</span></a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <article class="tutorial wrap">
+      <div class="page-head" style="padding-top:40px;">
+        <div class="crumb">
+          <a href="https://wjtianze.netlify.app/index.html">首页</a><span>/</span>
+          <a href="https://wjtianze.netlify.app/ai/index.html">AI 专区</a><span>/</span>
+          <a href="https://wjtianze.netlify.app/ai/skill/index.html">技能</a><span>/</span>
+          <a href="https://wjtianze.netlify.app/ai/skill/tlh/index.html">课本学习助手</a><span>/</span><span>使用教程</span>
+        </div>
+      </div>
+
+      <div class="article-head reveal in" style="border:none; padding-top:10px;">
+        <span class="a-tag">API 级文档</span>
+        <h1>课本学习助手 · 使用教程</h1>
+        <div class="article-meta">
+          <span>📌 版本 L7.0</span>
+          <span>📦 技能名 textbook-learning-helper</span>
+          <span>🔧 依赖 DeepSeek API</span>
+        </div>
+      </div>
+
+      <div class="tutorial-body reveal in d1">
+
+        <p>本教程以 API 文档的详细程度，说明 <code>textbook-learning-helper</code>（课本学习助手，简称 TLH）的全部用法：技能如何被触发、生成学习页的六步流程、五个源文件的字段规范、六大题型的输入输出格式、公式与演示的书写规则，以及注入脚本 <code>inject.py</code> 的参数与行为。</p>
+
+        <blockquote>本技能是<b>普通版（L7.0）</b>。生成可用的 HTML <b>必须</b>由用户提供有效的 DeepSeek API Key。开发者版（L7.0-d）已内置开发者 Key，无需用户提供。</blockquote>
+
+        <h2><span class="bar"></span>1. 触发与生成总览</h2>
+        <p>当用户对 AI Agent 说「学习第 X 节」「帮我整理第 X 章知识点并出题」或类似表述时，Agent 自动调用本技能。整个生成流程分六步，<b>顺序不可颠倒</b>：</p>
+        <ol>
+          <li><b>提取教材文本</b>：判断输入是文本型还是扫描/图像型；图像型先 OCR。<b>铁律：fulltext 必须忠实保留全部原文</b>（含例题、注释、表格、公式），不得删减或概括，只允许格式转写。</li>
+          <li><b>创建工作目录</b> <code>data/</code> 与 <code>data/demos/</code>。</li>
+          <li><b>分文件写出五类源文件</b>（见第 3 节）：<code>meta.json</code>、<code>fulltext.md</code>、<code>kp.json</code>、<code>questions.json</code>、<code>demos/{ci}_{ii}.html</code>。</li>
+          <li><b>演示强制性铁律</b>：<code>kp.json</code> 里<b>每一个 item</b> 都必须有对应的 <code>demos/{ci}_{ii}.html</code>，inject.py 会校验，缺任何一个都报错退出。</li>
+          <li><b>注入并校验</b>：<code>python3 inject.py data "输出.html" --key sk-你的Key</code>。</li>
+          <li><b>呈现</b>：用 present_files 把生成的 HTML 交付给用户，并附上 API Key 清除提醒。</li>
+        </ol>
+
+        <h2><span class="bar"></span>2. 目录结构</h2>
+        <p>技能包解压后的目录结构：</p>
+        <pre><code>tlh-L7.0/
+├── SKILL.md              # AI Agent 读取的技能说明
+├── README.md             # 人类用户阅读的说明
+└── references/
+    ├── template.html     # 学习页模板（不需要读进上下文）
+    ├── inject.py         # 注入与校验脚本
+    └── CHANGELOG.md      # 版本更新记录</code></pre>
+        <p>生成时，AI 创建的工作目录结构如下（<code>data/</code> 是输入，<code>输出.html</code> 是产物）：</p>
+        <pre><code>data/
+├── meta.json             # 元信息
+├── fulltext.md           # 教材全文
+├── kp.json               # 知识点（不含 demo 字段）
+├── questions.json        # 题目
+└── demos/
+    ├── 0_0.html          # kpData[0].items[0] 的演示
+    ├── 0_1.html          # kpData[0].items[1] 的演示
+    ├── 1_0.html          # kpData[1].items[0] 的演示
+    └── ...               # 每个知识点都必须有
+
+输出.html                  # inject.py 生成</code></pre>
+
+        <h2><span class="bar"></span>3. 源文件字段规范</h2>
+
+        <h3>3.1 meta.json <span class="tut-tag req">必填</span></h3>
+        <p>章节元信息，JSON 对象。</p>
+        <table>
+          <tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr>
+          <tr><td><code>book</code></td><td>string</td><td>是</td><td>教材名称。</td></tr>
+          <tr><td><code>chapter</code></td><td>string</td><td>是</td><td>章节名称。</td></tr>
+          <tr><td><code>summary</code></td><td>string</td><td>是</td><td>章节摘要，可含公式（<code>$...$</code>）与 <strong>加粗</strong>。</td></tr>
+        </table>
+        <pre><code>{
+  "book": "大学物理学（自编讲义）",
+  "chapter": "狭义相对论基础",
+  "summary": "本章介绍……其中洛伦兹因子 $\\gamma=\\dfrac{1}{\\sqrt{1-v^2/c^2}}$。"
+}</code></pre>
+        <blockquote>⚠️ JSON 字符串中的反斜杠必须转义：<code>\dfrac</code> 写作 <code>\\dfrac</code>、<code>\sqrt</code> 写作 <code>\\sqrt</code>。下同。</blockquote>
+
+        <h3>3.2 fulltext.md <span class="tut-tag req">必填</span></h3>
+        <p>教材<b>全文</b>，规范 Markdown（<code>##</code>/<code>###</code> 标题、段落分行、公式遵守第 4 节规则）。<b>铁律：必须忠实保留全部原文</b>，包括正文、例题、定理证明、注释、表格、公式等，只允许做格式转写（如两栏排版 → 单栏）。</p>
+        <p>特殊内容高亮：blockquote + 标记开头的段落会自动套上彩色边框样式：</p>
+        <table>
+          <tr><th>写法</th><th>效果</th></tr>
+          <tr><td><code>&gt; 📖 **定义** ...</code></td><td>蓝色边框「📖 定义」</td></tr>
+          <tr><td><code>&gt; 📐 **公式** ...</code></td><td>橙色边框「📐 公式」（居中）</td></tr>
+          <tr><td><code>&gt; 📊 **定理** ...</code></td><td>紫色边框「📊 定理」</td></tr>
+          <tr><td><code>&gt; 📎 **推论** ...</code></td><td>绿色边框「📎 推论」</td></tr>
+          <tr><td><code>&gt; 📝 **引理** ...</code></td><td>青色边框「📝 引理」</td></tr>
+          <tr><td><code>&gt; 💡 **性质** ...</code></td><td>粉色边框「💡 性质」</td></tr>
+          <tr><td><code>&gt; 📖 **例题** ...</code> 或 <code>&gt; 【例 X.Y】 ...</code></td><td>橙色边框「📖 例题」</td></tr>
+          <tr><td><code>&gt; 📝 **注释** ...</code></td><td>灰色边框「📝 注释」</td></tr>
+        </table>
+        <blockquote>⚠️ fulltext.md 中<b>不得出现字面量 <code>&lt;/script&gt;</code></b>——它会被拼进 <code>&lt;script type="application/json"&gt;</code> 块，字面量 <code>&lt;/script&gt;</code> 会让该块提前关闭、页面崩溃。inject.py 会拦截并报错。</blockquote>
+
+        <h3>3.3 kp.json <span class="tut-tag req">必填</span></h3>
+        <p>知识点分类数组，<b>不含 demo 字段</b>（demo 由 demos/ 目录单独提供，inject.py 自动组装）。</p>
+        <table>
+          <tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr>
+          <tr><td><code>cat</code></td><td>string</td><td>是</td><td>分类名。</td></tr>
+          <tr><td><code>items</code></td><td>array</td><td>是</td><td>该分类下的知识点数组。</td></tr>
+          <tr><td><code>items[].name</code></td><td>string</td><td>是</td><td>知识点名称，可含公式。</td></tr>
+          <tr><td><code>items[].desc</code></td><td>string</td><td>是</td><td>知识点简述，可含公式与 <strong>加粗</strong>。</td></tr>
+        </table>
+        <pre><code>[
+  {
+    "cat": "一、相对论基本原理",
+    "items": [
+      { "name": "伽利略变换与经典时空观",
+        "desc": "经典力学中 $x'=x-vt$、$t'=t$……" },
+      { "name": "爱因斯坦两条基本假设",
+        "desc": "**相对性原理**与**光速不变原理**……" }
+    ]
+  }
+]</code></pre>
+        <p>下标约定：<code>demos/{ci}_{ii}.html</code> 中 <code>{ci}</code> 是分类下标（从 0 开始），<code>{ii}</code> 是该分类 items 下标。例如 <code>demos/1_2.html</code> 对应 <code>kpData[1].items[2]</code>。</p>
+
+        <h3>3.4 questions.json <span class="tut-tag req">必填</span></h3>
+        <p>题目数组，总量建议 6–12 题，六大题型智能搭配。公共字段见下表，各题型差异见第 5 节。</p>
+        <table>
+          <tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr>
+          <tr><td><code>type</code></td><td>string</td><td>是</td><td>题型：<code>single</code> / <code>multiple</code> / <code>indeterminate</code> / <code>judge</code> / <code>fill</code> / <code>essay</code>。</td></tr>
+          <tr><td><code>text</code></td><td>string</td><td>是</td><td>题干，可含公式。选择题题干不含选项。</td></tr>
+          <tr><td><code>kp</code></td><td>string</td><td>是</td><td>关联的知识点名称（用于薄弱点统计）。</td></tr>
+          <tr><td><code>difficulty</code></td><td>string</td><td>是</td><td>难度：<code>简单</code> / <code>中等</code> / <code>困难</code>。</td></tr>
+          <tr><td><code>explanation</code></td><td>string</td><td>是</td><td>解析，可含公式与加粗；选择题逐选项、填空按空、解答按小问讲解。</td></tr>
+          <tr><td><code>options</code></td><td>object</td><td>选择题必填</td><td>选项，键<b>必须是大写字母 A/B/C/D…</b>，严禁 0/1/2/3 数字键。</td></tr>
+          <tr><td><code>answer</code></td><td>string/array</td><td>是</td><td>参考答案，格式随题型（见第 5 节）。</td></tr>
+        </table>
+
+        <h3>3.5 demos/{ci}_{ii}.html <span class="tut-tag req">每个知识点必填</span></h3>
+        <p>每个知识点的交互式演示，<b>强制要求</b>。完整 HTML 文档（<code>&lt;!DOCTYPE html&gt;</code> 开头，<code>&lt;/html&gt;</code> 结尾），自包含、可在 sandboxed iframe 中独立运行。详细规则见第 6 节。</p>
+
+        <h2><span class="bar"></span>4. 公式与书写规则</h2>
+        <p>适用于 <code>fulltext.md</code> / <code>kp.json</code> / <code>questions.json</code>：</p>
+        <ul>
+          <li>数学内容一律用 <code>$...$</code>（行内）或 <code>$$...$$</code>（行间），<b>绝不用</b> <code>\[...\]</code>、<code>\(...\)</code>。</li>
+          <li>反斜杠命令（<code>\frac</code>、<code>\xi</code>、<code>\vec</code> 等）整体包进 <code>$...$</code>，不裸露在外。</li>
+          <li><b>乘号一律用 <code>\cdot</code>，绝不用 <code>\cdotp</code></b>（会渲染错误）。</li>
+          <li><b>长度命令铁律</b>：严禁使用 LaTeX 长度/间距命令——<code>\[4pt]</code>、<code>\[2ex]</code>、<code>\vspace{...}</code>、<code>\hspace{...}</code>、<code>\vskip</code>、<code>\hskip</code>、<code>\smallskip</code>、<code>\medskip</code>、<code>\bigskip</code>、<code>\vfill</code>、<code>\hfill</code>、<code>\newline</code>、<code>\par</code> 等。需要换行就真正换行。</li>
+          <li><b>选择题 options 的键必须是大写字母 A/B/C/D…</b>，严禁 0/1/2/3 数字键。</li>
+          <li><b>行内公式</b>：仅当含 <code>\sum</code> <code>\int</code> <code>\lim</code> <code>\prod</code> <code>\oint</code> 等大型运算符时才加 <code>\displaystyle</code>；含 <code>\frac</code> 的（除上下标小字外）一律写 <code>\dfrac</code>；上下标内的 <code>\frac</code> 保持原样。</li>
+          <li><b>行间公式</b> <code>$$...$$</code>：不要写 <code>\displaystyle</code>，不要写 <code>\dfrac</code>，分数用 <code>\frac</code>。</li>
+          <li>生成 JSON 时<b>无需手动加</b> <code>\displaystyle</code> 或 <code>\dfrac</code>——页面 <code>applyDisplayStyle</code> 函数会自动按上述规则处理。</li>
+        </ul>
+
+        <h2><span class="bar"></span>5. 六大题型输入输出格式</h2>
+
+        <h3>5.1 single 单选</h3>
+        <p><code>options</code> 键 A/B/C/D；<code>answer</code> 单个大写字母。本地即时判分。</p>
+        <pre><code>{
+  "type": "single",
+  "text": "一飞船以 $v=0.6c$ 飞行，飞船钟走 $1\\ \\mathrm{s}$，地面测得历时？",
+  "options": { "A": "$0.8\\ \\mathrm{s}$", "B": "$1\\ \\mathrm{s}$",
+               "C": "$1.25\\ \\mathrm{s}$", "D": "$1.67\\ \\mathrm{s}$" },
+  "answer": "C",
+  "kp": "时间膨胀（动钟变慢）", "difficulty": "中等",
+  "explanation": "$\\gamma=\\dfrac{1}{\\sqrt{1-0.6^2}}=1.25$，故 $\\Delta t=1.25\\ \\mathrm{s}$，选 C。"
+}</code></pre>
+
+        <h3>5.2 multiple 多选</h3>
+        <p><code>options</code> 同上；<code>answer</code> ≥2 个大写字母的字符串。<b>漏选但没错选得一半分（partial）</b>，完全答对得满分，错选或全错得 0 分。</p>
+        <pre><code>{ "type": "multiple", "answer": "ACD", ... }</code></pre>
+
+        <h3>5.3 indeterminate 不定项</h3>
+        <p><code>options</code> 同上；<code>answer</code> ≥1 个大写字母。<b>漏选但没错选同样得一半分</b>（与多选规则一致）。</p>
+        <pre><code>{ "type": "indeterminate", "answer": "AC", ... }</code></pre>
+
+        <h3>5.4 judge 判断</h3>
+        <p>可省 <code>options</code>；<code>answer</code> 写 <code>"对"</code> 或 <code>"错"</code>。</p>
+        <pre><code>{
+  "type": "judge",
+  "text": "伽利略变换下 $\\Delta t'=\\Delta t$、$\\Delta x'=\\Delta x$。",
+  "answer": "对", "kp": "...", "difficulty": "简单",
+  "explanation": "伽利略变换 $t'=t$ 给出时间空间绝对……"
+}</code></pre>
+
+        <h3>5.5 fill 填空</h3>
+        <p>无 <code>options</code>；<code>answer</code> 为参考答案字符串。</p>
+        <pre><code>{
+  "type": "fill",
+  "text": "粒子以 $v=0.8c$ 运动，洛伦兹因子 $\\gamma=$ ____。",
+  "answer": "1.67", "kp": "...", "difficulty": "中等",
+  "explanation": "$\\gamma=\\dfrac{1}{\\sqrt{1-0.8^2}}\\approx 1.67$。"
+}</code></pre>
+
+        <h3>5.6 essay 解答</h3>
+        <p>无 <code>options</code>；<code>answer</code> 为分步参考解答。由 AI（max 思考）按 0–10 评分给评语，可「🔄 重新批阅」。</p>
+        <pre><code>{
+  "type": "essay",
+  "text": "杆 $L_0=100\\ \\mathrm{m}$ 以 $v=0.6c$ 运动，求地面测得杆长并说明为何须同时测两端。",
+  "answer": "$\\gamma=1.25$，$L=80\\ \\mathrm{m}$。测长度需同一时刻记录两端……",
+  "kp": "...", "difficulty": "中等",
+  "explanation": "长度收缩公式 $L=L_0/\\gamma$……"
+}</code></pre>
+
+        <h2><span class="bar"></span>6. 演示 HTML 写作规则</h2>
+        <p>适用于 <code>demos/{ci}_{ii}.html</code>：</p>
+        <ul>
+          <li>必须是完整 HTML 文档：<code>&lt;!DOCTYPE html&gt;</code> 开头，<code>&lt;/html&gt;</code> 结尾；也接受 HTML 片段（页面会自动包装）。</li>
+          <li>自包含：所有 CSS 写在 <code>&lt;style&gt;</code> 内，所有 JS 写在 <code>&lt;script&gt;</code> 内；不得引用本地外部文件。</li>
+          <li><b><code>&lt;/script&gt;</code> 直接写正常的</b>，inject.py 会自动转义为 <code>&lt;\/script&gt;</code> 注入到 JSON 字符串里。<b>绝对不要</b>在演示文件里写 <code>&lt;\/script&gt;</code>（反斜杠转义）。</li>
+        </ul>
+
+        <h3>公式与 Markdown 渲染（自动注入）</h3>
+        <p>页面会自动为每个演示注入 KaTeX（公式）与 marked（Markdown）库，<b>无需手动引入任何 CDN</b>或调用 <code>renderMathInElement</code>：</p>
+        <ul>
+          <li><b>数学公式</b>：直接用 <code>$...$</code>（行内）或 <code>$$...$$</code>（行间），页面自动用 KaTeX 渲染。</li>
+          <li><b>Markdown 文字说明</b>：把 Markdown 文本放在带 <code>class="md"</code> 的元素里，页面自动用 marked 渲染（支持标题、列表、表格、代码块、粗体斜体、blockquote 等 GFM 语法）。</li>
+          <li><b>动态更新内容后重新渲染</b>：若 JS 动态修改了 <code>.md</code> 元素内容或插入了新的 <code>$...$</code> 公式，调用 <code>window._demoRender()</code> 重新跑一遍 marked + KaTeX。</li>
+          <li><b>不要在演示里重复引入 katex/marked CDN</b>（页面已自动注入，重复引入可能导致冲突）。</li>
+        </ul>
+
+        <h3>其他规则</h3>
+        <ul>
+          <li>LaTeX 规范：乘号用 <code>\cdot</code>，禁止 <code>\cdotp</code>；禁止 <code>\[ \]</code> 与 <code>\( \)</code>；禁止 LaTeX 长度命令。</li>
+          <li>必须【交互式】：有滑块、按钮、输入框、下拉框等控件，让学生操作并实时观察结果变化；不能只是静态展示。</li>
+          <li>视觉美观：现代 CSS（渐变 background、box-shadow、border-radius、平滑 transition）；配色用蓝紫主题（主色 <code>#3a5a9c</code>、强调 <code>#ff7a45</code>、背景 <code>#f4f6fb</code>、文字 <code>#1c2438</code>）；字体 <code>system-ui, -apple-system, "Segoe UI", sans-serif</code>。</li>
+          <li>布局宽敞：内容居中、padding 充足（至少 16px）、控件间距 8~12px。</li>
+          <li>不要使用 <code>prompt()</code> / <code>alert()</code> / <code>confirm()</code>（sandbox 限制）；用页面内 DOM 显示反馈。</li>
+          <li>不要访问 <code>document.cookie</code>、<code>localStorage</code>、<code>parent.xxx</code>（sandbox 限制）。</li>
+          <li>不要使用 ES module（import/export）——用普通 <code>&lt;script&gt;</code> 即可。</li>
+          <li>控件必须有初始值，JS 放在 body 末尾的 <code>&lt;script&gt;</code> 里或用 <code>window.onload</code>。</li>
+        </ul>
+
+        <h2><span class="bar"></span>7. inject.py 参数与行为</h2>
+        <p>注入脚本把分开写好的源文件整合后注入 <code>template.html</code>，产出最终学习页。</p>
+        <h3>用法</h3>
+        <pre><code>python3 inject.py &lt;input_dir&gt; &lt;output.html&gt; [template.html] [--key &lt;api-key&gt;]</code></pre>
+        <table>
+          <tr><th>参数</th><th>必填</th><th>说明</th></tr>
+          <tr><td><code>&lt;input_dir&gt;</code></td><td>是</td><td>源文件目录（含 meta.json / fulltext.md / kp.json / questions.json / demos/）。</td></tr>
+          <tr><td><code>&lt;output.html&gt;</code></td><td>是</td><td>输出 HTML 文件路径。命名格式：<code>技能版本_教材_章节.html</code>（如 <code>L7.0_大学物理_狭义相对论基础.html</code>）。</td></tr>
+          <tr><td><code>[template.html]</code></td><td>否</td><td>可选，默认用脚本同目录下的 <code>template.html</code>。</td></tr>
+          <tr><td><code>--key &lt;api-key&gt;</code></td><td>是（普通版）</td><td>把模板中的 <code>&lt;your-api-key&gt;</code> 替换为真实 Key。若模板仍含占位符且未传此参数，脚本报错退出。</td></tr>
+        </table>
+        <h3>脚本流程</h3>
+        <ol>
+          <li>读取并校验所有源文件（meta / fulltext / kp / questions / demos）。</li>
+          <li><b>强制演示校验</b>：每个 <code>kpData[ci].items[ii]</code> 必须有 <code>demos/{ci}_{ii}.html</code>，缺任何一个报错退出。</li>
+          <li>自动把 demo HTML 中的 <code>&lt;/script&gt;</code> 转义为 <code>&lt;\/script&gt;</code>（JSON 字符串层面），AI 写演示时可用正常的 <code>&lt;/script&gt;</code>。</li>
+          <li>组装成完整 data 对象 <code>{book, chapter, summary, fulltext, kpData, questions}</code>。</li>
+          <li>拦截 fulltext / kp / questions 中可能残留的字面量 <code>&lt;/script&gt;</code>。</li>
+          <li>注入 API Key（若需要）。</li>
+          <li>把模板中 <code>id="learning-data"</code> 的 <code>&lt;script&gt;</code> 块整体替换为真实数据。</li>
+          <li>写出文件，打印 <code>✅ 已生成：…（知识点 N 个 / 演示 N 个 / 题目 M 道）</code>。</li>
+        </ol>
+        <blockquote>校验失败会非零退出并打印原因——据此回到对应源文件修数据即可。</blockquote>
+
+        <h2><span class="bar"></span>8. 输出格式（最终 JSON 结构）</h2>
+        <p>inject.py 组装后注入模板的 <code>&lt;script type="application/json" id="learning-data"&gt;</code> 块，结构如下：</p>
+        <pre><code>{
+  "book": "教材名",
+  "chapter": "章节名",
+  "summary": "摘要（可含公式与 **加粗**）",
+  "fulltext": "教材全文（Markdown）",
+  "kpData": [
+    { "cat": "分类名",
+      "items": [
+        { "name": "知识点名", "desc": "简述",
+          "demo": "交互式演示 HTML 代码（已转义）" }
+      ] }
+  ],
+  "questions": [ { "type": "...", "text": "...", ... } ]
+}</code></pre>
+
+        <h2><span class="bar"></span>9. 页面功能（生成后自动具备）</h2>
+        <ul>
+          <li><b>五视图两栏布局</b>：左栏 tab 切换「知识点 / 教材原文 / 测验 / ❌ 错题本 / 批阅数据」，右栏 AI 对话；列宽可拖动。教材原文视图有「📑 目录」浮层按章/节跳转。</li>
+          <li><b>知识点单页</b>：一页一个知识点，顶部「上一个 / 目录 / 下一个」导航。每个含文字、公式、交互式演示（强制）、可选 AI 详解。演示在 sandboxed iframe 中独立运行，支持编辑/重跑/AI 编辑/全屏。</li>
+          <li><b>测验单页</b>：一屏一题，「上一题 / 答题卡 / 下一题」切换；底部「🔄 再出几道题 / 📝 批阅本题 / ✅ 全部批阅」。答题卡圆形彩点（白=未做、蓝=做了没批、绿=对、红=错、黄=半对）。单选/多选/不定项可右键排除选项。</li>
+          <li><b>错题本</b>：自动收集已批阅但未全对的题目，支持「重新作答」「跳到测验」。</li>
+          <li><b>批阅数据</b>：总分、全对数、答题概览表、错题订正建议、薄弱知识点排名。</li>
+          <li><b>DeepSeek 聊天</b>：V4 Flash / V4 Pro，思考强度（无/high/max）、理解强度（无/标准/深度）。多对话管理、自动命名（≤7 字）、流式输出与中途停止、重新生成与编辑。<code>max_tokens</code> 拉满到 384000。</li>
+          <li><b>出题模式</b>：勾选后发送消息自动加 <code>#出题</code> 指令，AI 以 JSON 数组出题并写入题库。</li>
+          <li><b>AI 详解 / 重写纠错</b>：知识点与已批阅题目可一键生成详解；可让 AI 检查事实/公式/Markdown 错误并改正。</li>
+          <li><b>引用知识点/题目</b>：「📎 引用」按钮勾选任意知识点与题目作为本次提问上下文（仅本次有效）。</li>
+          <li><b>公式点击复制 LaTeX</b>：点击页面内任意公式复制其 LaTeX 源码（交互元素内的公式除外）。</li>
+          <li><b>LaTeX 公式助手弹窗</b>：四学科 tab（通用/数学/物理/化学）× 难度，点击即复制，支持搜索。</li>
+          <li><b>Markdown + KaTeX 渲染</b>：答案/解析/AI 回复/作答/看法/评语均完整渲染，行内公式智能判断 <code>\displaystyle</code> 与 <code>\dfrac</code>。</li>
+          <li><b>Token 统计与余额</b>：按模型分桶显示用量与计价，精确到 ¥0.00001；右栏显示当前对话费用、累计费用、API 余额（60 秒缓存）。</li>
+          <li><b>状态持久化</b>：作答/批阅/对话（含草稿）/设置/滚动位置/索引/demo 代码均存入 localStorage（与文件路径绑定）。左上角「🗑 清除缓存」一键清除。</li>
+        </ul>
+
+        <h2><span class="bar"></span>10. 注意事项与常见错误</h2>
+        <ul>
+          <li>知识点与题目务必写进各自源文件（kp.json / questions.json），<b>不要写进 JS 字符串/数组</b>——公式里的 <code>\xi</code>、<code>\underline</code> 在 JS 字符串中是非法转义。</li>
+          <li>演示 HTML 文件里直接写正常的 <code>&lt;/script&gt;</code>，inject.py 会自动转义。<b>不要</b>在演示文件里写 <code>&lt;\/script&gt;</code>。</li>
+          <li><code>fulltext.md</code> / <code>kp.json</code> / <code>questions.json</code> 中<b>不得出现字面量 <code>&lt;/script&gt;</code></b>——inject.py 会拦截并报错。</li>
+          <li>不要在生成的 Markdown 中使用 LaTeX 长度命令（<code>\[4pt]</code>、<code>\vspace</code>、<code>\hspace</code> 等），会破坏渲染。</li>
+          <li>模板内嵌的 DeepSeek API Key 会随 HTML 分发，<b>分享前提醒用户更换</b>（在文件中搜索 <code>var KEY='sk-</code> 即可定位）。</li>
+          <li>若打开后页面为空或行为异常：点页面左上角的「🗑 清除缓存」按钮清掉所有 localStorage 后重载。</li>
+        </ul>
+
+        <blockquote>⚠️ <b>API Key 提醒</b>：生成的 HTML 文件内嵌了你提供的 DeepSeek API Key。分享该文件前，请先用文本编辑器打开，找到 <code>var KEY=</code> 那一行，把引号内的 Key 值删除或替换为空字符串，否则任何拿到文件的人都能看到并消耗你的 API 额度。</blockquote>
+
+        <h2><span class="bar"></span>11. AI 能力要求</h2>
+        <p>运行本技能需要至少达到 <b>Claude Sonnet 4.6</b> 水平的 AI。经实测，DeepSeek V4 Flash 和 Claude Haiku 4.5 运行效果较差，不推荐使用。</p>
+
+        <div class="article-foot">
+          <a class="btn btn--ghost" href="https://wjtianze.netlify.app/ai/skill/tlh/index.html"><span>← 返回课本学习助手主页</span></a>
+          <a class="btn" href="https://wjtianze.netlify.app/ai/skill/tlh/textbook-learning-helper-L7.0.zip" download><span>⬇ 下载技能包</span></a>
+        </div>
+
+      </div>
+    </article>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <div>© 2026 天择网 · 物竞天择，适者生存</div>
+      <div class="links">
+        <a href="https://wjtianze.netlify.app/index.html">主页</a>
+        <a href="https://wjtianze.netlify.app/news/index.html">新闻</a>
+        <a href="https://wjtianze.netlify.app/blog/index.html">博客</a>
+        <a href="https://wjtianze.netlify.app/ai/index.html">AI 专区</a>
+        <a href="https://wjtianze.netlify.app/coc/index.html">COC 专区</a>
+        <a href="https://wjtianze.netlify.app/open/index.html">开源专区</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://wjtianze.netlify.app/assets/js/main.js"></script>
+</body>
+</html>
