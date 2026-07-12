@@ -855,7 +855,7 @@ img { max-width: 100%; display: block; }
 }
 /* 文章内表格：深底白字表头 + 浅底深字行，避免深色主题下白字白底 */
 .article-body table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 0.95em; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.18); }
-.article-body table th { padding: 11px 14px; border: 1px solid #475569; text-align: left; background: #334155; color: #fff; font-weight: 700; }
+.article-body table th { padding: 11px 14px; border: 1px solid #475569; text-align: left; background: var(--grad-main); color: #fff; font-weight: 700; }
 .article-body table td { padding: 11px 14px; border: 1px solid #e2e8f0; background: #f8fafc; color: #0f172a; }
 .article-foot {
   margin-top: 50px;
