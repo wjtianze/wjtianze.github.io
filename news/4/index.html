@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>COC 数据查询页升级，AI 专区上线开源数据导出技能 — 天择网</title>
   <meta name="description" content="天择网 COC 专区数据查询页升级数据源至 272 条单位含中文介绍与大本营等级；AI 专区技能板块新增「COC 单位数据导出器」并以开源形式发布。" />
-  <link rel="stylesheet" href="https://wjtianze.netlify.app/assets/css/style.css" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
 </head>
 <body>
@@ -13,7 +13,7 @@
 
   <header class="topbar">
     <div class="wrap topbar-inner">
-      <a class="brand" href="https://wjtianze.netlify.app/index.html" aria-label="天择网首页">
+      <a class="brand" href="https://wjtianze.github.io/index.html" aria-label="天择网首页">
         <span class="logo-mark">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/>
@@ -22,14 +22,7 @@
         <span class="logo-text">天择网</span>
       </a>
       <button class="nav-toggle" aria-label="菜单">☰</button>
-      <nav class="nav">
-        <a href="https://wjtianze.netlify.app/index.html"><span>首页</span></a>
-        <a href="https://wjtianze.netlify.app/news/index.html" class="active"><span>新闻</span></a>
-        <a href="https://wjtianze.netlify.app/blog/index.html"><span>博客</span></a>
-        <a href="https://wjtianze.netlify.app/ai/index.html"><span>AI 专区</span></a>
-        <a href="https://wjtianze.netlify.app/coc/index.html"><span>COC 专区</span></a>
-        <a href="https://wjtianze.netlify.app/open/index.html"><span>开源专区</span></a>
-      </nav>
+      <nav class="nav"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html" class="active"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a></nav>
     </div>
   </header>
 
@@ -56,7 +49,7 @@
           <li><strong>更新</strong>：数据版本对应 v18.400.9，含新英雄「飞龙公爵」、龙王装备等最新内容。</li>
         </ul>
         <p>查询页的交互保持一致：分类标签筛选、关键词搜索、点击卡片查看详情。分类从原来的 9 类微调为更贴合新数据的 9 个大类（兵种、法术、英雄、战宠、装备、建筑、陷阱、守卫、帮手），每个大类下自动包含夜世界等细分。</p>
-        <blockquote>查询页底部新增了一个入口，可直接跳转到「开源专区」下载这份原始 JSON。</blockquote>
+        <blockquote>查询页底部新增了一个入口，可直接跳转到「数据开源」下载这份原始 JSON。</blockquote>
 
         <h2>AI 专区上线开源技能：COC 单位数据导出器</h2>
         <p>这次上架的技能叫 <strong>coc-units-data-exporter</strong>，作用是把一份《部落冲突》APK 安装包里的全部单位游戏数据提取成结构化 JSON。它就是上面那份新数据源的「生产工具」。</p>
@@ -68,19 +61,19 @@
           <li>内置默认名称表，开箱即用，也可用自定义名称表覆盖；</li>
           <li>纯本地解析，不联网、不调用任何外部 API、不读取凭据。</li>
         </ul>
-        <p>技能以<strong>开源</strong>形式发布——技能包可直接下载，任何人都能用它提取任意版本的部落冲突数据，不限用途。提取出的数据本身也已开源在天择网「开源专区」（详见下一篇公告）。</p>
+        <p>技能以<strong>开源</strong>形式发布——技能包可直接下载，任何人都能用它提取任意版本的部落冲突数据，不限用途。提取出的数据本身也已开源在天择网「数据开源」（详见下一篇公告）。</p>
 
         <h2>从哪里进入</h2>
         <ul>
-          <li>COC 数据查询页：<a href="https://wjtianze.netlify.app/coc/data/index.html" style="color:var(--c-sky); text-decoration:underline;">COC 专区 → 游戏数据查询</a></li>
-          <li>技能主页与下载：<a href="https://wjtianze.netlify.app/ai/skill/coc-units-data-exporter/index.html" style="color:var(--c-sky); text-decoration:underline;">AI 专区 → 技能 → COC 单位数据导出器</a></li>
-          <li>开源数据下载：<a href="https://wjtianze.netlify.app/open/index.html" style="color:var(--c-sky); text-decoration:underline;">开源专区</a></li>
+          <li>COC 数据查询页：<a href="https://wjtianze.github.io/coc/data/index.html" style="color:var(--c-sky); text-decoration:underline;">COC 专区 → 游戏数据查询</a></li>
+          <li>技能主页与下载：<a href="https://wjtianze.github.io/ai/skill/coc-units-data-exporter/index.html" style="color:var(--c-sky); text-decoration:underline;">AI 专区 → 技能 → COC 单位数据导出器</a></li>
+          <li>开源数据下载：<a href="https://wjtianze.github.io/open/index.html" style="color:var(--c-sky); text-decoration:underline;">数据开源</a></li>
         </ul>
       </div>
 
       <div class="article-foot">
         <a class="btn btn--ghost" href="#" data-back data-home="../index.html"><span>← 返回上一页</span></a>
-        <a class="btn" href="https://wjtianze.netlify.app/coc/data/index.html"><span>前往数据查询 →</span></a>
+        <a class="btn" href="https://wjtianze.github.io/coc/data/index.html"><span>前往数据查询 →</span></a>
       </div>
     </article>
   </main>
@@ -88,17 +81,10 @@
   <footer class="footer">
     <div class="wrap footer-inner">
       <div>© 2026 天择网 · 物竞天择，适者生存</div>
-      <div class="links">
-        <a href="https://wjtianze.netlify.app/index.html">主页</a>
-        <a href="https://wjtianze.netlify.app/news/index.html">新闻</a>
-        <a href="https://wjtianze.netlify.app/blog/index.html">博客</a>
-        <a href="https://wjtianze.netlify.app/ai/index.html">AI 专区</a>
-        <a href="https://wjtianze.netlify.app/coc/index.html">COC 专区</a>
-        <a href="https://wjtianze.netlify.app/open/index.html">开源专区</a>
-      </div>
+      <div class="links"><a href="https://wjtianze.github.io/index.html">主页</a><a href="https://wjtianze.github.io/news/index.html">新闻</a><a href="https://wjtianze.github.io/blog/index.html">博客</a><a href="https://wjtianze.github.io/open/index.html">数据开源</a><a href="https://wjtianze.github.io/ai/index.html">AI 专区</a><a href="https://wjtianze.github.io/coc/index.html">COC 专区</a></div>
     </div>
   </footer>
 
-  <script src="https://wjtianze.netlify.app/assets/js/main.js"></script>
+  <script src="https://wjtianze.github.io/assets/js/main.js"></script>
 </body>
 </html>

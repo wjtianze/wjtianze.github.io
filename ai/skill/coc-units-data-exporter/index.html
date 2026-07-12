@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>COC 单位数据导出器 · 技能 — 天择网</title>
   <meta name="description" content="coc-units-data-exporter：从部落冲突 APK 中提取全部单位完整游戏数据，输出结构化 JSON，含中文介绍、所需大本营等级、装备技能。开源发布。" />
-  <link rel="stylesheet" href="https://wjtianze.netlify.app/assets/css/style.css" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
 </head>
 <body>
@@ -13,7 +13,7 @@
 
   <header class="topbar">
     <div class="wrap topbar-inner">
-      <a class="brand" href="https://wjtianze.netlify.app/index.html" aria-label="天择网首页">
+      <a class="brand" href="https://wjtianze.github.io/index.html" aria-label="天择网首页">
         <span class="logo-mark">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/>
@@ -22,14 +22,7 @@
         <span class="logo-text">天择网</span>
       </a>
       <button class="nav-toggle" aria-label="菜单">☰</button>
-      <nav class="nav">
-        <a href="https://wjtianze.netlify.app/index.html"><span>首页</span></a>
-        <a href="https://wjtianze.netlify.app/news/index.html"><span>新闻</span></a>
-        <a href="https://wjtianze.netlify.app/blog/index.html"><span>博客</span></a>
-        <a href="https://wjtianze.netlify.app/ai/index.html" class="active"><span>AI 专区</span></a>
-        <a href="https://wjtianze.netlify.app/coc/index.html"><span>COC 专区</span></a>
-        <a href="https://wjtianze.netlify.app/open/index.html"><span>开源专区</span></a>
-      </nav>
+      <nav class="nav"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html" class="active"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a></nav>
     </div>
   </header>
 
@@ -129,7 +122,7 @@ python scripts/coc_pipeline.py "APK.apk" "名称表.xlsx" "输出目录/"</code>
         <span class="more">完全开源 · 免费使用</span>
       </div>
       <div class="grid grid-auto">
-        <a class="card dl-card reveal in d1" href="https://wjtianze.netlify.app/ai/skill/coc-units-data-exporter/coc-units-data-exporter.zip" download>
+        <a class="card dl-card reveal in d1" href="https://wjtianze.github.io/ai/skill/coc-units-data-exporter/coc-units-data-exporter.zip" download>
           <div class="dl-icon">📦</div>
           <div class="dl-info">
             <h3>coc-units-data-exporter.zip</h3>
@@ -148,11 +141,11 @@ python scripts/coc_pipeline.py "APK.apk" "名称表.xlsx" "输出目录/"</code>
           <h2 style="font-size:19px;"><span class="bar" style="height:22px;"></span>已用本技能生成的数据</h2>
         </div>
         <p style="color:var(--ink-dim); font-size:14.5px; line-height:1.85; max-width:760px;">
-          本技能导出的最新一份数据（272 条单位），已开源在天择网「开源专区」，并驱动 COC 专区的游戏数据查询页。你可以：
+          本技能导出的最新一份数据（272 条单位），已开源在天择网「数据开源」，并驱动 COC 专区的游戏数据查询页。你可以：
         </p>
         <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:14px;">
-          <a class="btn btn--sm btn--ghost" href="https://wjtianze.netlify.app/open/index.html"><span>前往开源专区下载 JSON →</span></a>
-          <a class="btn btn--sm btn--ghost" href="https://wjtianze.netlify.app/coc/data/index.html"><span>在 COC 专区在线查询 →</span></a>
+          <a class="btn btn--sm btn--ghost" href="https://wjtianze.github.io/open/index.html"><span>前往数据开源下载 JSON →</span></a>
+          <a class="btn btn--sm btn--ghost" href="https://wjtianze.github.io/coc/data/index.html"><span>在 COC 专区在线查询 →</span></a>
         </div>
       </div>
     </section>
@@ -161,17 +154,10 @@ python scripts/coc_pipeline.py "APK.apk" "名称表.xlsx" "输出目录/"</code>
   <footer class="footer">
     <div class="wrap footer-inner">
       <div>© 2026 天择网 · 物竞天择，适者生存</div>
-      <div class="links">
-        <a href="https://wjtianze.netlify.app/index.html">主页</a>
-        <a href="https://wjtianze.netlify.app/news/index.html">新闻</a>
-        <a href="https://wjtianze.netlify.app/blog/index.html">博客</a>
-        <a href="https://wjtianze.netlify.app/ai/index.html">AI 专区</a>
-        <a href="https://wjtianze.netlify.app/coc/index.html">COC 专区</a>
-        <a href="https://wjtianze.netlify.app/open/index.html">开源专区</a>
-      </div>
+      <div class="links"><a href="https://wjtianze.github.io/index.html">主页</a><a href="https://wjtianze.github.io/news/index.html">新闻</a><a href="https://wjtianze.github.io/blog/index.html">博客</a><a href="https://wjtianze.github.io/open/index.html">数据开源</a><a href="https://wjtianze.github.io/ai/index.html">AI 专区</a><a href="https://wjtianze.github.io/coc/index.html">COC 专区</a></div>
     </div>
   </footer>
 
-  <script src="https://wjtianze.netlify.app/assets/js/main.js"></script>
+  <script src="https://wjtianze.github.io/assets/js/main.js"></script>
 </body>
 </html>
