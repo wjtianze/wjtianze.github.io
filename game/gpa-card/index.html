@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>绩点战争：GPA 4.3 · 内测版 — 天择网</title>
+  <meta name="description" content="绩点战争内测版——在攻击、防守与学习成长间分配能量，击倒对手或率先把 GPA 推到 4.3。" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M8 17h5v-5h6v5h5v6h-5v-3h-6v3H8z' fill='white'/%3E%3C/svg%3E" />
+  <style>
+    /* ===== GPA 卡牌游戏专用样式 ===== */
+    .gpa-game { max-width: var(--maxw); margin: 0 auto; padding: 0 20px 60px; }
+    .gpa-topbar-spacer { height: 64px; }
+
+    /* 游戏棋盘 */
+    .gpa-board { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    .gpa-side { background: var(--bg-elevated); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 18px 20px; position: relative; transition: border-color .3s; }
+    .gpa-side.active-turn { border-color: var(--c-green); box-shadow: 0 0 0 1px rgba(16,185,129,.3), 0 8px 30px rgba(16,185,129,.1); }
+    .gpa-side.opponent-side { border-color: rgba(239,68,68,.2); }
+    .gpa-side.opponent-side.active-turn { border-color: var(--c-purple); box-shadow: 0 0 0 1px rgba(124,58,237,.3), 0 8px 30px rgba(124,58,237,.1); }
+
+    .gpa-player-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .gpa-avatar { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; background: var(--grad-main); }
+    .gpa-avatar.ai { background: linear-gradient(135deg, #ef4444, #f59e0b); }
+    .gpa-name { font-weight: 700; font-size: 17px; color: var(--ink); }
+    .gpa-name .turn-tag { font-size: 12px; font-weight: 400; color: var(--ink-faint); margin-left: 8px; }
+
+    /* 状态条 */
+    .gpa-stats { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; }
+    .gpa-stat { background: rgba(255,255,255,.03); border-radius: var(--r-sm); padding: 6px 14px; min-width: 80px; }
+    .gpa-stat label { font-size: 11px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: .05em; display: block; }
+    .gpa-stat .val { font-size: 22px; font-weight: 800; color: var(--ink); line-height: 1.3; }
+    .gpa-stat .val.hp { color: #f87171; }
+    .gpa-stat .val.gpa { color: #a78bfa; }
+    .gpa-stat .val.energy { color: #60a5fa; }
+    .gpa-stat .val.shield { color: #34d399; }
+
+    .gpa-hp-bar { height: 8px; border-radius: 4px; background: rgba(239,68,68,.15); overflow: hidden; margin-top: 4px; }
+    .gpa-hp-bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #ef4444, #f87171); transition: width .5s cubic-bezier(.22,1,.36,1); }
+    .gpa-gpa-bar { height: 8px; border-radius: 4px; background: rgba(167,139,250,.15); overflow: hidden; margin-top: 4px; }
+    .gpa-gpa-bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #7c3aed, #a78bfa); transition: width .5s cubic-bezier(.22,1,.36,1); }
+
+    /* 手牌区 */
+    .gpa-hand-label { font-size: 13px; color: var(--ink-faint); margin: 14px 0 8px; display: flex; align-items: center; gap: 8px; }
+    .gpa-hand { display: flex; gap: 10px; flex-wrap: wrap; min-height: 130px; }
+    .gpa-hand.opponent-hand { min-height: 50px; }
+    .gpa-card-back { width: 46px; height: 64px; border-radius: 8px; background: linear-gradient(135deg, #1e293b, #334155); border: 1px solid rgba(255,255,255,.08); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+
+    /* 卡牌 */
+    .gpa-card { width: 140px; border-radius: var(--r-md); padding: 12px; background: linear-gradient(160deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); border: 1px solid var(--line); cursor: pointer; transition: all .25s cubic-bezier(.22,1,.36,1); position: relative; user-select: none; }
+    .gpa-card:hover { transform: translateY(-4px); border-color: var(--c-blue); box-shadow: 0 12px 30px rgba(59,130,246,.15); }
+    .gpa-card.disabled { opacity: .4; cursor: not-allowed; transform: none !important; }
+    .gpa-card.disabled:hover { border-color: var(--line); box-shadow: none; }
+    .gpa-card.selected { border-color: var(--c-green); box-shadow: 0 0 0 2px rgba(16,185,129,.4); transform: translateY(-4px); }
+    .gpa-card-name { font-weight: 700; font-size: 14px; color: var(--ink); margin-bottom: 4px; }
+    .gpa-card-type { font-size: 11px; padding: 2px 8px; border-radius: var(--r-pill); display: inline-block; margin-bottom: 6px; }
+    .gpa-card-type.攻击 { background: rgba(239,68,68,.15); color: #f87171; }
+    .gpa-card-type.防御 { background: rgba(59,130,246,.15); color: #60a5fa; }
+    .gpa-card-type.治疗 { background: rgba(16,185,129,.15); color: #34d399; }
+    .gpa-card-type.过牌 { background: rgba(168,85,247,.15); color: #c084fc; }
+    .gpa-card-type.资源 { background: rgba(245,158,11,.15); color: #fbbf24; }
+    .gpa-card-type.检索 { background: rgba(20,184,166,.15); color: #2dd4bf; }
+    .gpa-card-type.GPA { background: rgba(124,58,237,.15); color: #a78bfa; }
+    .gpa-card-type.干扰 { background: rgba(239,68,68,.12); color: #fb7185; }
+    .gpa-card-type.逆风 { background: rgba(234,179,8,.15); color: #facc15; }
+    .gpa-card-type.连携 { background: rgba(99,102,241,.15); color: #818cf8; }
+    .gpa-card-desc { font-size: 12px; color: var(--ink-dim); line-height: 1.5; margin-bottom: 6px; min-height: 36px; }
+    .gpa-card-cost { display: flex; gap: 8px; font-size: 11px; }
+    .gpa-card-cost span { display: flex; align-items: center; gap: 3px; }
+    .gpa-card-cost .cost-use { color: #60a5fa; }
+    .gpa-card-cost .cost-buy { color: #fbbf24; }
+    .gpa-card-cost .cost-wt { color: var(--ink-faint); }
+
+    /* 商店 */
+    .gpa-shop { display: flex; gap: 10px; flex-wrap: wrap; min-height: 160px; }
+    .gpa-shop-slot { width: 140px; border-radius: var(--r-md); padding: 12px; border: 1px dashed var(--line-strong); display: flex; align-items: center; justify-content: center; color: var(--ink-muted); font-size: 13px; }
+    .gpa-shop-slot.has-card { border-style: solid; border-color: var(--line); background: linear-gradient(160deg, rgba(255,255,255,.04), transparent); cursor: pointer; transition: all .2s; }
+    .gpa-shop-slot.has-card:hover { border-color: var(--c-green); }
+    .gpa-shop-slot.empty { text-align: center; }
+    .gpa-shop-slot .bought-stamp { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.5); border-radius: var(--r-md); color: var(--ink-faint); font-size: 13px; }
+
+    /* 日志 */
+    .gpa-log { max-height: 200px; overflow-y: auto; background: rgba(0,0,0,.15); border-radius: var(--r-sm); padding: 10px 14px; font-size: 13px; color: var(--ink-dim); line-height: 1.7; }
+    .gpa-log::-webkit-scrollbar { width: 4px; }
+    .gpa-log::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 2px; }
+    .gpa-log .log-turn { color: var(--ink-faint); font-size: 11px; }
+    .gpa-log .log-damage { color: #f87171; }
+    .gpa-log .log-heal { color: #34d399; }
+    .gpa-log .log-gpa { color: #a78bfa; }
+    .gpa-log .log-buy { color: #fbbf24; }
+    .gpa-log .log-shield { color: #60a5fa; }
+    .gpa-log .log-system { color: var(--ink-faint); font-style: italic; }
+
+    /* 控制按钮 */
+    .gpa-controls { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+    .gpa-btn { padding: 10px 20px; border-radius: var(--r-sm); font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: all .2s; display: inline-flex; align-items: center; gap: 6px; }
+    .gpa-btn-primary { background: var(--grad-main); color: #fff; }
+    .gpa-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(99,102,241,.3); }
+    .gpa-btn-primary:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+    .gpa-btn-ghost { background: rgba(255,255,255,.05); color: var(--ink-dim); border: 1px solid var(--line); }
+    .gpa-btn-ghost:hover { background: rgba(255,255,255,.08); }
+    .gpa-btn-danger { background: rgba(239,68,68,.15); color: #f87171; border: 1px solid rgba(239,68,68,.2); }
+
+    /* 阶段指示 */
+    .gpa-phase-bar { display: flex; gap: 0; margin: 16px 0; border-radius: var(--r-pill); overflow: hidden; background: rgba(255,255,255,.03); }
+    .gpa-phase-step { flex: 1; padding: 8px 4px; text-align: center; font-size: 12px; color: var(--ink-faint); border-right: 1px solid var(--line); transition: all .3s; }
+    .gpa-phase-step:last-child { border-right: none; }
+    .gpa-phase-step.active { background: rgba(16,185,129,.1); color: #34d399; font-weight: 600; }
+    .gpa-phase-step.done { color: var(--ink-muted); }
+
+    /* 开始/结束遮罩 */
+    .gpa-overlay { position: fixed; inset: 0; background: rgba(7,10,20,.85); backdrop-filter: blur(8px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .gpa-overlay.hidden { display: none; }
+    .gpa-overlay-card { max-width: 520px; width: 100%; background: var(--bg-soft); border: 1px solid var(--glass-border); border-radius: var(--r-xl); padding: 40px; text-align: center; }
+    .gpa-overlay-card h2 { font-size: 28px; margin-bottom: 12px; }
+    .gpa-overlay-card p { color: var(--ink-dim); line-height: 1.8; margin-bottom: 20px; font-size: 15px; }
+    .gpa-overlay-card .win-icon { font-size: 56px; margin-bottom: 16px; }
+    .gpa-overlay-card .lose-icon { font-size: 56px; margin-bottom: 16px; }
+
+    /* 选技能 */
+    .gpa-skill-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin: 20px 0; text-align: left; }
+    .gpa-skill-option { padding: 14px; border-radius: var(--r-md); border: 1px solid var(--line); background: rgba(255,255,255,.02); cursor: pointer; transition: all .2s; }
+    .gpa-skill-option:hover { border-color: var(--c-blue); background: rgba(59,130,246,.05); }
+    .gpa-skill-option.selected { border-color: var(--c-green); background: rgba(16,185,129,.06); box-shadow: 0 0 0 1px rgba(16,185,129,.3); }
+    .gpa-skill-option .sk-name { font-weight: 700; font-size: 15px; color: var(--ink); margin-bottom: 4px; }
+    .gpa-skill-option .sk-type { font-size: 11px; color: var(--ink-faint); margin-bottom: 6px; }
+    .gpa-skill-option .sk-desc { font-size: 13px; color: var(--ink-dim); line-height: 1.5; }
+    .gpa-skill-option .sk-cost { font-size: 12px; color: #f87171; margin-top: 6px; }
+
+    .gpa-skill-active { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .gpa-skill-chip { padding: 4px 12px; border-radius: var(--r-pill); font-size: 12px; background: rgba(124,58,237,.12); border: 1px solid rgba(124,58,237,.2); color: #c4b5fd; display: flex; align-items: center; gap: 4px; cursor: pointer; transition: all .2s; }
+    .gpa-skill-chip.ready:hover { background: rgba(124,58,237,.2); }
+    .gpa-skill-chip.on-cd { opacity: .5; cursor: not-allowed; }
+    .gpa-skill-chip .cd-tag { font-size: 10px; color: var(--ink-faint); }
+
+    /* Toast */
+    .gpa-toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: var(--bg-soft); border: 1px solid var(--glass-border); border-radius: var(--r-md); padding: 12px 24px; font-size: 14px; color: var(--ink); z-index: 2000; opacity: 0; transition: opacity .3s, transform .3s; pointer-events: none; }
+    .gpa-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* 响应式 */
+    @media (max-width: 680px) {
+      .gpa-card { width: 120px; }
+      .gpa-shop-slot { width: 120px; }
+      .gpa-stat { min-width: 65px; padding: 4px 10px; }
+      .gpa-stat .val { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-mesh"></div>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="https://wjtianze.github.io/index.html" aria-label="天择网首页">
+        <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/></svg></span>
+        <span class="logo-text">天择网</span>
+      </a>
+      <button class="nav-toggle" aria-label="菜单">☰</button>
+      <nav class="nav"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html" class="active"><span>游戏专区</span></a></nav>
+    </div>
+  </header>
+
+  <div class="gpa-topbar-spacer"></div>
+
+  <main class="gpa-game">
+    <div style="margin-bottom:16px;">
+      <div class="crumb" style="margin-bottom:8px;"><a href="https://wjtianze.github.io/index.html">首页</a><span>/</span><a href="https://wjtianze.github.io/game/index.html">游戏专区</a><span>/</span><span>绩点战争</span></div>
+      <h1 style="font-size:28px;">绩点战争：<span class="grad">GPA 4.3</span> <span style="font-size:14px;color:var(--ink-faint);font-weight:400;">内测版 v0.1</span></h1>
+    </div>
+
+    <!-- 开始遮罩 -->
+    <div class="gpa-overlay" id="startScreen">
+      <div class="gpa-overlay-card">
+        <div class="win-icon">🎓</div>
+        <h2>绩点战争</h2>
+        <p>你是一名大学生。用能量打出卡牌——攻击对手、防守自保、或专注学习提升 GPA。<br/>把 GPA 推到 <b style="color:#a78bfa;">4.3</b> 直接获胜，或把对手生命打到 <b style="color:#f87171;">0</b>。<br/><span style="color:var(--ink-faint);font-size:13px;">内测版仅含 12 张基础牌与 4 个技能，用于验证核心循环。</span></p>
+        <div style="text-align:left;margin:20px 0;">
+          <h3 style="font-size:15px;margin-bottom:10px;">选择你的技能（1 主动 + 1 被动）</h3>
+          <div class="gpa-skill-pick" id="skillPick"></div>
+        </div>
+        <button class="gpa-btn gpa-btn-primary" id="startBtn" disabled style="font-size:16px;padding:12px 32px;">开始对局</button>
+      </div>
+    </div>
+
+    <!-- 游戏棋盘 -->
+    <div class="gpa-board" id="gameBoard" style="display:none;">
+      <!-- 阶段指示 -->
+      <div class="gpa-phase-bar" id="phaseBar">
+        <div class="gpa-phase-step" data-phase="config">配卡</div>
+        <div class="gpa-phase-step" data-phase="supply">补给</div>
+        <div class="gpa-phase-step" data-phase="action">行动</div>
+        <div class="gpa-phase-step" data-phase="end">结束</div>
+      </div>
+
+      <!-- 对手区域 -->
+      <div class="gpa-side opponent-side" id="opponentSide">
+        <div class="gpa-player-row">
+          <div class="gpa-avatar ai">🤖</div>
+          <div>
+            <div class="gpa-name">AI 对手 <span class="turn-tag" id="aiTurnTag"></span></div>
+            <div class="gpa-stats" id="aiStats"></div>
+          </div>
+        </div>
+        <div class="gpa-hand-label">手牌 <span id="aiHandCount"></span></div>
+        <div class="gpa-hand opponent-hand" id="aiHand"></div>
+      </div>
+
+      <!-- 日志 -->
+      <div class="gpa-side" style="padding:14px 18px;">
+        <div style="font-size:13px;color:var(--ink-faint);margin-bottom:6px;">战况日志</div>
+        <div class="gpa-log" id="gameLog"></div>
+      </div>
+
+      <!-- 玩家区域 -->
+      <div class="gpa-side active-turn" id="playerSide">
+        <div class="gpa-player-row">
+          <div class="gpa-avatar">🎓</div>
+          <div style="flex:1;">
+            <div class="gpa-name">你 <span class="turn-tag" id="playerTurnTag"></span></div>
+            <div class="gpa-stats" id="playerStats"></div>
+          </div>
+        </div>
+        <div class="gpa-skill-active" id="playerSkills"></div>
+        <div class="gpa-hand-label">
+          手牌 <span id="playerHandCount"></span>
+          <span style="margin-left:auto;color:var(--ink-faint);" id="deckInfo"></span>
+        </div>
+        <div class="gpa-hand" id="playerHand"></div>
+
+        <!-- 商店 -->
+        <div class="gpa-hand-label" style="margin-top:16px;">
+          商店 <span style="color:var(--ink-faint);">（花能量购买，永久解锁）</span>
+          <button class="gpa-btn gpa-btn-ghost" id="refreshBtn" style="margin-left:auto;padding:4px 14px;font-size:12px;">🔄 刷新 (1⚡)</button>
+        </div>
+        <div class="gpa-shop" id="shopArea"></div>
+
+        <!-- 控制 -->
+        <div class="gpa-controls">
+          <button class="gpa-btn gpa-btn-primary" id="endTurnBtn">结束回合 →</button>
+          <button class="gpa-btn gpa-btn-ghost" id="helpBtn">📖 规则速查</button>
+          <button class="gpa-btn gpa-btn-danger" id="restartBtn">重新开始</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 结束遮罩 -->
+    <div class="gpa-overlay hidden" id="endScreen">
+      <div class="gpa-overlay-card">
+        <div id="endIcon" class="win-icon">🏆</div>
+        <h2 id="endTitle">胜利！</h2>
+        <p id="endDesc"></p>
+        <div style="display:flex;gap:10px;justify-content:center;">
+          <button class="gpa-btn gpa-btn-primary" id="playAgainBtn">再来一局</button>
+          <a class="gpa-btn gpa-btn-ghost" href="https://wjtianze.github.io/game/index.html">返回专区</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 规则速查 -->
+    <div class="gpa-overlay hidden" id="helpScreen">
+      <div class="gpa-overlay-card" style="max-width:560px;">
+        <h2 style="font-size:22px;margin-bottom:16px;">规则速查</h2>
+        <div style="text-align:left;font-size:14px;color:var(--ink-dim);line-height:2;">
+          <p><b style="color:var(--ink);">🎯 目标：</b>GPA 达到 4.3 直接获胜，或把对手生命降到 0。</p>
+          <p><b style="color:var(--ink);">⚡ 能量：</b>初始 3，每回合 +3，上限 10。能量用于打出卡牌和购买卡牌。</p>
+          <p><b style="color:var(--ink);">🃏 卡牌：</b>每张牌有使用成本（打牌花）和购买成本（买牌花）。购买的牌永久解锁。</p>
+          <p><b style="color:var(--ink);">🛡️ 护盾：</b>伤害先扣护盾。护盾在你的回合开始时清空。</p>
+          <p><b style="color:var(--ink);">📈 GPA：</b>每回合最多 +0.3。造成 ≥8 伤害 +0.1，获得 ≥8 护盾/治疗 +0.1，购买卡牌 +0.1。各限一次。</p>
+          <p><b style="color:var(--ink);">🎁 里程碑：</b>GPA 到达 1.5/2.0/2.5/3.0/3.5/4.0 时获得一次性奖励。</p>
+          <p><b style="color:var(--ink);">🔄 回合：</b>配卡 → 补给（+能量+摸牌+刷新商店）→ 行动（打牌/买牌）→ 结束。</p>
+          <p><b style="color:var(--ink);">⚖️ 先后手：</b>首回合随机先手，之后交替。后手首回合额外 +1 能量。</p>
+        </div>
+        <button class="gpa-btn gpa-btn-ghost" id="closeHelpBtn" style="margin-top:20px;">关闭</button>
+      </div>
+    </div>
+
+    <div class="gpa-toast" id="toast"></div>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <div>© 2026 天择网 · 物竞天择，适者生存</div>
+      <div class="links"><a href="https://wjtianze.github.io/index.html">主页</a><a href="https://wjtianze.github.io/news/index.html">新闻</a><a href="https://wjtianze.github.io/blog/index.html">博客</a><a href="https://wjtianze.github.io/open/index.html">数据开源</a><a href="https://wjtianze.github.io/ai/index.html">AI 专区</a><a href="https://wjtianze.github.io/coc/index.html">COC 专区</a><a href="https://wjtianze.github.io/game/index.html">游戏专区</a></div>
+    </div>
+  </footer>
+
+  <script src="https://wjtianze.github.io/assets/js/main.js"></script>
+  <script src="https://wjtianze.github.io/assets/js/gpa-card.js"></script>
+</body>
+</html>
