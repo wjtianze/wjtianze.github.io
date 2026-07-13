@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>升级规划器 · COC 专区 · 天择网</title>
-  <meta name="description" content="基于村庄存档的升级规划器，家乡与夜世界分开，稳本/速本两种模式，甘特图可视化升级任务，自动安排工人并支持拖拽微调与冲突校验。" />
+  <meta name="description" content="基于村庄存档的升级规划器，单级拆分+前置依赖，稳本/速本模式，甘特图缩放滚动，待规划区拖拽安排。" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
   <style>
@@ -28,13 +28,19 @@
     .vp-mode{ display:flex; gap:8px; }
     .vp-mode-btn{ padding:8px 18px; font-size:13.5px; font-weight:600; cursor:pointer; border:1px solid var(--line-strong); background:var(--glass); color:var(--ink-dim); border-radius:8px; transition:all .15s; }
     .vp-mode-btn.active{ background:var(--grad-main); color:#fff; border-color:transparent; }
+    .vp-mode-desc{ font-size:12.5px; color:var(--ink-dim); margin-top:8px; line-height:1.7; padding:10px 14px; background:var(--glass); border:1px solid var(--line); border-radius:8px; }
 
-    .v-planner-bar{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:14px; }
-    .v-planner-bar select{ padding:7px 10px; border:1px solid var(--line-strong); border-radius:8px; font-size:13px; background:var(--bg-soft); color:var(--ink); max-width:320px; }
-    .v-planner-bar .vp-info{ font-size:12px; color:var(--ink-faint); }
-    .v-gantt-wrap{ overflow-x:auto; border:1px solid var(--line); border-radius:10px; background:var(--bg-soft); }
+    .vp-toolbar{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:14px; }
+    .vp-zoom{ display:flex; gap:6px; align-items:center; margin-left:auto; }
+    .vp-zoom-btn{ width:32px; height:32px; border:1px solid var(--line-strong); background:var(--glass); color:var(--ink); border-radius:8px; cursor:pointer; font-size:16px; line-height:1; }
+    .vp-zoom-btn:hover{ background:var(--bg-elevated); }
+    .vp-zoom-label{ font-size:12px; color:var(--ink-faint); min-width:42px; text-align:center; }
+    .vp-info{ font-size:12px; color:var(--ink-faint); }
+
+    .v-gantt-wrap{ overflow-x:auto; overflow-y:hidden; border:1px solid var(--line); border-radius:10px; background:var(--bg-soft); min-height:120px; transition:border-color .15s; }
+    .v-gantt-wrap.vp-drop-hover{ border-color:var(--c-purple); background:var(--bg-elevated); }
     .v-gantt{ display:block; }
-    .v-gantt .vg-axis text{ font-size:10px; fill:var(--ink-faint); }
+    .v-gantt .vg-axis{ font-size:10px; fill:#9aa3c7; }
     .v-gantt .vg-lane-label{ font-size:11.5px; fill:var(--ink-dim); }
     .v-gantt .vg-bar{ cursor:grab; }
     .v-gantt .vg-bar:active{ cursor:grabbing; }
@@ -43,8 +49,19 @@
     .v-gantt .vg-grid{ stroke:var(--line); stroke-width:0.5; }
     .v-planner-stats{ display:flex; flex-wrap:wrap; gap:12px; margin-top:14px; font-size:12.5px; color:var(--ink-dim); }
     .v-planner-stats .vps{ background:var(--glass); border:1px solid var(--line); padding:8px 14px; border-radius:8px; }
-    .v-planner-hint{ font-size:12.5px; color:var(--ink-faint); margin-top:10px; line-height:1.7; }
-    .vp-mode-desc{ font-size:12.5px; color:var(--ink-dim); margin-top:8px; line-height:1.7; padding:10px 14px; background:var(--glass); border:1px solid var(--line); border-radius:8px; }
+
+    .vp-pending{ margin-top:20px; border:1px dashed var(--line-strong); border-radius:10px; padding:14px 16px; min-height:70px; transition:border-color .15s, background .15s; }
+    .vp-pending.vp-drop-hover{ border-color:var(--c-purple); background:var(--bg-elevated); }
+    .vp-pending-head{ font-size:13px; color:var(--ink-faint); margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; }
+    .vp-pending-head b{ color:var(--ink-dim); font-weight:600; }
+    .vp-pending-grid{ display:flex; flex-wrap:wrap; gap:8px; }
+    .vp-pending-item{ background:var(--glass); border:1px solid var(--line); border-radius:8px; padding:7px 12px; font-size:12.5px; color:var(--ink-dim); cursor:grab; user-select:none; transition:opacity .15s; }
+    .vp-pending-item:hover{ border-color:var(--c-purple); color:var(--ink); }
+    .vp-pending-item:active{ cursor:grabbing; }
+    .vp-pending-item.dragging{ opacity:.4; }
+    .vp-pending-empty{ font-size:12.5px; color:var(--ink-faint); padding:6px 0; }
+
+    .v-planner-hint{ font-size:12.5px; color:var(--ink-faint); margin-top:14px; line-height:1.7; }
   </style>
 </head>
 <body>
@@ -69,13 +86,11 @@
         <span>升级规划器</span>
       </div>
       <h1 class="reveal in d1">升级 <span class="grad">规划器</span></h1>
-      <p class="reveal in d2">基于村庄存档数据，用甘特图规划升级排程。家乡与夜世界分开，支持稳本 / 速本两种模式，自动把每项升级安排到对应资源最早空闲的时段，支持拖拽微调与冲突校验。</p>
+      <p class="reveal in d2">基于村庄存档数据，按单级拆分规划升级。每级一个滑块，自动处理前置依赖（同单位串行、实验室/英雄殿堂/战宠小屋等级要求）。支持稳本/速本模式、甘特图缩放滚动、待规划区拖拽安排。</p>
     </section>
 
     <section class="section wrap" style="padding-top:18px;">
-      <div class="card reveal" style="padding:22px 28px;" id="vpSource">
-        <div id="vpMetricsWrap"></div>
-      </div>
+      <div class="card reveal" style="padding:22px 28px;" id="vpSource"><div id="vpMetricsWrap"></div></div>
     </section>
 
     <section class="section wrap" id="vpNoData" style="display:none;">
@@ -88,7 +103,6 @@
     </section>
 
     <section class="section wrap" id="vpBody" style="display:none;">
-      <!-- 选项：哥布林 + 模式 -->
       <div class="vp-opt-bar">
         <div class="vp-opt-group">
           <span class="vog-title">可选加成</span>
@@ -111,30 +125,46 @@
       </div>
 
       <div class="vp-pane active" id="vpHome">
-        <div class="v-planner-bar">
-          <select id="vpSelHome"><option value="">选择要添加的升级任务…</option></select>
-          <button class="btn btn--sm" id="vpAddHome"><span>添加</span></button>
+        <div class="vp-toolbar">
           <button class="btn btn--sm" id="vpAutoHome"><span>一键全排程</span></button>
           <button class="btn btn--sm" id="vpClearHome"><span>清空规划</span></button>
           <span class="vp-info" id="vpInfoHome"></span>
+          <div class="vp-zoom">
+            <button class="vp-zoom-btn" id="vpZoomOutHome" title="缩小">−</button>
+            <span class="vp-zoom-label" id="vpZoomLabelHome">100%</span>
+            <button class="vp-zoom-btn" id="vpZoomInHome" title="放大">+</button>
+            <button class="vp-zoom-btn" id="vpZoomResetHome" title="重置" style="width:auto;padding:0 10px;font-size:12px;">重置</button>
+          </div>
         </div>
-        <div class="v-gantt-wrap"><svg class="v-gantt" id="vpGanttHome" viewBox="0 0 1000 200" width="100%"></svg></div>
+        <div class="v-gantt-wrap" id="vpGanttWrapHome"><svg class="v-gantt" id="vpGanttHome" viewBox="0 0 1000 200" width="100%"></svg></div>
         <div class="v-planner-stats" id="vpStatsHome"></div>
+        <div class="vp-pending" id="vpPendingHome">
+          <div class="vp-pending-head"><span>📥 待规划任务（拖到上方甘特图即可安排）</span><b id="vpPendingCountHome"></b></div>
+          <div class="vp-pending-grid" id="vpPendingGridHome"></div>
+        </div>
       </div>
 
       <div class="vp-pane" id="vpBB">
-        <div class="v-planner-bar">
-          <select id="vpSelBB"><option value="">选择要添加的升级任务…</option></select>
-          <button class="btn btn--sm" id="vpAddBB"><span>添加</span></button>
+        <div class="vp-toolbar">
           <button class="btn btn--sm" id="vpAutoBB"><span>一键全排程</span></button>
           <button class="btn btn--sm" id="vpClearBB"><span>清空规划</span></button>
           <span class="vp-info" id="vpInfoBB"></span>
+          <div class="vp-zoom">
+            <button class="vp-zoom-btn" id="vpZoomOutBB" title="缩小">−</button>
+            <span class="vp-zoom-label" id="vpZoomLabelBB">100%</span>
+            <button class="vp-zoom-btn" id="vpZoomInBB" title="放大">+</button>
+            <button class="vp-zoom-btn" id="vpZoomResetBB" title="重置" style="width:auto;padding:0 10px;font-size:12px;">重置</button>
+          </div>
         </div>
-        <div class="v-gantt-wrap"><svg class="v-gantt" id="vpGanttBB" viewBox="0 0 1000 200" width="100%"></svg></div>
+        <div class="v-gantt-wrap" id="vpGanttWrapBB"><svg class="v-gantt" id="vpGanttBB" viewBox="0 0 1000 200" width="100%"></svg></div>
         <div class="v-planner-stats" id="vpStatsBB"></div>
+        <div class="vp-pending" id="vpPendingBB">
+          <div class="vp-pending-head"><span>📥 待规划任务（拖到上方甘特图即可安排）</span><b id="vpPendingCountBB"></b></div>
+          <div class="vp-pending-grid" id="vpPendingGridBB"></div>
+        </div>
       </div>
 
-      <p class="v-planner-hint">分工：研究员（实验室）升级兵种 / 法术 / 攻城机器；战宠研究员升级战宠；建筑工人升级英雄 / 建筑 / 陷阱 / 其他。甘特图每条泳道的进度条数量 = 该资源工人/研究员数量。拖动色块可调整开始时间，系统自动校验同槽位冲突并吸附到最近合法位置。仅当前大本营已解锁的等级可被纳入。</p>
+      <p class="v-planner-hint">每级一个滑块，前置依赖自动处理：同单位必须逐级升级；兵种/法术/攻城机器需实验室达到对应等级，战宠需战宠小屋等级，英雄需英雄殿堂等级。下方「待规划区」显示尚未安排的单级任务，拖到甘特图即自动排程（含前置）；甘特图里的滑块拖回待规划区即移除（含其后置等级）。缩放按钮可放大时间轴横向滚动查看。</p>
     </section>
   </main>
 
