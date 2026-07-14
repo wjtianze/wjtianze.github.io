@@ -436,6 +436,7 @@ const Taskbar = {
     };
     t.oncontextmenu = (e) => {
       e.preventDefault();
+      e.stopPropagation(); // 阻止冒泡到 #desktop，避免同时弹出桌面右键菜单
       const items = [];
       const isPinned = Store.getPinned().includes(app.id);
       items.push(isPinned
@@ -1387,20 +1388,29 @@ function initBrowser() {
 
     const frame = el('iframe', '');
     Object.assign(frame.style, { width:'100%', height:'100%', border:'none', background:'#fff' });
-    // sandbox 不含 allow-popups：阻止 iframe 内 window.open / target=_blank 外跳到系统浏览器
-    frame.sandbox = 'allow-scripts allow-forms allow-same-origin allow-modals';
+    // 不设 sandbox：保证同窗口链接可正常自导航；同源页面用点击委托把 _blank/外站链接改到 OS 内新标签页
     frame.src = 'about:blank';
     frame.referrerPolicy = 'no-referrer';
     frame.addEventListener('load', () => {
-      // 同源页面：拦截 target=_blank / _new 链接，改为 OS 内新标签页
+      // 同源页面：点击委托拦截 _blank/_new/_top 及外站链接 → OS 内新标签页；同站同窗口链接放行自导航
       try {
         const doc = frame.contentDocument;
-        if (doc) {
-          doc.querySelectorAll('a[target="_blank"], a[target="_new"]').forEach(a => {
-            a.addEventListener('click', (ev) => { ev.preventDefault(); if (a.href) newTab(a.href); });
+        if (doc && !doc.__tzHooked) {
+          doc.__tzHooked = true;
+          doc.addEventListener('click', (ev) => {
+            const a = ev.target.closest && ev.target.closest('a');
+            if (!a || !a.href || a.hasAttribute('download')) return;
+            const tgt = a.target;
+            let isExternal = false;
+            try { isExternal = new URL(a.href).origin !== location.origin; } catch {}
+            if (tgt === '_blank' || tgt === '_new' || tgt === '_top' || isExternal) {
+              ev.preventDefault();
+              newTab(a.href);
+            }
+            // 否则放行：同站同窗口链接由 iframe 自身导航
           });
         }
-      } catch (e) { /* 跨域无法访问，已被 sandbox 阻止外跳 */ }
+      } catch (e) { /* 跨域无法访问，链接按浏览器默认行为自导航 */ }
       const t = tabs.find(x => x.id === id);
       if (t) {
         try { t.title = (frame.contentDocument && frame.contentDocument.title) || ''; } catch {}
@@ -1584,9 +1594,9 @@ function bindGlobalEvents() {
     if (!e.target.closest('#notifCenter') && !e.target.closest('#tbClock')) $('#notifCenter').hidden = true;
     if (!e.target.closest('.desktop-icon') && !e.target.closest('.start-app') && !e.target.closest('#floatingWidget') && !e.target.closest('#fwReopen')) Desktop.clearSelect();
   });
-  // 桌面右键
+  // 桌面右键（任务栏/窗口/图标/悬浮窗不触发桌面菜单）
   $('#desktop').addEventListener('contextmenu', (e) => {
-    if (e.target.closest('.desktop-icon') || e.target.closest('.win') || e.target.closest('#floatingWidget')) return;
+    if (e.target.closest('.desktop-icon') || e.target.closest('.win') || e.target.closest('#floatingWidget') || e.target.closest('#taskbar') || e.target.closest('#startMenu') || e.target.closest('#notifCenter')) return;
     e.preventDefault();
     showCtxMenu(e.clientX, e.clientY, [
       { icon: '🔄', label: '刷新桌面', act: () => { Desktop.render(); StartMenu.render(); } },
@@ -1612,8 +1622,8 @@ function bindGlobalEvents() {
       if (ctxEl) { hideCtxMenu(); return; }
       const nc = $('#notifCenter'); if (nc && !nc.hidden) { nc.hidden = true; return; }
     }
-    // Ctrl+F 切换浏览器全屏（覆盖浏览器默认查找）
-    if (e.ctrlKey && (e.key === 'f' || e.key === 'F')) {
+    // Ctrl+Q 切换浏览器全屏（覆盖浏览器默认快捷键）
+    if (e.ctrlKey && (e.key === 'q' || e.key === 'Q')) {
       e.preventDefault();
       if (document.fullscreenElement) { document.exitFullscreen(); }
       else { try { document.documentElement.requestFullscreen(); } catch (err) {} }
