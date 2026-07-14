@@ -48,13 +48,32 @@
     <!-- macOS 顶栏 -->
     <div id="macBar" class="mac-bar" hidden>
       <div class="mac-bar-left">
-        <span class="mac-logo"></span>
+        <span class="mac-logo" id="macLogo" title="应用列表"></span>
         <span class="mac-app-name">天择OS</span>
       </div>
       <div class="mac-bar-right">
+        <button class="mac-bar-btn" id="macStyle" title="切换桌面风格">🖥</button>
+        <button class="mac-bar-btn" id="macAi" title="AI 配置">🔑</button>
         <span class="mac-clock" id="macClock"></span>
       </div>
     </div>
+
+    <!-- 左下角悬浮窗（可拖拽 / 可关闭） -->
+    <div id="floatingWidget" class="floating-widget">
+      <div class="fw-header" id="fwHeader">
+        <span class="fw-title">⚡ 快捷面板</span>
+        <button class="fw-close" id="fwClose" title="关闭">×</button>
+      </div>
+      <div class="fw-body">
+        <div class="fw-clock" id="fwClock">--:--</div>
+        <div class="fw-actions">
+          <button class="fw-btn" data-app="ai-chat" title="AI 对话">💬</button>
+          <button class="fw-btn" data-app="app-store" title="软件商城">🛒</button>
+          <button class="fw-btn" data-app="settings" title="系统设置">⚙️</button>
+        </div>
+      </div>
+    </div>
+    <button id="fwReopen" class="fw-reopen hidden" title="显示快捷面板">⚡</button>
 
     <!-- 任务栏（Windows 风格 / 通用底栏） -->
     <div id="taskbar" class="taskbar">

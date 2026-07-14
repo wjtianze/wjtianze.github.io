@@ -1,7 +1,8 @@
 /* ============================================================
    天择OS · 核心逻辑
-   模块：Storage | Device | Apps | Desktop | WindowManager
-         | Taskbar | StartMenu | ContextMenu | AIEngine
+   模块：Storage | Device | Apps | WindowManager
+         | Desktop(自由摆放+分类) | Taskbar | StartMenu
+         | ContextMenu | FloatingWidget | AIEngine
          | 内置应用（配置/对话/商城/设置/关于）
    ============================================================ */
 (function () {
@@ -35,7 +36,14 @@ const Store = {
   // 通知
   getNotifs() { return this.get('notifs', []); },
   addNotif(n) { const ns = this.getNotifs(); ns.unshift({ ...n, time: Date.now() }); this.set('notifs', ns.slice(0, 30)); },
-  clearNotifs() { this.set('notifs', []); }
+  clearNotifs() { this.set('notifs', []); },
+  // 桌面图标自由位置 { appId: {x,y} }
+  getIconPositions() { return this.get('iconPositions', {}); },
+  setIconPositions(p) { this.set('iconPositions', p); },
+  clearIconPositions() { this.set('iconPositions', {}); },
+  // 悬浮窗位置与开关 {x,y} / bool
+  getWidget() { return this.get('widget', { x: null, y: null, closed: false }); },
+  setWidget(w) { this.set('widget', w); }
 };
 
 /* ===================== 工具函数 ===================== */
@@ -47,9 +55,14 @@ const fmtDate = (d) => `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'
 const fmtDateTime = (d) => `${fmtDate(d)} ${fmtTime(d)}`;
 const ago = (t) => { const s = (Date.now() - t) / 1000; if (s < 60) return '刚刚'; if (s < 3600) return Math.floor(s/60)+'分钟前'; if (s < 86400) return Math.floor(s/3600)+'小时前'; return Math.floor(s/86400)+'天前'; };
 const escapeHtml = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const isMobile = () => navigator.maxTouchPoints > 1 || window.innerWidth < 768;
+// 移动端判定收窄：仅小屏触控设备才算移动端，避免触摸笔记本被误判为移动端导致窗口全屏
+const isMobile = () => {
+  const narrow = window.innerWidth < 768;
+  const touch = navigator.maxTouchPoints > 1;
+  return narrow && touch;
+};
 
-/* ===================== 设备检测 ===================== */
+/* ===================== 设备检测 / 风格应用 ===================== */
 function applyDeviceStyle() {
   const mobile = isMobile();
   document.body.classList.toggle('mobile', mobile);
@@ -69,13 +82,20 @@ function applyDeviceStyle() {
     $('#homeScreen').hidden = true;
     const isMac = style === 'mac';
     $('#desktop').classList.toggle('mac-style', isMac);
+    // Mac 风格：顶部 macBar 显示，底部 taskbar 变身为居中 Dock（保留显示）
     $('#macBar').hidden = !isMac;
-    $('#taskbar').hidden = isMac ? false : false; // 任务栏两种都保留（mac 用作 dock 底栏）
+    $('#taskbar').hidden = false; // taskbar 在 mac 下通过 CSS 变为 Dock
   }
+  applyStyleToWindows();
+}
+
+// 切换风格时同步更新所有已打开窗口的控件样式
+function applyStyleToWindows() {
+  const isMac = !isMobile() && Store.getStyle() === 'mac';
+  $$('.win').forEach(w => w.classList.toggle('mac-style', isMac));
 }
 
 /* ===================== 应用注册表 ===================== */
-// 内置应用：返回 HTML 字符串由窗口渲染
 const BUILTIN_APPS = {
   'ai-config': {
     name: 'AI 配置', icon: '🔑', grad: true, category: 'system',
@@ -132,7 +152,7 @@ const PRESET_APPS = [
 ];
 
 function getAllApps() {
-  const installed = Store.getApps().map(a => ({ ...a, type: 'installed' }));
+  const installed = Store.getApps().map(a => ({ ...a, type: 'installed', category: a.category || 'tool' }));
   return [...Object.entries(BUILTIN_APPS).map(([id, app]) => ({ id, ...app, type: 'builtin' })),
           ...PRESET_APPS.map(a => ({ ...a, type: 'preset' })),
           ...installed];
@@ -160,17 +180,19 @@ const WM = {
     const isMac = !mobile && (Store.getStyle() === 'mac');
     if (isMac) winEl.classList.add('mac-style');
 
-    // 尺寸与位置
-    const w = opts.width || 720, h = opts.height || 480;
-    const offset = (this.openCount % 6) * 28;
-    const left = opts.left ?? Math.max(20, (window.innerWidth - w) / 2 + offset - 70);
-    const top = opts.top ?? Math.max(20, (window.innerHeight - h) / 2 + offset - 60);
+    // 尺寸与位置 —— 默认分屏窗口模式（留出明显边距，非最大化）
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const w = Math.min(opts.width || 720, Math.round(vw * 0.64));
+    const h = Math.min(opts.height || 480, Math.round(vh * 0.74));
+    const offset = (this.openCount % 6) * 26;
+    const left = opts.left ?? Math.max(20, Math.round((vw - w) / 2) + offset - 70);
+    const top = opts.top ?? Math.max(20, Math.round((vh - h) / 2) + offset - 50);
     winEl.style.width = w + 'px';
     winEl.style.height = h + 'px';
     winEl.style.left = left + 'px';
     winEl.style.top = (mobile ? 0 : top) + 'px';
 
-    // 标题栏
+    // 标题栏（统一 DOM 顺序，由 CSS 按风格排列控件位置）
     const title = el('div', 'win-title');
     const icons = el('div', 'win-title-icons');
     const closeBtn = el('button', 'wctrl close', '<svg viewBox="0 0 8 8" fill="none" stroke="#5b0700" stroke-width="1.5"><path d="M1 1l6 6M7 1L1 7"/></svg>');
@@ -178,8 +200,7 @@ const WM = {
     const minBtn = el('button', 'wctrl min', '<svg viewBox="0 0 8 8" fill="none" stroke="#5b3a00" stroke-width="1.5"><path d="M1 4h6"/></svg>');
     minBtn.title = '最小化';
     const maxBtn = el('button', 'wctrl max', '<svg viewBox="0 0 8 8" fill="none" stroke="#003d00" stroke-width="1.5"><path d="M1 1h6v6H1z"/></svg>');
-    maxBtn.title = '最大化';
-    // AI 生成的软件：标题栏加卸载按钮
+    maxBtn.title = '最大化 / 还原';
     const uninstBtn = app.type === 'installed' ? el('button', 'wctrl uninst', '<svg viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 2l4 4M6 2L2 6"/></svg>') : null;
     if (uninstBtn) { uninstBtn.title = '卸载此软件'; }
     icons.append(closeBtn, minBtn, maxBtn, ...(uninstBtn ? [uninstBtn] : []));
@@ -187,9 +208,7 @@ const WM = {
     const titleIcon = el('span', 'win-title-icon', app.icon || '📦');
     const titleText = el('span', 'win-title-text', escapeHtml(app.name || '应用'));
     const spacer = el('div', 'win-title-spacer');
-    // mac 风格：[圆点][图标][标题居中][平衡占位]；Windows 风格：[图标][标题左对齐][按钮在右]
-    if (isMac) { title.append(icons, titleIcon, titleText, spacer); }
-    else { title.append(titleIcon, titleText, icons); }
+    title.append(icons, titleIcon, titleText, spacer);
 
     const body = el('div', 'win-body pad');
     const resizers = ['r-nw','r-n','r-ne','r-e','r-se','r-s','r-sw','r-w'];
@@ -209,7 +228,7 @@ const WM = {
     minBtn.onclick = (e) => { e.stopPropagation(); this.minimize(id); };
     maxBtn.onclick = (e) => { e.stopPropagation(); this.toggleMax(id); };
     if (uninstBtn) uninstBtn.onclick = (e) => { e.stopPropagation(); if (confirm('确定要卸载「' + app.name + '」吗？\n该软件将从桌面移除。')) { uninstallApp(app.id); } };
-    title.ondblclick = () => { if (!isMobile()) this.toggleMax(id); };
+    title.ondblclick = (e) => { if (e.target.closest('.wctrl')) return; if (!isMobile()) this.toggleMax(id); };
     this.bindDrag(winObj);
     this.bindResize(winObj);
     winEl.addEventListener('pointerdown', () => this.focus(id), { passive: true });
@@ -222,15 +241,17 @@ const WM = {
     const { app, body } = winObj;
     if (app.type === 'preset') {
       body.className = 'win-body no-pad';
+      const loading = el('div', 'app-loading', '<div class="al-spin"></div><div>正在加载 ' + escapeHtml(app.name) + '…</div>');
+      loading.style.position = 'absolute'; loading.style.inset = '0'; loading.style.zIndex = '2';
       const iframe = el('iframe', 'app-iframe');
       iframe.src = app.url;
       iframe.loading = 'lazy';
-      const loading = el('div', 'app-loading', '<div class="al-spin"></div><div>正在加载 ' + escapeHtml(app.name) + '…</div>');
+      // 关键修复：先把 iframe 插入 DOM，浏览器才会真正加载，onload 才会触发
+      body.appendChild(iframe);
       body.appendChild(loading);
-      iframe.onload = () => { loading.remove(); body.appendChild(iframe); };
+      iframe.onload = () => { loading.remove(); };
       iframe.onerror = () => { loading.innerHTML = '<div class="app-error"><div class="ae-icon">⚠️</div>加载失败<br/><small>无法连接到 ' + escapeHtml(app.url) + '</small></div>'; };
-      // 超时保护
-      setTimeout(() => { if (loading.parentNode) loading.querySelector('.al-spin').style.borderTopColor = '#ef4444'; }, 8000);
+      setTimeout(() => { if (loading.parentNode) { const sp = loading.querySelector('.al-spin'); if (sp) sp.style.borderTopColor = '#ef4444'; } }, 8000);
     } else if (app.type === 'installed') {
       body.className = 'win-body no-pad';
       const iframe = el('iframe', 'app-iframe');
@@ -259,7 +280,6 @@ const WM = {
     setTimeout(() => { w.el.remove(); }, 180);
     this.windows.splice(idx, 1);
     Taskbar.render();
-    // 触发 onClose 钩子
     if (w.onClose) w.onClose();
   },
   minimize(id) {
@@ -278,6 +298,7 @@ const WM = {
     w.el.classList.remove('minimized');
     this.focus(id);
   },
+  // 最大化 / 还原 切换（分屏窗口 ↔ 全屏最大化）
   toggleMax(id) {
     const w = this.windows.find(x => x.id === id);
     if (!w || isMobile()) return;
@@ -356,10 +377,12 @@ const WM = {
 const Taskbar = {
   render() {
     const running = $('#tbRunning');
+    if (!running) return;
     running.innerHTML = '';
     WM.windows.forEach(w => {
       const t = el('button', 'tb-task' + (w.el.classList.contains('focused') ? ' active' : ''));
       t.innerHTML = `<span class="tb-task-icon">${w.app.icon || '📦'}</span><span class="tb-task-name">${escapeHtml(w.app.name)}</span>`;
+      t.title = w.app.name;
       t.onclick = () => {
         if (w.minimized) WM.restore(w.id);
         else if (w.el.classList.contains('focused')) WM.minimize(w.id);
@@ -387,7 +410,6 @@ const StartMenu = {
     const apps = getAllApps().filter(a => !filter || a.name.toLowerCase().includes(filter.toLowerCase()) || (a.desc||'').includes(filter));
     const grid = $('#startApps');
     grid.innerHTML = '';
-    // 分类排序
     const order = ['system','ai','tznet','game','tool'];
     apps.sort((a,b) => { const ia = order.indexOf(a.category), ib = order.indexOf(b.category); return (ia-ib) || a.name.localeCompare(b.name); });
     apps.forEach(app => {
@@ -420,7 +442,10 @@ function showCtxMenu(x, y, items) {
 }
 function hideCtxMenu() { if (ctxEl) { ctxEl.hidden = true; ctxEl = null; } }
 
-/* ===================== 桌面渲染 ===================== */
+/* ===================== 桌面渲染（自由摆放 + 分类整理） ===================== */
+const CAT_ORDER = ['system', 'ai', 'tznet', 'game', 'tool'];
+const CAT_LABEL = { system: '系统', ai: 'AI', tznet: '天择网', game: '游戏', tool: '我的软件' };
+
 const Desktop = {
   selected: null,
   render() {
@@ -429,46 +454,137 @@ const Desktop = {
     iconsEl.innerHTML = '';
     homeEl.innerHTML = '';
     const apps = getAllApps();
-    // 桌面显示所有应用
+
+    if (isMobile()) {
+      // 移动端：保持网格，不支持自由拖拽
+      iconsEl.classList.remove('canvas-mode');
+      apps.forEach(app => { const ic = this.makeIcon(app, false); homeEl.appendChild(ic); });
+      this.renderDock();
+      return;
+    }
+
+    // PC：绝对定位画布，支持自由拖拽 + 分类整理
+    iconsEl.classList.add('canvas-mode');
+    const saved = Store.getIconPositions();
+    const placed = new Set();
+
+    // 1) 已保存位置的图标 → 自由摆放在保存坐标
     apps.forEach(app => {
-      const ic = this.makeIcon(app);
-      iconsEl.appendChild(ic);
-      // 移动端主屏副本
-      const ic2 = ic.cloneNode(true);
-      this.bindIcon(ic2, app);
-      homeEl.appendChild(ic2);
+      if (saved[app.id]) {
+        const ic = this.makeIcon(app, true);
+        ic.style.left = saved[app.id].x + 'px';
+        ic.style.top = saved[app.id].y + 'px';
+        iconsEl.appendChild(ic);
+        placed.add(app.id);
+      }
     });
-    // 移动端 Dock：固定应用
+
+    // 2) 其余图标 → 按分类整理到独立区域（带分类标签）
+    const remaining = apps.filter(a => !placed.has(a.id));
+    this.layoutByCategory(iconsEl, remaining);
     this.renderDock();
   },
-  makeIcon(app) {
+  // 按分类整理：每个分类一列，带标签，超出高度自动换列
+  layoutByCategory(container, apps) {
+    const rect = container.getBoundingClientRect();
+    const padX = 10, padY = 8;
+    const colW = 100, rowH = 100, labelH = 24;
+    const maxBottom = (rect.height || (window.innerHeight - 120)) - 20;
+    const groups = {};
+    apps.forEach(a => { const c = a.category || 'tool'; (groups[c] = groups[c] || []).push(a); });
+    let col = 0;
+    CAT_ORDER.forEach(cat => {
+      const list = groups[cat];
+      if (!list || !list.length) return;
+      let x = padX + col * colW;
+      let y = padY;
+      const label = el('div', 'zone-label', CAT_LABEL[cat] || '应用');
+      label.style.left = x + 'px';
+      label.style.top = y + 'px';
+      container.appendChild(label);
+      y += labelH;
+      list.forEach(app => {
+        if (y + rowH > maxBottom) { col++; x = padX + col * colW; y = padY + labelH; }
+        const ic = this.makeIcon(app, true);
+        ic.style.left = x + 'px';
+        ic.style.top = y + 'px';
+        container.appendChild(ic);
+        y += rowH;
+      });
+      col++;
+    });
+  },
+  makeIcon(app, draggable) {
     const ic = el('div', 'desktop-icon');
     ic.dataset.appId = app.id;
     const badge = app.badge ? `<span class="di-badge">${app.badge}</span>` : '';
     ic.innerHTML = `<div class="di-icon${app.grad?' grad':''}">${app.icon||'📦'}${badge}</div><div class="di-label">${escapeHtml(app.name)}</div>`;
-    this.bindIcon(ic, app);
+    this.bindIcon(ic, app, draggable);
     return ic;
   },
-  bindIcon(ic, app) {
+  bindIcon(ic, app, draggable) {
     let lastTap = 0;
+    let pressX, pressY, startL, startT, dragging = false, moved = false, wasDragged = false;
+    const canDrag = draggable && !isMobile();
+
+    ic.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0 && e.pointerType === 'mouse') return;
+      pressX = e.clientX; pressY = e.clientY;
+      moved = false; wasDragged = false;
+      if (canDrag) { startL = ic.offsetLeft; startT = ic.offsetTop; }
+    });
+    ic.addEventListener('pointermove', (e) => {
+      if (!canDrag || pressX === undefined) return;
+      const dx = e.clientX - pressX, dy = e.clientY - pressY;
+      if (!dragging && Math.hypot(dx, dy) > 5) {
+        dragging = true;
+        try { ic.setPointerCapture(e.pointerId); } catch {}
+        ic.classList.add('dragging', 'free');
+      }
+      if (dragging) {
+        moved = true;
+        const cw = ic.parentElement.clientWidth, ch = ic.parentElement.clientHeight;
+        const nx = Math.max(0, Math.min(cw - ic.offsetWidth, startL + dx));
+        const ny = Math.max(0, Math.min(ch - ic.offsetHeight, startT + dy));
+        ic.style.left = nx + 'px';
+        ic.style.top = ny + 'px';
+      }
+    });
+    const endDrag = (e) => {
+      if (dragging) {
+        dragging = false;
+        try { ic.releasePointerCapture(e.pointerId); } catch {}
+        ic.classList.remove('dragging');
+        if (moved) {
+          wasDragged = true;
+          const saved = Store.getIconPositions();
+          saved[app.id] = { x: ic.offsetLeft, y: ic.offsetTop };
+          Store.setIconPositions(saved);
+        }
+      }
+      pressX = undefined;
+    };
+    ic.addEventListener('pointerup', endDrag);
+    ic.addEventListener('pointercancel', endDrag);
+
     ic.onclick = (e) => {
+      if (wasDragged) { wasDragged = false; return; }
       e.stopPropagation();
-      // 双击打开（PC），单击打开（移动端）
       const now = Date.now();
       const dbl = now - lastTap < 350;
       lastTap = now;
-      if (isMobile() || dbl) {
-        launchApp(app.id);
-      } else {
-        this.select(ic);
-      }
+      if (isMobile() || dbl) launchApp(app.id);
+      else this.select(ic);
     };
     ic.ondblclick = (e) => { e.stopPropagation(); if (!isMobile()) launchApp(app.id); };
     ic.oncontextmenu = (e) => {
       e.preventDefault(); e.stopPropagation();
-      const items = [
-        { icon: '▶', label: '打开', act: () => launchApp(app.id) }
-      ];
+      const items = [{ icon: '▶', label: '打开', act: () => launchApp(app.id) }];
+      if (Store.getIconPositions()[app.id]) {
+        items.push({ icon: '↩', label: '重置此图标位置', act: () => {
+          const saved = Store.getIconPositions(); delete saved[app.id]; Store.setIconPositions(saved); Desktop.render();
+        }});
+      }
       if (app.type === 'installed') {
         items.push({ sep: true });
         items.push({ icon: '🗑', label: '卸载', act: () => uninstallApp(app.id) });
@@ -482,6 +598,11 @@ const Desktop = {
     this.selected = ic.dataset.appId;
   },
   clearSelect() { $$('.desktop-icon').forEach(x => x.classList.remove('selected')); this.selected = null; },
+  resetLayout() {
+    Store.clearIconPositions();
+    this.render();
+    toast('图标布局已重置');
+  },
   renderDock() {
     const dock = $('#mobileDock');
     if (!isMobile()) { dock.innerHTML = ''; return; }
@@ -495,6 +616,70 @@ const Desktop = {
       d.onclick = () => launchApp(id);
       dock.appendChild(d);
     });
+  }
+};
+
+/* ===================== 左下角悬浮窗（可拖拽 / 可关闭） ===================== */
+const FloatingWidget = {
+  el: null,
+  init() {
+    const w = $('#floatingWidget');
+    const reopen = $('#fwReopen');
+    this.el = w;
+    const st = Store.getWidget();
+    // 位置
+    if (st.x != null && st.y != null) { w.style.left = st.x + 'px'; w.style.top = st.y + 'px'; w.style.bottom = 'auto'; w.style.right = 'auto'; }
+    if (st.closed) { w.classList.add('hidden'); reopen.classList.remove('hidden'); this.placeReopen(reopen, st); }
+    // 拖拽
+    const head = $('#fwHeader');
+    let sx, sy, sl, st2, dragging = false;
+    head.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('.fw-close')) return;
+      dragging = true; sx = e.clientX; sy = e.clientY;
+      sl = w.offsetLeft; st2 = w.offsetTop;
+      w.style.transition = 'none';
+      head.setPointerCapture(e.pointerId);
+    });
+    head.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - sx, dy = e.clientY - sy;
+      const nx = Math.max(4, Math.min(window.innerWidth - w.offsetWidth - 4, sl + dx));
+      const ny = Math.max(4, Math.min(window.innerHeight - w.offsetHeight - 4, st2 + dy));
+      w.style.left = nx + 'px'; w.style.top = ny + 'px'; w.style.bottom = 'auto'; w.style.right = 'auto';
+    });
+    head.addEventListener('pointerup', (e) => {
+      dragging = false; w.style.transition = '';
+      try { head.releasePointerCapture(e.pointerId); } catch {}
+      const cur = Store.getWidget();
+      cur.x = w.offsetLeft; cur.y = w.offsetTop;
+      Store.setWidget(cur);
+    });
+    // 关闭
+    $('#fwClose').onclick = (e) => { e.stopPropagation(); this.close(); };
+    // 重新打开
+    reopen.onclick = () => { this.open(); };
+    // 快捷按钮
+    w.querySelectorAll('.fw-btn').forEach(b => {
+      b.onclick = () => launchApp(b.dataset.app);
+    });
+    // 时钟
+    const tick = () => { const c = $('#fwClock'); if (c) { const d = new Date(); c.textContent = fmtTime(d); c.dataset.date = fmtDate(d); } };
+    tick(); setInterval(tick, 1000 * 10);
+  },
+  placeReopen(reopen, st) {
+    if (st.x != null && st.y != null) { reopen.style.left = st.x + 'px'; reopen.style.top = st.y + 'px'; reopen.style.bottom = 'auto'; reopen.style.right = 'auto'; }
+  },
+  close() {
+    this.el.classList.add('hidden');
+    const reopen = $('#fwReopen');
+    reopen.classList.remove('hidden');
+    this.placeReopen(reopen, Store.getWidget());
+    const cur = Store.getWidget(); cur.closed = true; Store.setWidget(cur);
+  },
+  open() {
+    this.el.classList.remove('hidden');
+    $('#fwReopen').classList.add('hidden');
+    const cur = Store.getWidget(); cur.closed = false; Store.setWidget(cur);
   }
 };
 
@@ -520,7 +705,6 @@ function launchApp(id, opts = {}) {
 function uninstallApp(id) {
   if (!confirm('确定要卸载这个软件吗？')) return;
   Store.removeApp(id);
-  // 关闭对应窗口
   WM.windows.filter(w => w.appId === id).forEach(w => WM.close(w.id));
   Desktop.render();
   StartMenu.render();
@@ -546,7 +730,6 @@ const AI = {
   config() { return Store.getAIConfig(); },
   isReady() { const c = this.config(); return !!(c.url && c.key && c.model); },
 
-  // 通用 chat completion（非流式）
   async chat(messages, opts = {}) {
     const c = this.config();
     if (!this.isReady()) throw new Error('AI 未配置，请先在「AI 配置」中设置 URL、Key 和模型。');
@@ -560,7 +743,6 @@ const AI = {
     return data.choices?.[0]?.message?.content || '';
   },
 
-  // 流式 chat
   async chatStream(messages, onChunk, opts = {}) {
     const c = this.config();
     if (!this.isReady()) throw new Error('AI 未配置，请先在「AI 配置」中设置 URL、Key 和模型。');
@@ -594,7 +776,6 @@ const AI = {
     return full;
   },
 
-  // 智能优化提示词
   async refinePrompt(userPrompt) {
     const sys = `你是一位资深软件产品经理与全栈工程师。用户想用一句话创建一个浏览器内运行的小软件。请把用户的模糊需求优化为一份清晰的软件规格说明书。
 
@@ -611,7 +792,6 @@ const AI = {
     return out.trim();
   },
 
-  // 根据规格生成完整 HTML 软件
   async generateApp(spec, userPrompt, onChunk) {
     const sys = `你是一位顶尖前端工程师。请根据软件规格生成一个完整的、可直接在浏览器中运行的单文件 HTML 应用。
 
@@ -696,7 +876,6 @@ window.TZOS.testConfig = async function() {
 
 /* ===================== 内置应用：AI 对话 ===================== */
 function renderAIChat() {
-  const history = Store.getChat();
   return `
   <div class="app-chat" id="chatApp">
     <div class="chat-messages" id="chatMsgs"></div>
@@ -729,7 +908,6 @@ function initChat() {
 }
 function appendMsg(role, content) {
   const msgs = $('#chatMsgs');
-  // 移除空状态
   const empty = msgs.querySelector('.chat-empty');
   if (empty) empty.remove();
   const m = el('div', 'msg ' + role);
@@ -739,7 +917,6 @@ function appendMsg(role, content) {
   return m;
 }
 function renderMd(text) {
-  // 简易 markdown：代码块、行内代码、加粗、换行
   let html = escapeHtml(text);
   html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (_,l,c) => `<pre><code>${c.replace(/&lt;\/?pre.*?>/g,'')}</code></pre>`);
   html = html.replace(/`([^`]+)`/g, '<code style="background:rgba(0,0,0,0.3);padding:2px 5px;border-radius:4px;font-size:0.9em">$1</code>');
@@ -757,7 +934,6 @@ async function sendChat() {
   appendMsg('user', text);
   const history = Store.getChat();
   history.push({ role: 'user', content: text });
-  // AI 回复占位
   const aiMsg = appendMsg('ai', '<span class="typing-dots"><span></span><span></span><span></span></span>');
   sendBtn.disabled = true;
   const msgs = $('#chatMsgs');
@@ -834,27 +1010,22 @@ window.TZOS.startGen = async function() {
   $('#refinedBox').innerHTML = '<span style="color:var(--ink-faint)">正在优化提示词…</span>';
   $('#codeProgress').textContent = '';
   try {
-    // 步骤1：优化提示词
     const spec = await AI.refinePrompt(prompt);
     $('#refinedBox').innerHTML = escapeHtml(spec).replace(/\|/g, '<br><span class="opt">▸ </span>');
-    // 步骤2：生成代码
     $('#codeProgress').textContent = '开始生成代码…';
     let code = '';
     code = await AI.generateApp(spec, prompt, (delta, all) => {
       code = all;
       $('#codeProgress').textContent = '生成中… ' + all.length + ' 字符';
     });
-    // 清理：去掉可能的 markdown 包裹
     code = code.trim();
     if (code.startsWith('```')) { code = code.replace(/^```(?:html)?\n?/, '').replace(/```$/, ''); }
     if (!code.includes('<!DOCTYPE') && !code.includes('<html')) {
       throw new Error('生成的代码不完整，请重试');
     }
     $('#codeProgress').textContent = '✓ 生成完成，共 ' + code.length + ' 字符';
-    // 解析规格中的名称
     const nameMatch = spec.split('|')[0]?.trim() || '新软件';
     const descMatch = spec.split('|')[1]?.trim() || prompt;
-    // 安装
     const appId = 'app-' + Date.now();
     Store.saveApp({
       id: appId, name: nameMatch, desc: descMatch, icon: '📦', grad: true,
@@ -865,7 +1036,6 @@ window.TZOS.startGen = async function() {
     refreshInstalledList();
     toast('✓ ' + nameMatch + ' 已安装到桌面');
     input.value = '';
-    // 自动打开
     setTimeout(() => launchApp(appId), 400);
   } catch (e) {
     $('#codeProgress').innerHTML = '<span style="color:#fca5a5">✗ ' + escapeHtml(e.message) + '</span>';
@@ -890,6 +1060,10 @@ function renderSettings() {
         <button class="${style==='win'?'active':''}" onclick="TZOS.setStyle('win')">Windows</button>
         <button class="${style==='mac'?'active':''}" onclick="TZOS.setStyle('mac')">macOS</button>
       </div>
+    </div>
+    <div class="setting-row">
+      <div><div class="sr-label">桌面图标布局</div><div class="sr-desc">重置所有图标到分类默认位置</div></div>
+      <button class="btn sm ghost" onclick="TZOS.Desktop.resetLayout()">重置布局</button>
     </div>
     <div class="setting-row">
       <div><div class="sr-label">刷新桌面</div><div class="sr-desc">重新加载所有图标</div></div>
@@ -924,9 +1098,15 @@ function initSettings() {
     si.textContent = (total / 1024).toFixed(1) + ' KB（' + Store.getApps().length + ' 个已装软件）';
   }
 }
-window.TZOS.setStyle = function(s) { Store.setStyle(s); applyDeviceStyle(); Desktop.render(); refreshOpenApp('settings'); toast('风格已切换'); };
+window.TZOS.setStyle = function(s) {
+  Store.setStyle(s);
+  applyDeviceStyle();
+  Desktop.render();
+  refreshOpenApp('settings');
+  toast('风格已切换为 ' + (s === 'mac' ? 'macOS' : s === 'win' ? 'Windows' : '自动'));
+};
 window.TZOS.reset = function() {
-  if (!confirm('⚠️ 这将清除天择OS的所有本地数据（已安装软件、AI配置、对话历史），确定继续吗？')) return;
+  if (!confirm('⚠️ 这将清除天择OS的所有本地数据（已安装软件、AI配置、对话历史、图标布局），确定继续吗？')) return;
   if (!confirm('再次确认：此操作不可恢复！')) return;
   localStorage.removeItem(Store.KEY);
   location.reload();
@@ -938,13 +1118,14 @@ function renderAbout() {
   <div style="padding:30px;text-align:center">
     <div style="width:72px;height:72px;margin:0 auto 18px;border-radius:18px;background:var(--grad-main);display:flex;align-items:center;justify-content:center;font-size:38px">🖥️</div>
     <h2 style="font-size:22px;background:var(--grad-main);-webkit-background-clip:text;background-clip:text;color:transparent">天择OS</h2>
-    <p style="color:var(--ink-faint);font-size:13px;margin-top:6px">v1.0.0 · 浏览器内全屏操作系统</p>
+    <p style="color:var(--ink-faint);font-size:13px;margin-top:6px">v1.1.0 · 浏览器内全屏操作系统</p>
     <div style="margin:24px 0;padding:16px;background:rgba(255,255,255,0.04);border-radius:12px;text-align:left;font-size:13px;line-height:1.9;color:var(--ink-dim)">
       <div>🌐 <b>天择网</b> —— 所有功能预装为应用</div>
       <div>🤖 <b>AI 引擎</b> —— 对话 + 代码生成</div>
       <div>🛒 <b>软件商城</b> —— 一句话生成新软件</div>
+      <div>🖥️ <b>自由桌面</b> —— 图标可拖拽摆放，分类整理</div>
+      <div>💠 <b>双风格</b> —— Windows / macOS 自由切换</div>
       <div>💾 <b>本地存储</b> —— 数据持久化在浏览器</div>
-      <div>📱 <b>自适应</b> —— PC/移动端自动切换风格</div>
     </div>
     <p style="font-size:12px;color:var(--ink-muted);line-height:1.7">
       天择OS 运行在 wjtianze.github.io/os<br/>
@@ -1001,7 +1182,7 @@ function initAIConfig() {
     };
   });
 }
-// 在窗口创建后初始化
+// 在窗口创建后初始化内置应用钩子
 const origRender = WM.renderContent.bind(WM);
 WM.renderContent = function(winObj, opts) {
   origRender(winObj, opts);
@@ -1029,6 +1210,7 @@ async function boot() {
 
   applyDeviceStyle();
   Desktop.render();
+  FloatingWidget.init();
   startClock();
   bindGlobalEvents();
 
@@ -1039,7 +1221,6 @@ async function boot() {
   boot.classList.add('gone');
   setTimeout(() => { boot.style.display = 'none'; $('#desktop').hidden = false; }, 600);
 
-  // 欢迎通知
   Store.addNotif({ title: '欢迎使用天择OS', body: '所有天择网功能已预装为应用。点击「🔑 AI 配置」开始使用 AI 功能。' });
   Store.addNotif({ title: '软件商城已就绪', body: '输入一句话，让 AI 为你生成专属软件。' });
 }
@@ -1048,17 +1229,18 @@ async function boot() {
 function bindGlobalEvents() {
   // 开始按钮
   $('#btnStart').onclick = (e) => { e.stopPropagation(); StartMenu.toggle(); };
-  // 风格切换按钮
-  $('#btnStyle').onclick = (e) => {
-    e.stopPropagation();
-    const cur = Store.getStyle();
-    const next = cur === 'mac' ? 'win' : 'mac';
-    Store.setStyle(next);
-    applyDeviceStyle();
-    Desktop.render();
-    toast('切换为 ' + (next === 'mac' ? 'macOS' : 'Windows') + ' 风格');
-  };
-  // AI 配置快捷按钮
+  // 风格切换按钮（任务栏）
+  $('#btnStyle').onclick = (e) => { e.stopPropagation(); toggleStyle(); };
+  // macBar 上的风格切换
+  const macStyle = $('#macStyle');
+  if (macStyle) macStyle.onclick = (e) => { e.stopPropagation(); toggleStyle(); };
+  // macBar 上的 AI 配置
+  const macAi = $('#macAi');
+  if (macAi) macAi.onclick = (e) => { e.stopPropagation(); launchApp('ai-config'); };
+  // macBar logo → 应用列表（开始菜单）
+  const macLogo = $('#macLogo');
+  if (macLogo) macLogo.onclick = (e) => { e.stopPropagation(); StartMenu.toggle(); };
+  // AI 配置快捷按钮（任务栏）
   $('#btnAiConfig').onclick = (e) => { e.stopPropagation(); launchApp('ai-config'); };
   // 设置按钮
   $('#btnSettings').onclick = (e) => { e.stopPropagation(); StartMenu.hide(); launchApp('settings'); };
@@ -1078,17 +1260,20 @@ function bindGlobalEvents() {
     if (!e.target.closest('#startMenu') && !e.target.closest('#btnStart')) StartMenu.hide();
     if (!e.target.closest('#ctxMenu')) hideCtxMenu();
     if (!e.target.closest('#notifCenter') && !e.target.closest('#tbClock')) $('#notifCenter').hidden = true;
-    if (!e.target.closest('.desktop-icon') && !e.target.closest('.start-app')) Desktop.clearSelect();
+    if (!e.target.closest('.desktop-icon') && !e.target.closest('.start-app') && !e.target.closest('#floatingWidget') && !e.target.closest('#fwReopen')) Desktop.clearSelect();
   });
   // 桌面右键
   $('#desktop').addEventListener('contextmenu', (e) => {
-    if (e.target.closest('.desktop-icon') || e.target.closest('.win')) return;
+    if (e.target.closest('.desktop-icon') || e.target.closest('.win') || e.target.closest('#floatingWidget')) return;
     e.preventDefault();
     showCtxMenu(e.clientX, e.clientY, [
       { icon: '🔄', label: '刷新桌面', act: () => { Desktop.render(); StartMenu.render(); } },
+      { icon: '↩', label: '重置图标布局', act: () => Desktop.resetLayout() },
+      { sep: true },
       { icon: '🛒', label: '打开软件商城', act: () => launchApp('app-store') },
       { icon: '💬', label: 'AI 对话', act: () => launchApp('ai-chat') },
       { sep: true },
+      { icon: '🖥️', label: '切换桌面风格', act: () => toggleStyle() },
       { icon: '⚙️', label: '系统设置', act: () => launchApp('settings') },
       { icon: '🌐', label: '返回天择网', act: () => { window.location.href = TZNET_BASE + 'index.html'; } }
     ]);
@@ -1102,6 +1287,15 @@ function bindGlobalEvents() {
     if (e.key === 'Escape') { StartMenu.hide(); hideCtxMenu(); }
     if (e.ctrlKey && e.key === ' ') { e.preventDefault(); StartMenu.toggle(); }
   });
+}
+
+function toggleStyle() {
+  const cur = Store.getStyle() || 'win';
+  const next = cur === 'mac' ? 'win' : 'mac';
+  Store.setStyle(next);
+  applyDeviceStyle();
+  Desktop.render();
+  toast('切换为 ' + (next === 'mac' ? 'macOS' : 'Windows') + ' 风格');
 }
 
 /* ===================== 通知中心 ===================== */
