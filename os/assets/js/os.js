@@ -22,6 +22,7 @@ const Store = {
   getApps() { return this.get('installedApps', []); },
   saveApp(app) { const apps = this.getApps(); apps.push(app); this.set('installedApps', apps); },
   removeApp(id) { const apps = this.getApps().filter(a => a.id !== id); this.set('installedApps', apps); },
+  updateApp(id, patch) { const apps = this.getApps(); const i = apps.findIndex(a => a.id === id); if (i < 0) return null; apps[i] = { ...apps[i], ...patch }; this.set('installedApps', apps); return apps[i]; },
   // AI 配置
   getAIConfig() {
     return this.get('aiConfig', { url: 'https://api.deepseek.com/v1/chat/completions', key: '', model: 'deepseek-chat' });
@@ -261,7 +262,7 @@ const WM = {
     minBtn.onclick = (e) => { e.stopPropagation(); this.minimize(id); };
     maxBtn.onclick = (e) => { e.stopPropagation(); this.toggleMax(id); };
     if (reloadBtn) reloadBtn.onclick = (e) => { e.stopPropagation(); this.reload(id); };
-    if (uninstBtn) uninstBtn.onclick = (e) => { e.stopPropagation(); if (confirm('确定要卸载「' + app.name + '」吗？\n该软件将从桌面移除。')) { uninstallApp(app.id); } };
+    if (uninstBtn) uninstBtn.onclick = (e) => { e.stopPropagation(); uninstallApp(app.id); };
     title.ondblclick = (e) => { if (e.target.closest('.wctrl')) return; if (!isMobile()) this.toggleMax(id); };
     this.bindDrag(winObj);
     this.bindResize(winObj);
@@ -686,6 +687,8 @@ const Desktop = {
       }
       if (app.type === 'installed') {
         items.push({ sep: true });
+        items.push({ icon: '✏️', label: '重命名', act: () => TZOS.renameApp(app.id) });
+        items.push({ icon: '🔧', label: 'AI 改进', act: () => TZOS.fixApp(app.id) });
         items.push({ icon: '🗑', label: '卸载', act: () => uninstallApp(app.id) });
       }
       showCtxMenu(e.clientX, e.clientY, items);
@@ -822,12 +825,16 @@ function launchApp(id, opts = {}) {
   return WM.create({ app, ...defaults, ...opts });
 }
 
-function uninstallApp(id) {
-  if (!confirm('确定要卸载这个软件吗？')) return;
+async function uninstallApp(id) {
+  const app = Store.getApps().find(a => a.id === id);
+  const name = app ? app.name : '此软件';
+  const ok = await confirmDialog({ title: '卸载软件', message: '确定要卸载「' + name + '」吗？\n该软件将从桌面移除。', confirmText: '卸载', danger: true });
+  if (!ok) return;
   Store.removeApp(id);
   WM.windows.filter(w => w.appId === id).forEach(w => WM.close(w.id));
   Desktop.render();
   StartMenu.render();
+  refreshOpenApp('file-manager');
   toast('已卸载');
 }
 
@@ -844,6 +851,57 @@ function toast(msg, dur = 2600) {
   requestAnimationFrame(() => { t.style.opacity = '1'; t.style.transform = 'translateX(-50%) translateY(-6px)'; });
   setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, dur);
 }
+
+/* ===================== 自定义对话框（替代原生 confirm/prompt）===================== */
+function openDialog(opts) {
+  return new Promise((resolve) => {
+    const o = Object.assign({ title: '提示', message: '', value: '', placeholder: '', confirmText: '确定', cancelText: '取消', danger: false, input: false, multiline: false }, opts || {});
+    const mask = el('div', 'tz-dialog-mask');
+    const card = el('div', 'tz-dialog' + (o.danger ? ' danger' : ''));
+    const titleEl = el('div', 'tz-dialog-title', escapeHtml(o.title));
+    card.appendChild(titleEl);
+    if (o.message) {
+      const msg = el('div', 'tz-dialog-msg');
+      msg.innerHTML = escapeHtml(o.message).replace(/\n/g, '<br>');
+      card.appendChild(msg);
+    }
+    let inputEl = null;
+    if (o.input) {
+      inputEl = el(o.multiline ? 'textarea' : 'input', 'tz-dialog-input');
+      if (o.multiline) inputEl.rows = 3; else inputEl.type = 'text';
+      inputEl.placeholder = o.placeholder || '';
+      inputEl.value = o.value || '';
+      card.appendChild(inputEl);
+    }
+    const btns = el('div', 'tz-dialog-btns');
+    const cancelBtn = el('button', 'tz-dialog-btn cancel', escapeHtml(o.cancelText));
+    const confirmBtn = el('button', 'tz-dialog-btn confirm' + (o.danger ? ' danger' : ''), escapeHtml(o.confirmText));
+    btns.append(cancelBtn, confirmBtn);
+    card.append(btns);
+    mask.appendChild(card);
+    document.body.appendChild(mask);
+    requestAnimationFrame(() => mask.classList.add('show'));
+    if (inputEl) setTimeout(() => { inputEl.focus(); inputEl.select(); }, 60);
+    let done = false;
+    const onKey = (ev) => {
+      if (ev.key === 'Escape') finish(inputEl ? null : false);
+      else if (ev.key === 'Enter' && inputEl && !o.multiline) { ev.preventDefault(); finish(inputEl.value); }
+    };
+    document.addEventListener('keydown', onKey);
+    const finish = (val) => {
+      if (done) return; done = true;
+      document.removeEventListener('keydown', onKey);
+      mask.classList.remove('show');
+      setTimeout(() => mask.remove(), 200);
+      resolve(val);
+    };
+    confirmBtn.onclick = () => finish(inputEl ? inputEl.value : true);
+    cancelBtn.onclick = () => finish(inputEl ? null : false);
+    mask.addEventListener('click', (e) => { if (e.target === mask) finish(inputEl ? null : false); });
+  });
+}
+const confirmDialog = (opts) => openDialog({ ...opts, input: false }).then(v => !!v);
+const promptDialog = (opts) => openDialog({ ...opts, input: true });
 
 /* ===================== AI 引擎 ===================== */
 const AI = {
@@ -914,10 +972,11 @@ const AI = {
     const sys = `你是一位资深软件产品经理与全栈工程师。用户想用一句话创建一个浏览器内运行的小软件。请把用户的模糊需求优化为一份清晰的软件规格说明书。
 
 输出格式（严格遵循，不要加任何额外说明或代码块包裹）：
-名称|一句话描述|主要功能1,主要功能2,主要功能3,主要功能4,主要功能5|界面要点|交互要点
+名称|图标|一句话描述|主要功能1,主要功能2,主要功能3,主要功能4,主要功能5|界面要点|交互要点
 
 要求：
 - 名称：4-8个字，朗朗上口
+- 图标：一个最能代表该软件的 emoji 表情（只输出一个 emoji，不要任何文字）
 - 主要功能：3-6条，每条简短
 - 界面要点：描述布局和视觉风格
 - 交互要点：描述关键交互
@@ -949,6 +1008,29 @@ ${userPrompt}
 
 请直接输出完整 HTML 代码，从 <!DOCTYPE html> 开始：`;
     return await this.chatStream([{ role: 'system', content: sys }, { role: 'user', content: '请生成这个软件' }], onChunk, { temperature: 0.7, max_tokens: 8192 });
+  },
+
+  async fixApp(app, instruction, onChunk) {
+    const sys = `你是一位顶尖前端工程师。用户有一个已生成的单文件 HTML 软件，现在要按用户的需求修改或修复它。
+
+【硬性要求】
+1. 只输出一个完整的 <!DOCTYPE html> 文档（修改后的完整版本），不要任何解释文字、不要 markdown 代码块包裹
+2. 保留原软件的整体结构与风格，只针对用户的需求做修改
+3. 所有 CSS 写在 <style> 标签内，所有 JS 写在 <script> 标签内，全部内联
+4. 界面保持深色主题，配色使用紫(#7c3aed)-蓝(#3b82f6)-绿(#10b981)渐变
+5. 代码健壮，修复 bug 时确保不引入新问题
+6. 中文界面，注释用中文
+7. 不要使用任何外部 CDN、外部资源或网络请求（图片用 SVG 或 emoji）
+8. 应用应在 720×540 左右的窗口内良好显示，支持响应式
+
+【用户修改需求】
+${instruction}
+
+【当前软件完整代码】
+${app.html}
+
+请直接输出修改后的完整 HTML 代码，从 <!DOCTYPE html> 开始：`;
+    return await this.chatStream([{ role: 'system', content: sys }, { role: 'user', content: '请按需求修改这个软件' }], onChunk, { temperature: 0.6, max_tokens: 8192 });
   }
 };
 
@@ -1123,8 +1205,9 @@ function initChat() {
     toast('深度思考已' + (d ? '开启' : '关闭') + '（仅影响后续回复）');
   };
   const clrBtn = $('#chatClear');
-  if (clrBtn) clrBtn.onclick = () => {
-    if (!confirm('清空当前对话历史？')) return;
+  if (clrBtn) clrBtn.onclick = async () => {
+    const ok = await confirmDialog({ title: '清空对话', message: '清空当前对话历史？', confirmText: '清空', danger: true });
+    if (!ok) return;
     Store.setChat([]);
     refreshOpenApp('ai-chat');
   };
@@ -1273,8 +1356,10 @@ function refreshInstalledList() {
     <div class="store-installed-item">
       <div class="sii-icon">${a.icon||'📦'}</div>
       <div class="sii-info"><div class="sii-name">${escapeHtml(a.name)}</div><div class="sii-meta">${ago(a.createdAt)} · ${escapeHtml(a.desc||'')}</div></div>
-      <button onclick="TZOS.openInstalled('${a.id}')">打开</button>
-      <button onclick="TZOS.uninstall('${a.id}')">卸载</button>
+      <button class="btn sm" onclick="TZOS.openInstalled('${a.id}')">打开</button>
+      <button class="btn sm ghost" onclick="TZOS.renameApp('${a.id}')">重命名</button>
+      <button class="btn sm ghost" onclick="TZOS.fixApp('${a.id}')">AI改进</button>
+      <button class="btn sm ghost" style="border-color:#ef4444;color:#fca5a5" onclick="TZOS.uninstall('${a.id}')">卸载</button>
     </div>`).join('');
 }
 window.TZOS.startGen = async function() {
@@ -1308,11 +1393,14 @@ window.TZOS.startGen = async function() {
       throw new Error('生成的代码不完整，请重试');
     }
     $('#codeProgress').innerHTML = '<div style="color:var(--c-emerald)">✓ 生成完成，共 ' + code.length + ' 字符</div>';
-    const nameMatch = spec.split('|')[0]?.trim() || '新软件';
-    const descMatch = spec.split('|')[1]?.trim() || prompt;
+    const parts = spec.split('|').map(s => s.trim());
+    const nameMatch = parts[0] || '新软件';
+    const iconRaw = parts[1] || '';
+    const iconMatch = (iconRaw && /\p{Extended_Pictographic}/u.test(iconRaw)) ? iconRaw : '📦';
+    const descMatch = parts[2] || prompt;
     const appId = 'app-' + Date.now();
     Store.saveApp({
-      id: appId, name: nameMatch, desc: descMatch, icon: '📦', grad: true,
+      id: appId, name: nameMatch, desc: descMatch, icon: iconMatch, grad: true,
       html: code, prompt, spec, createdAt: Date.now()
     });
     Desktop.render();
@@ -1330,6 +1418,70 @@ window.TZOS.startGen = async function() {
 };
 window.TZOS.openInstalled = function(id) { launchApp(id); };
 window.TZOS.uninstall = function(id) { uninstallApp(id); refreshInstalledList(); };
+window.TZOS.clearChat = async function() {
+  const ok = await confirmDialog({ title: '清空对话', message: '确定清空所有 AI 对话记录？', confirmText: '清空', danger: true });
+  if (!ok) return;
+  Store.setChat([]); toast('已清空');
+};
+window.TZOS.renameApp = async function(id) {
+  const app = Store.getApps().find(a => a.id === id);
+  if (!app) return;
+  const name = await promptDialog({ title: '重命名软件', message: '软件名称：', value: app.name || '', placeholder: '输入新名称', confirmText: '下一步' });
+  if (name === null) return;
+  const icon = await promptDialog({ title: '更换图标', message: '输入一个 emoji 作为图标：', value: app.icon || '📦', placeholder: '🎮 / 📝 / ⏰ …', confirmText: '保存' });
+  if (icon === null) return;
+  const patch = {};
+  const n = (name || '').trim(); if (n) patch.name = n;
+  const ic = (icon || '').trim();
+  if (ic && /\p{Extended_Pictographic}/u.test(ic)) patch.icon = ic;
+  if (!patch.name && !patch.icon) { toast('未修改'); return; }
+  Store.updateApp(id, patch);
+  Desktop.render(); StartMenu.render(); refreshInstalledList(); refreshOpenApp('file-manager');
+  WM.windows.filter(w => w.appId === id).forEach(w => {
+    if (patch.icon) { const ti = w.el.querySelector('.win-title-icon'); if (ti) ti.textContent = patch.icon; }
+    if (patch.name) { const tt = w.el.querySelector('.win-title-text'); if (tt) tt.textContent = patch.name; }
+    w.app = { ...w.app, ...patch };
+  });
+  toast('已更新');
+};
+window.TZOS.fixApp = async function(id) {
+  const app = Store.getApps().find(a => a.id === id);
+  if (!app) return;
+  if (!AI.isReady()) { toast('请先配置 AI'); launchApp('ai-config'); return; }
+  const instruction = await promptDialog({ title: 'AI 改进「' + app.name + '」', message: '描述你要修改或修复的内容：', placeholder: '例如：修复点击没反应 / 增加深色模式 / 调整布局…', confirmText: '开始改进', multiline: true });
+  if (!instruction || !instruction.trim()) return;
+  const mask = el('div', 'tz-dialog-mask show');
+  const card = el('div', 'tz-dialog');
+  card.style.width = 'min(520px,92vw)';
+  card.innerHTML = '<div class="tz-dialog-title">🔧 正在改进「' + escapeHtml(app.name) + '」</div><div class="tz-dialog-msg" id="fixStatus" style="margin-bottom:8px">⌨ AI 正在修改代码…</div><div id="fixCode" style="max-height:220px;overflow:auto;font-family:monospace;font-size:11px;white-space:pre-wrap;word-break:break-all;color:var(--ink-muted);background:rgba(0,0,0,0.25);border-radius:8px;padding:10px;margin-bottom:4px"></div>';
+  mask.appendChild(card); document.body.appendChild(mask);
+  const fixCode = card.querySelector('#fixCode');
+  const fixStatus = card.querySelector('#fixStatus');
+  const close = () => { mask.classList.remove('show'); setTimeout(() => mask.remove(), 200); };
+  try {
+    let code = '';
+    const result = await AI.fixApp(app, instruction.trim(), (delta, all) => {
+      code = all;
+      const tail = all.length > 1500 ? all.slice(-1500) : all;
+      fixCode.textContent = tail;
+      fixCode.scrollTop = fixCode.scrollHeight;
+    });
+    code = (result && result.content) ? result.content : code;
+    code = code.trim();
+    if (code.startsWith('```')) { code = code.replace(/^```(?:html)?\n?/, '').replace(/```$/, ''); }
+    if (!code.includes('<!DOCTYPE') && !code.includes('<html')) throw new Error('生成失败，请重试');
+    Store.updateApp(id, { html: code });
+    WM.windows.filter(w => w.appId === id).forEach(w => WM.reload(w.id));
+    Desktop.render(); StartMenu.render(); refreshInstalledList(); refreshOpenApp('file-manager');
+    fixStatus.innerHTML = '<span style="color:var(--c-emerald,#10b981)">✓ 改进完成，共 ' + code.length + ' 字符</span>';
+    toast('✓ ' + app.name + ' 已更新');
+    setTimeout(close, 1300);
+  } catch (e) {
+    fixStatus.innerHTML = '<span style="color:#fca5a5">✗ ' + escapeHtml(e.message) + '</span>';
+    toast('改进失败：' + e.message.slice(0, 40), 4000);
+    setTimeout(close, 2600);
+  }
+};
 
 /* ===================== 内置应用：系统设置 ===================== */
 function renderSettings() {
@@ -1359,7 +1511,7 @@ function renderSettings() {
     </div>
     <div class="setting-row">
       <div><div class="sr-label">清空对话历史</div><div class="sr-desc">删除所有 AI 对话记录</div></div>
-      <button class="btn sm ghost" onclick="if(confirm('确定清空？')){TZOS.Store.setChat([]);TZOS.toast('已清空')}">清空</button>
+      <button class="btn sm ghost" onclick="TZOS.clearChat()">清空</button>
     </div>
     <div class="setting-row">
       <div><div class="sr-label">清空通知</div><div class="sr-desc">删除所有通知</div></div>
@@ -1389,9 +1541,11 @@ window.TZOS.setStyle = function(s) {
   refreshOpenApp('settings');
   toast('风格已切换为 ' + (s === 'mac' ? 'macOS' : s === 'win' ? 'Windows' : '自动'));
 };
-window.TZOS.reset = function() {
-  if (!confirm('⚠️ 这将清除天择OS的所有本地数据（已安装软件、AI配置、对话历史、图标布局），确定继续吗？')) return;
-  if (!confirm('再次确认：此操作不可恢复！')) return;
+window.TZOS.reset = async function() {
+  const ok1 = await confirmDialog({ title: '重置天择OS', message: '⚠️ 这将清除天择OS的所有本地数据（已安装软件、AI配置、对话历史、图标布局），确定继续吗？', confirmText: '继续', danger: true });
+  if (!ok1) return;
+  const ok2 = await confirmDialog({ title: '再次确认', message: '此操作不可恢复！', confirmText: '确认重置', danger: true });
+  if (!ok2) return;
   localStorage.removeItem(Store.KEY);
   location.reload();
 };
@@ -1438,6 +1592,8 @@ function renderFileManager() {
           <div class="sii-meta">${ago(a.createdAt)}</div>
         </div>
         <button class="btn sm" onclick="TZOS.launchApp('${a.id}')">打开</button>
+        <button class="btn sm ghost" onclick="TZOS.renameApp('${a.id}');TZOS.refreshOpenApp('file-manager')">重命名</button>
+        <button class="btn sm ghost" onclick="TZOS.fixApp('${a.id}')">AI改进</button>
         <button class="btn sm ghost" style="border-color:#ef4444;color:#fca5a5" onclick="TZOS.uninstallApp('${a.id}');TZOS.refreshOpenApp('file-manager')">卸载</button>
       </div>`).join('')}
   </div>`;
@@ -1460,6 +1616,9 @@ const TIPS_DATA = [
   { cat: 'AI 对话', title: '切换 AI 提供方', body: '对话工具栏「⚙️自定义AI / 🫘豆包AI」一键切换。自定义走你配置的 OpenAI 兼容接口；豆包为网页嵌入。' },
   { cat: '软件商城', title: '一句话生成软件', body: '在软件商城输入需求，AI 会先优化提示词，再实时流式生成代码（可看到代码逐行写出），完成后自动安装到桌面并打开。' },
   { cat: '软件商城', title: '管理已安装软件', body: '「📁我的软件」或软件商城底部可查看/打开/卸载 AI 生成的软件。卸载按钮在窗口标题栏（紫色圆点）。' },
+  { cat: '软件商城', title: 'AI 改进软件', body: '已生成的软件可继续用 AI 修改：右键桌面软件图标 →「AI 改进」，或在「我的软件」点「AI改进」，输入要改的地方（如修复某 bug、加个功能），AI 会基于现有代码改好后自动更新。' },
+  { cat: '软件商城', title: '改名与换图标', body: '右键桌面软件图标 →「重命名」，或在「我的软件」点「重命名」，依次修改名称和图标（图标输入一个 emoji 即可）。' },
+  { cat: '软件商城', title: '自动命名与图标', body: '生成软件时，AI 会自动起名并选一个匹配的 emoji 图标，无需手动设置。' },
   { cat: '浏览器', title: '多标签页', body: '浏览器支持多标签页，点标签栏「＋」新建，点「✕」关闭。新链接在 OS 内新标签页打开，不外跳。' },
   { cat: '浏览器', title: '地址栏搜索', body: '在地址栏输入非网址文字会自动用 Bing 搜索；输入域名会自动补 https://。' },
   { cat: '桌面风格', title: 'Windows / macOS 切换', body: '任务栏右侧 🖥 按钮、系统设置、或右键桌面「切换桌面风格」可切 Windows（底部全宽任务栏，控件在右）与 macOS（底部居中 Dock，控件在左）两种风格。' },

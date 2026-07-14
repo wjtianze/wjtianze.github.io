@@ -549,3 +549,34 @@ body.mobile .floating-widget, body.mobile .fw-reopen { display: none; }
 }
 .msg-bubble .katex-display > .katex { white-space: nowrap; }
 .tz-math { white-space: nowrap; }
+
+/* ===================== 自定义对话框 ===================== */
+.tz-dialog-mask {
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(2,4,12,0.55); backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.2s; padding: 20px;
+}
+.tz-dialog-mask.show { opacity: 1; }
+.tz-dialog {
+  width: min(420px, 92vw); background: var(--glass-strong);
+  border: 1px solid var(--glass-border); border-radius: var(--r-md);
+  box-shadow: var(--sh-lg); padding: 22px; transform: scale(0.92); transition: transform 0.22s var(--ease);
+}
+.tz-dialog-mask.show .tz-dialog { transform: none; }
+.tz-dialog.danger { border-color: rgba(239,68,68,0.35); }
+.tz-dialog-title { font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 12px; }
+.tz-dialog-msg { font-size: 13px; color: var(--ink-dim); line-height: 1.65; margin-bottom: 16px; word-break: break-word; }
+.tz-dialog-input {
+  width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 8px;
+  border: 1px solid var(--glass-border); background: rgba(0,0,0,0.25); color: var(--ink);
+  font-size: 13px; font-family: inherit; outline: none; margin-bottom: 16px; transition: border-color 0.15s;
+}
+.tz-dialog-input:focus { border-color: var(--c-blue, #3b82f6); }
+textarea.tz-dialog-input { resize: vertical; min-height: 70px; line-height: 1.5; }
+.tz-dialog-btns { display: flex; gap: 8px; justify-content: flex-end; }
+.tz-dialog-btn { padding: 8px 18px; border-radius: 7px; font-size: 13px; cursor: pointer; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: var(--ink-dim); transition: background 0.15s, transform 0.1s; font-family: inherit; }
+.tz-dialog-btn:hover { background: rgba(255,255,255,0.1); }
+.tz-dialog-btn:active { transform: scale(0.96); }
+.tz-dialog-btn.confirm { background: linear-gradient(135deg,#7c3aed,#3b82f6); color: #fff; border: none; }
+.tz-dialog-btn.confirm.danger { background: linear-gradient(135deg,#ef4444,#dc2626); }
