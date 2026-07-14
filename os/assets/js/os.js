@@ -385,6 +385,7 @@ const WM = {
     this.focus(id);
     toast('已刷新 ' + (app.name || '应用'));
   },
+  bindDrag(w) {
     const title = w.el.querySelector('.win-title');
     let sx, sy, sl, st, dragging = false;
     title.addEventListener('pointerdown', (e) => {
