@@ -6,66 +6,10 @@
   <title>村庄存档分析 · COC 专区 · 天择网</title>
   <meta name="description" content="粘贴部落冲突村庄JSON数据，自动解析并按家乡/夜世界分类展示村庄完整数据，计算剩余升级时间（含墙钟时间），规划升级排程。" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
-  <style>
-    .v-input-area textarea{
-      width:100%; min-height:200px; resize:vertical;
-      font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12.5px; line-height:1.6;
-      padding:14px 16px; border:1px solid var(--line-strong); border-radius:var(--r-sm);
-      background:var(--bg-soft); color:var(--ink); outline:none; transition:border-color .15s;
-    }
-    .v-input-area textarea:focus{ border-color:var(--c-purple); }
-    .v-actions{ display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; }
-    .v-actions .btn{ cursor:pointer; }
-    .v-error{ margin-top:12px; padding:12px 16px; border-radius:8px; background:rgba(226,75,74,.15); color:#f5b8b8; font-size:13.5px; display:none; border:1px solid rgba(226,75,74,.4); }
-    .v-error.show{ display:block; }
-    .v-result{ display:none; } .v-result.show{ display:block; }
-
-    .v-metrics{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
-    .v-metric{ background:var(--glass); border:1px solid var(--line); border-radius:var(--r-sm); padding:14px 16px; }
-    .v-metric .vm-label{ font-size:12px; color:var(--ink-faint); }
-    .v-metric .vm-value{ font-size:18px; font-weight:600; margin-top:3px; color:var(--ink); }
-    .v-metric .vm-sub{ font-size:11.5px; color:var(--ink-faint); margin-top:2px; }
-
-    /* 升级时间总览 */
-    .v-opt-bar{ display:flex; flex-wrap:wrap; gap:18px; align-items:center; margin-bottom:18px; padding:12px 16px; background:var(--glass); border:1px solid var(--line); border-radius:var(--r-sm); }
-    .v-opt-bar label{ display:flex; align-items:center; gap:7px; font-size:13.5px; color:var(--ink-dim); cursor:pointer; }
-    .v-opt-bar input[type=checkbox]{ width:16px; height:16px; accent-color:var(--c-purple); cursor:pointer; }
-    .v-world-block{ margin-bottom:22px; }
-    .v-world-block h3{ font-size:15px; font-weight:600; color:var(--ink); margin-bottom:10px; display:flex; align-items:center; gap:8px; }
-    .v-time-table{ width:100%; border-collapse:collapse; font-size:13px; }
-    .v-time-table th{ text-align:left; padding:9px 12px; font-weight:500; color:var(--ink-faint); border-bottom:1px solid var(--line-strong); font-size:12px; }
-    .v-time-table td{ padding:9px 12px; border-bottom:1px solid var(--line); color:var(--ink-dim); }
-    .v-time-table tr:hover td{ background:var(--bg-elevated); }
-    .v-time-table .vt-cat{ font-weight:500; color:var(--ink); }
-    .v-time-bar{ height:6px; border-radius:3px; background:var(--bg-elevated); position:relative; min-width:80px; overflow:hidden; }
-    .v-time-bar .vt-fill{ height:100%; background:var(--grad-main); border-radius:3px; }
-    .v-wallclock{ font-weight:600; color:var(--c-emerald); }
-    .v-time-note{ font-size:12px; color:var(--ink-faint); margin-top:8px; line-height:1.6; }
-
-    /* 世界分区 */
-    .v-world{ margin-top:26px; }
-    .v-world-title{ display:flex; align-items:center; gap:10px; font-size:18px; font-weight:600; margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--line); color:var(--ink); }
-    .v-world-title .vw-badge{ font-size:12px; padding:3px 10px; border-radius:20px; background:var(--glass); color:var(--ink-faint); border:1px solid var(--line); }
-    .v-cat{ margin-bottom:22px; }
-    .v-cat-head{ display:flex; align-items:center; gap:8px; font-size:15px; font-weight:600; margin-bottom:10px; color:var(--ink); }
-    .v-cat-head .vc-emoji{ font-size:17px; }
-    .v-cat-head .vc-count{ font-size:12px; color:var(--ink-faint); font-weight:400; }
-    .v-cat-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:8px; }
-    .v-item{ background:var(--bg-elevated); border:1px solid var(--line); border-radius:8px; padding:9px 12px; font-size:13px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
-    .v-item .vi-name{ color:var(--ink); }
-    .v-item .vi-meta{ display:flex; align-items:center; gap:6px; flex-shrink:0; }
-    .v-item .vi-lvl{ font-weight:600; color:var(--ink); }
-    .v-item .vi-cnt{ font-size:11px; color:var(--ink-faint); }
-    .v-item .vi-tag{ font-size:10.5px; padding:2px 7px; border-radius:10px; }
-    .v-tag-up{ background:rgba(202,138,4,.18); color:#fbbf24; }
-    .v-tag-done{ background:rgba(16,185,129,.18); color:#34d399; }
-    .v-tag-gear{ background:rgba(99,102,241,.18); color:#a5b4fc; }
-    .v-tag-extra{ background:rgba(236,72,153,.18); color:#f9a8d4; }
-    .v-empty{ font-size:13px; color:var(--ink-faint); padding:8px 0; }
-  </style>
 </head>
-<body>
+<body class="coc-tool coc-village-tool">
   <div class="bg-mesh"></div>
 
   <header class="topbar">
@@ -86,6 +30,7 @@
         <a href="https://wjtianze.github.io/coc/index.html">COC 专区</a> <span>›</span>
         <span>村庄存档分析</span>
       </div>
+      <div class="coc-kicker reveal in d1">Village Intelligence · Local Analysis</div>
       <h1 class="reveal in d1">村庄存档 <span class="grad">分析</span></h1>
       <p class="reveal in d2">粘贴你的部落冲突村庄 JSON 数据，自动解析并按「家乡」与「夜世界」分类展示完整村庄信息，计算各类单位到达当前大本营满级的剩余升级时间（含按工人数量折算的墙钟时间）。所有解析在浏览器本地完成。</p>
     </section>
@@ -95,18 +40,19 @@
         <div class="section-head" style="margin-bottom:12px;">
           <h2><span class="bar"></span>粘贴村庄 JSON</h2>
         </div>
-        <p style="font-size:13.5px; color:var(--ink-dim); margin-bottom:12px; line-height:1.7;">将游戏中导出的村庄 JSON 粘贴到下方文本框，点击「解析数据」即可。数据仅在浏览器中处理。</p>
-        <textarea id="vJsonInput" placeholder='{"tag":"#XXXXX","timestamp":1783589176,"buildings":[...],"units":[...],"heroes":[...] ...}'></textarea>
+        <p id="vJsonHelp" style="font-size:13.5px; color:var(--ink-dim); margin-bottom:12px; line-height:1.7;"><span class="coc-status-dot"></span>将游戏中导出的村庄 JSON 粘贴到下方文本框，点击「解析数据」即可。数据仅在浏览器中处理。</p>
+        <label class="coc-section-label" for="vJsonInput">Village JSON Input</label>
+        <textarea id="vJsonInput" spellcheck="false" autocomplete="off" aria-describedby="vJsonHelp vError" placeholder='{"tag":"#XXXXX","timestamp":1783589176,"buildings":[...],"units":[...],"heroes":[...] ...}'></textarea>
         <div class="v-actions">
           <button class="btn" id="vParseBtn"><span>解析数据</span></button>
           <button class="btn btn--sm" id="vSampleBtn"><span>填入示例</span></button>
           <button class="btn btn--sm" id="vClearBtn"><span>清空</span></button>
         </div>
-        <div class="v-error" id="vError"></div>
+        <div class="v-error" id="vError" role="alert" aria-live="assertive" tabindex="-1"></div>
       </div>
     </section>
 
-    <section class="section wrap v-result" id="vResult">
+    <section class="section wrap v-result" id="vResult" tabindex="-1" aria-label="村庄分析结果">
       <!-- 概况 -->
       <div class="card reveal" style="padding:24px 28px; margin-bottom:22px;">
         <div class="section-head" style="margin-bottom:14px;">

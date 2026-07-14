@@ -1,76 +1,104 @@
 /* ============================================================
-   天择网 · 交互脚本 v2
-   目标：60fps 丝滑动画、被动监听、GPU 加速
+   天择网 · 公共交互层 v3
+   导航、滚动揭示、可访问性与轻量动效
    ============================================================ */
 (function () {
   "use strict";
 
-  /* 顶部栏滚动阴影 */
+  var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  var mobileNav = window.matchMedia("(max-width: 680px)");
   var topbar = document.querySelector(".topbar");
+  var toggle = document.querySelector(".nav-toggle");
+  var nav = document.querySelector(".nav");
+
+  document.documentElement.classList.add("js");
+
   function onScroll() {
-    if (!topbar) return;
-    if (window.scrollY > 8) topbar.classList.add("scrolled");
-    else topbar.classList.remove("scrolled");
+    if (topbar) topbar.classList.toggle("scrolled", window.scrollY > 8);
   }
+
   window.addEventListener("scroll", onScroll, { passive: true });
   onScroll();
 
-  /* 移动端导航开关 */
-  var toggle = document.querySelector(".nav-toggle");
-  var nav = document.querySelector(".nav");
+  /* 移动端导航：同步视觉状态、ARIA 与键盘焦点。 */
   if (toggle && nav) {
+    if (!nav.id) nav.id = "site-navigation";
+    toggle.type = "button";
+    toggle.setAttribute("aria-controls", nav.id);
+
+    function setNavState(open, options) {
+      var isOpen = Boolean(open && mobileNav.matches);
+      nav.classList.toggle("open", isOpen);
+      toggle.setAttribute("aria-expanded", String(isOpen));
+      toggle.setAttribute("aria-label", isOpen ? "关闭主导航" : "打开主导航");
+      nav.setAttribute("aria-hidden", String(mobileNav.matches && !isOpen));
+      document.body.classList.toggle("nav-open", isOpen);
+      if (isOpen && options && options.focusFirst) {
+        var firstLink = nav.querySelector("a");
+        if (firstLink) firstLink.focus();
+      }
+    }
+
     toggle.addEventListener("click", function () {
-      nav.classList.toggle("open");
+      setNavState(!nav.classList.contains("open"), { focusFirst: true });
     });
-    nav.querySelectorAll("a").forEach(function (a) {
-      a.addEventListener("click", function () {
-        nav.classList.remove("open");
-      });
+
+    nav.querySelectorAll("a").forEach(function (link) {
+      link.addEventListener("click", function () { setNavState(false); });
     });
-    document.addEventListener("click", function (e) {
-      if (!nav.contains(e.target) && !toggle.contains(e.target)) {
-        nav.classList.remove("open");
+
+    document.addEventListener("click", function (event) {
+      if (nav.classList.contains("open") && !nav.contains(event.target) && !toggle.contains(event.target)) {
+        setNavState(false);
       }
     });
-  }
 
-  /* 滚动揭示动画：优先使用 IntersectionObserver */
-  var reveals = document.querySelectorAll(".reveal");
-  if ("IntersectionObserver" in window && reveals.length) {
-    var revealIO = new IntersectionObserver(
-      function (entries) {
-        entries.forEach(function (e) {
-          if (e.isIntersecting) {
-            e.target.classList.add("in");
-            revealIO.unobserve(e.target);
-          }
-        });
-      },
-      { threshold: 0.10, rootMargin: "0px 0px -6% 0px" }
-    );
-    reveals.forEach(function (el) { revealIO.observe(el); });
-  } else {
-    reveals.forEach(function (el) { el.classList.add("in"); });
-  }
-
-  /* 网格内部子元素自动错峰显示 */
-  var staggerContainers = document.querySelectorAll(".grid, .feature-grid, .subzones, .scenario-list, .news-list");
-  staggerContainers.forEach(function (container) {
-    var children = container.querySelectorAll(".reveal");
-    children.forEach(function (child, idx) {
-      // 限制最大延迟，避免过长等待
-      var delay = Math.min(idx, 5) * 0.08;
-      child.style.transitionDelay = delay + "s";
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && nav.classList.contains("open")) {
+        setNavState(false);
+        toggle.focus();
+      }
     });
-  });
 
-  /* 背景网格视差：滚动时缓慢移动，营造空间感 */
+    function syncNavMode() { setNavState(nav.classList.contains("open")); }
+    if (mobileNav.addEventListener) mobileNav.addEventListener("change", syncNavMode);
+    else mobileNav.addListener(syncNavMode);
+    setNavState(false);
+  }
+
+  /* 滚动揭示：减少动态效果时直接呈现内容。 */
+  var reveals = document.querySelectorAll(".reveal");
+  if (reduceMotion.matches) {
+    reveals.forEach(function (element) { element.classList.add("in"); });
+  } else if ("IntersectionObserver" in window && reveals.length) {
+    var revealObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("in");
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08, rootMargin: "0px 0px -5% 0px" });
+
+    reveals.forEach(function (element) { revealObserver.observe(element); });
+  } else {
+    reveals.forEach(function (element) { element.classList.add("in"); });
+  }
+
+  if (!reduceMotion.matches) {
+    document.querySelectorAll(".grid, .feature-grid, .subzones, .scenario-list, .news-list").forEach(function (container) {
+      container.querySelectorAll(".reveal").forEach(function (child, index) {
+        child.style.setProperty("--reveal-delay", Math.min(index, 5) * 70 + "ms");
+      });
+    });
+  }
+
+  /* 背景视差只写入自定义属性，不覆盖组件自身 transform。 */
   var bgMesh = document.querySelector(".bg-mesh");
-  if (bgMesh) {
+  if (bgMesh && !reduceMotion.matches) {
     var ticking = false;
     function updateParallax() {
-      var y = window.scrollY;
-      bgMesh.style.transform = "translateY(" + (y * 0.06) + "px)";
+      bgMesh.style.setProperty("--mesh-offset", window.scrollY * 0.035 + "px");
       ticking = false;
     }
     window.addEventListener("scroll", function () {
@@ -81,55 +109,36 @@
     }, { passive: true });
   }
 
-  /* 通用返回上一页（带兜底回主页） */
-  document.querySelectorAll("[data-back]").forEach(function (btn) {
-    btn.addEventListener("click", function (ev) {
-      ev.preventDefault();
-      if (history.length > 1) {
-        history.back();
-      } else {
-        var home = btn.getAttribute("data-home") || "../index.html";
-        window.location.href = home;
-      }
+  document.querySelectorAll("[data-back]").forEach(function (button) {
+    button.addEventListener("click", function (event) {
+      event.preventDefault();
+      if (history.length > 1) history.back();
+      else window.location.href = button.getAttribute("data-home") || "../index.html";
     });
   });
 
-  /* 404：显示尝试访问的路径 */
-  var pathEl = document.getElementById("err-path");
-  if (pathEl) {
-    var attempted =
-      new URLSearchParams(window.location.search).get("path") ||
+  var pathElement = document.getElementById("err-path");
+  if (pathElement) {
+    var attemptedPath = new URLSearchParams(window.location.search).get("path") ||
       window.location.hash.replace(/^#/, "") ||
       document.referrer ||
       window.location.pathname;
-    pathEl.textContent = attempted || window.location.href;
+    pathElement.textContent = attemptedPath || window.location.href;
   }
 
-  /* 横幅轮播（若存在多条） */
+  /* 多条横幅才启用轮播；后台标签与减少动态效果时不自动切换。 */
   var banners = document.querySelectorAll(".banner-track .banner");
   if (banners.length > 1) {
-    var idx = 0;
-    banners.forEach(function (b, i) { b.style.display = i === 0 ? "" : "none"; });
-    setInterval(function () {
-      banners[idx].style.display = "none";
-      idx = (idx + 1) % banners.length;
-      banners[idx].style.display = "";
-      banners[idx].classList.remove("in");
-      void banners[idx].offsetWidth;
-      banners[idx].classList.add("in");
-    }, 5000);
-  }
+    var bannerIndex = 0;
+    banners.forEach(function (banner, index) {
+      banner.hidden = index !== 0;
+    });
 
-  /* 按钮涟漪（可选增强，不影响核心功能） */
-  document.querySelectorAll(".btn, .nav a, .dq-cat, .news-row").forEach(function (el) {
-    el.addEventListener("mousedown", function () {
-      el.style.transform = "scale(0.98)";
-    });
-    el.addEventListener("mouseup", function () {
-      el.style.transform = "";
-    });
-    el.addEventListener("mouseleave", function () {
-      el.style.transform = "";
-    });
-  });
+    window.setInterval(function () {
+      if (document.hidden || reduceMotion.matches) return;
+      banners[bannerIndex].hidden = true;
+      bannerIndex = (bannerIndex + 1) % banners.length;
+      banners[bannerIndex].hidden = false;
+    }, 6000);
+  }
 })();

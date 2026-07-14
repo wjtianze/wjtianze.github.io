@@ -112,18 +112,22 @@
       else { var pl=self.placeInLane(laneKey(t),0,t.sec); slot=pl?pl.slot:0; }
       self.planned[t.id]={id:t.id,start:0,dur:t.sec,lane:laneKey(t),slot:slot,locked:true}; self.planList.push(self.planned[t.id]);
     });
-    // 2. 英雄非locked专用槽串行
+    // 2. 英雄非locked专用槽串行；英雄多于槽位时，同槽英雄链继续排在已有链尾部
+    var heroSlotEnd=[];
+    for(var hs=0;hs<Math.max(bSlots,1);hs++)heroSlotEnd[hs]=0;
+    this.planList.forEach(function(p){ if(p.lane===builderLane)heroSlotEnd[p.slot]=Math.max(heroSlotEnd[p.slot]||0,p.start+p.dur); });
     heroKeys.forEach(function(key,idx){
       var slot=idx%Math.max(bSlots,1);
-      var prevEnd=0;
+      var prevEnd=heroSlotEnd[slot]||0;
       var lt=all.filter(function(t){return t.unitKey===key&&t.locked;})[0];
-      if(lt&&self.planned[lt.id]) prevEnd=self.planned[lt.id].start+self.planned[lt.id].dur;
+      if(lt&&self.planned[lt.id]) prevEnd=Math.max(prevEnd,self.planned[lt.id].start+self.planned[lt.id].dur);
       all.filter(function(t){return t.unitKey===key&&!t.locked;}).sort(function(a,b){return a.fromLvl-b.fromLvl;}).forEach(function(t){
         if(self.planned[t.id])return;
         var e=self.depEnd(t); var start=Math.max(prevEnd,e);
         self.planned[t.id]={id:t.id,start:start,dur:t.sec,lane:builderLane,slot:slot,locked:false}; self.planList.push(self.planned[t.id]);
         prevEnd=start+t.sec;
       });
+      heroSlotEnd[slot]=prevEnd;
     });
     // 3. 其他任务拓扑贪心
     var others=all.filter(function(t){return !self.planned[t.id]&&!t.locked;});
@@ -153,9 +157,9 @@
     lanes.forEach(function(l,i){ var n=laneRows[i].rows,y0=laneStartY[l.key]; s+='<rect x="0" y="'+y0+'" width="'+svgW+'" height="'+(n*rowH)+'" fill="'+(i%2?'rgba(255,255,255,0.015)':'transparent')+'"/>'; s+='<text class="vg-lane-label" x="10" y="'+(y0+12)+'" dominant-baseline="central">'+l.label+'('+slots[l.key]+'槽)</text>'; for(var r=0;r<n;r++)s+='<line class="vg-grid" x1="'+padL+'" y1="'+(y0+(r+1)*rowH)+'" x2="'+svgW+'" y2="'+(y0+(r+1)*rowH)+'"/>'; });
     var laneColor={}; lanes.forEach(function(l){laneColor[l.key]=l.color;});
     var self=this;
-    this.planList.forEach(function(p){ var t=BUILD.taskMap[p.id]; if(!t)return; var y0=laneStartY[p.lane]; if(y0==null)return; var y=y0+p.slot*rowH+4, x=padL+p.start*pxPerSec, w=Math.max(p.dur*pxPerSec,3); var col=laneColor[p.lane]||"#7c3aed"; if(p.locked)col="#64748b"; s+='<g class="vg-bar" data-tid="'+p.id+'"><rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+(rowH-8)+'" rx="4" fill="'+col+'"'+(p.locked?' stroke="#fbbf24" stroke-width="1.5"':'')+'/>'; var lbl=t.name; if(lbl.length>7)lbl=lbl.slice(0,6)+"…"; if(w>40)s+='<text x="'+(x+4)+'" y="'+(y+(rowH-8)/2)+'" dominant-baseline="central">'+lbl+' '+t.fromLvl+'→'+t.toLvl+'</text>'; if(p.locked&&w>20)s+='<text x="'+(x+w-14)+'" y="'+(y+10)+'" font-size="9" fill="#fbbf24">🔒</text>'; s+='</g>'; });
+    this.planList.forEach(function(p){ var t=BUILD.taskMap[p.id]; if(!t)return; var y0=laneStartY[p.lane]; if(y0==null)return; var y=y0+p.slot*rowH+4, x=padL+p.start*pxPerSec, w=Math.max(p.dur*pxPerSec,3); var col=laneColor[p.lane]||"#7c3aed"; if(p.locked)col="#64748b"; var barLabel=t.name+" "+t.fromLvl+"到"+t.toLvl+(p.locked?"，升级进行中":"，按 Delete 移回待规划区"); s+='<g class="vg-bar" data-tid="'+p.id+'" role="button" tabindex="'+(p.locked?'-1':'0')+'" aria-label="'+barLabel+'"><rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+(rowH-8)+'" rx="4" fill="'+col+'"'+(p.locked?' stroke="#fbbf24" stroke-width="1.5"':'')+'/>'; var lbl=t.name; if(lbl.length>7)lbl=lbl.slice(0,6)+"…"; if(w>40)s+='<text x="'+(x+4)+'" y="'+(y+(rowH-8)/2)+'" dominant-baseline="central">'+lbl+' '+t.fromLvl+'→'+t.toLvl+'</text>'; if(p.locked&&w>20)s+='<text x="'+(x+w-14)+'" y="'+(y+10)+'" font-size="9" fill="#fbbf24">🔒</text>'; s+='</g>'; });
     svg.innerHTML=s;
-    svg.querySelectorAll(".vg-bar").forEach(function(g){ var tid=g.getAttribute("data-tid"),p=self.planned[tid]; if(p&&p.locked)return; g.addEventListener("mousedown",function(e){ self.onBarDown(e); }); });
+    svg.querySelectorAll(".vg-bar").forEach(function(g){ var tid=g.getAttribute("data-tid"),p=self.planned[tid]; if(p&&p.locked)return; g.addEventListener("mousedown",function(e){ self.onBarDown(e); }); g.addEventListener("keydown",function(e){ if(e.key==="Delete"||e.key==="Backspace"){ e.preventDefault(); self.removeWithDeps(tid); self.redraw(); $(self.pendingGridId).focus(); } }); });
   };
   Planner.prototype.svgPoint=function(svg,e){ var pt=svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); };
   Planner.prototype.onBarDown=function(e){ e.preventDefault(); var g=e.currentTarget, tid=g.getAttribute("data-tid"), p=this.planned[tid]; if(!p||p.locked)return; var svg=$(this.svgId), pt=this.svgPoint(svg,e); this._drag={tid:tid,p:p,svg:svg,ptStart:pt,start0:p.start}; var self=this; this._move=function(ev){ self.onBarMove(ev); }; this._up=function(ev){ self.onBarUp(ev); }; window.addEventListener("mousemove",this._move); window.addEventListener("mouseup",this._up); };
@@ -166,14 +170,15 @@
     else { d.p.start=this.snapValid(d.p,d.newStart||d.p.start); }
     this.redraw();
   };
-  Planner.prototype.snapValid=function(p,newStart){ newStart=Math.max(0,newStart); var laneTasks=this.planList.filter(function(x){return x.lane===p.lane&&x.slot===p.slot&&x.tid!==p.tid;}).sort(function(a,b){return a.start-b.start;}); function conflict(s2){ return laneTasks.some(function(q){ return s2<q.start+q.dur&&s2+p.dur>q.start; }); } if(!conflict(newStart))return newStart; var t=newStart,sorted=laneTasks.slice().sort(function(a,b){return a.start-b.start;}); for(var i=0;i<sorted.length;i++){ var q=sorted[i]; if(t+p.dur<=q.start)return t; t=Math.max(t,q.start+q.dur); } return t; };
-  Planner.prototype.drawPending=function(){ var self=this,grid=$(this.pendingGridId); var up=this.unplanned(); $(this.pendingCountId).textContent=up.length+" 项"; if(!up.length){ grid.innerHTML='<div class="vp-pending-empty">全部任务已安排</div>'; return; } var h=""; up.forEach(function(t){ var lockTag=t.locked?' 🔒':''; h+='<div class="vp-pending-item" draggable="true" data-tid="'+t.id+'">'+t.name+' '+t.fromLvl+'→'+t.toLvl+' · '+fmtDur(t.sec)+lockTag+'</div>'; }); grid.innerHTML=h; grid.querySelectorAll(".vp-pending-item").forEach(function(el){ el.addEventListener("dragstart",function(e){ e.dataTransfer.setData("text/plain","add:"+el.getAttribute("data-tid")); e.dataTransfer.effectAllowed="move"; el.classList.add("dragging"); }); el.addEventListener("dragend",function(){ el.classList.remove("dragging"); }); }); };
+  Planner.prototype.snapValid=function(p,newStart){ var task=BUILD.taskMap[p.id],depMin=task?this.depEnd(task):0; newStart=Math.max(depMin,newStart||0); var laneTasks=this.planList.filter(function(x){return x.lane===p.lane&&x.slot===p.slot&&x.id!==p.id;}).sort(function(a,b){return a.start-b.start;}); function conflict(s2){ return laneTasks.some(function(q){ return s2<q.start+q.dur&&s2+p.dur>q.start; }); } if(!conflict(newStart))return newStart; var t=newStart; for(var i=0;i<laneTasks.length;i++){ var q=laneTasks[i]; if(t+p.dur<=q.start)return t; t=Math.max(t,q.start+q.dur); } return t; };
+  Planner.prototype.drawPending=function(){ var self=this,grid=$(this.pendingGridId); var up=this.unplanned(); $(this.pendingCountId).textContent=up.length+" 项"; grid.setAttribute("tabindex","-1"); if(!up.length){ grid.innerHTML='<div class="vp-pending-empty">全部任务已安排</div>'; return; } var h=""; up.forEach(function(t){ var lockTag=t.locked?' 🔒':''; h+='<button type="button" class="vp-pending-item" draggable="true" data-tid="'+t.id+'" aria-label="安排 '+t.name+' '+t.fromLvl+' 到 '+t.toLvl+' 级">'+t.name+' '+t.fromLvl+'→'+t.toLvl+' · '+fmtDur(t.sec)+lockTag+'</button>'; }); grid.innerHTML=h; grid.querySelectorAll(".vp-pending-item").forEach(function(el){ el.addEventListener("click",function(){ var t=BUILD.taskMap[el.getAttribute("data-tid")]; if(t){ self.scheduleWithDeps(t); self.redraw(); } }); el.addEventListener("dragstart",function(e){ e.dataTransfer.setData("text/plain","add:"+el.getAttribute("data-tid")); e.dataTransfer.effectAllowed="move"; el.classList.add("dragging"); }); el.addEventListener("dragend",function(){ el.classList.remove("dragging"); }); }); };
 
   var BUILD=null, homeP=null, bbP=null;
   function modeDesc(){ if(STATE.mode==="steady")return "稳本模式：升级所有内容，每级一个滑块。建筑工人优先英雄（每个英雄占一个专用槽连续升级），英雄升完再升其他；研究员与战宠研究员按时间短→长。"; return "速本模式：忽略防御建筑、建筑工人小屋升级、陷阱、资源采集器与英雄，集中资源冲大本营。"; }
   function setupDrop(planner){ var wrap=$(planner.wrapId),pending=$(planner.pendingGridId).parentElement; function over(e){ e.preventDefault(); e.dataTransfer.dropEffect="move"; this.classList.add("vp-drop-hover"); } function leave(){ this.classList.remove("vp-drop-hover"); } wrap.addEventListener("dragover",over); wrap.addEventListener("dragleave",leave); wrap.addEventListener("drop",function(e){ e.preventDefault(); this.classList.remove("vp-drop-hover"); var data=e.dataTransfer.getData("text/plain"); if(data&&data.indexOf("add:")===0){ var tid=data.slice(4),t=BUILD.taskMap[tid]; if(t)planner.scheduleWithDeps(t); planner.redraw(); } }); pending.addEventListener("dragover",over); pending.addEventListener("dragleave",leave); }
   function setupZoom(planner,world){ function setZoom(z){ STATE.zoom[world]=Math.max(0.3,Math.min(40,z)); $(planner.zoomLabelId).textContent=Math.round(STATE.zoom[world]*100)+"%"; planner.drawGantt(); } $("vpZoomIn"+cap(world)).addEventListener("click",function(){ setZoom(STATE.zoom[world]*1.5); }); $("vpZoomOut"+cap(world)).addEventListener("click",function(){ setZoom(STATE.zoom[world]/1.5); }); $("vpZoomReset"+cap(world)).addEventListener("click",function(){ setZoom(1); }); }
   function cap(w){ return w==="home"?"Home":"BB"; }
+  function activateTab(btn){ document.querySelectorAll(".vp-tab").forEach(function(b){b.classList.remove("active");b.setAttribute("aria-selected","false");}); btn.classList.add("active"); btn.setAttribute("aria-selected","true"); var w=btn.getAttribute("data-world"); document.querySelectorAll(".vp-pane").forEach(function(p){p.classList.remove("active");p.hidden=true;}); var pane=$(w==="home"?"vpHome":"vpBB"); pane.classList.add("active"); pane.hidden=false; }
   function rebuildAll(){ if(homeP)homeP.autoFill(); if(bbP)bbP.autoFill(); }
 
   function init(){
@@ -192,8 +197,8 @@
       $("vpAutoBB").addEventListener("click",function(){bbP.autoFill();}); $("vpClearBB").addEventListener("click",function(){bbP.clearPlan();});
       $("vpGobWorker").addEventListener("change",function(){STATE.gobWorker=this.checked?1:0;saveOpts();rebuildAll();});
       $("vpGobLab").addEventListener("change",function(){STATE.gobLab=this.checked?1:0;saveOpts();rebuildAll();});
-      document.querySelectorAll(".vp-mode-btn").forEach(function(btn){ btn.addEventListener("click",function(){ document.querySelectorAll(".vp-mode-btn").forEach(function(b){b.classList.remove("active");}); btn.classList.add("active"); STATE.mode=btn.getAttribute("data-mode"); $("vpModeDesc").textContent=modeDesc(); rebuildAll(); }); });
-      document.querySelectorAll(".vp-tab").forEach(function(btn){ btn.addEventListener("click",function(){ document.querySelectorAll(".vp-tab").forEach(function(b){b.classList.remove("active");}); btn.classList.add("active"); var w=btn.getAttribute("data-world"); document.querySelectorAll(".vp-pane").forEach(function(p){p.classList.remove("active");}); $(w==="home"?"vpHome":"vpBB").classList.add("active"); }); });
+      document.querySelectorAll(".vp-mode-btn").forEach(function(btn){ btn.addEventListener("click",function(){ document.querySelectorAll(".vp-mode-btn").forEach(function(b){b.classList.remove("active");b.setAttribute("aria-pressed","false");}); btn.classList.add("active"); btn.setAttribute("aria-pressed","true"); STATE.mode=btn.getAttribute("data-mode"); $("vpModeDesc").textContent=modeDesc(); rebuildAll(); }); });
+      document.querySelectorAll(".vp-tab").forEach(function(btn){ btn.addEventListener("click",function(){ activateTab(btn); }); btn.addEventListener("keydown",function(e){ if(e.key!=="ArrowLeft"&&e.key!=="ArrowRight")return; e.preventDefault(); var tabs=Array.prototype.slice.call(document.querySelectorAll(".vp-tab")),i=tabs.indexOf(btn),next=tabs[(i+(e.key==="ArrowRight"?1:-1)+tabs.length)%tabs.length]; activateTab(next); next.focus(); }); });
     }).catch(function(e){ $("vpMetricsWrap").innerHTML='<p style="color:#f5b8b8">游戏数据加载失败：'+e.message+'</p>'; });
   }
   function saveOpts(){ try{ STORE.gobWorker=STATE.gobWorker; STORE.gobLab=STATE.gobLab; localStorage.setItem("tz_coc_village",JSON.stringify(STORE)); }catch(e){} }

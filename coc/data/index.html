@@ -6,9 +6,10 @@
   <title>游戏数据查询 · COC 专区 · 天择网</title>
   <meta name="description" content="部落冲突全部单位静态游戏数据查询：兵种、建筑、法术、英雄、战宠、装备、陷阱、守卫、帮手等分类浏览与搜索，含各等级数值与所需大本营等级。" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
 </head>
-<body>
+<body class="coc-tool coc-data-tool">
   <div class="bg-mesh"></div>
 
   <header class="topbar">
@@ -33,6 +34,7 @@
         <a href="https://wjtianze.github.io/coc/index.html">COC 专区</a> <span>›</span>
         <span>游戏数据查询</span>
       </div>
+      <div class="coc-kicker reveal in d1">COC Intelligence Console · Local Dataset</div>
       <h1 class="reveal in d1">游戏数据 <span class="grad">查询</span></h1>
       <p class="reveal in d2">部落冲突全部单位静态游戏数据，支持分类筛选与关键词搜索。点击任意条目查看中文介绍、基础属性与各等级数值（含所需大本营等级、升级花费与时间）。数据均来自本地整理，不查询玩家信息，不调用任何外部接口。</p>
     </section>
@@ -41,19 +43,19 @@
       <div class="dq-toolbar reveal">
         <label class="dq-search">
           <span class="dq-ic">🔍</span>
-          <input id="dqInput" type="text" placeholder="搜索单位中英文名称或关键字…" autocomplete="off" />
+          <input id="dqInput" type="search" placeholder="搜索单位中英文名称或关键字…" autocomplete="off" aria-label="搜索游戏数据" aria-controls="dqGrid" />
         </label>
-        <span class="dq-count" id="dqCount">加载中…</span>
+        <span class="dq-count" id="dqCount" role="status" aria-live="polite">加载中…</span>
       </div>
 
-      <div class="dq-cats reveal d1" id="dqCats"></div>
+      <div class="dq-cats reveal d1" id="dqCats" role="toolbar" aria-label="数据分类筛选"></div>
 
-      <div class="dq-loading" id="dqLoading">
+      <div class="dq-loading" id="dqLoading" role="status" aria-live="polite">
         <div class="spinner"></div>
         <div>正在加载游戏数据…</div>
       </div>
 
-      <div class="dq-grid" id="dqGrid" style="display:none;"></div>
+      <div class="dq-grid" id="dqGrid" style="display:none;" aria-live="polite"></div>
 
       <div class="dq-empty" id="dqEmpty" style="display:none;">
         <div class="de-icon">🔍</div>
@@ -75,8 +77,8 @@
     </section>
   </main>
 
-  <div class="dq-overlay" id="dqOverlay">
-    <div class="dq-modal" id="dqModal"></div>
+  <div class="dq-overlay" id="dqOverlay" aria-hidden="true">
+    <div class="dq-modal" id="dqModal" role="dialog" aria-modal="true" aria-labelledby="dqDialogTitle" tabindex="-1"></div>
   </div>
 
   <footer class="footer">
@@ -159,6 +161,7 @@
     var UNITS = [];
     var currentBig = "all";
     var currentKw = "";
+    var lastFocus = null;
 
     /* ---------- 卡片关键属性 ---------- */
     function cardStats(u) {
@@ -210,21 +213,26 @@
       });
       var overlay = document.getElementById("dqOverlay");
       overlay.addEventListener("click", function (e) { if (e.target === overlay) closeDetail(); });
-      document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDetail(); });
+      document.addEventListener("keydown", function (e) {
+        if (!overlay.classList.contains("open")) return;
+        if (e.key === "Escape") { closeDetail(); return; }
+        if (e.key === "Tab") trapModalFocus(e);
+      });
     }
 
     function renderCats() {
       var box = document.getElementById("dqCats");
-      var html = '<span class="dq-cat active" data-big="all">全部 <span class="ct-num">' + UNITS.length + '</span></span>';
+      var html = '<button type="button" class="dq-cat active" data-big="all" aria-pressed="true">全部 <span class="ct-num">' + UNITS.length + '</span></button>';
       BIG_CATS.forEach(function (c) {
         var n = UNITS.filter(function (u) { return c.subs.indexOf(u.category) !== -1; }).length;
-        html += '<span class="dq-cat" data-big="' + c.key + '">' + c.emoji + ' ' + c.zh + ' <span class="ct-num">' + n + '</span></span>';
+        html += '<button type="button" class="dq-cat" data-big="' + c.key + '" aria-pressed="false">' + c.emoji + ' ' + c.zh + ' <span class="ct-num">' + n + '</span></button>';
       });
       box.innerHTML = html;
       box.querySelectorAll(".dq-cat").forEach(function (el) {
         el.addEventListener("click", function () {
-          box.querySelectorAll(".dq-cat").forEach(function (x) { x.classList.remove("active"); });
+          box.querySelectorAll(".dq-cat").forEach(function (x) { x.classList.remove("active"); x.setAttribute("aria-pressed", "false"); });
           el.classList.add("active");
+          el.setAttribute("aria-pressed", "true");
           currentBig = el.getAttribute("data-big");
           render();
         });
@@ -258,7 +266,7 @@
         var stats = cardStats(u);
         var statsHtml = stats.map(function (s) { return '<span class="dc-stat">' + esc(s.k) + ' <b>' + esc(String(s.v)) + '</b></span>'; }).join("");
         frag += '' +
-          '<div class="card dq-card" data-idx="' + idx + '">' +
+          '<button type="button" class="card dq-card" data-idx="' + idx + '" aria-label="查看' + esc(zh) + '详细数据">' +
             '<div class="dc-top">' +
               '<div class="dc-emoji">' + bm.emoji + '</div>' +
               '<div class="dc-name">' +
@@ -269,7 +277,7 @@
             '<span class="dc-pill">' + esc(u.category || "") + '</span>' +
             (desc ? '<div class="dc-info">' + esc(desc) + '</div>' : '') +
             (statsHtml ? '<div class="dc-stats">' + statsHtml + '</div>' : '') +
-          '</div>';
+          '</button>';
       });
       grid.innerHTML = frag;
       grid.querySelectorAll(".dq-card").forEach(function (node, i) {
@@ -361,10 +369,10 @@
       }
 
       document.getElementById("dqModal").innerHTML = '' +
-        '<button class="dq-close" id="dqClose" aria-label="关闭">×</button>' +
+        '<button type="button" class="dq-close" id="dqClose" aria-label="关闭详情">×</button>' +
         '<div class="dm-head">' +
-          '<div class="dm-emoji">' + bm.emoji + '</div>' +
-          '<div class="dm-title"><h2>' + esc(zh) + '</h2>' + (en ? '<div class="dm-en">' + esc(en) + '</div>' : '') + '</div>' +
+          '<div class="dm-emoji" aria-hidden="true">' + bm.emoji + '</div>' +
+          '<div class="dm-title"><h2 id="dqDialogTitle">' + esc(zh) + '</h2>' + (en ? '<div class="dm-en">' + esc(en) + '</div>' : '') + '</div>' +
         '</div>' +
         '<div class="dm-pills">' + pills + '</div>' +
         (desc ? '<div class="dm-desc">' + esc(desc) + '</div>' : '') +
@@ -373,13 +381,29 @@
 
       document.getElementById("dqClose").addEventListener("click", closeDetail);
       var overlay = document.getElementById("dqOverlay");
+      lastFocus = document.activeElement;
       overlay.classList.add("open");
+      overlay.setAttribute("aria-hidden", "false");
       document.body.style.overflow = "hidden";
       overlay.scrollTop = 0;
+      document.getElementById("dqClose").focus();
+    }
+    function trapModalFocus(e) {
+      var modal = document.getElementById("dqModal");
+      var nodes = modal.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])');
+      if (!nodes.length) { e.preventDefault(); modal.focus(); return; }
+      var first = nodes[0], last = nodes[nodes.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     }
     function closeDetail() {
-      document.getElementById("dqOverlay").classList.remove("open");
+      var overlay = document.getElementById("dqOverlay");
+      if (!overlay.classList.contains("open")) return;
+      overlay.classList.remove("open");
+      overlay.setAttribute("aria-hidden", "true");
       document.body.style.overflow = "";
+      if (lastFocus && typeof lastFocus.focus === "function") lastFocus.focus();
+      lastFocus = null;
     }
 
     function esc(s) {

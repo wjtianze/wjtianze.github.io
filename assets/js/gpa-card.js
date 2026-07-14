@@ -46,6 +46,38 @@
 
   // ===== 游戏状态 =====
   var G = null;
+  var activeDialog = null;
+  var dialogReturnFocus = null;
+
+  function getFocusable(container) {
+    return Array.prototype.slice.call(container.querySelectorAll('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'))
+      .filter(function (el) { return !el.hidden && el.offsetParent !== null; });
+  }
+
+  function openDialog(dialog, preferredFocus) {
+    dialogReturnFocus = document.activeElement;
+    activeDialog = dialog;
+    dialog.classList.remove("hidden");
+    dialog.setAttribute("aria-hidden", "false");
+    window.requestAnimationFrame(function () {
+      var target = preferredFocus || getFocusable(dialog)[0] || dialog.querySelector(".gpa-overlay-card");
+      if (target) target.focus();
+    });
+  }
+
+  function closeDialog(dialog, restoreFocus) {
+    dialog.classList.add("hidden");
+    dialog.setAttribute("aria-hidden", "true");
+    activeDialog = null;
+    if (restoreFocus !== false && dialogReturnFocus && document.contains(dialogReturnFocus)) dialogReturnFocus.focus();
+    dialogReturnFocus = null;
+  }
+
+  function announce(message) {
+    var el = document.getElementById("gameAnnouncer");
+    el.textContent = "";
+    window.setTimeout(function () { el.textContent = message; }, 20);
+  }
 
   function newGame(pickedSkills) {
     var maxHp = 100;
@@ -58,7 +90,7 @@
         name: "你", hp: maxHp, maxHp: maxHp, shield: 0, energy: 3, gpa: 1.0,
         deck: [], hand: [], shop: [], unlocked: CARDS.map(function (c) { return c.id; }),
         skills: pickedSkills.map(function (s) { return { id: s.id, cooldown: 0, used: false }; }),
-        milestonesClaimed: {}, costReduction: 0, nextEnergyBonus: 0,
+        milestonesClaimed: {}, costReduction: 0, nextEnergyBonus: 0, hasTakenTurn: false,
         gpaThisTurn: 0, gpaAttack: false, gpaDefense: false, gpaBuy: false,
         passiveTriggered: {}
       },
@@ -66,13 +98,15 @@
         name: "AI 对手", hp: 95, maxHp: 95, shield: 0, energy: 3, gpa: 1.0,
         deck: [], hand: [], shop: [], unlocked: CARDS.map(function (c) { return c.id; }),
         skills: [{ id: "steady", cooldown: 0, used: false }, { id: "adjust", cooldown: 0, used: false }],
-        milestonesClaimed: {}, costReduction: 0, nextEnergyBonus: 0,
+        milestonesClaimed: {}, costReduction: 0, nextEnergyBonus: 0, hasTakenTurn: false,
         gpaThisTurn: 0, gpaAttack: false, gpaDefense: false, gpaBuy: false,
         passiveTriggered: {}
       },
       log: [],
-      ended: false
+      ended: false,
+      secondPlayerBonusPending: null
     };
+    G.secondPlayerBonusPending = G.firstPlayer === "player" ? "ai" : "player";
     buildDeck(G.player);
     buildDeck(G.ai);
     drawCards(G.player, 5);
@@ -85,10 +119,36 @@
       render();
       setTimeout(aiTurn, 800);
     } else {
-      G.phase = "config";
-      log("system", "你的回合——配卡阶段");
-      render();
+      startPlayerTurn();
     }
+  }
+
+  function consumeSecondPlayerBonus(side) {
+    if (G.secondPlayerBonusPending !== side) return 0;
+    G.secondPlayerBonusPending = null;
+    log("system", (side === "player" ? "你" : "AI") + " 获得后手首回合补偿：额外 +1 能量");
+    return 1;
+  }
+
+  function startPlayerTurn() {
+    if (G.ended) return;
+    var p = G.player;
+    G.firstPlayer = "player";
+    G.phase = "supply";
+    var playerSupply = p.hasTakenTurn ? 3 + p.nextEnergyBonus : consumeSecondPlayerBonus("player");
+    p.energy = Math.min(10, p.energy + playerSupply);
+    p.hasTakenTurn = true;
+    p.nextEnergyBonus = 0;
+    p.shield = 0;
+    p.gpaThisTurn = 0; p.gpaAttack = false; p.gpaDefense = false; p.gpaBuy = false;
+    p.passiveTriggered = {};
+    p.costReduction = 0;
+    p.skills.forEach(function (sk) { if (sk.cooldown > 0) sk.cooldown--; });
+    drawCards(p, 5 - p.hand.length);
+    refreshShop(p);
+    G.phase = "action";
+    log("system", "你的回合——行动阶段");
+    render();
   }
 
   function buildDeck(p) {
@@ -132,14 +192,15 @@
     var card = CARD_MAP[p.hand[cardIdx]];
     if (!card) return;
     var cost = card.useCost;
-    if (p.costReduction > 0) { cost = Math.max(1, cost - p.costReduction); p.costReduction = 0; }
+    var usesCostReduction = p.costReduction > 0;
+    if (usesCostReduction) cost = Math.max(1, cost - p.costReduction);
     // steady skill
     var steady = p.skills.find(function (s) { return s.id === "steady"; });
-    if (steady && !p.passiveTriggered.steady && card.weight >= 12) {
-      cost = Math.max(1, cost - 1);
-      p.passiveTriggered.steady = true;
-    }
+    var usesSteady = steady && !p.passiveTriggered.steady && card.weight >= 12;
+    if (usesSteady) cost = Math.max(1, cost - 1);
     if (p.energy < cost) { toast("能量不足"); return; }
+    if (usesCostReduction) p.costReduction = 0;
+    if (usesSteady) p.passiveTriggered.steady = true;
     p.energy -= cost;
     p.hand.splice(cardIdx, 1);
     executeCardEffect(card, p, G.ai);
@@ -163,7 +224,7 @@
     for (var i = 0; i < card.weight; i++) p.deck.unshift(cardId);
     log("buy", p.name + " 购买【" + card.name + "】");
     // GPA from buying
-    if (!p.gpaBuy) { p.gpa += 0.1; p.gpaBuy = true; p.gpaThisTurn += 0.1; }
+    if (!p.gpaBuy && p.gpaThisTurn < 0.3) { addGpa(p, 0.1); p.gpaBuy = true; }
     checkMilestones(p);
     checkWin();
     render();
@@ -214,15 +275,6 @@
   }
 
   function endPlayerTurn() {
-    var p = G.player;
-    // clear shield
-    p.shield = 0;
-    // reset per-turn flags
-    p.gpaThisTurn = 0; p.gpaAttack = false; p.gpaDefense = false; p.gpaBuy = false;
-    p.passiveTriggered = {};
-    p.costReduction = 0;
-    // reduce cooldowns
-    p.skills.forEach(function (sk) { if (sk.cooldown > 0) sk.cooldown--; });
     G.turn++;
     G.firstPlayer = "ai";
     G.phase = "supply";
@@ -236,7 +288,9 @@
     var ai = G.ai;
     var pl = G.player;
     // supply phase
-    ai.energy = Math.min(10, ai.energy + 3 + ai.nextEnergyBonus);
+    var aiSupply = ai.hasTakenTurn ? 3 + ai.nextEnergyBonus : consumeSecondPlayerBonus("ai");
+    ai.energy = Math.min(10, ai.energy + aiSupply);
+    ai.hasTakenTurn = true;
     ai.nextEnergyBonus = 0;
     ai.shield = 0;
     ai.gpaThisTurn = 0; ai.gpaAttack = false; ai.gpaDefense = false; ai.gpaBuy = false;
@@ -254,92 +308,79 @@
     setTimeout(aiAction, 500);
   }
 
+  function getAICandidate(predicate) {
+    var ai = G.ai;
+    var steadyReady = ai.skills.some(function (s) { return s.id === "steady"; }) && !ai.passiveTriggered.steady;
+    for (var i = 0; i < ai.hand.length; i++) {
+      var card = CARD_MAP[ai.hand[i]];
+      if (!predicate(card)) continue;
+      var cost = card.useCost;
+      var usesCostReduction = ai.costReduction > 0;
+      if (usesCostReduction) cost = Math.max(1, cost - ai.costReduction);
+      var usesSteady = steadyReady && card.weight >= 12;
+      if (usesSteady) cost = Math.max(1, cost - 1);
+      if (ai.energy >= cost) return { idx: i, card: card, cost: cost, usesCostReduction: usesCostReduction, usesSteady: usesSteady };
+    }
+    return null;
+  }
+
+  function playAICandidate(candidate, suffix) {
+    if (!candidate || G.ended) return false;
+    var ai = G.ai;
+    if (candidate.idx < 0 || candidate.idx >= ai.hand.length || ai.hand[candidate.idx] !== candidate.card.id || ai.energy < candidate.cost) return false;
+    ai.energy -= candidate.cost;
+    if (candidate.usesCostReduction) ai.costReduction = 0;
+    if (candidate.usesSteady) ai.passiveTriggered.steady = true;
+    ai.hand.splice(candidate.idx, 1);
+    executeCardEffect(candidate.card, ai, G.player);
+    log("play", "AI 打出【" + candidate.card.name + "】" + (suffix || ""));
+    checkMilestones(ai);
+    checkWin();
+    return true;
+  }
+
+  function canAIForceLethal() {
+    var ai = G.ai;
+    var energy = ai.energy;
+    var steadyReady = ai.skills.some(function (s) { return s.id === "steady"; }) && !ai.passiveTriggered.steady;
+    var reduction = ai.costReduction;
+    var damage = 0;
+    ai.hand.forEach(function (id) {
+      var card = CARD_MAP[id];
+      if (card.target !== "enemy") return;
+      var cost = card.useCost;
+      if (reduction > 0) { cost = Math.max(1, cost - reduction); reduction = 0; }
+      if (steadyReady && card.weight >= 12) { cost = Math.max(1, cost - 1); steadyReady = false; }
+      if (energy < cost) return;
+      energy -= cost;
+      damage += parseDamage(card);
+    });
+    return damage >= G.player.hp + G.player.shield;
+  }
+
   function aiAction() {
     if (G.ended) return;
     var ai = G.ai;
     var pl = G.player;
 
-    // 1. Check if can win by attacking
-    var lethal = false;
-    var playable = ai.hand.map(function (id, i) {
-      var c = CARD_MAP[id];
-      var cost = c.useCost;
-      var steady = ai.skills.find(function (s) { return s.id === "steady"; });
-      if (steady && !ai.passiveTriggered.steady && c.weight >= 12) { cost = Math.max(1, cost - 1); }
-      return { idx: i, card: c, cost: cost, affordable: ai.energy >= cost };
-    }).filter(function (x) { return x.affordable; });
-
-    // Calculate total possible damage
-    var totalDmg = 0;
-    playable.forEach(function (x) {
-      if (x.card.target === "enemy") {
-        var dmg = parseDamage(x.card);
-        if (x.card.id === "precise") dmg += Math.min(pl.shield, 8);
-        totalDmg += dmg;
+    if (canAIForceLethal()) {
+      var lethalAttack;
+      while (!G.ended && (lethalAttack = getAICandidate(function (card) { return card.target === "enemy"; }))) {
+        playAICandidate(lethalAttack, "");
       }
-    });
-
-    if (totalDmg >= pl.hp + pl.shield) {
-      // lethal: play all attacks
-      playable.forEach(function (x) {
-        if (G.ended) return;
-        if (x.card.target === "enemy" && ai.energy >= x.cost) {
-          ai.energy -= x.cost;
-          if (ai.skills.find(function (s) { return s.id === "steady"; }) && !ai.passiveTriggered.steady && x.card.weight >= 12) ai.passiveTriggered.steady = true;
-          ai.hand.splice(x.idx, 1);
-          executeCardEffect(x.card, ai, pl);
-          log("play", "AI 打出【" + x.card.name + "】");
-          checkMilestones(ai);
-          checkWin();
-        }
-      });
     } else {
-      // 2. If low HP, try to defend/heal
       if (ai.hp < ai.maxHp * 0.35) {
-        var defense = playable.find(function (x) { return x.card.type === "防御" || x.card.type === "治疗"; });
-        if (defense) {
-          ai.energy -= defense.cost;
-          ai.hand.splice(defense.idx, 1);
-          executeCardEffect(defense.card, ai, pl);
-          log("play", "AI 打出【" + defense.card.name + "】（防守）");
-          checkMilestones(ai);
-          checkWin();
-        }
+        playAICandidate(getAICandidate(function (card) { return card.type === "防御" || card.type === "治疗"; }), "（防守）");
       }
-      // 3. Try to play an attack if affordable
-      if (!G.ended) {
-        var attack = playable.find(function (x) { return x.card.target === "enemy"; });
-        if (attack && ai.energy >= attack.cost) {
-          ai.energy -= attack.cost;
-          if (ai.skills.find(function (s) { return s.id === "steady"; }) && !ai.passiveTriggered.steady && attack.card.weight >= 12) ai.passiveTriggered.steady = true;
-          ai.hand.splice(attack.idx, 1);
-          executeCardEffect(attack.card, ai, pl);
-          log("play", "AI 打出【" + attack.card.name + "】");
-          checkMilestones(ai);
-          checkWin();
-        }
-      }
-      // 4. Try to play a GPA card
-      if (!G.ended) {
-        var gpaCard = playable.find(function (x) { return x.card.type === "GPA"; });
-        if (gpaCard && ai.energy >= gpaCard.cost) {
-          ai.energy -= gpaCard.cost;
-          ai.hand.splice(gpaCard.idx, 1);
-          executeCardEffect(gpaCard.card, ai, pl);
-          log("gpa", "AI 打出【" + gpaCard.card.name + "】");
-          checkMilestones(ai);
-          checkWin();
-        }
-      }
-      // 5. Buy a card if energy remaining
+      if (!G.ended) playAICandidate(getAICandidate(function (card) { return card.target === "enemy"; }), "");
+      if (!G.ended) playAICandidate(getAICandidate(function (card) { return card.type === "GPA"; }), "");
+
       if (!G.ended && ai.energy >= 3) {
         var bestBuy = null;
         ai.shop.forEach(function (cid, si) {
           if (!cid) return;
-          var c = CARD_MAP[cid];
-          if (ai.energy >= c.buyCost) {
-            if (!bestBuy || c.weight > bestBuy.card.weight) bestBuy = { idx: si, card: c };
-          }
+          var card = CARD_MAP[cid];
+          if (ai.energy >= card.buyCost && (!bestBuy || card.weight > bestBuy.card.weight)) bestBuy = { idx: si, card: card };
         });
         if (bestBuy) {
           ai.energy -= bestBuy.card.buyCost;
@@ -347,14 +388,14 @@
           if (ai.unlocked.indexOf(bestBuy.card.id) < 0) ai.unlocked.push(bestBuy.card.id);
           for (var i = 0; i < bestBuy.card.weight; i++) ai.deck.unshift(bestBuy.card.id);
           log("buy", "AI 购买【" + bestBuy.card.name + "】");
-          if (!ai.gpaBuy) { ai.gpa += 0.1; ai.gpaBuy = true; ai.gpaThisTurn += 0.1; }
+          if (!ai.gpaBuy && ai.gpaThisTurn < 0.3) { addGpa(ai, 0.1); ai.gpaBuy = true; }
           checkMilestones(ai);
           checkWin();
         }
       }
-      // 6. Use skill if available
+
       if (!G.ended) {
-        ai.skills.forEach(function (sk, si) {
+        ai.skills.forEach(function (sk) {
           var def = SKILL_MAP[sk.id];
           if (def.isPassive || sk.cooldown > 0 || ai.energy < (def.energyCost || 0)) return;
           if (sk.id === "breathe" && ai.hp < ai.maxHp * 0.6) {
@@ -368,39 +409,19 @@
       }
     }
 
-    // End AI turn
     if (G.ended) return;
-    ai.shield = 0;
-    ai.gpaThisTurn = 0; ai.gpaAttack = false; ai.gpaDefense = false; ai.gpaBuy = false;
-    ai.passiveTriggered = {};
-    ai.costReduction = 0;
-    ai.skills.forEach(function (sk) { if (sk.cooldown > 0) sk.cooldown--; });
     G.turn++;
-    G.firstPlayer = "player";
-    // player supply
-    var pp = G.player;
-    pp.energy = Math.min(10, pp.energy + 3 + pp.nextEnergyBonus);
-    pp.nextEnergyBonus = 0;
-    pp.shield = 0;
-    pp.gpaThisTurn = 0; pp.gpaAttack = false; pp.gpaDefense = false; pp.gpaBuy = false;
-    pp.passiveTriggered = {};
-    pp.costReduction = 0;
-    pp.skills.forEach(function (sk) { if (sk.cooldown > 0) sk.cooldown--; });
-    drawCards(pp, 5 - pp.hand.length);
-    if (pp.hand.length < 5) drawCards(pp, 5 - pp.hand.length);
-    refreshShop(pp);
-    G.phase = "config";
     log("system", "—— 回合 " + G.turn + "：你的回合 ——");
-    // check turn limit
     if (G.turn > 15) {
-      // sudden death
-      if (pp.gpa > ai.gpa) { endGame("player", "回合超限，GPA 更高者胜"); }
-      else if (ai.gpa > pp.gpa) { endGame("ai", "回合超限，GPA 更高者胜"); }
-      else if (pp.hp > ai.hp) { endGame("player", "回合超限，生命百分比更高者胜"); }
+      var playerHpPct = G.player.hp / G.player.maxHp;
+      var aiHpPct = ai.hp / ai.maxHp;
+      if (G.player.gpa > ai.gpa) { endGame("player", "回合超限，GPA 更高者胜"); }
+      else if (ai.gpa > G.player.gpa) { endGame("ai", "回合超限，GPA 更高者胜"); }
+      else if (playerHpPct > aiHpPct) { endGame("player", "回合超限，生命百分比更高者胜"); }
       else { endGame("ai", "回合超限，AI 生命百分比更高"); }
       return;
     }
-    render();
+    startPlayerTurn();
   }
 
   // ===== 卡牌效果执行 =====
@@ -527,14 +548,15 @@
     var title = document.getElementById("endTitle");
     var desc = document.getElementById("endDesc");
     if (winner === "player") {
-      icon.textContent = "🏆"; icon.className = "win-icon";
+      icon.textContent = "🏆"; icon.className = "gpa-dialog-icon win-icon";
       title.textContent = "胜利！";
     } else {
-      icon.textContent = "💀"; icon.className = "lose-icon";
+      icon.textContent = "💀"; icon.className = "gpa-dialog-icon lose-icon";
       title.textContent = "失败";
     }
     desc.innerHTML = reason + "<br/>回合 " + G.turn + "　|　你的 GPA " + G.player.gpa.toFixed(1) + "　|　AI GPA " + G.ai.gpa.toFixed(1);
-    screen.classList.remove("hidden");
+    announce(title.textContent + "。" + reason);
+    openDialog(screen, document.getElementById("playAgainBtn"));
   }
 
   // ===== 日志 =====
@@ -615,15 +637,15 @@
       if (steady && !p.passiveTriggered.steady && c.weight >= 12) cost = Math.max(1, cost - 1);
       if (p.costReduction > 0) cost = Math.max(1, cost - p.costReduction);
       var canPlay = isMyTurn && p.energy >= cost;
-      return '<div class="gpa-card' + (canPlay ? "" : " disabled") + '" data-idx="' + i + '">' +
-        '<div class="gpa-card-name">' + c.name + '</div>' +
+      return '<button type="button" class="gpa-card' + (canPlay ? "" : " disabled") + '" data-idx="' + i + '"' + (canPlay ? "" : " disabled") + ' aria-label="' + c.name + '，' + c.type + '，' + c.desc + '，使用能量 ' + cost + '">' +
+        '<span class="gpa-card-name">' + c.name + '</span>' +
         '<span class="gpa-card-type ' + c.type + '">' + c.type + '</span>' +
-        '<div class="gpa-card-desc">' + c.desc + '</div>' +
-        '<div class="gpa-card-cost">' +
+        '<span class="gpa-card-desc">' + c.desc + '</span>' +
+        '<span class="gpa-card-cost">' +
           '<span class="cost-use">⚡' + cost + '</span>' +
           '<span class="cost-buy">💰' + c.buyCost + '</span>' +
           '<span class="cost-wt">⚖' + c.weight + '</span>' +
-        '</div></div>';
+        '</span></button>';
     }).join("");
     el.querySelectorAll(".gpa-card").forEach(function (card) {
       card.addEventListener("click", function () {
@@ -635,8 +657,8 @@
 
   function renderAIHand() {
     var el = document.getElementById("aiHand");
-    el.innerHTML = G.ai.hand.map(function () {
-      return '<div class="gpa-card-back">🂠</div>';
+    el.innerHTML = G.ai.hand.map(function (_, i) {
+      return '<div class="gpa-card-back" aria-label="AI 手牌 ' + (i + 1) + '">🂠</div>';
     }).join("");
   }
 
@@ -645,16 +667,16 @@
     var p = G.player;
     var isMyTurn = G.firstPlayer === "player";
     el.innerHTML = p.shop.map(function (cid, i) {
-      if (!cid) return '<div class="gpa-shop-slot empty">已购买</div>';
+      if (!cid) return '<div class="gpa-shop-slot empty" aria-label="此商店位已购买">已购买</div>';
       var c = CARD_MAP[cid];
       var canBuy = isMyTurn && p.energy >= c.buyCost;
-      return '<div class="gpa-shop-slot has-card' + (canBuy ? "" : " disabled") + '" data-idx="' + i + '">' +
-        '<div style="width:100%;">' +
-        '<div class="gpa-card-name">' + c.name + '</div>' +
+      return '<button type="button" class="gpa-shop-slot has-card' + (canBuy ? "" : " disabled") + '" data-idx="' + i + '"' + (canBuy ? "" : " disabled") + ' aria-label="购买 ' + c.name + '，' + c.desc + '，需要能量 ' + c.buyCost + '">' +
+        '<span class="gpa-shop-card-body">' +
+        '<span class="gpa-card-name">' + c.name + '</span>' +
         '<span class="gpa-card-type ' + c.type + '">' + c.type + '</span>' +
-        '<div class="gpa-card-desc">' + c.desc + '</div>' +
-        '<div class="gpa-card-cost"><span class="cost-buy">💰' + c.buyCost + '</span><span class="cost-wt">⚖' + c.weight + '</span></div>' +
-        '</div></div>';
+        '<span class="gpa-card-desc">' + c.desc + '</span>' +
+        '<span class="gpa-card-cost"><span class="cost-buy">💰' + c.buyCost + '</span><span class="cost-wt">⚖' + c.weight + '</span></span>' +
+        '</span></button>';
     }).join("");
     el.querySelectorAll(".gpa-shop-slot.has-card").forEach(function (slot) {
       slot.addEventListener("click", function () {
@@ -672,7 +694,7 @@
       var ready = !def.isPassive && sk.cooldown === 0 && p.energy >= (def.energyCost || 0) && G.firstPlayer === "player" && G.phase === "action";
       var cls = "gpa-skill-chip" + (ready ? " ready" : "") + (sk.cooldown > 0 ? " on-cd" : "");
       var cd = sk.cooldown > 0 ? ' <span class="cd-tag">CD' + sk.cooldown + '</span>' : "";
-      return '<div class="' + cls + '" data-idx="' + i + '">' + def.name + cd + '</div>';
+      return '<button type="button" class="' + cls + '" data-idx="' + i + '"' + (ready ? "" : " disabled") + ' aria-label="技能 ' + def.name + '，' + def.desc + '">' + def.name + cd + '</button>';
     }).join("");
     el.querySelectorAll(".gpa-skill-chip.ready").forEach(function (chip) {
       chip.addEventListener("click", function () {
@@ -695,12 +717,12 @@
     var container = document.getElementById("skillPick");
     var selected = { passive: null, active: null };
     container.innerHTML = SKILLS.map(function (s) {
-      return '<div class="gpa-skill-option" data-id="' + s.id + '">' +
-        '<div class="sk-name">' + s.name + '</div>' +
-        '<div class="sk-type">' + (s.isPassive ? "被动" : "主动") + (s.cooldown ? " · CD" + s.cooldown : "") + '</div>' +
-        '<div class="sk-desc">' + s.desc + '</div>' +
-        '<div class="sk-cost">生命成本 ' + s.hpCost + (s.energyCost ? " · 能量 " + s.energyCost : "") + '</div>' +
-        '</div>';
+      return '<button type="button" class="gpa-skill-option" data-id="' + s.id + '" aria-pressed="false">' +
+        '<span class="sk-name">' + s.name + '</span>' +
+        '<span class="sk-type">' + (s.isPassive ? "被动" : "主动") + (s.cooldown ? " · CD" + s.cooldown : "") + '</span>' +
+        '<span class="sk-desc">' + s.desc + '</span>' +
+        '<span class="sk-cost">生命成本 ' + s.hpCost + (s.energyCost ? " · 能量 " + s.energyCost : "") + '</span>' +
+        '</button>';
     }).join("");
     container.querySelectorAll(".gpa-skill-option").forEach(function (el) {
       el.addEventListener("click", function () {
@@ -709,26 +731,29 @@
         if (skill.isPassive) {
           container.querySelectorAll(".gpa-skill-option").forEach(function (e) {
             var sid = e.getAttribute("data-id");
-            if (SKILL_MAP[sid].isPassive) e.classList.remove("selected");
+            if (SKILL_MAP[sid].isPassive) { e.classList.remove("selected"); e.setAttribute("aria-pressed", "false"); }
           });
           selected.passive = id;
         } else {
           container.querySelectorAll(".gpa-skill-option").forEach(function (e) {
             var sid = e.getAttribute("data-id");
-            if (!SKILL_MAP[sid].isPassive) e.classList.remove("selected");
+            if (!SKILL_MAP[sid].isPassive) { e.classList.remove("selected"); e.setAttribute("aria-pressed", "false"); }
           });
           selected.active = id;
         }
         this.classList.add("selected");
+        this.setAttribute("aria-pressed", "true");
         document.getElementById("startBtn").disabled = !(selected.passive && selected.active);
       });
     });
     document.getElementById("startBtn").addEventListener("click", function () {
       if (!selected.passive || !selected.active) return;
       var picked = [SKILL_MAP[selected.passive], SKILL_MAP[selected.active]];
-      document.getElementById("startScreen").classList.add("hidden");
+      closeDialog(document.getElementById("startScreen"), false);
       document.getElementById("gameBoard").style.display = "";
       newGame(picked);
+      var focusTarget = G.firstPlayer === "player" ? getFocusable(document.getElementById("playerSide"))[0] : document.getElementById("helpBtn");
+      if (focusTarget) focusTarget.focus();
     });
   }
 
@@ -738,12 +763,34 @@
   document.getElementById("restartBtn").addEventListener("click", function () { location.reload(); });
   document.getElementById("playAgainBtn").addEventListener("click", function () { location.reload(); });
   document.getElementById("helpBtn").addEventListener("click", function () {
-    document.getElementById("helpScreen").classList.remove("hidden");
+    openDialog(document.getElementById("helpScreen"), document.getElementById("closeHelpBtn"));
   });
   document.getElementById("closeHelpBtn").addEventListener("click", function () {
-    document.getElementById("helpScreen").classList.add("hidden");
+    closeDialog(document.getElementById("helpScreen"));
+  });
+  document.getElementById("helpScreen").addEventListener("click", function (event) {
+    if (event.target === this) closeDialog(this);
+  });
+  document.addEventListener("keydown", function (event) {
+    if (!activeDialog) return;
+    if (event.key === "Escape" && activeDialog.id === "helpScreen") {
+      event.preventDefault();
+      closeDialog(activeDialog);
+      return;
+    }
+    if (event.key !== "Tab") return;
+    var focusable = getFocusable(activeDialog);
+    if (!focusable.length) { event.preventDefault(); return; }
+    var first = focusable[0];
+    var last = focusable[focusable.length - 1];
+    if (!activeDialog.contains(document.activeElement)) { event.preventDefault(); (event.shiftKey ? last : first).focus(); }
+    else if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
   });
 
   // ===== 初始化 =====
   initStartScreen();
+  activeDialog = document.getElementById("startScreen");
+  var initialFocus = getFocusable(activeDialog)[0] || activeDialog.querySelector(".gpa-overlay-card");
+  if (initialFocus) initialFocus.focus();
 })();
