@@ -2035,12 +2035,13 @@ main { isolation: isolate; }
   text-transform: uppercase;
 }
 .hero h1 {
-  max-width: 1020px;
-  font-size: clamp(42px, 6.4vw, 76px);
-  line-height: .98;
-  letter-spacing: -.055em;
+  max-width: 1120px;
+  font-size: clamp(40px, 5.6vw, 68px);
+  line-height: 1.02;
+  letter-spacing: -.052em;
   margin-bottom: 30px;
 }
+.hero-title-line { white-space: nowrap; }
 .hero p.lead { max-width: 760px; font-size: clamp(17px, 1.8vw, 21px); }
 .hero-actions { margin-top: 2px; }
 .hero-ledger {
@@ -2210,7 +2211,7 @@ main { isolation: isolate; }
 @media (max-width: 900px) {
   .nav a { padding-inline: 10px; }
   .hero { min-height: auto; }
-  .hero h1 { font-size: clamp(40px, 8vw, 62px); }
+  .hero h1 { font-size: clamp(38px, 6.6vw, 56px); }
   .game-zone-hero { min-height: auto; }
 }
 
@@ -2250,7 +2251,8 @@ main { isolation: isolate; }
   html:not(.js) .topbar-inner { height: auto; flex-wrap: wrap; }
   .hero { padding-top: 70px; padding-bottom: 40px; }
   .hero::after { display: none; }
-  .hero h1 { font-size: clamp(36px, 11vw, 52px); line-height: 1.05; }
+  .hero h1 { font-size: clamp(34px, 10vw, 46px); line-height: 1.06; }
+  .hero-title-line { white-space: normal; }
   .hero p.lead { font-size: 17px; }
   .hero-ledger { width: 100%; }
   .hero-ledger span { width: 50%; margin: 0; padding-right: 12px; }
