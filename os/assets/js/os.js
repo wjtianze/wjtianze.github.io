@@ -924,7 +924,7 @@ const AI = {
     const res = await fetch(c.url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + c.key },
-      body: JSON.stringify({ model: c.model, messages, temperature: opts.temperature ?? 0.7, max_tokens: opts.max_tokens ?? 4096, stream: false })
+      body: JSON.stringify({ model: c.model, messages, temperature: opts.temperature ?? 0.7, max_tokens: opts.max_tokens ?? 131072, stream: false })
     });
     if (!res.ok) { const t = await res.text().catch(()=> ''); throw new Error('AI 接口错误 ' + res.status + '：' + t.slice(0,200)); }
     const data = await res.json();
@@ -939,7 +939,7 @@ const AI = {
     const res = await fetch(c.url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + c.key },
-      body: JSON.stringify({ model: c.model, messages, temperature: opts.temperature ?? 0.7, max_tokens: opts.max_tokens ?? 4096, stream: true })
+      body: JSON.stringify({ model: c.model, messages, temperature: opts.temperature ?? 0.7, max_tokens: opts.max_tokens ?? 131072, stream: true })
     });
     if (!res.ok) { const t = await res.text().catch(()=> ''); throw new Error('AI 接口错误 ' + res.status + '：' + t.slice(0,200)); }
     const reader = res.body.getReader();
@@ -981,7 +981,7 @@ const AI = {
 - 界面要点：描述布局和视觉风格
 - 交互要点：描述关键交互
 - 所有内容用中文，简洁清晰`;
-    const out = await this.chat([{ role: 'system', content: sys }, { role: 'user', content: userPrompt }], { temperature: 0.5, max_tokens: 600 });
+    const out = await this.chat([{ role: 'system', content: sys }, { role: 'user', content: userPrompt }], { temperature: 0.5, max_tokens: 131072 });
     return (out.content || '').trim();
   },
 
@@ -1007,7 +1007,7 @@ ${spec}
 ${userPrompt}
 
 请直接输出完整 HTML 代码，从 <!DOCTYPE html> 开始：`;
-    return await this.chatStream([{ role: 'system', content: sys }, { role: 'user', content: '请生成这个软件' }], onChunk, { temperature: 0.7, max_tokens: 8192 });
+    return await this.chatStream([{ role: 'system', content: sys }, { role: 'user', content: '请生成这个软件' }], onChunk, { temperature: 0.7, max_tokens: 131072 });
   },
 
   async fixApp(app, instruction, onChunk) {
@@ -1030,7 +1030,7 @@ ${instruction}
 ${app.html}
 
 请直接输出修改后的完整 HTML 代码，从 <!DOCTYPE html> 开始：`;
-    return await this.chatStream([{ role: 'system', content: sys }, { role: 'user', content: '请按需求修改这个软件' }], onChunk, { temperature: 0.6, max_tokens: 8192 });
+    return await this.chatStream([{ role: 'system', content: sys }, { role: 'user', content: '请按需求修改这个软件' }], onChunk, { temperature: 0.6, max_tokens: 131072 });
   }
 };
 
@@ -1091,7 +1091,7 @@ window.TZOS.testConfig = async function() {
   const prev = Store.getProvider(); Store.setProvider('custom');
   toast('正在测试连接…', 1500);
   try {
-    const r = await AI.chat([{role:'user',content:'请回复"OK"'}], { max_tokens: 10, provider:'custom' });
+    const r = await AI.chat([{role:'user',content:'请回复"OK"'}], { max_tokens: 131072, provider:'custom' });
     toast('✓ 连接成功：' + (r.content || '').slice(0, 30));
   } catch (e) { toast('✗ ' + e.message.slice(0, 60), 4000); }
   finally { Store.setProvider(prev); }
