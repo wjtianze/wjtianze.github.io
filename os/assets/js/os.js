@@ -1506,7 +1506,7 @@ function initTips() {
 /* ===================== 内置应用：浏览器 ===================== */
 function renderBrowser() {
   return `
-  <div class="app-browser" style="display:flex;flex-direction:column;height:100%;background:rgba(5,8,19,0.4)">
+  <div class="app-browser" style="position:absolute;inset:0;display:flex;flex-direction:column;background:rgba(5,8,19,0.4)">
     <div id="brTabs" style="display:flex;gap:4px;padding:6px 8px;border-bottom:1px solid var(--glass-border);background:rgba(255,255,255,0.03);overflow-x:auto;align-items:center;min-height:34px"></div>
     <div style="display:flex;gap:6px;padding:8px;border-bottom:1px solid var(--glass-border);background:rgba(255,255,255,0.04);align-items:center">
       <button class="btn sm ghost" id="brBack" title="后退">←</button>
