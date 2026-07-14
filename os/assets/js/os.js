@@ -41,6 +41,9 @@ const Store = {
   getIconPositions() { return this.get('iconPositions', {}); },
   setIconPositions(p) { this.set('iconPositions', p); },
   clearIconPositions() { this.set('iconPositions', {}); },
+  // 任务栏固定应用 [appId,...]
+  getPinned() { return this.get('pinnedApps', []); },
+  togglePin(id) { const p = this.getPinned(); const i = p.indexOf(id); if (i >= 0) p.splice(i, 1); else p.push(id); this.set('pinnedApps', p); },
   // 悬浮窗位置与开关 {x,y} / bool
   getWidget() { return this.get('widget', { x: null, y: null, closed: false }); },
   setWidget(w) { this.set('widget', w); }
@@ -126,6 +129,11 @@ const BUILTIN_APPS = {
     name: '我的软件', icon: '📁', grad: false, category: 'system',
     desc: '管理已安装的软件',
     render: () => renderFileManager()
+  },
+  'browser': {
+    name: '浏览器', icon: '🌐', grad: true, category: 'system',
+    desc: '浏览网页',
+    render: () => renderBrowser()
   }
 };
 
@@ -377,18 +385,43 @@ const Taskbar = {
     const running = $('#tbRunning');
     if (!running) return;
     running.innerHTML = '';
-    WM.windows.forEach(w => {
-      const t = el('button', 'tb-task' + (w.el.classList.contains('focused') ? ' active' : ''));
-      t.innerHTML = `<span class="tb-task-icon">${w.app.icon || '📦'}</span><span class="tb-task-name">${escapeHtml(w.app.name)}</span>`;
-      t.title = w.app.name;
-      t.onclick = () => {
-        if (w.minimized) WM.restore(w.id);
-        else if (w.el.classList.contains('focused')) WM.minimize(w.id);
-        else WM.focus(w.id);
-      };
-      t.oncontextmenu = (e) => { e.preventDefault(); showCtxMenu(e.clientX, e.clientY, [{ icon: '✕', label: '关闭窗口', act: () => WM.close(w.id) }]); };
-      running.appendChild(t);
+    const pinned = Store.getPinned();
+    const wins = WM.windows;
+    // 1) 固定的应用（始终显示，未运行时半透明）
+    pinned.forEach(id => {
+      const app = findApp(id);
+      if (!app) return;
+      const w = wins.find(x => x.appId === id);
+      this.addItem(running, app, w);
     });
+    // 2) 正在运行但未固定的应用
+    wins.forEach(w => {
+      if (pinned.includes(w.appId)) return;
+      this.addItem(running, w.app, w);
+    });
+  },
+  addItem(container, app, w) {
+    const cls = 'tb-task' + (w ? (w.el.classList.contains('focused') ? ' active' : '') : ' pinned');
+    const t = el('button', cls);
+    t.innerHTML = `<span class="tb-task-icon">${app.icon || '📦'}</span><span class="tb-task-name">${escapeHtml(app.name)}</span>`;
+    t.title = app.name;
+    t.onclick = () => {
+      if (!w) { launchApp(app.id); return; }
+      if (w.minimized) WM.restore(w.id);
+      else if (w.el.classList.contains('focused')) WM.minimize(w.id);
+      else WM.focus(w.id);
+    };
+    t.oncontextmenu = (e) => {
+      e.preventDefault();
+      const items = [];
+      const isPinned = Store.getPinned().includes(app.id);
+      items.push(isPinned
+        ? { icon: '📌', label: '从任务栏取消固定', act: () => { Store.togglePin(app.id); this.render(); } }
+        : { icon: '📌', label: '固定到任务栏', act: () => { Store.togglePin(app.id); this.render(); } });
+      if (w) items.push({ icon: '✕', label: '关闭窗口', act: () => WM.close(w.id) });
+      showCtxMenu(e.clientX, e.clientY, items);
+    };
+    container.appendChild(t);
   }
 };
 
@@ -577,12 +610,10 @@ const Desktop = {
       if (wasDragged) { wasDragged = false; return; }
       e.stopPropagation();
       const now = Date.now();
-      const dbl = now - lastTap < 350;
+      if (now - lastTap < 450) return; // 防止双击时第二次点击重复打开
       lastTap = now;
-      if (isMobile() || dbl) launchApp(app.id);
-      else this.select(ic);
+      launchApp(app.id);
     };
-    ic.ondblclick = (e) => { e.stopPropagation(); if (!isMobile()) launchApp(app.id); };
     ic.oncontextmenu = (e) => {
       e.preventDefault(); e.stopPropagation();
       const items = [{ icon: '▶', label: '打开', act: () => launchApp(app.id) }];
@@ -613,7 +644,7 @@ const Desktop = {
     const dock = $('#mobileDock');
     if (!isMobile()) { dock.innerHTML = ''; return; }
     dock.innerHTML = '';
-    const dockApps = ['ai-chat', 'app-store', 'ai-config', 'tz-home', 'tz-gpa', 'settings'];
+    const dockApps = ['browser', 'ai-chat', 'app-store', 'ai-config', 'tz-home', 'tz-gpa', 'settings'];
     dockApps.forEach((id, idx) => {
       const app = findApp(id);
       if (!app) return;
@@ -719,6 +750,8 @@ function launchApp(id, opts = {}) {
     defaults.width = 720; defaults.height = 600;
   } else if (id === 'app-store') {
     defaults.width = 760; defaults.height = 640;
+  } else if (id === 'browser') {
+    defaults.width = 980; defaults.height = 680;
   } else if (id === 'about' || id === 'ai-config' || id === 'settings' || id === 'file-manager') {
     defaults.width = 560; defaults.height = 520;
   }
@@ -1182,6 +1215,63 @@ function renderFileManager() {
   </div>`;
 }
 
+/* ===================== 内置应用：浏览器 ===================== */
+function renderBrowser() {
+  return `
+  <div class="app-browser" style="display:flex;flex-direction:column;height:100%;background:rgba(5,8,19,0.4)">
+    <div style="display:flex;gap:6px;padding:8px;border-bottom:1px solid var(--glass-border);background:rgba(255,255,255,0.04);align-items:center">
+      <button class="btn sm ghost" id="brBack" title="后退">←</button>
+      <button class="btn sm ghost" id="brFwd" title="前进">→</button>
+      <button class="btn sm ghost" id="brReload" title="刷新">⟳</button>
+      <input class="input" id="brUrl" placeholder="输入网址或搜索词，回车前往…" style="flex:1;height:36px" />
+      <button class="btn sm" id="brGo">前往</button>
+      <button class="btn sm ghost" id="brNewTab" title="在新标签页打开">↗</button>
+    </div>
+    <div style="flex:1;position:relative;background:#fff;min-height:0">
+      <iframe id="brFrame" style="width:100%;height:100%;border:none;background:#fff" src="about:blank"></iframe>
+      <div id="brOverlay" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;color:var(--ink-faint);background:var(--glass-strong);text-align:center;padding:24px">
+        <div style="font-size:44px">🌐</div>
+        <div style="font-size:15px;color:var(--ink-dim)">天择OS 浏览器</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:420px">
+          <button class="btn sm" data-url="https://wjtianze.github.io/">天择网首页</button>
+          <button class="btn sm ghost" data-url="https://wjtianze.github.io/news/">新闻</button>
+          <button class="btn sm ghost" data-url="https://wjtianze.github.io/blog/">博客</button>
+          <button class="btn sm ghost" data-url="https://wjtianze.github.io/coc/data/">COC 数据</button>
+        </div>
+        <div style="font-size:11px;color:var(--ink-muted);max-width:380px;line-height:1.6">提示：部分网站（如 Google、百度、B站）会禁止被嵌入显示，遇到白屏时点右上角「↗」在新标签页打开。</div>
+      </div>
+    </div>
+  </div>`;
+}
+function initBrowser() {
+  const url = $('#brUrl'), frame = $('#brFrame'), overlay = $('#brOverlay');
+  const goBtn = $('#brGo'), newTab = $('#brNewTab'), back = $('#brBack'), fwd = $('#brFwd'), reload = $('#brReload');
+  const history = ['about:blank']; let hi = 0;
+  const navigate = (u, push) => {
+    if (!u) return;
+    let full = u.trim();
+    if (!/^https?:\/\//i.test(full)) {
+      if (/^[\w-]+(\.[\w-]+)+/.test(full)) full = 'https://' + full;
+      else full = 'https://www.bing.com/search?q=' + encodeURIComponent(full);
+    }
+    url.value = full;
+    frame.src = full;
+    overlay.style.display = 'none';
+    if (push !== false) { history.length = hi + 1; history.push(full); hi = history.length - 1; }
+    updateNav();
+  };
+  const updateNav = () => { back.disabled = hi <= 0; fwd.disabled = hi >= history.length - 1; };
+  goBtn.onclick = () => navigate(url.value);
+  url.onkeydown = (e) => { if (e.key === 'Enter') navigate(url.value); };
+  newTab.onclick = () => { const u = url.value || frame.src; if (u && u !== 'about:blank') window.open(u, '_blank'); };
+  back.onclick = () => { if (hi > 0) { hi--; navigate(history[hi], false); } };
+  fwd.onclick = () => { if (hi < history.length - 1) { hi++; navigate(history[hi], false); } };
+  reload.onclick = () => { if (frame.src && frame.src !== 'about:blank') frame.src = frame.src; };
+  overlay.querySelectorAll('button[data-url]').forEach(b => b.onclick = () => navigate(b.dataset.url));
+  frame.addEventListener('load', () => { overlay.style.display = 'none'; });
+  updateNav();
+}
+
 /* ===================== 刷新已打开的应用窗口 ===================== */
 function refreshOpenApp(appId) {
   const w = WM.windows.find(x => x.appId === appId);
@@ -1192,6 +1282,7 @@ function initAppHooks(appId) {
   if (appId === 'app-store') initAppStore();
   if (appId === 'settings') initSettings();
   if (appId === 'ai-config') initAIConfig();
+  if (appId === 'browser') initBrowser();
 }
 function initAIConfig() {
   $$('.preset-chip').forEach(chip => {
@@ -1301,7 +1392,18 @@ function bindGlobalEvents() {
   window.addEventListener('resize', () => { applyDeviceStyle(); Desktop.render(); });
   // 键盘快捷键
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { StartMenu.hide(); hideCtxMenu(); }
+    if (e.key === 'Escape') {
+      // 优先关闭菜单/面板
+      if (StartMenu.open) { StartMenu.hide(); return; }
+      if (ctxEl) { hideCtxMenu(); return; }
+      const nc = $('#notifCenter'); if (nc && !nc.hidden) { nc.hidden = true; return; }
+      // 在输入框中按 Esc 仅失焦，不触发全屏
+      const tag = (e.target.tagName || '').toUpperCase();
+      if (tag === 'INPUT' || tag === 'TEXTAREA') { e.target.blur(); return; }
+      // 否则切换浏览器全屏
+      if (document.fullscreenElement) { document.exitFullscreen(); }
+      else { try { document.documentElement.requestFullscreen(); } catch (err) {} }
+    }
     if (e.ctrlKey && e.key === ' ') { e.preventDefault(); StartMenu.toggle(); }
   });
 }

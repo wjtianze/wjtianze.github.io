@@ -10,7 +10,7 @@
   --gpa-focus: #a5f3fc;
 }
 
-body.gpa-page { background: #050812; }
+body.gpa-page { background: #050812; display: flex; flex-direction: column; min-height: 100vh; }
 .gpa-page .bg-mesh::before {
   content: "";
   position: absolute;
@@ -26,6 +26,7 @@ body.gpa-page { background: #050812; }
   width: min(1480px, 100%);
   margin: 0 auto;
   padding: 26px clamp(14px, 2.6vw, 34px) 72px;
+  flex: 1 0 auto;
 }
 .gpa-topbar-spacer { display: none; }
 .gpa-hero {
