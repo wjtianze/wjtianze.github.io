@@ -153,6 +153,11 @@ const BUILTIN_APPS = {
     name: '浏览器', icon: '🌐', grad: true, category: 'system',
     desc: '浏览网页',
     render: () => renderBrowser()
+  },
+  'tips': {
+    name: '玩机技巧', icon: '💡', grad: true, category: 'system',
+    desc: '系统使用技巧与隐藏功能',
+    render: () => renderTips()
   }
 };
 
@@ -226,9 +231,12 @@ const WM = {
     minBtn.title = '最小化';
     const maxBtn = el('button', 'wctrl max', '<svg viewBox="0 0 8 8" fill="none" stroke="#003d00" stroke-width="1.5"><path d="M1 1h6v6H1z"/></svg>');
     maxBtn.title = '最大化 / 还原';
+    // 刷新/重载按钮（仅 preset/installed 应用显示）
+    const reloadBtn = (app.type === 'preset' || app.type === 'installed') ? el('button', 'wctrl reload', '<svg viewBox="0 0 8 8" fill="none" stroke="#003d00" stroke-width="1.3"><path d="M4 1.5a2.5 2.5 0 1 0 2.3 3.5M6.3 2v2h-2"/></svg>') : null;
+    if (reloadBtn) reloadBtn.title = '刷新（恢复初始状态）';
     const uninstBtn = app.type === 'installed' ? el('button', 'wctrl uninst', '<svg viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 2l4 4M6 2L2 6"/></svg>') : null;
     if (uninstBtn) { uninstBtn.title = '卸载此软件'; }
-    icons.append(closeBtn, minBtn, maxBtn, ...(uninstBtn ? [uninstBtn] : []));
+    icons.append(closeBtn, minBtn, maxBtn, ...(reloadBtn ? [reloadBtn] : []), ...(uninstBtn ? [uninstBtn] : []));
 
     const titleIcon = el('span', 'win-title-icon', app.icon || '📦');
     const titleText = el('span', 'win-title-text', escapeHtml(app.name || '应用'));
@@ -252,6 +260,7 @@ const WM = {
     closeBtn.onclick = (e) => { e.stopPropagation(); this.close(id); };
     minBtn.onclick = (e) => { e.stopPropagation(); this.minimize(id); };
     maxBtn.onclick = (e) => { e.stopPropagation(); this.toggleMax(id); };
+    if (reloadBtn) reloadBtn.onclick = (e) => { e.stopPropagation(); this.reload(id); };
     if (uninstBtn) uninstBtn.onclick = (e) => { e.stopPropagation(); if (confirm('确定要卸载「' + app.name + '」吗？\n该软件将从桌面移除。')) { uninstallApp(app.id); } };
     title.ondblclick = (e) => { if (e.target.closest('.wctrl')) return; if (!isMobile()) this.toggleMax(id); };
     this.bindDrag(winObj);
@@ -347,7 +356,35 @@ const WM = {
     }
     this.focus(id);
   },
-  bindDrag(w) {
+  // 刷新/重载：恢复应用到初始状态（等同于退出后重新打开）
+  reload(id) {
+    const w = this.windows.find(x => x.id === id);
+    if (!w) return;
+    const app = w.app;
+    w.body.innerHTML = '';
+    if (app.type === 'preset') {
+      const iframe = el('iframe', 'app-iframe');
+      iframe.src = app.url;
+      iframe.loading = 'lazy';
+      const loading = el('div', 'app-loading', '<div class="al-spin"></div><div>正在重新加载…</div>');
+      loading.style.cssText = 'position:absolute;inset:0;z-index:2';
+      w.body.appendChild(iframe);
+      w.body.appendChild(loading);
+      iframe.onload = () => loading.remove();
+    } else if (app.type === 'installed') {
+      const iframe = el('iframe', 'app-iframe');
+      iframe.sandbox = 'allow-scripts allow-forms allow-modals allow-popups allow-same-origin';
+      iframe.srcdoc = app.html;
+      w.body.appendChild(iframe);
+    } else {
+      const html = app.render();
+      if (typeof html === 'string') w.body.innerHTML = html;
+      else if (html instanceof HTMLElement) { w.body.innerHTML = ''; w.body.appendChild(html); }
+      setTimeout(() => initAppHooks(app.id), 0);
+    }
+    this.focus(id);
+    toast('已刷新 ' + (app.name || '应用'));
+  },
     const title = w.el.querySelector('.win-title');
     let sx, sy, sl, st, dragging = false;
     title.addEventListener('pointerdown', (e) => {
@@ -668,7 +705,7 @@ const Desktop = {
     const dock = $('#mobileDock');
     if (!isMobile()) { dock.innerHTML = ''; return; }
     dock.innerHTML = '';
-    const dockApps = ['browser', 'ai-chat', 'app-store', 'ai-config', 'tz-home', 'tz-gpa', 'settings'];
+    const dockApps = ['browser', 'tips', 'ai-chat', 'app-store', 'ai-config', 'tz-home', 'tz-gpa', 'settings'];
     dockApps.forEach((id, idx) => {
       const app = findApp(id);
       if (!app) return;
@@ -776,6 +813,8 @@ function launchApp(id, opts = {}) {
     defaults.width = 760; defaults.height = 640;
   } else if (id === 'browser') {
     defaults.width = 980; defaults.height = 680;
+  } else if (id === 'tips') {
+    defaults.width = 600; defaults.height = 560;
   } else if (id === 'about' || id === 'ai-config' || id === 'settings' || id === 'file-manager') {
     defaults.width = 560; defaults.height = 520;
   }
@@ -950,41 +989,12 @@ function renderAIConfig() {
     </p>
 
     <hr style="margin:22px 0;border:none;border-top:1px solid var(--glass-border)" />
-    <h3 style="font-size:15px;margin-bottom:4px">🫘 豆包 AI（doubao.com）</h3>
-    <p class="sub" style="margin-bottom:14px">在「AI 对话」顶部可一键切换「自定义AI ↔ 豆包AI」。豆包走 Volcengine Ark OpenAI 兼容接口，需在火山引擎控制台开通并获取 API Key。</p>
-    ${(() => {
-      const d = Store.getDoubaoConfig();
-      const dReady = !!(d.url && d.key && d.model);
-      return `
-      <div class="config-status ${dReady?'ok':'warn'}"><span>${dReady?'✓':'⚠'}</span><span>${dReady?'豆包已就绪：'+escapeHtml(d.model):'豆包尚未配置 API Key'}</span></div>
-      <div class="field"><label>豆包 API 地址</label><input class="input" id="dbUrl" value="${escapeHtml(d.url)}" placeholder="https://ark.cn-beijing.volces.com/api/v3/chat/completions" /></div>
-      <div class="field"><label>豆包 API Key</label><input class="input" id="dbKey" type="password" value="${escapeHtml(d.key)}" placeholder="ark-..." /></div>
-      <div class="field"><label>豆包模型 ID（接入点 ID）</label><input class="input" id="dbModel" value="${escapeHtml(d.model)}" placeholder="doubao-1-5-pro-32k-250115" /></div>
-      <div style="display:flex;gap:8px;margin-top:14px">
-        <button class="btn" onclick="TZOS.saveDoubao()">💾 保存豆包配置</button>
-        <button class="btn ghost" onclick="TZOS.testDoubao()">🧪 测试豆包</button>
-      </div>`;
-    })()}
+    <h3 style="font-size:15px;margin-bottom:4px">🫘 豆包 AI（doubao.com 网页版）</h3>
+    <p class="sub" style="margin-bottom:10px">豆包AI 采用 <strong>网页嵌入</strong> 方式接入（非 API Key）。在「AI 对话」顶部点「⚙️ 自定义AI」可一键切换为「🫘 豆包AI」，将在窗口内嵌入 doubao.com 网页版。</p>
+    <div class="config-status warn"><span>ℹ</span><span>豆包无需在此配置 API Key。若 doubao.com 禁止被嵌入（白屏），点对话窗口右上角「↗ 外部打开」在系统浏览器中使用，首次需登录豆包账号。</span></div>
   </div>`;
 }
 window.TZOS = window.TZOS || {};
-window.TZOS.saveDoubao = function() {
-  const cfg = { url: $('#dbUrl').value.trim(), key: $('#dbKey').value.trim(), model: $('#dbModel').value.trim() };
-  Store.setDoubaoConfig(cfg);
-  toast('豆包配置已保存');
-  refreshOpenApp('ai-config');
-};
-window.TZOS.testDoubao = async function() {
-  const cfg = { url: $('#dbUrl').value.trim(), key: $('#dbKey').value.trim(), model: $('#dbModel').value.trim() };
-  Store.setDoubaoConfig(cfg);
-  const prev = Store.getProvider(); Store.setProvider('doubao');
-  toast('正在测试豆包连接…', 1500);
-  try {
-    const r = await AI.chat([{role:'user',content:'请回复"OK"'}], { max_tokens: 10, provider:'doubao' });
-    toast('✓ 豆包连接成功：' + (r.content || '').slice(0, 30));
-  } catch (e) { toast('✗ ' + e.message.slice(0, 60), 4000); }
-  finally { Store.setProvider(prev); }
-};
 window.TZOS.saveConfig = function() {
   const cfg = { url: $('#cfgUrl').value.trim(), key: $('#cfgKey').value.trim(), model: $('#cfgModel').value.trim() };
   Store.setAIConfig(cfg);
@@ -1006,11 +1016,31 @@ window.TZOS.testConfig = async function() {
 /* ===================== 内置应用：AI 对话 ===================== */
 function renderAIChat() {
   const provider = Store.getProvider();
+  // 豆包AI：doubao.com 网页版嵌入（非 API Key 方式）
+  if (provider === 'doubao') {
+    return `
+    <div class="app-chat" id="chatApp" style="background:rgba(5,8,19,0.4)">
+      <div class="chat-toolbar" style="display:flex;gap:6px;padding:6px 10px;border-bottom:1px solid var(--glass-border);background:rgba(255,255,255,0.04);align-items:center">
+        <button class="btn sm" id="chatProvider" title="切换回自定义AI">🫘 豆包AI（网页版）</button>
+        <span style="flex:1"></span>
+        <a class="btn sm ghost" href="https://www.doubao.com/chat" target="_blank" rel="noopener" title="在系统外新标签页打开豆包">↗ 外部打开</a>
+      </div>
+      <div style="flex:1;position:relative;min-height:0;background:#fff">
+        <iframe id="doubaoFrame" style="width:100%;height:100%;border:none;background:#fff" src="https://www.doubao.com/chat/" referrerpolicy="no-referrer"></iframe>
+        <div id="doubaoHint" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;text-align:center;padding:24px;color:var(--ink-faint);background:var(--glass-strong)">
+          <div style="font-size:38px">🫘</div>
+          <div style="font-size:14px;color:var(--ink-dim)">正在加载豆包网页版…</div>
+          <div style="font-size:12px;max-width:380px;line-height:1.6">若长时间空白，说明豆包禁止被嵌入（站点安全策略）。可点右上角「↗ 外部打开」在系统浏览器中使用，首次需登录豆包账号。</div>
+          <button class="btn sm" onclick="TZOS.openDoubaoExternal()">↗ 在系统外打开豆包</button>
+        </div>
+      </div>
+    </div>`;
+  }
   const deep = Store.getDeepThink();
   return `
   <div class="app-chat" id="chatApp">
     <div class="chat-toolbar" style="display:flex;gap:6px;padding:6px 10px;border-bottom:1px solid var(--glass-border);background:rgba(255,255,255,0.04);align-items:center">
-      <button class="btn sm ghost" id="chatProvider" title="切换 AI 提供方">${provider==='doubao'?'🫘 豆包AI':'⚙️ 自定义AI'}</button>
+      <button class="btn sm ghost" id="chatProvider" title="切换 AI 提供方">⚙️ 自定义AI</button>
       <button class="btn sm ${deep?'':'ghost'}" id="chatDeep" title="深度思考（显示思考过程）">🧠 深度思考${deep?'·开':'·关'}</button>
       <span style="flex:1"></span>
       <button class="btn sm ghost" id="chatClear" title="清空当前对话">🗑</button>
@@ -1028,6 +1058,20 @@ function reasoningHtml(reasoning, ongoing) {
   return `<details class="msg-reasoning"${ongoing?' open':''} style="margin-bottom:6px"><summary style="cursor:pointer;color:var(--ink-faint);font-size:12px">🧠 思考过程${tag}</summary><div style="font-size:12px;color:var(--ink-faint);line-height:1.6;padding:6px 8px;background:rgba(255,255,255,0.03);border-radius:6px;margin-top:4px;white-space:pre-wrap">${escapeHtml(reasoning)}</div></details>`;
 }
 function initChat() {
+  // 豆包网页嵌入模式：只绑定切换按钮 + iframe 加载隐藏提示
+  if (Store.getProvider() === 'doubao') {
+    const provBtn = $('#chatProvider');
+    if (provBtn) provBtn.onclick = () => { Store.setProvider('custom'); toast('已切换为 ⚙️ 自定义AI'); refreshOpenApp('ai-chat'); };
+    const f = $('#doubaoFrame');
+    const hint = $('#doubaoHint');
+    if (f && hint) {
+      const hide = () => { try { if (f.contentWindow) hint.style.display = 'none'; } catch {} };
+      f.addEventListener('load', hide);
+      // 兜底：4 秒后若仍空白则保留提示
+      setTimeout(() => { try { if (!f.contentWindow || f.contentWindow.length === 0) hint.style.display = 'flex'; } catch {} }, 4000);
+    }
+    return;
+  }
   const msgs = $('#chatMsgs');
   const input = $('#chatInput');
   const sendBtn = $('#chatSend');
@@ -1082,11 +1126,21 @@ function appendMsg(role, content, reasoning) {
   return m;
 }
 function renderMd(text) {
-  let html = escapeHtml(text);
+  // 先抽取数学公式占位符，保护 $$...$$ 跨行不被 <br> 与转义破坏
+  const maths = [];
+  let work = text.replace(/\$\$([\s\S]*?)\$\$/g, (m, c) => { maths.push({ d: true, c }); return '\u0000M' + (maths.length - 1) + '\u0000'; });
+  work = work.replace(/(?<!\$)\$([^\$\n]+?)\$(?!\$)/g, (m, c) => { maths.push({ d: false, c }); return '\u0000M' + (maths.length - 1) + '\u0000'; });
+  let html = escapeHtml(work);
   html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (_,l,c) => `<pre><code>${c.replace(/&lt;\/?pre.*?>/g,'')}</code></pre>`);
   html = html.replace(/`([^`]+)`/g, '<code style="background:rgba(0,0,0,0.3);padding:2px 5px;border-radius:4px;font-size:0.9em">$1</code>');
   html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   html = html.replace(/\n/g, '<br>');
+  // 还原数学占位符为 span（内含原始 LaTeX 文本，供 KaTeX auto-render 处理）
+  html = html.replace(/\u0000M(\d+)\u0000/g, (m, i) => {
+    const x = maths[+i]; if (!x) return '';
+    const delim = x.d ? '$$' : '$';
+    return '<span class="tz-math">' + escapeHtml(delim + x.c + delim) + '</span>';
+  });
   return html;
 }
 // LaTeX 渲染：懒加载 KaTeX 后对元素内的 $...$ / $$...$$ 渲染
@@ -1141,6 +1195,7 @@ async function sendChat() {
 }
 window.TZOS.chatSuggest = function(t) { const i = $('#chatInput'); if (i) { i.value = t; sendChat(); } };
 window.TZOS.openConfig = function() { launchApp('ai-config'); };
+window.TZOS.openDoubaoExternal = function() { window.open('https://www.doubao.com/chat/', '_blank'); };
 
 /* ===================== 内置应用：软件商城 ===================== */
 function renderAppStore() {
@@ -1197,11 +1252,16 @@ window.TZOS.startGen = async function() {
   try {
     const spec = await AI.refinePrompt(prompt);
     $('#refinedBox').innerHTML = escapeHtml(spec).replace(/\|/g, '<br><span class="opt">▸ </span>');
-    $('#codeProgress').textContent = '开始生成代码…';
+    $('#codeProgress').innerHTML = '<div style="color:var(--ink-faint);margin-bottom:4px">开始生成代码…</div>';
     let code = '';
+    const showStream = (all) => {
+      const tail = all.length > 1600 ? all.slice(-1600) : all;
+      $('#codeProgress').innerHTML = '<div style="color:var(--c-blue);margin-bottom:4px">⌨ 生成中… ' + all.length + ' 字符</div><pre style="white-space:pre-wrap;word-break:break-all;margin:0">' + escapeHtml(tail) + '</pre>';
+      $('#codeProgress').scrollTop = $('#codeProgress').scrollHeight;
+    };
     const result = await AI.generateApp(spec, prompt, (delta, all) => {
       code = all;
-      $('#codeProgress').textContent = '生成中… ' + all.length + ' 字符';
+      showStream(all);
     });
     if (typeof result === 'object' && result.content) code = result.content;
     code = code.trim();
@@ -1209,7 +1269,7 @@ window.TZOS.startGen = async function() {
     if (!code.includes('<!DOCTYPE') && !code.includes('<html')) {
       throw new Error('生成的代码不完整，请重试');
     }
-    $('#codeProgress').textContent = '✓ 生成完成，共 ' + code.length + ' 字符';
+    $('#codeProgress').innerHTML = '<div style="color:var(--c-emerald)">✓ 生成完成，共 ' + code.length + ' 字符</div>';
     const nameMatch = spec.split('|')[0]?.trim() || '新软件';
     const descMatch = spec.split('|')[1]?.trim() || prompt;
     const appId = 'app-' + Date.now();
@@ -1343,6 +1403,66 @@ function renderFileManager() {
         <button class="btn sm ghost" style="border-color:#ef4444;color:#fca5a5" onclick="TZOS.uninstallApp('${a.id}');TZOS.refreshOpenApp('file-manager')">卸载</button>
       </div>`).join('')}
   </div>`;
+}
+
+/* ===================== 内置应用：玩机技巧 ===================== */
+const TIPS_DATA = [
+  { cat: '基础操作', title: '打开与关闭应用', body: '单击桌面图标即可打开应用；窗口右上角红/黄/绿圆点分别是关闭/最小化/最大化。双击标题栏可快速最大化/还原。' },
+  { cat: '基础操作', title: '自由摆放桌面图标', body: '按住任一桌面图标拖动，可摆到任意位置，松开后位置自动保存；刷新或重启后布局保留。右键图标可「重置此图标位置」。' },
+  { cat: '基础操作', title: '重置全部图标布局', body: '右键桌面空白处 → 「重置图标布局」，或进系统设置点「重置布局」，所有图标回到分类默认位置。' },
+  { cat: '窗口与任务栏', title: '窗口刷新', body: '天择网系列应用与 AI 生成软件的窗口标题栏多了一颗蓝色圆点（刷新按钮），点击即恢复到初始状态，等同退出重开。' },
+  { cat: '窗口与任务栏', title: '固定应用到任务栏', body: '右键任务栏上的应用图标 → 「固定到任务栏」，该应用会常驻任务栏（半透明显示），即使没运行也在，点击即启动。' },
+  { cat: '窗口与任务栏', title: '最大化不遮挡任务栏', body: '点最大化后窗口会自动避开底部任务栏，底部紧贴任务栏上方，不会被遮挡。再点一次还原。' },
+  { cat: '快捷键', title: 'Ctrl+Q 全屏', body: '按 Ctrl+Q 进入浏览器全屏沉浸模式，再按一次退出（覆盖浏览器默认快捷键）。' },
+  { cat: '快捷键', title: 'Ctrl+空格 开始菜单', body: '按 Ctrl+空格 快速打开/关闭开始菜单（应用列表）。' },
+  { cat: '快捷键', title: 'Esc 关闭菜单', body: '开始菜单、右键菜单、通知中心打开时，按 Esc 即可关闭。' },
+  { cat: 'AI 对话', title: '深度思考', body: 'AI 对话默认开启「🧠 深度思考」，会先展示思考过程（可折叠），再给正式回答。点工具栏按钮可开关。' },
+  { cat: 'AI 对话', title: '多开对话窗口', body: 'AI 对话不再是单例，可连续打开多个对话窗口并行使用。' },
+  { cat: 'AI 对话', title: 'LaTeX 公式', body: 'AI 回答中的数学公式会自动渲染。行内用 $...$，块级用 $$...$$。例如 $E=mc^2$。' },
+  { cat: 'AI 对话', title: '切换 AI 提供方', body: '对话工具栏「⚙️自定义AI / 🫘豆包AI」一键切换。自定义走你配置的 OpenAI 兼容接口；豆包为网页嵌入。' },
+  { cat: '软件商城', title: '一句话生成软件', body: '在软件商城输入需求，AI 会先优化提示词，再实时流式生成代码（可看到代码逐行写出），完成后自动安装到桌面并打开。' },
+  { cat: '软件商城', title: '管理已安装软件', body: '「📁我的软件」或软件商城底部可查看/打开/卸载 AI 生成的软件。卸载按钮在窗口标题栏（紫色圆点）。' },
+  { cat: '浏览器', title: '多标签页', body: '浏览器支持多标签页，点标签栏「＋」新建，点「✕」关闭。新链接在 OS 内新标签页打开，不外跳。' },
+  { cat: '浏览器', title: '地址栏搜索', body: '在地址栏输入非网址文字会自动用 Bing 搜索；输入域名会自动补 https://。' },
+  { cat: '桌面风格', title: 'Windows / macOS 切换', body: '任务栏右侧 🖥 按钮、系统设置、或右键桌面「切换桌面风格」可切 Windows（底部全宽任务栏，控件在右）与 macOS（底部居中 Dock，控件在左）两种风格。' },
+  { cat: '数据与安全', title: '数据全在本地', body: '你的 AI 配置、已装软件、对话历史、图标布局、固定项全部存在浏览器 localStorage，不上传服务器。清理浏览器数据会清空天择OS。' },
+  { cat: '数据与安全', title: '重置系统', body: '系统设置 → 「重置天择OS」可清除所有本地数据并重启。请谨慎。' }
+];
+function renderTips() {
+  const cats = [...new Set(TIPS_DATA.map(t => t.cat))];
+  return `
+  <div style="padding:18px;max-width:560px;margin:0 auto">
+    <h2 style="font-size:18px;margin-bottom:4px">💡 玩机技巧</h2>
+    <p style="font-size:12px;color:var(--ink-faint);margin-bottom:14px">系统使用技巧、隐藏功能与快捷操作指南</p>
+    <input class="input" id="tipsSearch" placeholder="搜索技巧…" style="width:100%;margin-bottom:14px" />
+    <div id="tipsCats" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">
+      <button class="preset-chip tips-cat active" data-cat="">全部</button>
+      ${cats.map(c => `<button class="preset-chip tips-cat" data-cat="${escapeHtml(c)}">${escapeHtml(c)}</button>`).join('')}
+    </div>
+    <div id="tipsList" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div>`;
+}
+function initTips() {
+  let curCat = '', curKw = '';
+  const list = $('#tipsList');
+  const render = () => {
+    const kw = curKw.toLowerCase();
+    const items = TIPS_DATA.filter(t => (!curCat || t.cat === curCat) && (!kw || t.title.toLowerCase().includes(kw) || t.body.toLowerCase().includes(kw)));
+    if (!items.length) { list.innerHTML = '<div style="color:var(--ink-faint);font-size:13px;text-align:center;padding:24px">未找到匹配的技巧</div>'; return; }
+    list.innerHTML = items.map(t => `
+      <div style="background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);border-radius:10px;padding:12px 14px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(99,102,241,0.2);color:var(--c-violet)">${escapeHtml(t.cat)}</span><strong style="font-size:14px">${escapeHtml(t.title)}</strong></div>
+        <div style="font-size:13px;color:var(--ink-dim);line-height:1.7">${escapeHtml(t.body)}</div>
+      </div>`).join('');
+  };
+  render();
+  $('#tipsSearch').oninput = (e) => { curKw = e.target.value.trim(); render(); };
+  $$('.tips-cat').forEach(b => b.onclick = () => {
+    $$('.tips-cat').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    curCat = b.dataset.cat;
+    render();
+  });
 }
 
 /* ===================== 内置应用：浏览器 ===================== */
@@ -1507,6 +1627,7 @@ function initAppHooks(appId) {
   if (appId === 'settings') initSettings();
   if (appId === 'ai-config') initAIConfig();
   if (appId === 'browser') initBrowser();
+  if (appId === 'tips') initTips();
 }
 function initAIConfig() {
   $$('.preset-chip').forEach(chip => {

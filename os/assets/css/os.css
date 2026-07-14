@@ -307,6 +307,8 @@ input, textarea { font-family: inherit; }
 .wctrl.close { background: #ff5f57; }
 .wctrl.min { background: #febc2e; }
 .wctrl.max { background: #28c840; }
+.wctrl.reload { background: #60a5fa; }
+.wctrl.reload svg { width: 7px; height: 7px; }
 /* 卸载按钮：仅 AI 生成软件显示，紫色提示 */
 .wctrl.uninst {
   background: var(--grad-main); width: 14px; height: 14px;
