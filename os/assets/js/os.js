@@ -27,6 +27,17 @@ const Store = {
     return this.get('aiConfig', { url: 'https://api.deepseek.com/v1/chat/completions', key: '', model: 'deepseek-chat' });
   },
   setAIConfig(cfg) { this.set('aiConfig', cfg); },
+  // 豆包 AI 配置（Volcengine Ark OpenAI 兼容接口）
+  getDoubaoConfig() {
+    return this.get('doubaoConfig', { url: 'https://ark.cn-beijing.volces.com/api/v3/chat/completions', key: '', model: 'doubao-1-5-pro-32k-250115' });
+  },
+  setDoubaoConfig(cfg) { this.set('doubaoConfig', cfg); },
+  // 当前对话使用的 AI 提供方：'custom' | 'doubao'
+  getProvider() { return this.get('aiProvider', 'custom'); },
+  setProvider(p) { this.set('aiProvider', p); },
+  // 深度思考开关（默认开启）
+  getDeepThink() { return this.get('deepThink', true); },
+  setDeepThink(b) { this.set('deepThink', !!b); },
   // 桌面风格
   getStyle() { return this.get('desktopStyle', null); }, // null=自动, 'win', 'mac'
   setStyle(s) { this.set('desktopStyle', s); },
@@ -64,6 +75,15 @@ const isMobile = () => {
   const touch = navigator.maxTouchPoints > 1;
   return narrow && touch;
 };
+
+// 可用桌面区域（排除天择OS任务栏/Dock）：窗口最大化时限制在此区域内，底部紧贴任务栏上方
+function getWorkArea() {
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const isMac = !isMobile() && Store.getStyle() === 'mac';
+  // Windows 风格：底部全宽任务栏 52px；macOS 风格：底部居中 Dock 约 84px
+  const reservedBottom = isMac ? 84 : 52;
+  return { left: 0, top: 0, width: vw, height: Math.max(200, vh - reservedBottom) };
+}
 
 /* ===================== 设备检测 / 风格应用 ===================== */
 function applyDeviceStyle() {
@@ -105,9 +125,8 @@ const BUILTIN_APPS = {
   },
   'ai-chat': {
     name: 'AI 对话', icon: '💬', grad: true, category: 'ai',
-    desc: '与 AI 助手对话',
-    render: () => renderAIChat(),
-    singleton: true
+    desc: '与 AI 助手对话（可多开）',
+    render: () => renderAIChat()
   },
   'app-store': {
     name: '软件商城', icon: '🛒', grad: true, category: 'system',
@@ -304,7 +323,7 @@ const WM = {
     w.el.classList.remove('minimized');
     this.focus(id);
   },
-  // 最大化 / 还原 切换（分屏窗口 ↔ 全屏最大化）
+  // 最大化 / 还原 切换（分屏窗口 ↔ 最大化，最大化时不覆盖任务栏）
   toggleMax(id) {
     const w = this.windows.find(x => x.id === id);
     if (!w || isMobile()) return;
@@ -319,8 +338,12 @@ const WM = {
       w.savedRect = { l: w.el.style.left, t: w.el.style.top, w: w.el.style.width, h: w.el.style.height };
       w.maximized = true;
       w.el.classList.add('maximized');
-      w.el.style.left = '0'; w.el.style.top = '0';
-      w.el.style.width = '100%'; w.el.style.height = '100%';
+      // 限制在任务栏之外的可用桌面区域：底部紧贴任务栏上方，不被遮挡
+      const area = getWorkArea();
+      w.el.style.left = area.left + 'px';
+      w.el.style.top = area.top + 'px';
+      w.el.style.width = area.width + 'px';
+      w.el.style.height = area.height + 'px';
     }
     this.focus(id);
   },
@@ -783,12 +806,21 @@ function toast(msg, dur = 2600) {
 
 /* ===================== AI 引擎 ===================== */
 const AI = {
-  config() { return Store.getAIConfig(); },
-  isReady() { const c = this.config(); return !!(c.url && c.key && c.model); },
+  // 按当前 provider 取配置；deepThink 时若为 DeepSeek 自动用 reasoner 模型
+  config(provider) {
+    const p = provider || Store.getProvider();
+    let c = (p === 'doubao') ? Store.getDoubaoConfig() : Store.getAIConfig();
+    c = { ...c };
+    if (Store.getDeepThink() && /deepseek\.com/i.test(c.url) && /deepseek-chat/i.test(c.model)) {
+      c.model = 'deepseek-reasoner';
+    }
+    return c;
+  },
+  isReady(provider) { const c = this.config(provider); return !!(c.url && c.key && c.model); },
 
   async chat(messages, opts = {}) {
-    const c = this.config();
-    if (!this.isReady()) throw new Error('AI 未配置，请先在「AI 配置」中设置 URL、Key 和模型。');
+    const c = this.config(opts.provider);
+    if (!this.isReady(opts.provider)) throw new Error('AI 未配置，请先在「AI 配置」中设置 URL、Key 和模型。' + (Store.getProvider()==='doubao'?'（当前为豆包，需填入 Volcengine Ark API Key）':''));
     const res = await fetch(c.url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + c.key },
@@ -796,12 +828,14 @@ const AI = {
     });
     if (!res.ok) { const t = await res.text().catch(()=> ''); throw new Error('AI 接口错误 ' + res.status + '：' + t.slice(0,200)); }
     const data = await res.json();
-    return data.choices?.[0]?.message?.content || '';
+    const msg = data.choices?.[0]?.message || {};
+    return { content: msg.content || '', reasoning: msg.reasoning_content || '' };
   },
 
+  // 流式输出。onChunk(delta, fullContent) 收正文；onReasoning(delta, fullReasoning) 收思考过程
   async chatStream(messages, onChunk, opts = {}) {
-    const c = this.config();
-    if (!this.isReady()) throw new Error('AI 未配置，请先在「AI 配置」中设置 URL、Key 和模型。');
+    const c = this.config(opts.provider);
+    if (!this.isReady(opts.provider)) throw new Error('AI 未配置，请先在「AI 配置」中设置 URL、Key 和模型。' + (Store.getProvider()==='doubao'?'（当前为豆包，需填入 Volcengine Ark API Key）':''));
     const res = await fetch(c.url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + c.key },
@@ -810,7 +844,8 @@ const AI = {
     if (!res.ok) { const t = await res.text().catch(()=> ''); throw new Error('AI 接口错误 ' + res.status + '：' + t.slice(0,200)); }
     const reader = res.body.getReader();
     const dec = new TextDecoder();
-    let buf = '', full = '';
+    let buf = '', full = '', reasoning = '';
+    const onReasoning = opts.onReasoning;
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
@@ -821,15 +856,16 @@ const AI = {
         const s = line.trim();
         if (!s.startsWith('data:')) continue;
         const data = s.slice(5).trim();
-        if (data === '[DONE]') return full;
+        if (data === '[DONE]') return { content: full, reasoning };
         try {
           const j = JSON.parse(data);
-          const delta = j.choices?.[0]?.delta?.content || '';
-          if (delta) { full += delta; onChunk(delta, full); }
+          const delta = j.choices?.[0]?.delta || {};
+          if (delta.reasoning_content) { reasoning += delta.reasoning_content; if (onReasoning) onReasoning(delta.reasoning_content, reasoning); }
+          if (delta.content) { full += delta.content; onChunk(delta.content, full); }
         } catch {}
       }
     }
-    return full;
+    return { content: full, reasoning };
   },
 
   async refinePrompt(userPrompt) {
@@ -845,7 +881,7 @@ const AI = {
 - 交互要点：描述关键交互
 - 所有内容用中文，简洁清晰`;
     const out = await this.chat([{ role: 'system', content: sys }, { role: 'user', content: userPrompt }], { temperature: 0.5, max_tokens: 600 });
-    return out.trim();
+    return (out.content || '').trim();
   },
 
   async generateApp(spec, userPrompt, onChunk) {
@@ -911,9 +947,43 @@ function renderAIConfig() {
     <p style="margin-top:18px;font-size:11px;color:var(--ink-muted);line-height:1.6">
       你的 Key 只保存在本机 localStorage，不会上传到任何服务器。建议使用 DeepSeek 等国产 API，便宜且快。
     </p>
+
+    <hr style="margin:22px 0;border:none;border-top:1px solid var(--glass-border)" />
+    <h3 style="font-size:15px;margin-bottom:4px">🫘 豆包 AI（doubao.com）</h3>
+    <p class="sub" style="margin-bottom:14px">在「AI 对话」顶部可一键切换「自定义AI ↔ 豆包AI」。豆包走 Volcengine Ark OpenAI 兼容接口，需在火山引擎控制台开通并获取 API Key。</p>
+    ${(() => {
+      const d = Store.getDoubaoConfig();
+      const dReady = !!(d.url && d.key && d.model);
+      return `
+      <div class="config-status ${dReady?'ok':'warn'}"><span>${dReady?'✓':'⚠'}</span><span>${dReady?'豆包已就绪：'+escapeHtml(d.model):'豆包尚未配置 API Key'}</span></div>
+      <div class="field"><label>豆包 API 地址</label><input class="input" id="dbUrl" value="${escapeHtml(d.url)}" placeholder="https://ark.cn-beijing.volces.com/api/v3/chat/completions" /></div>
+      <div class="field"><label>豆包 API Key</label><input class="input" id="dbKey" type="password" value="${escapeHtml(d.key)}" placeholder="ark-..." /></div>
+      <div class="field"><label>豆包模型 ID（接入点 ID）</label><input class="input" id="dbModel" value="${escapeHtml(d.model)}" placeholder="doubao-1-5-pro-32k-250115" /></div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn" onclick="TZOS.saveDoubao()">💾 保存豆包配置</button>
+        <button class="btn ghost" onclick="TZOS.testDoubao()">🧪 测试豆包</button>
+      </div>`;
+    })()}
   </div>`;
 }
 window.TZOS = window.TZOS || {};
+window.TZOS.saveDoubao = function() {
+  const cfg = { url: $('#dbUrl').value.trim(), key: $('#dbKey').value.trim(), model: $('#dbModel').value.trim() };
+  Store.setDoubaoConfig(cfg);
+  toast('豆包配置已保存');
+  refreshOpenApp('ai-config');
+};
+window.TZOS.testDoubao = async function() {
+  const cfg = { url: $('#dbUrl').value.trim(), key: $('#dbKey').value.trim(), model: $('#dbModel').value.trim() };
+  Store.setDoubaoConfig(cfg);
+  const prev = Store.getProvider(); Store.setProvider('doubao');
+  toast('正在测试豆包连接…', 1500);
+  try {
+    const r = await AI.chat([{role:'user',content:'请回复"OK"'}], { max_tokens: 10, provider:'doubao' });
+    toast('✓ 豆包连接成功：' + (r.content || '').slice(0, 30));
+  } catch (e) { toast('✗ ' + e.message.slice(0, 60), 4000); }
+  finally { Store.setProvider(prev); }
+};
 window.TZOS.saveConfig = function() {
   const cfg = { url: $('#cfgUrl').value.trim(), key: $('#cfgKey').value.trim(), model: $('#cfgModel').value.trim() };
   Store.setAIConfig(cfg);
@@ -923,17 +993,27 @@ window.TZOS.saveConfig = function() {
 window.TZOS.testConfig = async function() {
   const cfg = { url: $('#cfgUrl').value.trim(), key: $('#cfgKey').value.trim(), model: $('#cfgModel').value.trim() };
   Store.setAIConfig(cfg);
+  const prev = Store.getProvider(); Store.setProvider('custom');
   toast('正在测试连接…', 1500);
   try {
-    const r = await AI.chat([{role:'user',content:'请回复"OK"'}], { max_tokens: 10 });
-    toast('✓ 连接成功：' + r.slice(0, 30));
+    const r = await AI.chat([{role:'user',content:'请回复"OK"'}], { max_tokens: 10, provider:'custom' });
+    toast('✓ 连接成功：' + (r.content || '').slice(0, 30));
   } catch (e) { toast('✗ ' + e.message.slice(0, 60), 4000); }
+  finally { Store.setProvider(prev); }
 };
 
 /* ===================== 内置应用：AI 对话 ===================== */
 function renderAIChat() {
+  const provider = Store.getProvider();
+  const deep = Store.getDeepThink();
   return `
   <div class="app-chat" id="chatApp">
+    <div class="chat-toolbar" style="display:flex;gap:6px;padding:6px 10px;border-bottom:1px solid var(--glass-border);background:rgba(255,255,255,0.04);align-items:center">
+      <button class="btn sm ghost" id="chatProvider" title="切换 AI 提供方">${provider==='doubao'?'🫘 豆包AI':'⚙️ 自定义AI'}</button>
+      <button class="btn sm ${deep?'':'ghost'}" id="chatDeep" title="深度思考（显示思考过程）">🧠 深度思考${deep?'·开':'·关'}</button>
+      <span style="flex:1"></span>
+      <button class="btn sm ghost" id="chatClear" title="清空当前对话">🗑</button>
+    </div>
     <div class="chat-messages" id="chatMsgs"></div>
     <div class="chat-input-bar">
       <textarea class="textarea" id="chatInput" placeholder="输入消息，Enter 发送，Shift+Enter 换行…" rows="1"></textarea>
@@ -941,34 +1021,62 @@ function renderAIChat() {
     </div>
   </div>`;
 }
+function reasoningHtml(reasoning, ongoing) {
+  if (!reasoning) return '';
+  const tag = ongoing ? '（进行中…）' : '';
+  return `<details class="msg-reasoning"${ongoing?' open':''} style="margin-bottom:6px"><summary style="cursor:pointer;color:var(--ink-faint);font-size:12px">🧠 思考过程${tag}</summary><div style="font-size:12px;color:var(--ink-faint);line-height:1.6;padding:6px 8px;background:rgba(255,255,255,0.03);border-radius:6px;margin-top:4px;white-space:pre-wrap">${escapeHtml(reasoning)}</div></details>`;
+}
 function initChat() {
   const msgs = $('#chatMsgs');
   const input = $('#chatInput');
   const sendBtn = $('#chatSend');
   const history = Store.getChat();
   if (!history.length) {
+    const ready = AI.isReady();
+    const provName = Store.getProvider()==='doubao' ? '豆包AI' : '自定义AI';
     msgs.innerHTML = `<div class="chat-empty">
       <div class="ce-icon">💬</div>
-      <div class="ce-title">天择 AI 助手</div>
-      <div style="font-size:12px;max-width:360px">${AI.isReady()?'问我任何问题，或试试下面的建议':'请先在「AI 配置」中设置 API Key 才能开始对话'}</div>
+      <div class="ce-title">天择 AI 助手 · ${provName}</div>
+      <div style="font-size:12px;max-width:360px">${ready?(Store.getDeepThink()?'深度思考已开启，会显示思考过程。':'问我任何问题，或试试下面的建议'):'请先在「AI 配置」中设置当前提供方的 API Key'}</div>
       <div class="ce-suggest">
-        ${AI.isReady()?['介绍一下你自己','帮我写一首关于夏天的诗','解释一下量子纠缠'].map(s=>`<div class="chat-suggest-chip" onclick="TZOS.chatSuggest(this.textContent)">${s}</div>`).join(''):'<div class="chat-suggest-chip" onclick="TZOS.openConfig()">去配置 →</div>'}
+        ${ready?['介绍一下你自己','帮我写一首关于夏天的诗','解释一下量子纠缠，给出公式'].map(s=>`<div class="chat-suggest-chip" onclick="TZOS.chatSuggest(this.textContent)">${s}</div>`).join(''):'<div class="chat-suggest-chip" onclick="TZOS.openConfig()">去配置 →</div>'}
       </div>
     </div>`;
   } else {
-    history.forEach(m => appendMsg(m.role, m.content));
+    history.forEach(m => appendMsg(m.role, m.content, m.reasoning));
   }
   input.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } };
   input.oninput = () => { input.style.height = 'auto'; input.style.height = Math.min(120, input.scrollHeight) + 'px'; };
   sendBtn.onclick = sendChat;
+  // 工具栏
+  const provBtn = $('#chatProvider');
+  if (provBtn) provBtn.onclick = () => {
+    const next = Store.getProvider()==='doubao' ? 'custom' : 'doubao';
+    Store.setProvider(next);
+    toast('已切换为 ' + (next==='doubao'?'🫘 豆包AI':'⚙️ 自定义AI'));
+    refreshOpenApp('ai-chat');
+  };
+  const deepBtn = $('#chatDeep');
+  if (deepBtn) deepBtn.onclick = () => {
+    Store.setDeepThink(!Store.getDeepThink());
+    refreshOpenApp('ai-chat');
+    toast('深度思考已' + (Store.getDeepThink()?'开启':'关闭'));
+  };
+  const clrBtn = $('#chatClear');
+  if (clrBtn) clrBtn.onclick = () => {
+    if (!confirm('清空当前对话历史？')) return;
+    Store.setChat([]);
+    refreshOpenApp('ai-chat');
+  };
 }
-function appendMsg(role, content) {
+function appendMsg(role, content, reasoning) {
   const msgs = $('#chatMsgs');
   const empty = msgs.querySelector('.chat-empty');
   if (empty) empty.remove();
   const m = el('div', 'msg ' + role);
-  m.innerHTML = `<div class="msg-avatar">${role==='ai'?'🤖':'🧑'}</div><div class="msg-bubble">${renderMd(content)}</div>`;
+  m.innerHTML = `<div class="msg-avatar">${role==='ai'?'🤖':'🧑'}</div><div class="msg-bubble">${reasoningHtml(reasoning,false)}${renderMd(content)}</div>`;
   msgs.appendChild(m);
+  if (role === 'ai') renderMath(m);
   msgs.scrollTop = msgs.scrollHeight;
   return m;
 }
@@ -980,12 +1088,30 @@ function renderMd(text) {
   html = html.replace(/\n/g, '<br>');
   return html;
 }
+// LaTeX 渲染：懒加载 KaTeX 后对元素内的 $...$ / $$...$$ 渲染
+let _katexLoading = false, _katexQueue = [];
+function renderMath(el) {
+  if (!el) return;
+  if (window.renderMathInElement) { try { window.renderMathInElement(el, { delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}], throwOnError:false }); } catch {} return; }
+  _katexQueue.push(el);
+  if (_katexLoading) return;
+  _katexLoading = true;
+  const head = document.head;
+  const css = el('link'); css.rel = 'stylesheet'; css.href = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css'; head.appendChild(css);
+  const s1 = el('script'); s1.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js';
+  s1.onload = () => {
+    const s2 = el('script'); s2.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js';
+    s2.onload = () => { _katexQueue.forEach(e => { try { window.renderMathInElement(e, { delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}], throwOnError:false }); } catch {} }); _katexQueue = []; };
+    head.appendChild(s2);
+  };
+  head.appendChild(s1);
+}
 async function sendChat() {
   const input = $('#chatInput');
   const sendBtn = $('#chatSend');
   const text = input.value.trim();
   if (!text) return;
-  if (!AI.isReady()) { toast('请先配置 AI'); launchApp('ai-config'); return; }
+  if (!AI.isReady()) { toast(Store.getProvider()==='doubao' ? '请先在「AI 配置」中填入豆包(Volcengine Ark) API Key' : '请先配置 AI'); launchApp('ai-config'); return; }
   input.value = ''; input.style.height = 'auto';
   appendMsg('user', text);
   const history = Store.getChat();
@@ -993,24 +1119,26 @@ async function sendChat() {
   const aiMsg = appendMsg('ai', '<span class="typing-dots"><span></span><span></span><span></span></span>');
   sendBtn.disabled = true;
   const msgs = $('#chatMsgs');
-  let full = '';
+  let full = '', reasoning = '';
+  const bubble = aiMsg.querySelector('.msg-bubble');
+  const paint = () => { bubble.innerHTML = reasoningHtml(reasoning, true) + renderMd(full); msgs.scrollTop = msgs.scrollHeight; };
   try {
-    const sysMsg = { role: 'system', content: '你是天择 AI 助手，运行在天择OS中。回答简洁有用，使用中文。可以写代码（用markdown代码块）。' };
+    const sysMsg = { role: 'system', content: '你是天择 AI 助手，运行在天择OS中。回答简洁有用，使用中文。可写代码（markdown代码块）。数学公式用 LaTeX：行内 $...$，块级 $$...$$。' };
     await AI.chatStream([sysMsg, ...history.slice(-12).map(m => ({role: m.role==='ai'?'assistant':'user', content: m.content}))],
-      (delta, all) => {
-        full = all;
-        aiMsg.querySelector('.msg-bubble').innerHTML = renderMd(all);
-        msgs.scrollTop = msgs.scrollHeight;
-      });
-    history.push({ role: 'ai', content: full });
+      (delta, all) => { full = all; paint(); },
+      { onReasoning: (d, allR) => { reasoning = allR; paint(); } }
+    );
+    bubble.innerHTML = reasoningHtml(reasoning, false) + renderMd(full);
+    renderMath(aiMsg);
+    history.push({ role: 'ai', content: full, reasoning });
     Store.setChat(history);
   } catch (e) {
-    aiMsg.querySelector('.msg-bubble').innerHTML = `<span style="color:#fca5a5">⚠ ${escapeHtml(e.message)}</span>`;
+    bubble.innerHTML = `<span style="color:#fca5a5">⚠ ${escapeHtml(e.message)}</span>`;
   } finally {
     sendBtn.disabled = false;
   }
 }
-window.TZOS.chatSuggest = function(t) { $('#chatInput').value = t; sendChat(); };
+window.TZOS.chatSuggest = function(t) { const i = $('#chatInput'); if (i) { i.value = t; sendChat(); } };
 window.TZOS.openConfig = function() { launchApp('ai-config'); };
 
 /* ===================== 内置应用：软件商城 ===================== */
@@ -1070,10 +1198,11 @@ window.TZOS.startGen = async function() {
     $('#refinedBox').innerHTML = escapeHtml(spec).replace(/\|/g, '<br><span class="opt">▸ </span>');
     $('#codeProgress').textContent = '开始生成代码…';
     let code = '';
-    code = await AI.generateApp(spec, prompt, (delta, all) => {
+    const result = await AI.generateApp(spec, prompt, (delta, all) => {
       code = all;
       $('#codeProgress').textContent = '生成中… ' + all.length + ' 字符';
     });
+    if (typeof result === 'object' && result.content) code = result.content;
     code = code.trim();
     if (code.startsWith('```')) { code = code.replace(/^```(?:html)?\n?/, '').replace(/```$/, ''); }
     if (!code.includes('<!DOCTYPE') && !code.includes('<html')) {
