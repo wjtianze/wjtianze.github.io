@@ -1393,14 +1393,14 @@ function bindGlobalEvents() {
   // 键盘快捷键
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-      // 优先关闭菜单/面板
+      // Esc 仅用于关闭菜单/面板
       if (StartMenu.open) { StartMenu.hide(); return; }
       if (ctxEl) { hideCtxMenu(); return; }
       const nc = $('#notifCenter'); if (nc && !nc.hidden) { nc.hidden = true; return; }
-      // 在输入框中按 Esc 仅失焦，不触发全屏
-      const tag = (e.target.tagName || '').toUpperCase();
-      if (tag === 'INPUT' || tag === 'TEXTAREA') { e.target.blur(); return; }
-      // 否则切换浏览器全屏
+    }
+    // Ctrl+F 切换浏览器全屏（覆盖浏览器默认查找）
+    if (e.ctrlKey && (e.key === 'f' || e.key === 'F')) {
+      e.preventDefault();
       if (document.fullscreenElement) { document.exitFullscreen(); }
       else { try { document.documentElement.requestFullscreen(); } catch (err) {} }
     }
