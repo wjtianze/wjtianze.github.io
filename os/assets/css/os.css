@@ -124,7 +124,7 @@ input, textarea { font-family: inherit; }
   grid-auto-rows: 104px; grid-auto-flow: column;
   gap: 6px; align-content: start;
 }
-.desktop.mac-style .desktop-icons { top: calc(var(--macbar-h) + 12px); bottom: 96px; }
+.desktop.mac-style .desktop-icons { top: 16px; }
 
 /* PC 自由摆放画布模式：绝对定位 */
 .desktop-icons.canvas-mode { display: block; }
@@ -206,7 +206,6 @@ input, textarea { font-family: inherit; }
   border-radius: var(--r-lg); box-shadow: var(--sh-lg);
 }
 .desktop.mac-style .tb-start { display: none; }
-.desktop.mac-style .tb-tray { display: none; }
 .desktop.mac-style .tb-running { justify-content: center; }
 .desktop.mac-style .tb-task {
   height: 46px; width: 46px; min-width: 46px; padding: 0; border-radius: 12px;
@@ -215,19 +214,6 @@ input, textarea { font-family: inherit; }
 .desktop.mac-style .tb-task .tb-task-icon { font-size: 22px; }
 .desktop.mac-style .tb-task.active { border-bottom: none; background: rgba(255,255,255,0.16); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15); }
 
-/* ============ macOS 顶栏 ============ */
-.mac-bar {
-  position: absolute; left: 0; right: 0; top: 0; height: var(--macbar-h);
-  display: flex; align-items: center; justify-content: space-between; padding: 0 14px;
-  background: rgba(10, 15, 36, 0.55); backdrop-filter: blur(20px) saturate(160%);
-  border-bottom: 1px solid var(--glass-border); z-index: 5000; font-size: 13px;
-}
-.mac-bar-left { display: flex; align-items: center; gap: 10px; }
-.mac-logo { width: 18px; height: 18px; border-radius: 50%; background: var(--grad-main); display: inline-block; cursor: pointer; }
-.mac-app-name { font-weight: 600; }
-.mac-bar-right { display: flex; align-items: center; gap: 14px; color: var(--ink-dim); }
-.mac-bar-btn { width: 26px; height: 26px; border-radius: 6px; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: background 0.16s; }
-.mac-bar-btn:hover { background: rgba(255,255,255,0.12); }
 
 /* ============ 开始菜单 ============ */
 .start-menu {
@@ -466,7 +452,6 @@ body.mobile .home-screen {
 body.mobile .desktop-icon { width: 100%; }
 body.mobile .di-icon { width: 56px; height: 56px; font-size: 28px; }
 body.mobile .taskbar { display: none; }
-body.mobile .mac-bar { display: none !important; }
 body.mobile .mobile-dock {
   display: flex !important; position: absolute; left: 12px; right: 12px; bottom: 12px;
   height: 62px; background: var(--glass-strong); backdrop-filter: blur(24px) saturate(170%);
@@ -515,7 +500,6 @@ body.mobile .win.mobile-fullscreen { inset: 0 !important; width: 100% !important
   border: 1px solid var(--glass-border); border-radius: var(--r-md); box-shadow: var(--sh-md);
   overflow: hidden; user-select: none; transition: opacity 0.2s var(--ease), transform 0.2s var(--ease);
 }
-.desktop.mac-style .floating-widget { bottom: 96px; }
 .floating-widget.hidden { opacity: 0; pointer-events: none; transform: scale(0.9); }
 .fw-header {
   display: flex; align-items: center; justify-content: space-between; padding: 8px 10px;
@@ -544,7 +528,6 @@ body.mobile .win.mobile-fullscreen { inset: 0 !important; width: 100% !important
   background: var(--grad-main); color: #fff; box-shadow: var(--sh-glow);
   display: flex; align-items: center; justify-content: center; transition: transform 0.14s var(--ease);
 }
-.desktop.mac-style .fw-reopen { bottom: 96px; }
 .fw-reopen.hidden { display: none; }
 .fw-reopen:hover { transform: scale(1.08); }
 .fw-reopen:active { transform: scale(0.92); }

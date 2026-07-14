@@ -70,7 +70,6 @@ function applyDeviceStyle() {
   let style = auto || (mobile ? 'ios' : 'win');
   if (mobile) {
     $('#taskbar').hidden = true;
-    $('#macBar').hidden = true;
     $('#mobileDock').hidden = false;
     $('#homeBar').hidden = false;
     $('#desktopIcons').hidden = false;
@@ -82,9 +81,8 @@ function applyDeviceStyle() {
     $('#homeScreen').hidden = true;
     const isMac = style === 'mac';
     $('#desktop').classList.toggle('mac-style', isMac);
-    // Mac 风格：顶部 macBar 显示，底部 taskbar 变身为居中 Dock（保留显示）
-    $('#macBar').hidden = !isMac;
-    $('#taskbar').hidden = false; // taskbar 在 mac 下通过 CSS 变为 Dock
+    // Mac 风格：底部 taskbar 通过 CSS 变身为居中 Dock（顶部无 macBar）
+    $('#taskbar').hidden = false;
   }
   applyStyleToWindows();
 }
@@ -630,40 +628,57 @@ const FloatingWidget = {
     // 位置
     if (st.x != null && st.y != null) { w.style.left = st.x + 'px'; w.style.top = st.y + 'px'; w.style.bottom = 'auto'; w.style.right = 'auto'; }
     if (st.closed) { w.classList.add('hidden'); reopen.classList.remove('hidden'); this.placeReopen(reopen, st); }
-    // 拖拽
+
+    // 拖拽：使用 document 级 pointermove/pointerup，避开 setPointerCapture 兼容性问题
     const head = $('#fwHeader');
-    let sx, sy, sl, st2, dragging = false;
-    head.addEventListener('pointerdown', (e) => {
-      if (e.target.closest('.fw-close')) return;
-      dragging = true; sx = e.clientX; sy = e.clientY;
-      sl = w.offsetLeft; st2 = w.offsetTop;
-      w.style.transition = 'none';
-      head.setPointerCapture(e.pointerId);
-    });
-    head.addEventListener('pointermove', (e) => {
+    let dragging = false, sx, sy, sl, st2;
+    const onMove = (e) => {
       if (!dragging) return;
       const dx = e.clientX - sx, dy = e.clientY - sy;
-      const nx = Math.max(4, Math.min(window.innerWidth - w.offsetWidth - 4, sl + dx));
-      const ny = Math.max(4, Math.min(window.innerHeight - w.offsetHeight - 4, st2 + dy));
-      w.style.left = nx + 'px'; w.style.top = ny + 'px'; w.style.bottom = 'auto'; w.style.right = 'auto';
-    });
-    head.addEventListener('pointerup', (e) => {
-      dragging = false; w.style.transition = '';
-      try { head.releasePointerCapture(e.pointerId); } catch {}
+      const nx = Math.max(0, Math.min(window.innerWidth - w.offsetWidth, sl + dx));
+      const ny = Math.max(0, Math.min(window.innerHeight - w.offsetHeight, st2 + dy));
+      w.style.left = nx + 'px';
+      w.style.top = ny + 'px';
+      w.style.bottom = 'auto';
+      w.style.right = 'auto';
+    };
+    const onUp = () => {
+      if (!dragging) return;
+      dragging = false;
+      w.style.transition = '';
       const cur = Store.getWidget();
       cur.x = w.offsetLeft; cur.y = w.offsetTop;
       Store.setWidget(cur);
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      document.removeEventListener('pointercancel', onUp);
+    };
+    head.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0 && e.pointerType === 'mouse') return;
+      if (e.target.closest('.fw-close')) return; // 点关闭按钮不启动拖拽
+      e.preventDefault();
+      dragging = true;
+      sx = e.clientX; sy = e.clientY;
+      sl = w.offsetLeft; st2 = w.offsetTop;
+      w.style.transition = 'none';
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+      document.addEventListener('pointercancel', onUp);
     });
-    // 关闭
-    $('#fwClose').onclick = (e) => { e.stopPropagation(); this.close(); };
+
+    // 关闭按钮：pointerdown 阻止冒泡到 header，click 触发关闭
+    const closeBtn = $('#fwClose');
+    closeBtn.addEventListener('pointerdown', (e) => { e.stopPropagation(); });
+    closeBtn.onclick = (e) => { e.stopPropagation(); this.close(); };
+
     // 重新打开
     reopen.onclick = () => { this.open(); };
     // 快捷按钮
     w.querySelectorAll('.fw-btn').forEach(b => {
-      b.onclick = () => launchApp(b.dataset.app);
+      b.onclick = (e) => { e.stopPropagation(); launchApp(b.dataset.app); };
     });
     // 时钟
-    const tick = () => { const c = $('#fwClock'); if (c) { const d = new Date(); c.textContent = fmtTime(d); c.dataset.date = fmtDate(d); } };
+    const tick = () => { const c = $('#fwClock'); if (c) { c.textContent = fmtTime(new Date()); } };
     tick(); setInterval(tick, 1000 * 10);
   },
   placeReopen(reopen, st) {
@@ -1193,10 +1208,8 @@ WM.renderContent = function(winObj, opts) {
 function startClock() {
   const tick = () => {
     const d = new Date();
-    const tc = $('#tbClock'); const mc = $('#macClock');
-    const t = fmtTime(d) + '<br>' + fmtDate(d);
-    if (tc) tc.innerHTML = t;
-    if (mc) mc.textContent = `${d.getMonth()+1}月${d.getDate()}日 ${fmtTime(d)}`;
+    const tc = $('#tbClock');
+    if (tc) tc.innerHTML = fmtTime(d) + '<br>' + fmtDate(d);
   };
   tick(); setInterval(tick, 1000);
 }
@@ -1231,15 +1244,8 @@ function bindGlobalEvents() {
   $('#btnStart').onclick = (e) => { e.stopPropagation(); StartMenu.toggle(); };
   // 风格切换按钮（任务栏）
   $('#btnStyle').onclick = (e) => { e.stopPropagation(); toggleStyle(); };
-  // macBar 上的风格切换
-  const macStyle = $('#macStyle');
-  if (macStyle) macStyle.onclick = (e) => { e.stopPropagation(); toggleStyle(); };
-  // macBar 上的 AI 配置
-  const macAi = $('#macAi');
-  if (macAi) macAi.onclick = (e) => { e.stopPropagation(); launchApp('ai-config'); };
-  // macBar logo → 应用列表（开始菜单）
-  const macLogo = $('#macLogo');
-  if (macLogo) macLogo.onclick = (e) => { e.stopPropagation(); StartMenu.toggle(); };
+  // AI 配置快捷按钮（任务栏）
+  $('#btnAiConfig').onclick = (e) => { e.stopPropagation(); launchApp('ai-config'); };
   // AI 配置快捷按钮（任务栏）
   $('#btnAiConfig').onclick = (e) => { e.stopPropagation(); launchApp('ai-config'); };
   // 设置按钮
