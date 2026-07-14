@@ -223,6 +223,8 @@ input, textarea { font-family: inherit; }
   z-index: 5100; padding: 18px; display: flex; flex-direction: column;
   animation: startPop 0.24s var(--ease-bounce); transform-origin: bottom left;
 }
+/* 关键：display:flex 会覆盖 hidden 属性的 display:none，必须显式声明 [hidden] 时隐藏，否则菜单关不掉 */
+.start-menu[hidden] { display: none; }
 @keyframes startPop { from { opacity: 0; transform: translateY(12px) scale(0.96); } to { opacity: 1; transform: none; } }
 .start-search { margin-bottom: 14px; }
 .start-search input {
