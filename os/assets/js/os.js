@@ -400,23 +400,31 @@ const StartMenu = {
     this.open = true;
     $('#startMenu').hidden = false;
     $('#btnStart').classList.add('active');
+    // 打开时清空搜索框，避免上次残留过滤导致空列表
+    const searchInput = $('#startSearch');
+    if (searchInput) searchInput.value = '';
     this.render();
     setTimeout(() => $('#startSearch').focus(), 50);
   },
   hide() { this.open = false; $('#startMenu').hidden = true; $('#btnStart').classList.remove('active'); },
   render(filter = '') {
-    const apps = getAllApps().filter(a => !filter || a.name.toLowerCase().includes(filter.toLowerCase()) || (a.desc||'').includes(filter));
     const grid = $('#startApps');
+    if (!grid) return;
     grid.innerHTML = '';
+    const all = (typeof getAllApps === 'function') ? getAllApps() : [];
+    const apps = all.filter(a => !filter || (a.name||'').toLowerCase().includes(filter.toLowerCase()) || (a.desc||'').toLowerCase().includes(filter.toLowerCase()));
     const order = ['system','ai','tznet','game','tool'];
-    apps.sort((a,b) => { const ia = order.indexOf(a.category), ib = order.indexOf(b.category); return (ia-ib) || a.name.localeCompare(b.name); });
+    apps.sort((a,b) => { const ia = order.indexOf(a.category), ib = order.indexOf(b.category); return (ia-ib) || (a.name||'').localeCompare(b.name||''); });
+    if (!apps.length) {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--ink-faint);padding:30px;font-size:13px;">未找到匹配的应用</div>';
+      return;
+    }
     apps.forEach(app => {
       const a = el('div', 'start-app');
-      a.innerHTML = `<div class="sa-icon${app.grad?' grad':''}">${app.icon||'📦'}</div><div class="sa-name">${escapeHtml(app.name)}</div>`;
+      a.innerHTML = `<div class="sa-icon${app.grad?' grad':''}">${app.icon||'📦'}</div><div class="sa-name">${escapeHtml(app.name||'应用')}</div>`;
       a.onclick = () => { launchApp(app.id); this.hide(); };
       grid.appendChild(a);
     });
-    if (!apps.length) grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--ink-faint);padding:30px;font-size:13px;">未找到匹配的应用</div>';
   }
 };
 
@@ -1250,6 +1258,9 @@ function bindGlobalEvents() {
   $('#btnAiConfig').onclick = (e) => { e.stopPropagation(); launchApp('ai-config'); };
   // 设置按钮
   $('#btnSettings').onclick = (e) => { e.stopPropagation(); StartMenu.hide(); launchApp('settings'); };
+  // 开始菜单关闭按钮
+  const btnStartClose = $('#btnStartClose');
+  if (btnStartClose) btnStartClose.onclick = (e) => { e.stopPropagation(); StartMenu.hide(); };
   // 关机按钮
   $('#btnPower').onclick = (e) => {
     e.stopPropagation();

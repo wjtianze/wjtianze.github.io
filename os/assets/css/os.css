@@ -248,9 +248,10 @@ input, textarea { font-family: inherit; }
 }
 .start-app .sa-icon.grad { background: var(--grad-main); border: none; }
 .start-app .sa-name { font-size: 11.5px; color: var(--ink-dim); text-align: center; max-width: 84px; word-break: break-all; }
-.start-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--glass-border); }
+.start-footer { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--glass-border); }
 .start-footer button { width: 36px; height: 36px; border-radius: var(--r-sm); font-size: 16px; display: flex; align-items: center; justify-content: center; transition: background 0.16s; }
 .start-footer button:hover { background: rgba(255,255,255,0.1); }
+.start-footer .start-close-btn { margin-right: auto; width: auto; padding: 0 14px; font-size: 13px; font-weight: 500; }
 
 /* ============ 窗口系统 ============ */
 .windows-layer { position: absolute; inset: 0; pointer-events: none; }
