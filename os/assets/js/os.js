@@ -1523,8 +1523,9 @@ function initBrowser() {
   const tabsEl = $('#brTabs'), views = $('#brViews'), urlInput = $('#brUrl');
   const QUICK = [['天择网首页','https://wjtianze.github.io/'],['新闻','https://wjtianze.github.io/news/'],['博客','https://wjtianze.github.io/blog/'],['COC 数据','https://wjtianze.github.io/coc/data/']];
   let tabs = [], activeId = null, counter = 0;
-  // 清理上一次浏览器实例遗留的 URL 轮询（窗口刷新/重开场景）
+  // 清理上一次浏览器实例遗留的 URL 轮询与消息监听（窗口刷新/重开场景）
   if (window.__tzBrWatcher) { clearInterval(window.__tzBrWatcher); window.__tzBrWatcher = null; }
+  if (window.__tzBrMsg) { window.removeEventListener('message', window.__tzBrMsg); window.__tzBrMsg = null; }
 
   const sanitizeUrl = (u) => {
     let full = (u || '').trim();
@@ -1659,6 +1660,30 @@ function initBrowser() {
   $('#brBack').onclick = () => { const t = tabs.find(x => x.id === activeId); if (t && t.hi > 0) { t.hi--; navigate(t.id, t.history[t.hi], false); } };
   $('#brFwd').onclick = () => { const t = tabs.find(x => x.id === activeId); if (t && t.hi < t.history.length - 1) { t.hi++; navigate(t.id, t.history[t.hi], false); } };
   $('#brReload').onclick = () => { const t = tabs.find(x => x.id === activeId); if (t && t.url) t.frame.src = t.url; };
+
+  // 接收天择网页面（被嵌入时）主动上报的消息：新窗口链接 → OS 内开标签页；当前网址 → 同步地址栏。
+  // 不依赖同源，本地预览（localhost）与线上均生效。
+  const onBrMsg = (ev) => {
+    const d = ev.data; if (!d) return;
+    let tab = null;
+    for (let i = 0; i < tabs.length; i++) {
+      try { if (tabs[i].frame.contentWindow === ev.source) { tab = tabs[i]; break; } } catch (e) {}
+    }
+    if (!tab) return;
+    if (d.type === 'tz_browser_open' && d.url) {
+      newTab(d.url);
+    } else if (d.type === 'tz_browser_url') {
+      if (d.url && d.url !== 'about:blank') {
+        tab.url = d.url;
+        tab.overlay.style.display = 'none';
+        if (d.title) tab.title = d.title;
+        if (tab.id === activeId) urlInput.value = d.url;
+        renderTabs();
+      }
+    }
+  };
+  window.addEventListener('message', onBrMsg);
+  window.__tzBrMsg = onBrMsg;
 
   // 轮询：捕获同源页面 SPA 式 URL 变化（pushState/replaceState 不触发 load），同步地址栏与标签标题
   window.__tzBrWatcher = setInterval(() => {

@@ -141,4 +141,39 @@
       banners[bannerIndex].hidden = false;
     }, 6000);
   }
+
+  /* 被 iframe 嵌入（如天择OS 浏览器）时：把“新窗口/外站链接”交给父窗口在系统内打开，
+     并主动上报当前网址供地址栏同步。直接访问天择网时（parent===window）不生效。 */
+  if (window.parent !== window) {
+    var TZ_OPEN = "tz_browser_open";
+    var TZ_URL = "tz_browser_url";
+    function tzPostUrl() {
+      try { window.parent.postMessage({ type: TZ_URL, url: location.href, title: document.title }, "*"); } catch (e) {}
+    }
+    // 捕获阶段拦截，确保先于默认跳转
+    document.addEventListener("click", function (event) {
+      var a = event.target.closest && event.target.closest("a");
+      if (!a || !a.href || a.hasAttribute("download")) return;
+      var tgt = a.target;
+      var isExternal = false;
+      try { isExternal = new URL(a.href, location.href).origin !== location.origin; } catch (e) {}
+      if (tgt === "_blank" || tgt === "_new" || tgt === "_top" || tgt === "_parent" || isExternal) {
+        event.preventDefault();
+        try { window.parent.postMessage({ type: TZ_OPEN, url: a.href }, "*"); } catch (e) {}
+      }
+    }, true);
+    // 上报当前网址：覆盖多页跳转与单页路由（pushState/replaceState/popstate/hashchange）
+    tzPostUrl();
+    window.addEventListener("load", tzPostUrl);
+    window.addEventListener("popstate", tzPostUrl);
+    window.addEventListener("hashchange", tzPostUrl);
+    ["pushState", "replaceState"].forEach(function (m) {
+      var orig = history[m];
+      history[m] = function () {
+        var ret = orig.apply(this, arguments);
+        setTimeout(tzPostUrl, 0);
+        return ret;
+      };
+    });
+  }
 })();
