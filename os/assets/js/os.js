@@ -1523,6 +1523,8 @@ function initBrowser() {
   const tabsEl = $('#brTabs'), views = $('#brViews'), urlInput = $('#brUrl');
   const QUICK = [['天择网首页','https://wjtianze.github.io/'],['新闻','https://wjtianze.github.io/news/'],['博客','https://wjtianze.github.io/blog/'],['COC 数据','https://wjtianze.github.io/coc/data/']];
   let tabs = [], activeId = null, counter = 0;
+  // 清理上一次浏览器实例遗留的 URL 轮询（窗口刷新/重开场景）
+  if (window.__tzBrWatcher) { clearInterval(window.__tzBrWatcher); window.__tzBrWatcher = null; }
 
   const sanitizeUrl = (u) => {
     let full = (u || '').trim();
@@ -1546,11 +1548,14 @@ function initBrowser() {
 
     const frame = el('iframe', '');
     Object.assign(frame.style, { width:'100%', height:'100%', border:'none', background:'#fff' });
-    // 不设 sandbox：保证同窗口链接可正常自导航；同源页面用点击委托把 _blank/外站链接改到 OS 内新标签页
+    // sandbox：允许脚本/表单/同源（保证同源点击委托可工作、天择网页面功能正常），
+    // 但【不】给 allow-popups / allow-top-navigation —— 这样跨域网站的 target=_blank/_top 链接
+    // 无法跳出天择OS 到外部浏览器；同源页面则由下方点击委托接管，改到 OS 内新标签页打开。
+    frame.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin allow-modals allow-downloads allow-presentation');
     frame.src = 'about:blank';
     frame.referrerPolicy = 'no-referrer';
     frame.addEventListener('load', () => {
-      // 同源页面：点击委托拦截 _blank/_new/_top 及外站链接 → OS 内新标签页；同站同窗口链接放行自导航
+      // 同源页面：点击委托拦截 _blank/_new/_top/_parent 及外站链接 → OS 内新标签页；同站同窗口链接放行自导航
       try {
         const doc = frame.contentDocument;
         if (doc && !doc.__tzHooked) {
@@ -1561,18 +1566,22 @@ function initBrowser() {
             const tgt = a.target;
             let isExternal = false;
             try { isExternal = new URL(a.href).origin !== location.origin; } catch {}
-            if (tgt === '_blank' || tgt === '_new' || tgt === '_top' || isExternal) {
+            if (tgt === '_blank' || tgt === '_new' || tgt === '_top' || tgt === '_parent' || isExternal) {
               ev.preventDefault();
               newTab(a.href);
+              return;
             }
-            // 否则放行：同站同窗口链接由 iframe 自身导航
+            // 否则放行：同站同窗口链接由 iframe 自身导航，下方会同步地址栏
           });
         }
-      } catch (e) { /* 跨域无法访问，链接按浏览器默认行为自导航 */ }
+      } catch (e) { /* 跨域无法注入委托；sandbox 已阻止跳出系统 */ }
+      // 同步地址栏与 tab 信息：同源读精确当前 URL（含自导航），跨域回退到 frame.src
       const t = tabs.find(x => x.id === id);
       if (t) {
+        let cur = '';
+        try { cur = frame.contentWindow.location.href; } catch (e) { cur = frame.src; }
+        if (cur && cur !== 'about:blank') { t.url = cur; t.overlay.style.display = 'none'; }
         try { t.title = (frame.contentDocument && frame.contentDocument.title) || ''; } catch {}
-        if (frame.src && frame.src !== 'about:blank') { t.url = frame.src; t.overlay.style.display = 'none'; }
         renderTabs();
         if (id === activeId) urlInput.value = t.url || '';
       }
@@ -1650,6 +1659,21 @@ function initBrowser() {
   $('#brBack').onclick = () => { const t = tabs.find(x => x.id === activeId); if (t && t.hi > 0) { t.hi--; navigate(t.id, t.history[t.hi], false); } };
   $('#brFwd').onclick = () => { const t = tabs.find(x => x.id === activeId); if (t && t.hi < t.history.length - 1) { t.hi++; navigate(t.id, t.history[t.hi], false); } };
   $('#brReload').onclick = () => { const t = tabs.find(x => x.id === activeId); if (t && t.url) t.frame.src = t.url; };
+
+  // 轮询：捕获同源页面 SPA 式 URL 变化（pushState/replaceState 不触发 load），同步地址栏与标签标题
+  window.__tzBrWatcher = setInterval(() => {
+    tabs.forEach(t => {
+      if (!document.body.contains(t.frame)) return;
+      let cur = '';
+      try { cur = t.frame.contentWindow.location.href; } catch (e) { return; }
+      if (cur && cur !== 'about:blank' && cur !== t.url) {
+        t.url = cur;
+        try { t.title = (t.frame.contentDocument && t.frame.contentDocument.title) || ''; } catch {}
+        if (t.id === activeId) urlInput.value = cur;
+        renderTabs();
+      }
+    });
+  }, 800);
 
   newTab('');
 }
