@@ -847,13 +847,14 @@ function toast(msg, dur = 2600) {
 
 /* ===================== AI 引擎 ===================== */
 const AI = {
-  // 按当前 provider 取配置；deepThink 时若为 DeepSeek 自动用 reasoner 模型
+  // 按当前 provider 取配置；deepThink 时若为 DeepSeek 自动用 reasoner 模型，关闭时切回 chat
   config(provider) {
     const p = provider || Store.getProvider();
     let c = (p === 'doubao') ? Store.getDoubaoConfig() : Store.getAIConfig();
     c = { ...c };
-    if (Store.getDeepThink() && /deepseek\.com/i.test(c.url) && /deepseek-chat/i.test(c.model)) {
-      c.model = 'deepseek-reasoner';
+    if (/deepseek\.com/i.test(c.url)) {
+      if (Store.getDeepThink() && /deepseek-chat/i.test(c.model)) c.model = 'deepseek-reasoner';
+      else if (!Store.getDeepThink() && /deepseek-reasoner/i.test(c.model)) c.model = 'deepseek-chat';
     }
     return c;
   },
@@ -1066,10 +1067,18 @@ function initChat() {
     const f = $('#doubaoFrame');
     const hint = $('#doubaoHint');
     if (f && hint) {
-      const hide = () => { try { if (f.contentWindow) hint.style.display = 'none'; } catch {} };
+      // iframe 加载成功即隐藏提示（load 事件对跨源 iframe 同样会触发）
+      let loaded = false;
+      const hide = () => { loaded = true; hint.style.display = 'none'; };
       f.addEventListener('load', hide);
-      // 兜底：4 秒后若仍空白则保留提示
-      setTimeout(() => { try { if (!f.contentWindow || f.contentWindow.length === 0) hint.style.display = 'flex'; } catch {} }, 4000);
+      // 兜底：6 秒后若仍未加载完成，说明豆包可能禁止被嵌入，更新文案引导用户外部打开
+      // （不强制重显已隐藏的提示——之前用 contentWindow.length===0 判断"空白"是错的：
+      //  正常加载的豆包页面也没有子框架，length 就是 0，会把已隐藏的提示重新显示出来）
+      setTimeout(() => {
+        if (loaded || !hint.parentNode) return;
+        const sub = hint.querySelector('div[style*="14px"]');
+        if (sub) sub.textContent = '豆包网页版加载较慢或被禁止嵌入…';
+      }, 6000);
     }
     return;
   }
@@ -1083,7 +1092,7 @@ function initChat() {
     msgs.innerHTML = `<div class="chat-empty">
       <div class="ce-icon">💬</div>
       <div class="ce-title">天择 AI 助手 · ${provName}</div>
-      <div style="font-size:12px;max-width:360px">${ready?(Store.getDeepThink()?'深度思考已开启，会显示思考过程。':'问我任何问题，或试试下面的建议'):'请先在「AI 配置」中设置当前提供方的 API Key'}</div>
+      <div id="chatEmptyHint" style="font-size:12px;max-width:360px">${ready?(Store.getDeepThink()?'深度思考已开启，会显示思考过程。':'问我任何问题，或试试下面的建议'):'请先在「AI 配置」中设置当前提供方的 API Key'}</div>
       <div class="ce-suggest">
         ${ready?['介绍一下你自己','帮我写一首关于夏天的诗','解释一下量子纠缠，给出公式'].map(s=>`<div class="chat-suggest-chip" onclick="TZOS.chatSuggest(this.textContent)">${s}</div>`).join(''):'<div class="chat-suggest-chip" onclick="TZOS.openConfig()">去配置 →</div>'}
       </div>
@@ -1105,8 +1114,13 @@ function initChat() {
   const deepBtn = $('#chatDeep');
   if (deepBtn) deepBtn.onclick = () => {
     Store.setDeepThink(!Store.getDeepThink());
-    refreshOpenApp('ai-chat');
-    toast('深度思考已' + (Store.getDeepThink()?'开启':'关闭'));
+    const d = Store.getDeepThink();
+    // 只更新按钮状态，不重渲染对话，避免影响已有内容
+    deepBtn.classList.toggle('ghost', !d);
+    deepBtn.textContent = '🧠 深度思考' + (d ? '·开' : '·关');
+    const eh = $('#chatEmptyHint');
+    if (eh && AI.isReady()) eh.textContent = d ? '深度思考已开启，会显示思考过程。' : '问我任何问题，或试试下面的建议';
+    toast('深度思考已' + (d ? '开启' : '关闭') + '（仅影响后续回复）');
   };
   const clrBtn = $('#chatClear');
   if (clrBtn) clrBtn.onclick = () => {
@@ -1144,23 +1158,33 @@ function renderMd(text) {
   });
   return html;
 }
-// LaTeX 渲染：懒加载 KaTeX 后对元素内的 $...$ / $$...$$ 渲染
-let _katexLoading = false, _katexQueue = [];
-function renderMath(el) {
-  if (!el) return;
-  if (window.renderMathInElement) { try { window.renderMathInElement(el, { delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}], throwOnError:false }); } catch {} return; }
-  _katexQueue.push(el);
-  if (_katexLoading) return;
-  _katexLoading = true;
-  const head = document.head;
-  const css = el('link'); css.rel = 'stylesheet'; css.href = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css'; head.appendChild(css);
-  const s1 = el('script'); s1.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js';
-  s1.onload = () => {
-    const s2 = el('script'); s2.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js';
-    s2.onload = () => { _katexQueue.forEach(e => { try { window.renderMathInElement(e, { delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}], throwOnError:false }); } catch {} }); _katexQueue = []; };
-    head.appendChild(s2);
-  };
-  head.appendChild(s1);
+// LaTeX 渲染：依赖在 os/index.html 中预加载的 KaTeX（与 TLH 演示页一致，jsdelivr 0.16.11）。
+// 这里只负责调用 auto-render；若 KaTeX 尚未加载完成，排队并在就绪后统一渲染。
+const KATEX_OPTS = { delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}], throwOnError:false };
+let _katexQueue = [], _katexTimer = null, _katexFallbackTried = false;
+function renderMath(node) {
+  if (!node) return;
+  if (window.renderMathInElement) { try { window.renderMathInElement(node, KATEX_OPTS); } catch {} return; }
+  // KaTeX 还在加载中，入队等待
+  _katexQueue.push(node);
+  if (!_katexTimer) {
+    _katexTimer = setInterval(() => {
+      if (!window.renderMathInElement) return;
+      clearInterval(_katexTimer); _katexTimer = null;
+      const q = _katexQueue; _katexQueue = [];
+      q.forEach(n => { try { window.renderMathInElement(n, KATEX_OPTS); } catch {} });
+    }, 150);
+    // 兜底：3 秒后若 jsdelivr 仍未就绪，尝试国内备用 CDN（staticfile.org）
+    setTimeout(() => {
+      if (window.renderMathInElement || _katexFallbackTried) return;
+      _katexFallbackTried = true;
+      const head = document.head;
+      const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'https://cdn.staticfile.org/KaTeX/0.16.11/katex.min.css'; head.appendChild(css);
+      const s1 = document.createElement('script'); s1.src = 'https://cdn.staticfile.org/KaTeX/0.16.11/katex.min.js';
+      s1.onload = () => { const s2 = document.createElement('script'); s2.src = 'https://cdn.staticfile.org/KaTeX/0.16.11/contrib/auto-render.min.js'; head.appendChild(s2); };
+      head.appendChild(s1);
+    }, 3000);
+  }
 }
 async function sendChat() {
   const input = $('#chatInput');
@@ -1177,16 +1201,18 @@ async function sendChat() {
   const msgs = $('#chatMsgs');
   let full = '', reasoning = '';
   const bubble = aiMsg.querySelector('.msg-bubble');
-  const paint = () => { bubble.innerHTML = reasoningHtml(reasoning, true) + renderMd(full); msgs.scrollTop = msgs.scrollHeight; };
+  // 深度思考关闭时：不显示、不存储思考过程（仅影响本次及后续回复，不动已有消息）
+  const deep = Store.getDeepThink();
+  const paint = () => { bubble.innerHTML = (deep ? reasoningHtml(reasoning, true) : '') + renderMd(full); msgs.scrollTop = msgs.scrollHeight; };
   try {
     const sysMsg = { role: 'system', content: '你是天择 AI 助手，运行在天择OS中。回答简洁有用，使用中文。可写代码（markdown代码块）。数学公式用 LaTeX：行内 $...$，块级 $$...$$。' };
     await AI.chatStream([sysMsg, ...history.slice(-12).map(m => ({role: m.role==='ai'?'assistant':'user', content: m.content}))],
       (delta, all) => { full = all; paint(); },
-      { onReasoning: (d, allR) => { reasoning = allR; paint(); } }
+      { onReasoning: deep ? ((d, allR) => { reasoning = allR; paint(); }) : undefined }
     );
-    bubble.innerHTML = reasoningHtml(reasoning, false) + renderMd(full);
+    bubble.innerHTML = (deep ? reasoningHtml(reasoning, false) : '') + renderMd(full);
     renderMath(aiMsg);
-    history.push({ role: 'ai', content: full, reasoning });
+    history.push({ role: 'ai', content: full, reasoning: deep ? reasoning : '' });
     Store.setChat(history);
   } catch (e) {
     bubble.innerHTML = `<span style="color:#fca5a5">⚠ ${escapeHtml(e.message)}</span>`;
@@ -1201,6 +1227,7 @@ window.TZOS.openDoubaoExternal = function() { window.open('https://www.doubao.co
 /* ===================== 内置应用：软件商城 ===================== */
 function renderAppStore() {
   const installed = Store.getApps();
+  const deep = Store.getDeepThink();
   return `
   <div class="app-store">
     <div class="store-header">
@@ -1209,6 +1236,7 @@ function renderAppStore() {
     </div>
     <div class="store-form">
       <input class="input" id="storePrompt" placeholder="例如：一个贪吃蛇游戏 / 一个番茄钟计时器 / 一个markdown笔记…" />
+      <button class="btn sm ${deep?'':'ghost'}" id="storeDeep" title="深度思考（用推理模型生成更严谨的代码，速度较慢）">🧠 深度思考${deep?'·开':'·关'}</button>
       <button class="btn" id="storeGen" onclick="TZOS.startGen()">✨ 生成</button>
     </div>
     <div class="store-step" id="storeSteps" style="display:none">
@@ -1226,6 +1254,15 @@ function renderAppStore() {
 function initAppStore() {
   refreshInstalledList();
   $('#storePrompt').onkeydown = (e) => { if (e.key === 'Enter') window.TZOS.startGen(); };
+  // 深度思考开关：与 AI 对话共用同一设置，config() 据此在 DeepSeek 下切换 reasoner/chat 模型
+  const deepBtn = $('#storeDeep');
+  if (deepBtn) deepBtn.onclick = () => {
+    Store.setDeepThink(!Store.getDeepThink());
+    const d = Store.getDeepThink();
+    deepBtn.classList.toggle('ghost', !d);
+    deepBtn.textContent = '🧠 深度思考' + (d ? '·开' : '·关');
+    toast('深度思考已' + (d ? '开启' : '关闭') + '（影响后续生成）');
+  };
 }
 function refreshInstalledList() {
   const list = $('#installedList');

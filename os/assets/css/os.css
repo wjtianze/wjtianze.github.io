@@ -539,3 +539,13 @@ body.mobile .win.mobile-fullscreen { inset: 0 !important; width: 100% !important
 .fw-reopen:hover { transform: scale(1.08); }
 .fw-reopen:active { transform: scale(0.92); }
 body.mobile .floating-widget, body.mobile .fw-reopen { display: none; }
+
+/* ===== KaTeX 数学公式渲染（AI 对话） ===== */
+.msg-bubble .katex { font-size: 1.04em; color: var(--ink); }
+.msg-bubble .katex-display {
+  margin: 8px 0; overflow-x: auto; overflow-y: visible;
+  padding: 8px 10px; border-radius: 8px;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border);
+}
+.msg-bubble .katex-display > .katex { white-space: nowrap; }
+.tz-math { white-space: nowrap; }
