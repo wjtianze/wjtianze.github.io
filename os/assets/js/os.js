@@ -1219,57 +1219,142 @@ function renderFileManager() {
 function renderBrowser() {
   return `
   <div class="app-browser" style="display:flex;flex-direction:column;height:100%;background:rgba(5,8,19,0.4)">
+    <div id="brTabs" style="display:flex;gap:4px;padding:6px 8px;border-bottom:1px solid var(--glass-border);background:rgba(255,255,255,0.03);overflow-x:auto;align-items:center;min-height:34px"></div>
     <div style="display:flex;gap:6px;padding:8px;border-bottom:1px solid var(--glass-border);background:rgba(255,255,255,0.04);align-items:center">
       <button class="btn sm ghost" id="brBack" title="后退">←</button>
       <button class="btn sm ghost" id="brFwd" title="前进">→</button>
       <button class="btn sm ghost" id="brReload" title="刷新">⟳</button>
       <input class="input" id="brUrl" placeholder="输入网址或搜索词，回车前往…" style="flex:1;height:36px" />
       <button class="btn sm" id="brGo">前往</button>
-      <button class="btn sm ghost" id="brNewTab" title="在新标签页打开">↗</button>
+      <button class="btn sm ghost" id="brNewTab" title="在OS内新标签页打开当前网址">↗</button>
     </div>
-    <div style="flex:1;position:relative;background:#fff;min-height:0">
-      <iframe id="brFrame" style="width:100%;height:100%;border:none;background:#fff" src="about:blank"></iframe>
-      <div id="brOverlay" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;color:var(--ink-faint);background:var(--glass-strong);text-align:center;padding:24px">
-        <div style="font-size:44px">🌐</div>
-        <div style="font-size:15px;color:var(--ink-dim)">天择OS 浏览器</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:420px">
-          <button class="btn sm" data-url="https://wjtianze.github.io/">天择网首页</button>
-          <button class="btn sm ghost" data-url="https://wjtianze.github.io/news/">新闻</button>
-          <button class="btn sm ghost" data-url="https://wjtianze.github.io/blog/">博客</button>
-          <button class="btn sm ghost" data-url="https://wjtianze.github.io/coc/data/">COC 数据</button>
-        </div>
-        <div style="font-size:11px;color:var(--ink-muted);max-width:380px;line-height:1.6">提示：部分网站（如 Google、百度、B站）会禁止被嵌入显示，遇到白屏时点右上角「↗」在新标签页打开。</div>
-      </div>
-    </div>
+    <div id="brViews" style="flex:1;position:relative;background:#fff;min-height:0"></div>
   </div>`;
 }
 function initBrowser() {
-  const url = $('#brUrl'), frame = $('#brFrame'), overlay = $('#brOverlay');
-  const goBtn = $('#brGo'), newTab = $('#brNewTab'), back = $('#brBack'), fwd = $('#brFwd'), reload = $('#brReload');
-  const history = ['about:blank']; let hi = 0;
-  const navigate = (u, push) => {
-    if (!u) return;
-    let full = u.trim();
+  const tabsEl = $('#brTabs'), views = $('#brViews'), urlInput = $('#brUrl');
+  const QUICK = [['天择网首页','https://wjtianze.github.io/'],['新闻','https://wjtianze.github.io/news/'],['博客','https://wjtianze.github.io/blog/'],['COC 数据','https://wjtianze.github.io/coc/data/']];
+  let tabs = [], activeId = null, counter = 0;
+
+  const sanitizeUrl = (u) => {
+    let full = (u || '').trim();
+    if (!full) return '';
     if (!/^https?:\/\//i.test(full)) {
       if (/^[\w-]+(\.[\w-]+)+/.test(full)) full = 'https://' + full;
       else full = 'https://www.bing.com/search?q=' + encodeURIComponent(full);
     }
-    url.value = full;
-    frame.src = full;
-    overlay.style.display = 'none';
-    if (push !== false) { history.length = hi + 1; history.push(full); hi = history.length - 1; }
+    return full;
+  };
+  const hostOf = (u) => { try { return new URL(u).host; } catch { return u.replace(/^https?:\/\//,'').split('/')[0]; } };
+
+  // 创建一个新标签页（url 可空=空白起始页）。所有新网页都在 OS 内打开，绝不外跳
+  const newTab = (url) => {
+    const id = 'brtab-' + (++counter);
+    const overlay = el('div', '');
+    Object.assign(overlay.style, { position:'absolute', inset:'0', display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:'14px', color:'var(--ink-faint)', background:'var(--glass-strong)', textAlign:'center', padding:'24px' });
+    overlay.innerHTML = '<div style="font-size:44px">🌐</div><div style="font-size:15px;color:var(--ink-dim)">天择OS 浏览器</div><div class="br-quick" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:420px"></div><div style="font-size:11px;color:var(--ink-muted);max-width:380px;line-height:1.6">提示：部分网站禁止被嵌入显示，白屏时可换其它网址。新链接会在本浏览器内的新标签页打开。</div>';
+    const q = overlay.querySelector('.br-quick');
+    QUICK.forEach(([n, u]) => { const b = el('button', 'btn sm ghost', n); b.onclick = () => navigate(id, u); q.appendChild(b); });
+
+    const frame = el('iframe', '');
+    Object.assign(frame.style, { width:'100%', height:'100%', border:'none', background:'#fff' });
+    // sandbox 不含 allow-popups：阻止 iframe 内 window.open / target=_blank 外跳到系统浏览器
+    frame.sandbox = 'allow-scripts allow-forms allow-same-origin allow-modals';
+    frame.src = 'about:blank';
+    frame.referrerPolicy = 'no-referrer';
+    frame.addEventListener('load', () => {
+      // 同源页面：拦截 target=_blank / _new 链接，改为 OS 内新标签页
+      try {
+        const doc = frame.contentDocument;
+        if (doc) {
+          doc.querySelectorAll('a[target="_blank"], a[target="_new"]').forEach(a => {
+            a.addEventListener('click', (ev) => { ev.preventDefault(); if (a.href) newTab(a.href); });
+          });
+        }
+      } catch (e) { /* 跨域无法访问，已被 sandbox 阻止外跳 */ }
+      const t = tabs.find(x => x.id === id);
+      if (t) {
+        try { t.title = (frame.contentDocument && frame.contentDocument.title) || ''; } catch {}
+        if (frame.src && frame.src !== 'about:blank') { t.url = frame.src; t.overlay.style.display = 'none'; }
+        renderTabs();
+        if (id === activeId) urlInput.value = t.url || '';
+      }
+    });
+
+    views.appendChild(frame);
+    views.appendChild(overlay);
+    tabs.push({ id, url: url || '', frame, overlay, history: ['about:blank'], hi: 0, title: '' });
+    renderTabs();
+    activate(id);
+    if (url) navigate(id, url);
+    return id;
+  };
+
+  const navigate = (id, u, push) => {
+    const t = tabs.find(x => x.id === id); if (!t) return;
+    const full = sanitizeUrl(u); if (!full) return;
+    t.url = full;
+    t.frame.src = full;
+    t.overlay.style.display = 'none';
+    if (push !== false) { t.history.length = t.hi + 1; t.history.push(full); t.hi = t.history.length - 1; }
+    if (id === activeId) urlInput.value = full;
     updateNav();
   };
-  const updateNav = () => { back.disabled = hi <= 0; fwd.disabled = hi >= history.length - 1; };
-  goBtn.onclick = () => navigate(url.value);
-  url.onkeydown = (e) => { if (e.key === 'Enter') navigate(url.value); };
-  newTab.onclick = () => { const u = url.value || frame.src; if (u && u !== 'about:blank') window.open(u, '_blank'); };
-  back.onclick = () => { if (hi > 0) { hi--; navigate(history[hi], false); } };
-  fwd.onclick = () => { if (hi < history.length - 1) { hi++; navigate(history[hi], false); } };
-  reload.onclick = () => { if (frame.src && frame.src !== 'about:blank') frame.src = frame.src; };
-  overlay.querySelectorAll('button[data-url]').forEach(b => b.onclick = () => navigate(b.dataset.url));
-  frame.addEventListener('load', () => { overlay.style.display = 'none'; });
-  updateNav();
+
+  const activate = (id) => {
+    activeId = id;
+    tabs.forEach(t => {
+      const on = t.id === id;
+      t.frame.style.display = on ? '' : 'none';
+      t.overlay.style.display = on ? (t.url ? 'none' : 'flex') : 'none';
+    });
+    const t = tabs.find(x => x.id === id);
+    if (t) urlInput.value = t.url || '';
+    updateNav();
+    renderTabs();
+  };
+
+  const closeTab = (id) => {
+    const i = tabs.findIndex(x => x.id === id); if (i < 0) return;
+    tabs[i].frame.remove(); tabs[i].overlay.remove();
+    tabs.splice(i, 1);
+    if (!tabs.length) { newTab(''); return; }
+    if (activeId === id) activate(tabs[Math.min(i, tabs.length - 1)].id);
+    else renderTabs();
+  };
+
+  const renderTabs = () => {
+    tabsEl.innerHTML = '';
+    tabs.forEach(t => {
+      const tab = el('div', '');
+      const label = t.title || (t.url ? hostOf(t.url) : '新标签页');
+      Object.assign(tab.style, { display:'flex', alignItems:'center', gap:'6px', padding:'4px 10px', borderRadius:'6px', background: t.id===activeId ? 'rgba(99,102,241,0.25)' : 'rgba(255,255,255,0.05)', fontSize:'12px', color:'var(--ink-dim)', cursor:'pointer', whiteSpace:'nowrap', maxWidth:'180px', flexShrink:'0' });
+      tab.innerHTML = `<span style="overflow:hidden;text-overflow:ellipsis">${escapeHtml(label)}</span><span class="br-x" style="opacity:.6;padding:0 2px;border-radius:3px">✕</span>`;
+      tab.onclick = (e) => { if (e.target.classList.contains('br-x')) { e.stopPropagation(); closeTab(t.id); } else activate(t.id); };
+      tabsEl.appendChild(tab);
+    });
+    const plus = el('button', 'btn sm ghost', '＋');
+    plus.title = '新建标签页';
+    Object.assign(plus.style, { flexShrink:'0', padding:'4px 10px' });
+    plus.onclick = () => newTab('');
+    tabsEl.appendChild(plus);
+  };
+
+  const updateNav = () => {
+    const t = tabs.find(x => x.id === activeId);
+    $('#brBack').disabled = !t || t.hi <= 0;
+    $('#brFwd').disabled = !t || t.hi >= t.history.length - 1;
+  };
+
+  $('#brGo').onclick = () => navigate(activeId, urlInput.value);
+  urlInput.onkeydown = (e) => { if (e.key === 'Enter') navigate(activeId, urlInput.value); };
+  // ↗ 在 OS 内新标签页打开当前网址（不再 window.open 外跳）
+  $('#brNewTab').onclick = () => { const t = tabs.find(x => x.id === activeId); const u = urlInput.value || (t && t.url) || ''; newTab(u); };
+  $('#brBack').onclick = () => { const t = tabs.find(x => x.id === activeId); if (t && t.hi > 0) { t.hi--; navigate(t.id, t.history[t.hi], false); } };
+  $('#brFwd').onclick = () => { const t = tabs.find(x => x.id === activeId); if (t && t.hi < t.history.length - 1) { t.hi++; navigate(t.id, t.history[t.hi], false); } };
+  $('#brReload').onclick = () => { const t = tabs.find(x => x.id === activeId); if (t && t.url) t.frame.src = t.url; };
+
+  newTab('');
 }
 
 /* ===================== 刷新已打开的应用窗口 ===================== */
