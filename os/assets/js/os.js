@@ -179,7 +179,10 @@ const WM = {
     minBtn.title = '最小化';
     const maxBtn = el('button', 'wctrl max', '<svg viewBox="0 0 8 8" fill="none" stroke="#003d00" stroke-width="1.5"><path d="M1 1h6v6H1z"/></svg>');
     maxBtn.title = '最大化';
-    icons.append(closeBtn, minBtn, maxBtn);
+    // AI 生成的软件：标题栏加卸载按钮
+    const uninstBtn = app.type === 'installed' ? el('button', 'wctrl uninst', '<svg viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 2l4 4M6 2L2 6"/></svg>') : null;
+    if (uninstBtn) { uninstBtn.title = '卸载此软件'; }
+    icons.append(closeBtn, minBtn, maxBtn, ...(uninstBtn ? [uninstBtn] : []));
 
     const titleIcon = el('span', 'win-title-icon', app.icon || '📦');
     const titleText = el('span', 'win-title-text', escapeHtml(app.name || '应用'));
@@ -205,6 +208,7 @@ const WM = {
     closeBtn.onclick = (e) => { e.stopPropagation(); this.close(id); };
     minBtn.onclick = (e) => { e.stopPropagation(); this.minimize(id); };
     maxBtn.onclick = (e) => { e.stopPropagation(); this.toggleMax(id); };
+    if (uninstBtn) uninstBtn.onclick = (e) => { e.stopPropagation(); if (confirm('确定要卸载「' + app.name + '」吗？\n该软件将从桌面移除。')) { uninstallApp(app.id); } };
     title.ondblclick = () => { if (!isMobile()) this.toggleMax(id); };
     this.bindDrag(winObj);
     this.bindResize(winObj);

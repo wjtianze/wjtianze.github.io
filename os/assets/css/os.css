@@ -269,6 +269,16 @@ input, textarea { font-family: inherit; }
 .wctrl.close { background: #ff5f57; }
 .wctrl.min { background: #febc2e; }
 .wctrl.max { background: #28c840; }
+/* 卸载按钮：仅 AI 生成软件显示，紫色提示 */
+.wctrl.uninst {
+  background: var(--grad-main); width: 14px; height: 14px;
+  color: #fff;
+}
+.win-title:hover .wctrl.uninst svg { opacity: 1; }
+.win.mac-style .win-title-icons .wctrl.uninst { width: 12px; height: 12px; }
+.win.mac-style .win-title-icons .wctrl.uninst svg { opacity: 0; }
+.win.mac-style .win-title-icons:hover .wctrl.uninst svg { opacity: 1; }
+.wctrl.uninst:hover { filter: brightness(1.15); }
 .win.mac-style .win-title-icons .wctrl { width: 12px; height: 12px; }
 .win.mac-style .win-title-icons .wctrl svg { opacity: 0; }
 
