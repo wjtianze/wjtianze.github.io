@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#05070f" />
+  <title>天择背单词 · 天择网</title>
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/english/words/words.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='0.52' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Ctext x='16' y='22' font-size='18' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3EW%3C/text%3E%3C/svg%3E" />
+</head>
+<body class="tzw">
+  <!-- 全站公共页眉 -->
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="https://wjtianze.github.io/index.html" aria-label="天择网首页">
+        <span class="logo-mark">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/>
+          </svg>
+        </span>
+        <span class="logo-text">天择网</span>
+      </a>
+      <button class="nav-toggle" aria-label="菜单">☰</button>
+      <nav class="nav"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html" class="active"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a></nav>
+    </div>
+  </header>
+
+  <div class="words-app">
+    <div class="bg-mesh"></div>
+    <section class="app-toolbar" aria-label="背单词学习概览">
+      <div class="wrap app-toolbar-inner">
+        <div class="app-title"><span class="app-icon">W</span><strong>天择背单词</strong></div>
+        <div class="app-toolbar-actions">
+          <div class="app-stats">
+            <span class="ts-chip">已学 <b id="tsLearned">0</b></span>
+            <span class="ts-chip">正确率 <b id="tsAcc">0%</b></span>
+            <span class="ts-chip">连续 <b id="tsStreak">0</b> 天</span>
+          </div>
+          <button class="btn btn--ghost btn--sm" id="btnAiConfig">🔑 AI</button>
+        </div>
+      </div>
+    </section>
+
+  <!-- 主工作区 -->
+  <main class="wrap tzw-main">
+    <!-- 侧边导航 -->
+    <aside class="tzw-nav" id="tzwNav">
+      <button class="nav-item active" data-view="vocab">📚 词库</button>
+      <button class="nav-item" data-view="study">📖 学习</button>
+      <button class="nav-item" data-view="stats">📊 进度统计</button>
+      <button class="nav-item" data-view="wrong">❌ 错词本</button>
+    </aside>
+
+    <!-- 面板容器 -->
+    <section class="tzw-panel-wrap">
+
+      <!-- 1. 词库面板 -->
+      <div class="panel active" id="view-vocab">
+        <div class="card">
+          <h2>词库管理</h2>
+          <p class="muted">导入自定义 JSON 词库，支持一词多义。应用首次启动时词库为空。</p>
+          <div class="actions">
+            <input type="file" id="fileVocab" accept=".json,application/json" hidden />
+            <button class="btn" id="btnImport">📁 导入 JSON</button>
+            <button class="btn btn--ghost" id="btnPaste">📝 粘贴导入</button>
+            <button class="btn btn--ghost" id="btnExport">⬇️ 导出</button>
+            <button class="btn btn--ghost" id="btnSample">📋 示例格式</button>
+            <button class="btn btn--ghost btn--danger" id="btnClearVocab">🗑 清空</button>
+          </div>
+        </div>
+
+        <div class="card vocab-stats">
+          <div class="vs-item"><b id="vsTotal">0</b><span>总词数</span></div>
+          <div class="vs-item"><b id="vsLearned">0</b><span>已学</span></div>
+          <div class="vs-item"><b id="vsWrong">0</b><span>错词</span></div>
+          <div class="vs-item"><b id="vsMastered">0</b><span>已掌握</span></div>
+        </div>
+
+        <div class="card vocab-list-wrap">
+          <input class="search" id="vocabSearch" type="text" placeholder="搜索单词或释义…" />
+          <div class="vocab-list" id="vocabList">
+            <div class="empty-state">
+              <div class="es-icon">📚</div>
+              <div>词库为空，点击「导入 JSON」开始</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. 学习面板（四阶段：英译中预习→中译英→英译中→拼写） -->
+      <div class="panel" id="view-study" hidden>
+        <div class="card study-card">
+          <!-- 开始态 -->
+          <div id="studyStart">
+            <h2>学习</h2>
+            <p class="muted">四阶段学习法，循序渐进掌握每个单词。</p>
+            <div class="study-flow">
+              <div class="sf-step"><b>①</b> 英译中<span>预习，答完展示释义</span></div>
+              <div class="sf-step"><b>②</b> 中译英<span>看释义选英文</span></div>
+              <div class="sf-step"><b>③</b> 英译中<span>巩固</span></div>
+              <div class="sf-step"><b>④</b> 拼写<span>根据释义拼写</span></div>
+            </div>
+            <div class="quiz-opts">
+              <label>单词数
+                <input type="number" id="stCount" value="10" min="3" max="50" />
+              </label>
+              <label class="row-inline">
+                <input type="checkbox" id="stWrongOnly" />
+                <span>仅练错词本</span>
+              </label>
+              <label class="row-inline">
+                <input type="checkbox" id="stAiDistractor" />
+                <span>🤖 AI 干扰项</span>
+              </label>
+            </div>
+            <button class="btn" id="btnStudyStart">开始学习 →</button>
+          </div>
+
+          <!-- 阶段过渡态 -->
+          <div id="studyStage" hidden>
+            <div class="stage-indicator" id="stIndicator"></div>
+            <div class="stage-info">
+              <h3 id="stStageTitle"></h3>
+              <p class="muted" id="stStageDesc"></p>
+              <div id="stStageResult" class="stage-result"></div>
+            </div>
+            <button class="btn" id="btnStageStart">开始本阶段 →</button>
+          </div>
+
+          <!-- AI 加载态 -->
+          <div id="studyLoading" hidden>
+            <div class="ai-loading"><div class="spinner"></div><span id="stLoadingText">🤖 AI 正在生成干扰项…</span></div>
+          </div>
+
+          <!-- 答题态 -->
+          <div id="studyPlay" hidden>
+            <div class="stage-indicator" id="stIndicator2"></div>
+            <div class="quiz-progress">
+              <span id="stProg">1 / 10</span>
+              <div class="bar"><i id="stBar"></i></div>
+            </div>
+            <div class="quiz-question">
+              <div style="flex:1;">
+                <div class="q-prompt" id="stPrompt"></div>
+                <div class="q-sub" id="stSub"></div>
+              </div>
+            </div>
+            <div class="quiz-options" id="stOptions"></div>
+            <input class="spell-input" id="stInput" type="text" placeholder="输入拼写…" autocomplete="off" autocapitalize="off" spellcheck="false" hidden />
+            <div class="spell-prompt-row" id="stSpellExtra" hidden>
+              <button class="tts-btn" id="stTts" title="听发音">🔊 听发音</button>
+              <button class="btn btn--ghost btn--sm" id="stHint">💡 提示首字母</button>
+            </div>
+            <div class="quiz-feedback" id="stFeedback" hidden></div>
+            <div class="quiz-actions">
+              <button class="btn btn--ghost" id="stSkip">跳过</button>
+              <button class="btn" id="stSubmit" hidden>✓ 提交答案</button>
+              <button class="btn" id="stNext" hidden>下一题 →</button>
+            </div>
+          </div>
+
+          <!-- 最终结果态 -->
+          <div class="quiz-result" id="studyResult" hidden></div>
+        </div>
+      </div>
+
+      <!-- 3. 统计面板 -->
+      <div class="panel" id="view-stats" hidden>
+        <div class="stats-grid">
+          <div class="card stat-card"><b id="sLearned">0</b><span>已学单词</span></div>
+          <div class="card stat-card"><b id="sAccuracy">0%</b><span>正确率</span></div>
+          <div class="card stat-card"><b id="sStreak">0</b><span>连续学习天数</span></div>
+          <div class="card stat-card"><b id="sMastered">0</b><span>已掌握</span></div>
+        </div>
+
+        <div class="card">
+          <h3>近 14 天学习曲线</h3>
+          <div class="chart-bars" id="chartBars"></div>
+        </div>
+
+        <div class="card">
+          <h3>掌握度分布</h3>
+          <div class="mastery-dist" id="masteryDist"></div>
+        </div>
+
+        <div class="card">
+          <div class="row-between">
+            <h3 style="margin:0;">错词本</h3>
+            <button class="btn btn--ghost btn--sm" id="btnPracticeWrong">重练错词 →</button>
+          </div>
+          <div class="wrong-list" id="wrongList" style="margin-top:14px;"></div>
+        </div>
+      </div>
+
+      <!-- 5. 错词本面板 -->
+      <div class="panel" id="view-wrong" hidden>
+        <div class="card">
+          <div class="row-between">
+            <h2 style="margin:0;">错词本</h2>
+            <button class="btn btn--sm" id="btnPracticeWrong2">重练错词 →</button>
+          </div>
+          <p class="muted" style="margin-top:6px;">按错误频率排序，连续答对 3 次自动出册。</p>
+        </div>
+        <div class="card">
+          <div class="wrong-list" id="wrongListFull"></div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- AI 配置弹层 -->
+  <div class="modal" id="aiConfigModal" hidden>
+    <div class="modal-mask" id="aiCfgMask"></div>
+    <div class="card modal-card">
+      <div class="modal-head">
+        <h3>🔑 AI 配置</h3>
+        <button class="modal-close" id="aiCfgClose" title="关闭">×</button>
+      </div>
+      <div class="modal-body">
+        <div>
+          <div class="muted small" style="margin-bottom:8px;">预设提供方（点击填充）</div>
+          <div class="preset-chips" id="presetChips">
+            <div class="chip" data-url="https://api.deepseek.com/v1/chat/completions" data-model="deepseek-chat">DeepSeek</div>
+            <div class="chip" data-url="https://api.openai.com/v1/chat/completions" data-model="gpt-4o-mini">OpenAI</div>
+            <div class="chip" data-url="https://api.siliconflow.cn/v1/chat/completions" data-model="deepseek-ai/DeepSeek-V3">硅基流动</div>
+            <div class="chip" data-url="https://open.bigmodel.cn/api/paas/v4/chat/completions" data-model="glm-4-flash">智谱GLM</div>
+          </div>
+        </div>
+        <label>API 地址
+          <input id="cfgUrl" type="text" placeholder="https://api.deepseek.com/v1/chat/completions" />
+        </label>
+        <label>API Key
+          <input id="cfgKey" type="password" placeholder="sk-..." />
+        </label>
+        <label>模型名
+          <input id="cfgModel" type="text" placeholder="deepseek-chat" />
+        </label>
+        <label>温度（0-2，越高越发散）
+          <input id="cfgTemp" type="number" step="0.1" value="0.6" min="0" max="2" />
+        </label>
+        <p class="muted small">🔒 Key 仅存本机 localStorage，不会上传任何服务器。建议使用 OpenAI 兼容接口。</p>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn--ghost" id="cfgTest">🧪 测试连接</button>
+        <button class="btn" id="cfgSave">💾 保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI 解析弹层（通用，词库/答题/错词本共用） -->
+  <div class="modal" id="aiAnalyzeModal" hidden>
+    <div class="modal-mask" id="aiAnMask"></div>
+    <div class="card modal-card modal-card--wide">
+      <div class="modal-head">
+        <h3 id="aiAnTitle">🤖 AI 解析</h3>
+        <button class="modal-close" id="aiAnClose" title="关闭">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="ai-status" id="aiAnStatus"></div>
+        <div class="ai-stream" id="aiAnStream" hidden></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn--ghost" id="aiAnClose2">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 例句弹层（AI 生成） -->
+  <div class="modal" id="examplesModal" hidden>
+    <div class="modal-mask" id="exMask"></div>
+    <div class="card modal-card modal-card--wide">
+      <div class="modal-head">
+        <h3 id="exTitle">📖 例句</h3>
+        <button class="modal-close" id="exClose" title="关闭">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="ai-status" id="exStatus"></div>
+        <div id="exContent"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn--ghost" id="exRegen">🔄 重新生成</button>
+        <button class="btn" id="exClose2">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 粘贴导入弹层 -->
+  <div class="modal" id="pasteModal" hidden>
+    <div class="modal-mask" id="pasteMask"></div>
+    <div class="card modal-card">
+      <div class="modal-head">
+        <h3>📝 粘贴 JSON 词库</h3>
+        <button class="modal-close" id="pasteClose" title="关闭">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="muted small">将词库 JSON 粘贴到下方，支持数组或对象格式。</p>
+        <textarea id="pasteArea" rows="12" placeholder='[{"word":"accommodate","phonetic":"/əˈkɒmədeɪt/","pos":"v.","meaning":["容纳","迁就","适应"]}]' style="font-family:monospace;font-size:12px;resize:vertical;"></textarea>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn--ghost" id="pasteCancel">取消</button>
+        <button class="btn" id="pasteImport">导入</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 示例格式弹层 -->
+  <div class="modal" id="sampleModal" hidden>
+    <div class="modal-mask" id="sampleMask"></div>
+    <div class="card modal-card">
+      <div class="modal-head">
+        <h3>📋 词库 JSON 示例格式</h3>
+        <button class="modal-close" id="sampleClose" title="关闭">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="muted small">支持两种顶层格式：</p>
+        <pre id="sampleCode" style="background:var(--bg-elevated);padding:14px;border-radius:var(--r-md);font-size:12px;overflow-x:auto;color:var(--ink-dim);"></pre>
+        <p class="muted small">字段说明：<br>• <code style="color:var(--c-violet);">word</code>（必填）单词字符串<br>• <code style="color:var(--c-violet);">meaning</code>（必填）释义数组，支持一词多义<br>• <code style="color:var(--c-violet);">phonetic</code>（可选）音标<br>• <code style="color:var(--c-violet);">pos</code>（可选）词性<br>• <code style="color:var(--c-violet);">examples</code>（可选）例句数组 [{en,zh}]<br>• <code style="color:var(--c-violet);">tags</code>（可选）标签数组</p>
+      </div>
+      <div class="modal-foot">
+        <button class="btn" id="sampleCopy">📋 复制示例</button>
+        <button class="btn btn--ghost" id="sampleClose2">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast 容器 -->
+  <div class="toast-wrap" id="toastWrap"></div>
+  </div>
+
+  <!-- 全站公共页脚 -->
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <div>© 2026 天择网 · 物竞天择，适者生存</div>
+      <div class="links"><a href="https://wjtianze.github.io/index.html">主页</a><a href="https://wjtianze.github.io/news/index.html">新闻</a><a href="https://wjtianze.github.io/blog/index.html">博客</a><a href="https://wjtianze.github.io/open/index.html">数据开源</a><a href="https://wjtianze.github.io/ai/index.html">AI 专区</a><a href="https://wjtianze.github.io/coc/index.html">COC 专区</a><a href="https://wjtianze.github.io/game/index.html">游戏专区</a><a href="https://wjtianze.github.io/english/index.html">英语专区</a><a href="https://wjtianze.github.io/os/index.html">天择OS</a></div>
+    </div>
+  </footer>
+
+  <script src="https://wjtianze.github.io/assets/js/main.js?v=20260714e"></script>
+  <script src="https://wjtianze.github.io/english/words/words.js"></script>
+</body>
+</html>
