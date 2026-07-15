@@ -164,7 +164,10 @@ const BUILTIN_APPS = {
 
 // 天择网预装应用：iframe 加载天择网页面
 const TZNET_BASE = (() => {
-  // dev 版本用相对路径 ../ ; normal 版本 sync 会改写为绝对地址
+  // 桌面版（Electron，window.tzDesktop 由 preload 注入）：preset 应用加载线上天择网，
+  //   因为桌面安装包只打包 os/ 本身，不含整个站点；线上内容也始终保持最新。
+  // 网页版：dev 用相对路径 ../（本地预览），normal 部署后 ../ 相对 os/index.html 解析为域名根，均正确。
+  if (typeof window !== 'undefined' && window.tzDesktop) return 'https://wjtianze.github.io/';
   return '../';
 })();
 
@@ -1521,6 +1524,10 @@ function renderSettings() {
       <div><div class="sr-label">清空通知</div><div class="sr-desc">删除所有通知</div></div>
       <button class="btn sm ghost" onclick="TZOS.Store.clearNotifs();TZOS.toast('已清空')">清空</button>
     </div>
+    ${window.tzDesktop ? `<div class="setting-row">
+      <div><div class="sr-label">设为默认浏览器</div><div class="sr-desc">外部链接自动在天择OS 内打开（需在系统设置确认）</div></div>
+      <button class="btn sm" onclick="TZOS.setDefaultBrowser()">设置</button>
+    </div>` : ''}
     <div class="setting-row">
       <div><div class="sr-label">存储用量</div><div class="sr-desc" id="storageInfo">计算中…</div></div>
     </div>
@@ -1552,6 +1559,13 @@ window.TZOS.reset = async function() {
   if (!ok2) return;
   localStorage.removeItem(Store.KEY);
   location.reload();
+};
+// 桌面版：设为系统默认浏览器（注册协议处理器 + 引导用户在系统设置确认）
+window.TZOS.setDefaultBrowser = function() {
+  if (!window.tzDesktop) { toast('仅桌面版支持此功能'); return; }
+  toast('正在注册…', 1500);
+  try { window.tzDesktop.setAsDefaultBrowser(function (r) { toast((r && r.msg) || (r && r.ok ? '已设置' : '设置失败'), 6000); }); }
+  catch (e) { toast('设置失败', 3000); }
 };
 
 /* ===================== 内置应用：关于 ===================== */
@@ -1864,6 +1878,8 @@ function initBrowser() {
   }, 800);
 
   newTab('');
+  // 桌面版集成：暴露 newTab 给外部（tzOpenInBrowser 用），网页版无副作用
+  window.__tzBrNewTab = newTab;
 }
 
 /* ===================== 刷新已打开的应用窗口 ===================== */
@@ -1950,11 +1966,19 @@ function bindGlobalEvents() {
   // 关机按钮
   $('#btnPower').onclick = (e) => {
     e.stopPropagation();
-    showCtxMenu(e.clientX, e.clientY, [
+    const items = [
       { icon: '🔄', label: '刷新系统', act: () => location.reload() },
-      { sep: true },
-      { icon: '🌐', label: '返回天择网', act: () => { window.location.href = TZNET_BASE + 'index.html'; } }
-    ]);
+      { sep: true }
+    ];
+    if (window.tzDesktop) {
+      // 桌面版：在 OS 内置浏览器打开天择网（不跳出应用），并提供退出应用
+      items.push({ icon: '🌐', label: '打开天择网', act: () => tzOpenInBrowser('https://wjtianze.github.io/') });
+      items.push({ icon: '⏻', label: '退出天择OS', act: () => { try { window.tzDesktop.quit(); } catch (e) {} } });
+    } else {
+      // 网页版：返回天择网首页
+      items.push({ icon: '🌐', label: '返回天择网', act: () => { window.location.href = TZNET_BASE + 'index.html'; } });
+    }
+    showCtxMenu(e.clientX, e.clientY, items);
   };
   // 时钟点击 → 通知中心
   $('#tbClock').onclick = (e) => { e.stopPropagation(); toggleNotifCenter(); };
@@ -2030,7 +2054,34 @@ window.addEventListener('DOMContentLoaded', boot);
 // 暴露给 onclick 使用的全局接口
 Object.assign(window.TZOS, {
   launchApp, uninstallApp, Store, AI, WM, Desktop, StartMenu, refreshOpenApp, toast,
-  goHome: () => { window.location.href = TZNET_BASE + 'index.html'; }
+  goHome: () => {
+    // 桌面版：在 OS 内置浏览器打开天择网首页（不跳出应用）；网页版：跳转天择网首页
+    if (window.tzDesktop) { tzOpenInBrowser('https://wjtianze.github.io/'); }
+    else { window.location.href = TZNET_BASE + 'index.html'; }
+  }
 });
+
+/* ===================== 桌面应用（Electron）集成 =====================
+ * 仅在桌面环境（window.tzDesktop 由 preload.js 注入）生效；网页版
+ * window.tzDesktop 不存在，以下全部 no-op，对网页版外观与功能零影响。
+ * -----------------------------------------------------------------
+ * tzOpenInBrowser(url)：在 OS 内置浏览器打开链接——复用已开浏览器窗口
+ *   （浏览器应用非单例，需手动查找已开窗口），没有则新开；initBrowser
+ *   就绪后调用其 newTab 在新标签页打开。
+ * onOpenUrl：接收主进程转来的链接（外部链接唤起 / setWindowOpenHandler
+ *   拦截的 target=_blank / window.open），统一交给 tzOpenInBrowser。 */
+function tzOpenInBrowser(url) {
+  if (!window.tzDesktop || !url) return;
+  try {
+    const exist = WM.windows.find(w => w.appId === 'browser');
+    if (exist) { WM.focus(exist.id); if (exist.minimized) WM.restore(exist.id); }
+    else { launchApp('browser'); }
+    let n = 0;
+    (function wait() { if (window.__tzBrNewTab) { window.__tzBrNewTab(url); } else if (++n < 120) { setTimeout(wait, 30); } })();
+  } catch (e) { /* 忽略 */ }
+}
+if (window.tzDesktop) {
+  window.tzDesktop.onOpenUrl(function (url) { tzOpenInBrowser(url); });
+}
 
 })();
