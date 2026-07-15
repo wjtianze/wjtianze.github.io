@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>词库转 JSON · 天择网 AI 技能</title>
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Ctext x='16' y='22' font-size='14' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3EJSON%3C/text%3E%3C/svg%3E" />
+</head>
+<body>
+  <div class="bg-mesh"></div>
+
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="https://wjtianze.github.io/index.html" aria-label="天择网首页">
+        <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/></svg></span>
+        <span class="logo-text">天择网</span>
+      </a>
+      <button class="nav-toggle" aria-label="菜单">☰</button>
+      <nav class="nav"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a></nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="page-head wrap">
+      <div class="crumb">
+        <a href="https://wjtianze.github.io/index.html">首页</a><span>/</span>
+        <a href="https://wjtianze.github.io/ai/index.html">AI 专区</a><span>/</span>
+        <a href="https://wjtianze.github.io/ai/skill/index.html">技能</a><span>/</span><span>词库转 JSON</span>
+      </div>
+      <h1>词库转 <span class="grad">JSON</span></h1>
+      <p>将任意格式的词库文档转化为天择背单词应用的标准 JSON 格式。</p>
+    </div>
+
+    <section class="section wrap">
+      <div class="card" style="max-width:760px;margin:0 auto;">
+        <h2>功能说明</h2>
+        <p class="muted">这是一个 WorkBuddy AI 技能，在 WorkBuddy 对话中触发即可使用。</p>
+
+        <h3 style="margin-top:24px;">支持的输入格式</h3>
+        <div class="grid grid-auto" style="margin:12px 0;">
+          <div class="feature-item"><div class="f-icon">📄</div><div><b>TXT</b><br/><span class="muted small">纯文本，每行一个单词</span></div></div>
+          <div class="feature-item"><div class="f-icon">📊</div><div><b>CSV</b><br/><span class="muted small">逗号分隔表格</span></div></div>
+          <div class="feature-item"><div class="f-icon">📗</div><div><b>Excel</b><br/><span class="muted small">XLSX 工作表</span></div></div>
+          <div class="feature-item"><div class="f-icon">📘</div><div><b>Word</b><br/><span class="muted small">DOCX 文档</span></div></div>
+          <div class="feature-item"><div class="f-icon">📕</div><div><b>PDF</b><br/><span class="muted small">PDF 文档</span></div></div>
+          <div class="feature-item"><div class="f-icon">📝</div><div><b>Markdown</b><br/><span class="muted small">MD 表格</span></div></div>
+        </div>
+
+        <h3>输出格式</h3>
+        <pre style="background:var(--bg-elevated);padding:14px;border-radius:var(--r-md);font-size:12px;overflow-x:auto;color:var(--ink-dim);margin:12px 0;">[
+  {
+    "word": "accommodate",
+    "phonetic": "/əˈkɒmədeɪt/",
+    "pos": "v.",
+    "meaning": ["容纳；提供空间", "迁就；照顾", "适应"],
+    "examples": [{"en": "...", "zh": "..."}],
+    "tags": ["CET-6"]
+  }
+]</pre>
+
+        <h3>使用方法</h3>
+        <ol style="padding-left:20px;line-height:2;">
+          <li>在 WorkBuddy 对话中上传或粘贴词库文档</li>
+          <li>说「转换词库」「词库转 JSON」或「格式化单词表」</li>
+          <li>AI 自动解析并输出标准 JSON 文件</li>
+          <li>导入天择背单词应用的「词库管理」→「导入 JSON」</li>
+        </ol>
+
+        <h3>关键规则</h3>
+        <ul style="padding-left:20px;line-height:1.8;">
+          <li><b>meaning 必须是数组</b>：一词多义时每义一条，自动按分号/逗号拆分</li>
+          <li><b>顶层是数组</b>：<code>[...]</code>，不是对象</li>
+          <li><b>自动去重</b>：同一单词只保留一条</li>
+          <li><b>音标保留</b>：特殊字符（ə ˈ ɒ）原样保留</li>
+        </ul>
+
+        <div style="margin-top:24px;padding:16px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:var(--r-md);">
+          <b style="color:var(--c-blue);">💡 提示</b>
+          <p class="muted" style="margin-top:6px;">转换后的 JSON 可直接导入<a href="https://wjtianze.github.io/words/index.html" style="color:var(--c-blue);">天择背单词</a>应用使用。</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <div>© 2026 天择网 · 物竞天择，适者生存</div>
+      <div class="links"><a href="https://wjtianze.github.io/index.html">首页</a><a href="https://wjtianze.github.io/news/index.html">新闻</a><a href="https://wjtianze.github.io/blog/index.html">博客</a><a href="https://wjtianze.github.io/open/index.html">数据开源</a><a href="https://wjtianze.github.io/ai/index.html">AI 专区</a><a href="https://wjtianze.github.io/coc/index.html">COC 专区</a><a href="https://wjtianze.github.io/game/index.html">游戏专区</a><a href="https://wjtianze.github.io/english/index.html">英语专区</a><a href="https://wjtianze.github.io/os/index.html">天择OS</a></div>
+    </div>
+  </footer>
+
+  <script src="https://wjtianze.github.io/assets/js/main.js?v=20260715f"></script>
+</body>
+</html>

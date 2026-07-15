@@ -179,7 +179,9 @@ const PRESET_APPS = [
   { id: 'tz-coc-village', name: '村庄分析', icon: '🏘️', grad: false, category: 'tznet', url: TZNET_BASE + 'coc/village/index.html', desc: '村庄存档分析' },
   { id: 'tz-coc-planner', name: '升级规划', icon: '📅', grad: false, category: 'tznet', url: TZNET_BASE + 'coc/planner/index.html', desc: '升级规划器' },
   { id: 'tz-game', name: '游戏专区', icon: '🎮', grad: false, category: 'tznet', url: TZNET_BASE + 'game/index.html', desc: '天择网游戏' },
-  { id: 'tz-gpa', name: '绩点战争', icon: '⚔️', grad: true, category: 'game', url: TZNET_BASE + 'game/gpa-card/index.html', desc: '卡牌对战游戏' }
+  { id: 'tz-gpa', name: '绩点战争', icon: '⚔️', grad: true, category: 'game', url: TZNET_BASE + 'game/gpa-card/index.html', desc: '卡牌对战游戏' },
+  { id: 'tz-en', name: '英语专区', icon: '📖', grad: false, category: 'tznet', url: TZNET_BASE + 'english/index.html', desc: '英语学习' },
+  { id: 'tz-words', name: '背单词', icon: '📚', grad: true, category: 'tznet', url: TZNET_BASE + 'words/index.html', desc: '四阶段背单词' }
 ];
 
 function getAllApps() {
@@ -279,7 +281,8 @@ const WM = {
       const loading = el('div', 'app-loading', '<div class="al-spin"></div><div>正在加载 ' + escapeHtml(app.name) + '…</div>');
       loading.style.position = 'absolute'; loading.style.inset = '0'; loading.style.zIndex = '2';
       const iframe = el('iframe', 'app-iframe');
-      iframe.src = app.url;
+      // 非天择网首页的应用加 nochrome=1 隐藏页眉页脚
+      iframe.src = (app.id !== 'tz-home' && app.category === 'tznet') ? app.url + (app.url.includes('?') ? '&' : '?') + 'nochrome=1' : app.url;
       iframe.loading = 'lazy';
       // 关键修复：先把 iframe 插入 DOM，浏览器才会真正加载，onload 才会触发
       body.appendChild(iframe);
@@ -365,7 +368,8 @@ const WM = {
     w.body.innerHTML = '';
     if (app.type === 'preset') {
       const iframe = el('iframe', 'app-iframe');
-      iframe.src = app.url;
+      // 非天择网首页的应用加 nochrome=1 隐藏页眉页脚
+      iframe.src = (app.id !== 'tz-home' && app.category === 'tznet') ? app.url + (app.url.includes('?') ? '&' : '?') + 'nochrome=1' : app.url;
       iframe.loading = 'lazy';
       const loading = el('div', 'app-loading', '<div class="al-spin"></div><div>正在重新加载…</div>');
       loading.style.cssText = 'position:absolute;inset:0;z-index:2';
