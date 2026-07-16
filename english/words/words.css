@@ -553,6 +553,23 @@
 }
 
 .words-app .vocab-list-wrap { padding: 18px 20px; }
+.words-app .import-status {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 12px;
+  color: var(--ink-faint);
+  font-size: 13px;
+}
+.words-app .import-status[hidden] { display: none; }
+.words-app .import-status .spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--glass-border-strong);
+  border-top-color: var(--c-blue);
+  border-radius: 50%;
+  animation: words-spin 0.8s linear infinite;
+}
 .words-app .search {
   margin-bottom: 14px;
   background: var(--bg-elevated);
@@ -566,6 +583,10 @@
   padding-right: 4px;
 }
 .words-app .vocab-list::-webkit-scrollbar { width: 6px; }
+.words-app .vocab-more {
+  align-self: center;
+  margin: 10px 0 4px;
+}
 .words-app .vocab-list::-webkit-scrollbar-thumb {
   background: var(--glass-border-strong);
   border-radius: 3px;
@@ -1598,6 +1619,65 @@
   color: var(--c-blue);
   font-weight: 700;
   margin-right: 8px;
+}
+.words-app .preview-card .pv-examples {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(59, 130, 246, 0.2);
+}
+.words-app .preview-card .pv-examples-title {
+  margin-bottom: 7px;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.words-app .preview-card .pv-example {
+  padding: 7px 0 7px 12px;
+  border-left: 2px solid rgba(96, 165, 250, 0.45);
+}
+.words-app .preview-card .pv-example + .pv-example { margin-top: 5px; }
+.words-app .preview-card .pv-example-en {
+  color: var(--ink-dim);
+  font-size: 14px;
+  line-height: 1.55;
+}
+.words-app .preview-card .pv-example-zh {
+  margin-top: 2px;
+  color: var(--ink-faint);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.words-app .preview-card .pv-example-empty {
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* 英译中预习：题干下方的例句语境（仅英文，防泄题） */
+.words-app .q-prompt .q-word {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.words-app .q-prompt .q-example-en {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: rgba(124, 58, 237, 0.06);
+  border-left: 3px solid var(--accent, #7c3aed);
+  border-radius: 6px;
+  color: var(--ink-dim);
+  font-size: 13px;
+  line-height: 1.6;
+  font-style: italic;
+}
+.words-app .q-prompt .q-example-en .ex-hl {
+  color: var(--accent, #7c3aed);
+  font-weight: 700;
+  font-style: normal;
+  background: rgba(124, 58, 237, 0.12);
+  padding: 0 3px;
+  border-radius: 3px;
 }
 
 /* 不定项选择选项变单列 */

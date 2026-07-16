@@ -25,6 +25,39 @@ const todayStr = () => {
 
 const daysBetween = (t1, t2) => Math.floor((t2 - t1) / 86400000);
 
+const yieldToMain = () => new Promise(resolve => {
+  // 用 MessageChannel 让出主线程：零延迟 macrotask，不受窗口隐藏/后台 rAF 节流影响。
+  // 原先用 requestAnimationFrame，但窗口最小化或标签页切到后台时 rAF 会被节流到约
+  // 1 次/秒，导致批量导入每批 yield 等待约 1 秒，7000 词要 20+ 秒甚至卡死。
+  if (typeof MessageChannel !== 'undefined') {
+    const ch = new MessageChannel();
+    ch.port1.onmessage = () => { ch.port1.close(); ch.port2.close(); resolve(); };
+    ch.port2.postMessage(null);
+  } else if (typeof setTimeout === 'function') {
+    setTimeout(resolve, 0);
+  } else {
+    resolve();
+  }
+});
+
+const parseJsonAsync = (text) => new Promise((resolve, reject) => {
+  if (typeof Worker !== 'function' || typeof Blob !== 'function' || typeof URL === 'undefined') {
+    try { resolve(JSON.parse(text)); } catch (e) { reject(e); }
+    return;
+  }
+  const source = 'self.onmessage=function(e){try{self.postMessage({ok:true,data:JSON.parse(e.data)})}catch(err){self.postMessage({ok:false,error:err.message})}}';
+  const url = URL.createObjectURL(new Blob([source], { type: 'text/javascript' }));
+  const worker = new Worker(url);
+  const finish = () => { worker.terminate(); URL.revokeObjectURL(url); };
+  worker.onmessage = e => {
+    finish();
+    if (e.data && e.data.ok) resolve(e.data.data);
+    else reject(new Error((e.data && e.data.error) || 'JSON 解析失败'));
+  };
+  worker.onerror = e => { finish(); reject(new Error(e.message || 'JSON 解析失败')); };
+  worker.postMessage(text);
+});
+
 const shuffle = (arr) => {
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i--) {
@@ -35,6 +68,42 @@ const shuffle = (arr) => {
 };
 
 const CIRCLED = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
+
+const normalizeExamples = (value) => {
+  const result = [];
+  const add = (item) => {
+    if (item == null) return;
+    if (Array.isArray(item)) { item.forEach(add); return; }
+    if (typeof item === 'string' || typeof item === 'number') {
+      const en = String(item).trim();
+      if (en) result.push({ en, zh: '' });
+      return;
+    }
+    if (typeof item !== 'object') return;
+    const en = item.en != null ? item.en
+      : (item.english != null ? item.english
+      : (item.sentence != null ? item.sentence
+      : (item.example != null ? item.example : item.text)));
+    const zh = item.zh != null ? item.zh
+      : (item.cn != null ? item.cn
+      : (item.chinese != null ? item.chinese : item.translation));
+    if (en != null || zh != null) {
+      const cleanEn = en == null ? '' : String(en).trim();
+      const cleanZh = zh == null ? '' : String(zh).trim();
+      if (cleanEn || cleanZh) result.push({ en: cleanEn, zh: cleanZh });
+      return;
+    }
+    Object.values(item).forEach(add);
+  };
+  add(value);
+  const seen = new Set();
+  return result.filter(item => {
+    const key = item.en + '\u0000' + item.zh;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
 
 // 简易 Markdown → HTML（标题/列表/粗体/代码/段落）
 const renderMd = (md) => {
@@ -81,11 +150,128 @@ const formatTime = (ts) => {
 };
 
 /* ============================================================
-   Store 子模块（localStorage 持久化）
+   DB 子模块（IndexedDB 持久化大块数据：vocab / records）
+   ------------------------------------------------------------
+   localStorage 单 key 受 ~5MB 限制，且 setItem 是同步阻塞主线程
+   的操作。导入 7000+ 词时，JSON.stringify(整个state) + setItem
+   会卡死 UI 数百毫秒到数秒，甚至因超配额直接抛错失败。
+   把最大的两块（vocab 词库数组、records 学习记录对象）迁到
+   IndexedDB：异步读写、无容量限制、不阻塞 UI。内存缓存保证
+   同步读接口（DB.vocab()/DB.records()），写入防抖异步落盘。
+   meta（stats/wrongBook/examples/aiConfig/settings）仍走
+   localStorage，体积小、结构简单。
+   ============================================================ */
+const DB = {
+  DB_NAME: 'tzwords',
+  DB_VERSION: 1,
+  STORE: 'kv',
+  LEGACY_KEY: 'tzwords_state_v1',   // 旧版统一 state（含 vocab/records）
+  META_KEY: 'tzwords_meta_v1',      // 新版 meta（stats/wrongBook/examples/aiConfig/settings/version）
+  _db: null,
+  _cache: { vocab: null, records: null },
+  _recTimer: null,
+
+  open() {
+    if (this._db) return Promise.resolve(this._db);
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(this.DB_NAME, this.DB_VERSION);
+      req.onupgradeneeded = (e) => {
+        const d = e.target.result;
+        if (!d.objectStoreNames.contains(this.STORE)) d.createObjectStore(this.STORE, { keyPath: 'k' });
+      };
+      req.onsuccess = (e) => { this._db = e.target.result; resolve(this._db); };
+      req.onerror = () => reject(req.error);
+    });
+  },
+  _get(k) {
+    return this.open().then(db => new Promise((resolve, reject) => {
+      const tx = db.transaction(this.STORE, 'readonly');
+      const rq = tx.objectStore(this.STORE).get(k);
+      rq.onsuccess = () => resolve(rq.result ? rq.result.v : undefined);
+      rq.onerror = () => reject(rq.error);
+    }));
+  },
+  _set(k, v) {
+    return this.open().then(db => new Promise((resolve, reject) => {
+      const tx = db.transaction(this.STORE, 'readwrite');
+      tx.objectStore(this.STORE).put({ k, v });
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    }));
+  },
+
+  // 启动加载 + 旧数据迁移（旧 localStorage state → IndexedDB + meta key）
+  async loadAll() {
+    try {
+      let vocab = await this._get('vocab');
+      let records = await this._get('records');
+      const needMigrate = (!vocab || !vocab.length) && (!records || !Object.keys(records).length);
+      if (needMigrate) {
+        const legacy = localStorage.getItem(this.LEGACY_KEY);
+        if (legacy) {
+          try {
+            const s = JSON.parse(legacy);
+            if (Array.isArray(s.vocab) && s.vocab.length) { vocab = s.vocab; await this._set('vocab', vocab); }
+            if (s.records && typeof s.records === 'object' && !Array.isArray(s.records)) { records = s.records; await this._set('records', records); }
+            const meta = {
+              stats: s.stats, wrongBook: s.wrongBook, examples: s.examples,
+              aiConfig: s.aiConfig, settings: s.settings, version: s.version
+            };
+            localStorage.setItem(this.META_KEY, JSON.stringify(meta));
+            localStorage.removeItem(this.LEGACY_KEY);
+            console.log('[DB] 已从旧版 localStorage 迁移词库到 IndexedDB');
+          } catch (e) { console.warn('[DB] 迁移失败', e); }
+        }
+      }
+      this._cache.vocab = Array.isArray(vocab) ? vocab : [];
+      this._cache.records = (records && typeof records === 'object' && !Array.isArray(records)) ? records : {};
+    } catch (e) {
+      console.warn('[DB] loadAll 失败，回退空缓存', e);
+      this._cache.vocab = [];
+      this._cache.records = {};
+    }
+    return this._cache;
+  },
+
+  vocab() { return this._cache.vocab || []; },
+  records() { return this._cache.records || {}; },
+
+  // 立即写 vocab（导入/清空用，低频）
+  async saveVocab(v) {
+    this._cache.vocab = Array.isArray(v) ? v : [];
+    await this._set('vocab', this._cache.vocab);
+  },
+  // 立即写 records（清空用）
+  async saveRecords(r) {
+    this._cache.records = r || {};
+    try { await this._set('records', this._cache.records); }
+    catch (e) { console.warn('[DB] saveRecords 失败', e); }
+  },
+  // 防抖写 records（答题高频，不阻塞 UI）
+  commitRecords(delay) {
+    if (this._recTimer) clearTimeout(this._recTimer);
+    this._recTimer = setTimeout(() => {
+      this._recTimer = null;
+      this._set('records', this._cache.records).catch(e => console.warn('[DB] records 持久化失败', e));
+    }, delay == null ? 1200 : delay);
+  },
+  // 立即冲刷待写的 records（页面隐藏/卸载时调用，防丢）
+  flushRecords() {
+    if (this._recTimer) { clearTimeout(this._recTimer); this._recTimer = null; }
+    try { this._set('records', this._cache.records).catch(() => {}); } catch (e) {}
+  }
+};
+
+/* ============================================================
+   Store 子模块（localStorage 持久化 meta：stats/wrongBook/
+   examples/aiConfig/settings；vocab/records 由 DB 托管）
    ============================================================ */
 const Store = {
-  KEY: 'tzwords_state_v1',
+  KEY: 'tzwords_meta_v1',
   _cache: null,
+  _saveTimer: null,
+  SAVE_DELAY: 1000,
 
   _defaultState() {
     return {
@@ -129,30 +315,41 @@ const Store = {
   },
 
   load() {
+    if (this._cache) return this._cache;
     try {
       const raw = localStorage.getItem(this.KEY);
-      if (!raw) return this._defaultState();
-      const s = JSON.parse(raw);
-      // 兼容补全
       const def = this._defaultState();
-      return Object.assign(def, s, {
+      if (!raw) { this._cache = def; return this._cache; }
+      const s = JSON.parse(raw);
+      // meta 不含 vocab/records（由 DB/IndexedDB 托管）
+      this._cache = Object.assign(def, s, {
         stats: Object.assign(def.stats, s.stats || {}),
         aiConfig: Object.assign(def.aiConfig, s.aiConfig || {}),
         settings: Object.assign(def.settings, s.settings || {}),
-        records: s.records || {},
         wrongBook: s.wrongBook || [],
-        examples: s.examples || {},
-        vocab: s.vocab || []
+        examples: s.examples || {}
       });
+      return this._cache;
     } catch (e) {
       console.warn('Store.load 失败，回退默认状态', e);
-      return this._defaultState();
+      this._cache = this._defaultState();
+      return this._cache;
     }
   },
 
   save(state) {
+    this._cache = state;
     try {
-      localStorage.setItem(this.KEY, JSON.stringify(state));
+      // 只持久化 meta 字段，vocab/records 由 DB 托管，避免大对象阻塞 localStorage
+      const meta = {
+        stats: state.stats,
+        wrongBook: state.wrongBook,
+        examples: state.examples,
+        aiConfig: state.aiConfig,
+        settings: state.settings,
+        version: state.version
+      };
+      localStorage.setItem(this.KEY, JSON.stringify(meta));
       return true;
     } catch (e) {
       console.error('Store.save 失败', e);
@@ -166,15 +363,30 @@ const Store = {
     return this._cache;
   },
 
-  commit() { this.save(this._cache); },
+  commit(immediate) {
+    if (immediate) {
+      if (this._saveTimer) clearTimeout(this._saveTimer);
+      this._saveTimer = null;
+      return this.save(this._cache);
+    }
+    if (this._saveTimer) clearTimeout(this._saveTimer);
+    this._saveTimer = setTimeout(() => {
+      this._saveTimer = null;
+      this.save(this._cache);
+    }, this.SAVE_DELAY);
+    return true;
+  },
 
-  vocab() { return this.get().vocab; },
-  records() { return this.get().records; },
+  flush() { return this.commit(true); },
+
+  vocab() { return DB.vocab(); },
+  records() { return DB.records(); },
   record(id) {
-    const r = this.records()[id];
+    const records = DB.records();
+    const r = records[id];
     if (r) return r;
     const nr = this._newRecord(id);
-    this.records()[id] = nr;
+    records[id] = nr;
     return nr;
   },
   aiConfig() { return this.get().aiConfig; },
@@ -209,6 +421,23 @@ const Store = {
    Vocab 子模块（词库导入/校验/查询）
    ============================================================ */
 const Vocab = {
+  _idIndex: null,
+  _idIndexVocab: null,
+
+  _ensureIdIndex() {
+    const vocab = Store.vocab();
+    if (this._idIndexVocab !== vocab || !this._idIndex) {
+      this._idIndex = new Map(vocab.map(v => [v.id, v]));
+      this._idIndexVocab = vocab;
+    }
+    return this._idIndex;
+  },
+
+  _invalidateIndex() {
+    this._idIndex = null;
+    this._idIndexVocab = null;
+  },
+
   normalize(parsed) {
     let arr;
     if (Array.isArray(parsed)) arr = parsed;
@@ -242,44 +471,50 @@ const Vocab = {
         phonetic: typeof item.phonetic === 'string' ? item.phonetic.trim() : '',
         pos: typeof item.pos === 'string' ? item.pos.trim() : '',
         meaning,
-        examples: Array.isArray(item.examples) ? item.examples.filter(e => e && (e.en || e.zh)) : [],
+        examples: normalizeExamples(item.examples != null ? item.examples : item.example),
         tags: Array.isArray(item.tags) ? item.tags.map(String) : []
       }
     };
   },
 
-  import(parsed) {
+  async import(parsed, onProgress) {
     const arr = this.normalize(parsed);
-    const state = Store.get();
-    const existing = {}; // lowercase word → 索引
-    state.vocab.forEach((v, i) => { existing[v.word.toLowerCase()] = i; });
+    const nextVocab = DB.vocab().slice();
+    const existing = new Map(); // lowercase word → 索引
+    nextVocab.forEach((v, i) => { existing.set(v.word.toLowerCase(), i); });
     let count = 0, skipped = 0;
     const skipReasons = [];
-    arr.forEach(raw => {
-      const v = this.validate(raw);
-      if (!v.ok) { skipped++; skipReasons.push(v.error); return; }
-      const lw = v.item.word.toLowerCase();
-      if (lw in existing) {
-        // 合并 meaning（去重）
-        const idx = existing[lw];
-        const old = state.vocab[idx];
-        const mset = new Set(old.meaning.map(m => m.toLowerCase()));
-        v.item.meaning.forEach(m => {
-          if (!mset.has(m.toLowerCase())) { old.meaning.push(m); mset.add(m.toLowerCase()); }
-        });
-        if (v.item.phonetic && !old.phonetic) old.phonetic = v.item.phonetic;
-        if (v.item.pos && !old.pos) old.pos = v.item.pos;
-        if (v.item.examples.length) old.examples = (old.examples || []).concat(v.item.examples);
-        if (v.item.tags.length) old.tags = Array.from(new Set([...(old.tags || []), ...v.item.tags]));
-        count++;
-      } else {
-        const id = uid();
-        state.vocab.push(Object.assign({ id, addedAt: Date.now() }, v.item));
-        existing[lw] = state.vocab.length - 1;
+    const importedAt = Date.now();
+    const batchSize = 300;
+    for (let start = 0; start < arr.length; start += batchSize) {
+      const end = Math.min(start + batchSize, arr.length);
+      for (let i = start; i < end; i++) {
+        const v = this.validate(arr[i]);
+        if (!v.ok) { skipped++; if (skipReasons.length < 20) skipReasons.push(v.error); continue; }
+        const lw = v.item.word.toLowerCase();
+        if (existing.has(lw)) {
+          const idx = existing.get(lw);
+          const old = nextVocab[idx];
+          const mset = new Set((old.meaning || []).map(m => String(m).toLowerCase()));
+          v.item.meaning.forEach(m => {
+            if (!mset.has(m.toLowerCase())) { old.meaning.push(m); mset.add(m.toLowerCase()); }
+          });
+          if (v.item.phonetic && !old.phonetic) old.phonetic = v.item.phonetic;
+          if (v.item.pos && !old.pos) old.pos = v.item.pos;
+          if (v.item.examples.length) old.examples = normalizeExamples(normalizeExamples(old.examples).concat(v.item.examples));
+          if (v.item.tags.length) old.tags = Array.from(new Set([...(old.tags || []), ...v.item.tags]));
+        } else {
+          const id = uid();
+          nextVocab.push(Object.assign({ id, addedAt: importedAt }, v.item));
+          existing.set(lw, nextVocab.length - 1);
+        }
         count++;
       }
-    });
-    Store.commit();
+      if (onProgress) onProgress(end, arr.length);
+      if (end < arr.length) await yieldToMain();
+    }
+    await DB.saveVocab(nextVocab);
+    this._invalidateIndex();
     return { count, skipped, skipReasons };
   },
 
@@ -292,14 +527,24 @@ const Vocab = {
 
   clear() {
     const s = Store.get();
-    s.vocab = []; s.records = {}; s.wrongBook = []; s.examples = {};
+    s.wrongBook = []; s.examples = {};
     s.stats.learnedWordIds = [];
     s.stats.totalAnswered = 0; s.stats.totalCorrect = 0;
     s.stats.studyLog = {};
-    Store.commit();
+    // vocab/records 由 IndexedDB 托管：同步清内存缓存，异步落盘
+    DB.saveVocab([]).catch(e => console.warn('clear saveVocab 失败', e));
+    DB.saveRecords({}).catch(e => console.warn('clear saveRecords 失败', e));
+    this._invalidateIndex();
+    Store.commit(true);
   },
 
-  byId(id) { return Store.vocab().find(v => v.id === id); },
+  byId(id) {
+    const index = this._ensureIdIndex();
+    const cached = index.get(id);
+    if (cached || index.size === Store.vocab().length) return cached;
+    this._invalidateIndex();
+    return this._ensureIdIndex().get(id);
+  },
 
   search(q) {
     q = (q || '').trim().toLowerCase();
@@ -326,7 +571,8 @@ const Records = {
   },
 
   weight(wordId) {
-    const r = Store.record(wordId);
+    const r = Store.records()[wordId];
+    if (!r) return 45 + Math.random();
     const days = r.lastReview ? daysBetween(r.lastReview, Date.now()) : 30;
     return (5 - (r.mastery || 0)) * 3 + days + Math.random();
   },
@@ -378,7 +624,8 @@ const Records = {
     if (correct) state.stats.totalCorrect++;
     Store.touchStreak();
     Store.addStudyLog(correct);
-    Store.commit();
+    Store.commit();        // meta（stats/wrongBook）落 localStorage
+    DB.commitRecords();    // records 防抖异步落 IndexedDB
   },
 
   masteredCount() {
@@ -1302,6 +1549,10 @@ const TTS = {
    ============================================================ */
 const UI = {
   currentView: 'vocab',
+  VOCAB_PAGE_SIZE: 120,
+  _vocabList: [],
+  _vocabRendered: 0,
+  _vocabObserver: null,
 
   switchView(name) {
     this.currentView = name;
@@ -1360,17 +1611,28 @@ const UI = {
   },
 
   renderVocabList(filter) {
-    const list = Vocab.search(filter);
     const el = $('#vocabList');
-    if (!list.length) {
+    this._vocabList = Vocab.search(filter);
+    this._vocabRendered = 0;
+    if (this._vocabObserver) this._vocabObserver.disconnect();
+    if (!this._vocabList.length) {
       el.innerHTML = `<div class="empty-state">
         <div class="es-icon">${filter ? '🔍' : '📚'}</div>
         <div>${filter ? '未找到匹配的单词' : '词库为空，点击「导入 JSON」开始'}</div>
       </div>`;
       return;
     }
+    el.innerHTML = '';
+    this._appendVocabPage();
+  },
+
+  _appendVocabPage() {
+    const el = $('#vocabList');
+    if (!el || this._vocabRendered >= this._vocabList.length) return;
     const records = Store.records();
-    el.innerHTML = list.map(w => {
+    const start = this._vocabRendered;
+    const end = Math.min(start + this.VOCAB_PAGE_SIZE, this._vocabList.length);
+    const html = this._vocabList.slice(start, end).map(w => {
       const r = records[w.id];
       const mastery = (r && r.mastery) || 0;
       const dots = Array.from({ length: 5 }, (_, i) =>
@@ -1388,6 +1650,29 @@ const UI = {
         </div>
       </div>`;
     }).join('');
+    el.insertAdjacentHTML('beforeend', html);
+    this._vocabRendered = end;
+    this._observeVocabTail();
+  },
+
+  _observeVocabTail() {
+    if (this._vocabObserver) this._vocabObserver.disconnect();
+    if (this._vocabRendered >= this._vocabList.length) return;
+    const el = $('#vocabList');
+    const tail = el && el.lastElementChild;
+    if (!tail) return;
+    if ('IntersectionObserver' in window) {
+      this._vocabObserver = new IntersectionObserver(entries => {
+        if (entries.some(entry => entry.isIntersecting)) this._appendVocabPage();
+      }, { root: el, rootMargin: '240px 0px' });
+      this._vocabObserver.observe(tail);
+    } else {
+      const more = document.createElement('button');
+      more.className = 'btn btn--ghost vocab-more';
+      more.textContent = `加载更多（${this._vocabList.length - this._vocabRendered}）`;
+      more.addEventListener('click', () => { more.remove(); this._appendVocabPage(); });
+      el.appendChild(more);
+    }
   },
 
   // ===== 释义考察 =====
@@ -1474,7 +1759,22 @@ const UI = {
       $("#stSubmit").setAttribute("hidden", ""); $("#stSubmit").textContent = "\u63d0\u4ea4";
     } else {
       optsEl.style.display = ""; inputEl.setAttribute("hidden", ""); spellExtra.setAttribute("hidden", "");
-      promptEl.className = "q-prompt"; promptEl.textContent = q.prompt;
+      promptEl.className = "q-prompt";
+      // 英译中预习：题干下追加已缓存例句的英文作为语境（不显示中文，防泄题）
+      var _stageInfo = Study.STAGES[stageIdx];
+      if (_stageInfo && _stageInfo.isPreview && q.mode === 'en2cn') {
+        var _exsEn = normalizeExamples(q.word.examples).concat(normalizeExamples(Store.get().examples[q.word.id]));
+        var _exEn = _exsEn[0];
+        if (_exEn && _exEn.en) {
+          var _re = new RegExp('(' + q.word.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+          var _exHtml = escapeHtml(_exEn.en).replace(_re, '<span class="ex-hl">$1</span>');
+          promptEl.innerHTML = '<div class="q-word">' + escapeHtml(q.prompt) + '</div><div class="q-example-en" title="例句语境">💬 ' + _exHtml + '</div>';
+        } else {
+          promptEl.textContent = q.prompt;
+        }
+      } else {
+        promptEl.textContent = q.prompt;
+      }
       subEl.textContent = q.sub || "";
       var isMulti = !!q.multi;
       optsEl.className = "quiz-options" + (isMulti ? " multi" : "");
@@ -1528,7 +1828,23 @@ const UI = {
       q.word.meaning.forEach(function(m, i) {
         html += "<li data-i=\"" + (CIRCLED[i] || (i + 1) + ".") + "\">" + escapeHtml(m) + "</li>";
       });
-      html += "</ul></div>";
+      html += "</ul>";
+      var exs = normalizeExamples(q.word.examples);
+      var cachedEx = Store.get().examples[q.word.id];
+      if (cachedEx && cachedEx.length) exs = exs.concat(cachedEx);
+      exs = exs.slice(0, 3);
+      html += "<div class=\"pv-examples\" id=\"stPvExamples\"><div class=\"pv-examples-title\">📖 例句</div>";
+      if (exs.length) {
+        exs.forEach(function(example) {
+          html += "<div class=\"pv-example\">";
+          if (example.en) html += "<div class=\"pv-example-en\">" + escapeHtml(example.en) + "</div>";
+          if (example.zh) html += "<div class=\"pv-example-zh\">" + escapeHtml(example.zh) + "</div>";
+          html += "</div>";
+        });
+      } else {
+        html += "<div class=\"pv-example-empty\" id=\"stPvExEmpty\">暂无例句</div>";
+      }
+      html += "</div></div>";
     } else {
       html += "<div class=\"ans\" style=\"color:var(--ink-dim);margin-top:4px;\">" + escapeHtml(q.word.word) + " \u2014 " + escapeHtml((q.word.meaning || []).join("\uff1b")) + "</div>";
     }
@@ -1552,6 +1868,42 @@ const UI = {
     if (isSpell) { $("#stInput").setAttribute("disabled", ""); $("#stSubmit").setAttribute("hidden", ""); }
     else if (q.multi) { $("#stSubmit").setAttribute("hidden", ""); }
     $("#stNext").removeAttribute("hidden");
+    // 预习阶段无例句时，自动 AI 生成并缓存（确保每个单词都能看到例句）
+    if (isPreview && !isSpell) {
+      var _exs0 = normalizeExamples(q.word.examples);
+      var _cached0 = Store.get().examples[q.word.id];
+      if (_cached0 && _cached0.length) _exs0 = _exs0.concat(_cached0);
+      if (!_exs0.length) {
+        if (AI.isReady()) { UI._autoGenStudyExample(q.word); }
+        else { var _e0 = document.getElementById('stPvExEmpty'); if (_e0) _e0.textContent = '暂无例句（配置 AI 后自动生成，或点下方「AI 例句」）'; }
+      }
+    }
+  },
+  // 预习反馈区：自动 AI 生成例句（异步，不阻塞答题；生成后缓存供下次使用）
+  async _autoGenStudyExample(word) {
+    var box = document.getElementById('stPvExamples');
+    if (!box) return;
+    box.innerHTML = '<div class="pv-examples-title">📖 例句</div><div class="pv-example-empty">🤖 AI 正在生成例句…</div>';
+    try {
+      var res = await AI.generateExamples(word, function(){});
+      var items = null;
+      try { items = JSON.parse(res.content.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '')); }
+      catch (_) { var m = res.content.match(/\[[\s\S]*\]/); if (m) try { items = JSON.parse(m[0]); } catch (e) {} }
+      var fb = document.getElementById('stFeedback');
+      if (fb && fb.hasAttribute('hidden')) return; // 已进入下一题，放弃更新
+      if (items && Array.isArray(items) && items.length) {
+        var clean = items.filter(function(i){return i && i.en;}).slice(0, 3).map(function(i){return {en:String(i.en),zh:String(i.zh||'')};});
+        Store.get().examples[word.id] = clean;
+        Store.commit();
+        var html2 = '<div class="pv-examples-title">📖 例句</div>';
+        clean.forEach(function(ex){ html2 += '<div class="pv-example"><div class="pv-example-en">' + escapeHtml(ex.en) + '</div>' + (ex.zh ? '<div class="pv-example-zh">' + escapeHtml(ex.zh) + '</div>' : '') + '</div>'; });
+        box.innerHTML = html2;
+      } else {
+        box.innerHTML = '<div class="pv-examples-title">📖 例句</div><div class="pv-example-empty">生成失败，可点下方「AI 例句」重试</div>';
+      }
+    } catch (e) {
+      box.innerHTML = '<div class="pv-examples-title">📖 例句</div><div class="pv-example-empty">生成失败：' + escapeHtml(e.message) + '</div>';
+    }
   },
   showStudyResult(data) {
     this._showStudyState("studyResult");
@@ -2026,8 +2378,10 @@ const UI = {
    App 子模块（事件绑定 + 初始化）
    ============================================================ */
 const App = {
-  init() {
+  async init() {
     TTS.init();
+    // 先异步加载 IndexedDB 中的词库与学习记录（不阻塞主线程）
+    await DB.loadAll();
     this._loadAIConfigToForm();
     // 在天择OS内运行时隐藏应用内AI配置按钮（复用OS配置）
     if (AI._inOS()) {
@@ -2075,44 +2429,56 @@ const App = {
   },
 
   bindVocab() {
+    const setImportBusy = (busy, text) => {
+      const status = $('#importStatus');
+      const statusText = $('#importStatusText');
+      const importBtn = $('#btnImport');
+      const pasteBtn = $('#pasteImport');
+      if (status) busy ? status.removeAttribute('hidden') : status.setAttribute('hidden', '');
+      if (statusText && text) statusText.textContent = text;
+      if (importBtn) busy ? importBtn.setAttribute('disabled', '') : importBtn.removeAttribute('disabled');
+      if (pasteBtn) busy ? pasteBtn.setAttribute('disabled', '') : pasteBtn.removeAttribute('disabled');
+    };
+    const importText = async (text, closePaste) => {
+      setImportBusy(true, '正在解析 JSON…');
+      try {
+        const parsed = await parseJsonAsync(text);
+        const r = await Vocab.import(parsed, (done, total) => {
+          setImportBusy(true, `正在导入 ${done.toLocaleString()} / ${total.toLocaleString()}…`);
+        });
+        UI.toast(`成功导入 ${r.count} 个单词${r.skipped ? `，跳过 ${r.skipped} 个` : ''}`, 'success');
+        UI.renderVocabList();
+        UI.renderTopStats();
+        if (closePaste) UI.closeModal('pasteModal');
+      } catch (err) {
+        UI.toast('导入失败：' + err.message, 'error');
+      } finally {
+        setImportBusy(false);
+      }
+    };
+
     $('#btnImport').addEventListener('click', () => $('#fileVocab').click());
-    $('#fileVocab').addEventListener('change', (e) => {
+    $('#fileVocab').addEventListener('change', async (e) => {
       const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const parsed = JSON.parse(reader.result);
-          const r = Vocab.import(parsed);
-          UI.toast(`成功导入 ${r.count} 个单词${r.skipped ? `，跳过 ${r.skipped} 个` : ''}`, 'success');
-          UI.renderVocabList();
-          UI.renderTopStats();
-        } catch (err) {
-          UI.toast('JSON 解析失败：' + err.message, 'error');
-        }
-      };
-      reader.onerror = () => UI.toast('文件读取失败', 'error');
-      reader.readAsText(file);
       e.target.value = ''; // 允许重复导入同一文件
+      if (!file) return;
+      setImportBusy(true, '正在读取文件…');
+      try {
+        await importText(await file.text(), false);
+      } catch (err) {
+        UI.toast('文件读取失败：' + err.message, 'error');
+        setImportBusy(false);
+      }
     });
 
     $('#btnPaste').addEventListener('click', () => {
       $('#pasteArea').value = '';
       UI.openModal('pasteModal');
     });
-    $('#pasteImport').addEventListener('click', () => {
+    $('#pasteImport').addEventListener('click', async () => {
       const text = $('#pasteArea').value.trim();
       if (!text) { UI.toast('请粘贴 JSON 内容', 'warn'); return; }
-      try {
-        const parsed = JSON.parse(text);
-        const r = Vocab.import(parsed);
-        UI.toast(`成功导入 ${r.count} 个单词${r.skipped ? `，跳过 ${r.skipped} 个` : ''}`, 'success');
-        UI.renderVocabList();
-        UI.renderTopStats();
-        UI.closeModal('pasteModal');
-      } catch (err) {
-        UI.toast('JSON 解析失败：' + err.message, 'error');
-      }
+      await importText(text, true);
     });
     $('#pasteCancel').addEventListener('click', () => UI.closeModal('pasteModal'));
     $('#pasteClose').addEventListener('click', () => UI.closeModal('pasteModal'));
@@ -2147,8 +2513,11 @@ const App = {
       }
     });
 
+    let searchTimer = null;
     $('#vocabSearch').addEventListener('input', (e) => {
-      UI.renderVocabList(e.target.value);
+      const value = e.target.value;
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => UI.renderVocabList(value), 120);
     });
 
     // 点击单词项跳到 AI 解析
@@ -2405,6 +2774,10 @@ const App = {
   }
 };
 
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') { Store.flush(); DB.flushRecords(); }
+});
+window.addEventListener('pagehide', () => { Store.flush(); DB.flushRecords(); });
 document.addEventListener('DOMContentLoaded', () => App.init());
 
 })();

@@ -464,6 +464,7 @@ img { max-width: 100%; display: block; }
 .reveal.in {
   opacity: 1;
   transform: none;
+  will-change: auto;
 }
 .reveal.d1 { transition-delay: 0.08s; }
 .reveal.d2 { transition-delay: 0.16s; }
@@ -473,12 +474,40 @@ img { max-width: 100%; display: block; }
 .reveal.d6 { transition-delay: 0.48s; }
 
 @media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
   .reveal { opacity: 1; transform: none; }
+}
+
+@media (hover: none) {
+  .card,
+  .btn,
+  .nav-toggle,
+  .banner,
+  .news-row,
+  .zone-card .z-icon,
+  .feature-item .f-icon,
+  .dq-cat,
+  .dq-card .dc-emoji,
+  .dq-close,
+  .dl-card .dl-icon,
+  .game-feature,
+  .game-play-cta { will-change: auto; }
+}
+
+/* 跳过视口外长区块的布局和绘制，同时保留滚动条尺寸。 */
+@supports (content-visibility: auto) {
+  .section,
+  .news-list,
+  .article-body,
+  .tutorial-body {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 700px;
+  }
 }
 
 /* ============================================================

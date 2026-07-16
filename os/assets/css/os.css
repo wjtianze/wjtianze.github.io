@@ -445,7 +445,7 @@ input, textarea { font-family: inherit; }
 .app-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 14px; color: var(--ink-faint); }
 .app-loading .al-spin { width: 36px; height: 36px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--c-blue); border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.app-iframe { width: 100%; height: 100%; border: none; background: #fff; }
+.app-iframe { width: 100%; height: 100%; border: none; background: #fff; contain: strict; }
 .app-error { padding: 30px; text-align: center; color: var(--ink-faint); }
 .app-error .ae-icon { font-size: 42px; margin-bottom: 12px; }
 
@@ -539,6 +539,14 @@ body.mobile .win.mobile-fullscreen { inset: 0 !important; width: 100% !important
 .fw-reopen:hover { transform: scale(1.08); }
 .fw-reopen:active { transform: scale(0.92); }
 body.mobile .floating-widget, body.mobile .fw-reopen { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
 
 /* ===== KaTeX 数学公式渲染（AI 对话） ===== */
 .msg-bubble .katex { font-size: 1.04em; color: var(--ink); }

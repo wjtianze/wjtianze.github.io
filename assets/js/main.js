@@ -13,12 +13,25 @@
 
   document.documentElement.classList.add("js");
 
+  var bgMesh = document.querySelector(".bg-mesh");
+  var scrollTicking = false;
+  function updateScrollEffects() {
+    var scrollY = window.scrollY;
+    if (topbar) topbar.classList.toggle("scrolled", scrollY > 8);
+    if (bgMesh && !reduceMotion.matches) {
+      bgMesh.style.setProperty("--mesh-offset", scrollY * 0.035 + "px");
+    }
+    scrollTicking = false;
+  }
   function onScroll() {
-    if (topbar) topbar.classList.toggle("scrolled", window.scrollY > 8);
+    if (!scrollTicking) {
+      window.requestAnimationFrame(updateScrollEffects);
+      scrollTicking = true;
+    }
   }
 
   window.addEventListener("scroll", onScroll, { passive: true });
-  onScroll();
+  updateScrollEffects();
 
   /* 移动端导航：同步视觉状态、ARIA 与键盘焦点。 */
   if (toggle && nav) {
@@ -43,8 +56,8 @@
       setNavState(!nav.classList.contains("open"), { focusFirst: true });
     });
 
-    nav.querySelectorAll("a").forEach(function (link) {
-      link.addEventListener("click", function () { setNavState(false); });
+    nav.addEventListener("click", function (event) {
+      if (event.target.closest && event.target.closest("a")) setNavState(false);
     });
 
     document.addEventListener("click", function (event) {
@@ -93,22 +106,6 @@
     });
   }
 
-  /* 背景视差只写入自定义属性，不覆盖组件自身 transform。 */
-  var bgMesh = document.querySelector(".bg-mesh");
-  if (bgMesh && !reduceMotion.matches) {
-    var ticking = false;
-    function updateParallax() {
-      bgMesh.style.setProperty("--mesh-offset", window.scrollY * 0.035 + "px");
-      ticking = false;
-    }
-    window.addEventListener("scroll", function () {
-      if (!ticking) {
-        window.requestAnimationFrame(updateParallax);
-        ticking = true;
-      }
-    }, { passive: true });
-  }
-
   document.querySelectorAll("[data-back]").forEach(function (button) {
     button.addEventListener("click", function (event) {
       event.preventDefault();
@@ -134,12 +131,27 @@
       banner.hidden = index !== 0;
     });
 
-    window.setInterval(function () {
+    var bannerTimer = null;
+    function stopBannerRotation() {
+      if (bannerTimer !== null) {
+        window.clearTimeout(bannerTimer);
+        bannerTimer = null;
+      }
+    }
+    function scheduleBannerRotation() {
+      stopBannerRotation();
       if (document.hidden || reduceMotion.matches) return;
-      banners[bannerIndex].hidden = true;
-      bannerIndex = (bannerIndex + 1) % banners.length;
-      banners[bannerIndex].hidden = false;
-    }, 6000);
+      bannerTimer = window.setTimeout(function rotateBanner() {
+        banners[bannerIndex].hidden = true;
+        bannerIndex = (bannerIndex + 1) % banners.length;
+        banners[bannerIndex].hidden = false;
+        scheduleBannerRotation();
+      }, 6000);
+    }
+    document.addEventListener("visibilitychange", scheduleBannerRotation);
+    if (reduceMotion.addEventListener) reduceMotion.addEventListener("change", scheduleBannerRotation);
+    else reduceMotion.addListener(scheduleBannerRotation);
+    scheduleBannerRotation();
   }
 
   /* 被 iframe 嵌入（如天择OS 浏览器）时：把"新窗口/外站链接"交给父窗口在系统内打开，

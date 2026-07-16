@@ -11,11 +11,17 @@
 /* ===================== 存储层 ===================== */
 const Store = {
   KEY: 'tzos_state_v1',
+  _cache: null,
   load() {
-    try { return JSON.parse(localStorage.getItem(this.KEY)) || {}; }
-    catch { return {}; }
+    if (this._cache) return this._cache;
+    try { this._cache = JSON.parse(localStorage.getItem(this.KEY)) || {}; }
+    catch { this._cache = {}; }
+    return this._cache;
   },
-  save(state) { localStorage.setItem(this.KEY, JSON.stringify(state)); },
+  save(state) {
+    this._cache = state;
+    localStorage.setItem(this.KEY, JSON.stringify(state));
+  },
   get(k, def) { const s = this.load(); return s[k] !== undefined ? s[k] : def; },
   set(k, v) { const s = this.load(); s[k] = v; this.save(s); },
   // 已安装软件
@@ -320,6 +326,7 @@ const WM = {
     w.el.style.pointerEvents = 'none';
     setTimeout(() => { w.el.remove(); }, 180);
     this.windows.splice(idx, 1);
+    if (w.appId === 'browser') cleanupBrowserHooks();
     Taskbar.render();
     if (w.onClose) w.onClose();
   },
@@ -385,6 +392,7 @@ const WM = {
       iframe.srcdoc = app.html;
       w.body.appendChild(iframe);
     } else {
+      if (app.id === 'browser') cleanupBrowserHooks();
       const html = app.render();
       if (typeof html === 'string') w.body.innerHTML = html;
       else if (html instanceof HTMLElement) { w.body.innerHTML = ''; w.body.appendChild(html); }
@@ -925,17 +933,54 @@ const AI = {
   },
   isReady(provider) { const c = this.config(provider); return !!(c.url && c.key && c.model); },
 
+  async request(c, body, onData) {
+    if (window.tzDesktop?.requestAI) {
+      let text = '';
+      const response = await window.tzDesktop.requestAI({ url: c.url, key: c.key, body }, chunk => {
+        text += chunk;
+        if (onData) onData(chunk);
+      });
+      if (response.status < 200 || response.status >= 300) throw this.httpError(response.status, text);
+      return text;
+    }
+    const res = await fetch(c.url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': body.stream ? 'text/event-stream' : 'application/json', 'Authorization': 'Bearer ' + c.key },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw this.httpError(res.status, await res.text().catch(()=> ''));
+    if (!onData) return await res.text();
+    if (!res.body) throw new Error('AI 接口未返回可读取的响应内容');
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let text = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = dec.decode(value, { stream: true });
+      text += chunk;
+      if (chunk) onData(chunk);
+    }
+    const tail = dec.decode();
+    text += tail;
+    if (tail) onData(tail);
+    return text;
+  },
+
+  httpError(status, body) {
+    let detail = String(body || '').trim();
+    try { const parsed = JSON.parse(detail); detail = parsed.error?.message || parsed.message || detail; } catch {}
+    return new Error('AI 接口错误 ' + status + (detail ? '：' + detail.slice(0, 300) : ''));
+  },
+
   async chat(messages, opts = {}) {
     const c = this.config(opts.provider);
     if (!this.isReady(opts.provider)) throw new Error('AI 未配置，请先在「AI 配置」中设置 URL、Key 和模型。' + (Store.getProvider()==='doubao'?'（当前为豆包，需填入 Volcengine Ark API Key）':''));
-    const res = await fetch(c.url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + c.key },
-      body: JSON.stringify({ model: c.model, messages, temperature: opts.temperature ?? 0.7, max_tokens: opts.max_tokens ?? 384000, stream: false })
-    });
-    if (!res.ok) { const t = await res.text().catch(()=> ''); throw new Error('AI 接口错误 ' + res.status + '：' + t.slice(0,200)); }
-    const data = await res.json();
-    const msg = data.choices?.[0]?.message || {};
+    const text = await this.request(c, { model: c.model, messages, temperature: opts.temperature ?? 0.7, max_tokens: opts.max_tokens ?? 8192, stream: false });
+    let data;
+    try { data = JSON.parse(text); } catch { throw new Error('AI 接口返回了无效的 JSON'); }
+    const msg = data.choices?.[0]?.message;
+    if (!msg) throw new Error('AI 接口响应缺少 choices[0].message');
     return { content: msg.content || '', reasoning: msg.reasoning_content || '' };
   },
 
@@ -943,35 +988,29 @@ const AI = {
   async chatStream(messages, onChunk, opts = {}) {
     const c = this.config(opts.provider);
     if (!this.isReady(opts.provider)) throw new Error('AI 未配置，请先在「AI 配置」中设置 URL、Key 和模型。' + (Store.getProvider()==='doubao'?'（当前为豆包，需填入 Volcengine Ark API Key）':''));
-    const res = await fetch(c.url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + c.key },
-      body: JSON.stringify({ model: c.model, messages, temperature: opts.temperature ?? 0.7, max_tokens: opts.max_tokens ?? 384000, stream: true })
-    });
-    if (!res.ok) { const t = await res.text().catch(()=> ''); throw new Error('AI 接口错误 ' + res.status + '：' + t.slice(0,200)); }
-    const reader = res.body.getReader();
-    const dec = new TextDecoder();
-    let buf = '', full = '', reasoning = '';
+    let buf = '', full = '', reasoning = '', finished = false;
     const onReasoning = opts.onReasoning;
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buf += dec.decode(value, { stream: true });
-      const lines = buf.split('\n');
-      buf = lines.pop();
+    const consume = (flush = false) => {
+      const lines = buf.split(/\r?\n/);
+      buf = flush ? '' : lines.pop();
       for (const line of lines) {
         const s = line.trim();
         if (!s.startsWith('data:')) continue;
-        const data = s.slice(5).trim();
-        if (data === '[DONE]') return { content: full, reasoning };
+        const raw = s.slice(5).trim();
+        if (raw === '[DONE]') { finished = true; continue; }
         try {
-          const j = JSON.parse(data);
-          const delta = j.choices?.[0]?.delta || {};
+          const delta = JSON.parse(raw).choices?.[0]?.delta || {};
           if (delta.reasoning_content) { reasoning += delta.reasoning_content; if (onReasoning) onReasoning(delta.reasoning_content, reasoning); }
           if (delta.content) { full += delta.content; onChunk(delta.content, full); }
         } catch {}
       }
-    }
+    };
+    await this.request(c, { model: c.model, messages, temperature: opts.temperature ?? 0.7, max_tokens: opts.max_tokens ?? 8192, stream: true }, chunk => {
+      if (finished) return;
+      buf += chunk;
+      consume(false);
+    });
+    if (buf.trim() && !finished) { buf += '\n'; consume(true); }
     return { content: full, reasoning };
   },
 
@@ -988,7 +1027,7 @@ const AI = {
 - 界面要点：描述布局和视觉风格
 - 交互要点：描述关键交互
 - 所有内容用中文，简洁清晰`;
-    const out = await this.chat([{ role: 'system', content: sys }, { role: 'user', content: userPrompt }], { temperature: 0.5, max_tokens: 384000 });
+    const out = await this.chat([{ role: 'system', content: sys }, { role: 'user', content: userPrompt }], { temperature: 0.5, max_tokens: 8192 });
     return (out.content || '').trim();
   },
 
@@ -1014,7 +1053,7 @@ ${spec}
 ${userPrompt}
 
 请直接输出完整 HTML 代码，从 <!DOCTYPE html> 开始：`;
-    return await this.chatStream([{ role: 'system', content: sys }, { role: 'user', content: '请生成这个软件' }], onChunk, { temperature: 0.7, max_tokens: 384000 });
+    return await this.chatStream([{ role: 'system', content: sys }, { role: 'user', content: '请生成这个软件' }], onChunk, { temperature: 0.7, max_tokens: 8192 });
   },
 
   async fixApp(app, instruction, onChunk) {
@@ -1037,7 +1076,7 @@ ${instruction}
 ${app.html}
 
 请直接输出修改后的完整 HTML 代码，从 <!DOCTYPE html> 开始：`;
-    return await this.chatStream([{ role: 'system', content: sys }, { role: 'user', content: '请按需求修改这个软件' }], onChunk, { temperature: 0.6, max_tokens: 384000 });
+    return await this.chatStream([{ role: 'system', content: sys }, { role: 'user', content: '请按需求修改这个软件' }], onChunk, { temperature: 0.6, max_tokens: 8192 });
   }
 };
 
@@ -1248,33 +1287,41 @@ function renderMd(text) {
   });
   return html;
 }
-// LaTeX 渲染：依赖在 os/index.html 中预加载的 KaTeX（与 TLH 演示页一致，jsdelivr 0.16.11）。
-// 这里只负责调用 auto-render；若 KaTeX 尚未加载完成，排队并在就绪后统一渲染。
+// LaTeX 仅在 AI 回复需要公式时加载，避免 KaTeX 阻塞 OS 首屏和开机动画。
 const KATEX_OPTS = { delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}], throwOnError:false };
-let _katexQueue = [], _katexTimer = null, _katexFallbackTried = false;
+let _katexPromise = null;
+function loadExternalScript(src) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = true;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
+function loadKatexFrom(base) {
+  const css = document.createElement('link');
+  css.rel = 'stylesheet';
+  css.href = base + '/katex.min.css';
+  document.head.appendChild(css);
+  return loadExternalScript(base + '/katex.min.js')
+    .then(() => loadExternalScript(base + '/contrib/auto-render.min.js'));
+}
+function ensureKatex() {
+  if (window.renderMathInElement) return Promise.resolve();
+  if (!_katexPromise) {
+    _katexPromise = loadKatexFrom('https://cdn.jsdelivr.net/npm/katex@0.16.11/dist')
+      .catch(() => loadKatexFrom('https://cdn.staticfile.org/KaTeX/0.16.11'));
+  }
+  return _katexPromise;
+}
 function renderMath(node) {
   if (!node) return;
-  if (window.renderMathInElement) { try { window.renderMathInElement(node, KATEX_OPTS); } catch {} return; }
-  // KaTeX 还在加载中，入队等待
-  _katexQueue.push(node);
-  if (!_katexTimer) {
-    _katexTimer = setInterval(() => {
-      if (!window.renderMathInElement) return;
-      clearInterval(_katexTimer); _katexTimer = null;
-      const q = _katexQueue; _katexQueue = [];
-      q.forEach(n => { try { window.renderMathInElement(n, KATEX_OPTS); } catch {} });
-    }, 150);
-    // 兜底：3 秒后若 jsdelivr 仍未就绪，尝试国内备用 CDN（staticfile.org）
-    setTimeout(() => {
-      if (window.renderMathInElement || _katexFallbackTried) return;
-      _katexFallbackTried = true;
-      const head = document.head;
-      const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'https://cdn.staticfile.org/KaTeX/0.16.11/katex.min.css'; head.appendChild(css);
-      const s1 = document.createElement('script'); s1.src = 'https://cdn.staticfile.org/KaTeX/0.16.11/katex.min.js';
-      s1.onload = () => { const s2 = document.createElement('script'); s2.src = 'https://cdn.staticfile.org/KaTeX/0.16.11/contrib/auto-render.min.js'; head.appendChild(s2); };
-      head.appendChild(s1);
-    }, 3000);
-  }
+  ensureKatex().then(() => {
+    if (!node.isConnected || !window.renderMathInElement) return;
+    try { window.renderMathInElement(node, KATEX_OPTS); } catch {}
+  }).catch(() => {});
 }
 async function sendChat() {
   const input = $('#chatInput');
@@ -1293,13 +1340,22 @@ async function sendChat() {
   const bubble = aiMsg.querySelector('.msg-bubble');
   // 深度思考关闭时：不显示、不存储思考过程（仅影响本次及后续回复，不动已有消息）
   const deep = Store.getDeepThink();
-  const paint = () => { bubble.innerHTML = (deep ? reasoningHtml(reasoning, true) : '') + renderMd(full); msgs.scrollTop = msgs.scrollHeight; };
+  let paintFrame = 0;
+  const paint = () => {
+    if (paintFrame) return;
+    paintFrame = requestAnimationFrame(() => {
+      paintFrame = 0;
+      bubble.innerHTML = (deep ? reasoningHtml(reasoning, true) : '') + renderMd(full);
+      msgs.scrollTop = msgs.scrollHeight;
+    });
+  };
   try {
     const sysMsg = { role: 'system', content: '你是天择 AI 助手，运行在天择OS中。回答简洁有用，使用中文。可写代码（markdown代码块）。数学公式用 LaTeX：行内 $...$，块级 $$...$$。' };
     await AI.chatStream([sysMsg, ...history.slice(-12).map(m => ({role: m.role==='ai'?'assistant':'user', content: m.content}))],
       (delta, all) => { full = all; paint(); },
       { onReasoning: deep ? ((d, allR) => { reasoning = allR; paint(); }) : undefined }
     );
+    if (paintFrame) { cancelAnimationFrame(paintFrame); paintFrame = 0; }
     bubble.innerHTML = (deep ? reasoningHtml(reasoning, false) : '') + renderMd(full);
     renderMath(aiMsg);
     history.push({ role: 'ai', content: full, reasoning: deep ? reasoning : '' });
@@ -1696,13 +1752,17 @@ function renderBrowser() {
     <div id="brViews" style="flex:1;position:relative;background:#fff;min-height:0"></div>
   </div>`;
 }
+function cleanupBrowserHooks() {
+  if (window.__tzBrWatcher) { clearInterval(window.__tzBrWatcher); window.__tzBrWatcher = null; }
+  if (window.__tzBrMsg) { window.removeEventListener('message', window.__tzBrMsg); window.__tzBrMsg = null; }
+  window.__tzBrNewTab = null;
+}
 function initBrowser() {
   const tabsEl = $('#brTabs'), views = $('#brViews'), urlInput = $('#brUrl');
   const QUICK = [['天择网首页','https://wjtianze.github.io/'],['新闻','https://wjtianze.github.io/news/'],['博客','https://wjtianze.github.io/blog/'],['COC 数据','https://wjtianze.github.io/coc/data/']];
   let tabs = [], activeId = null, counter = 0;
   // 清理上一次浏览器实例遗留的 URL 轮询与消息监听（窗口刷新/重开场景）
-  if (window.__tzBrWatcher) { clearInterval(window.__tzBrWatcher); window.__tzBrWatcher = null; }
-  if (window.__tzBrMsg) { window.removeEventListener('message', window.__tzBrMsg); window.__tzBrMsg = null; }
+  cleanupBrowserHooks();
 
   const sanitizeUrl = (u) => {
     let full = (u || '').trim();
@@ -1862,20 +1922,20 @@ function initBrowser() {
   window.addEventListener('message', onBrMsg);
   window.__tzBrMsg = onBrMsg;
 
-  // 轮询：捕获同源页面 SPA 式 URL 变化（pushState/replaceState 不触发 load），同步地址栏与标签标题
+  // 同源页面通常通过 postMessage / load 同步；仅在标签页可见且浏览器窗口存在时低频兜底。
   window.__tzBrWatcher = setInterval(() => {
-    tabs.forEach(t => {
-      if (!document.body.contains(t.frame)) return;
-      let cur = '';
-      try { cur = t.frame.contentWindow.location.href; } catch (e) { return; }
-      if (cur && cur !== 'about:blank' && cur !== t.url) {
-        t.url = cur;
-        try { t.title = (t.frame.contentDocument && t.frame.contentDocument.title) || ''; } catch {}
-        if (t.id === activeId) urlInput.value = cur;
-        renderTabs();
-      }
-    });
-  }, 800);
+    if (document.hidden || !document.body.contains(views)) return;
+    const t = tabs.find(x => x.id === activeId);
+    if (!t || !document.body.contains(t.frame)) return;
+    let cur = '';
+    try { cur = t.frame.contentWindow.location.href; } catch (e) { return; }
+    if (cur && cur !== 'about:blank' && cur !== t.url) {
+      t.url = cur;
+      try { t.title = (t.frame.contentDocument && t.frame.contentDocument.title) || ''; } catch {}
+      urlInput.value = cur;
+      renderTabs();
+    }
+  }, 2000);
 
   newTab('');
   // 桌面版集成：暴露 newTab 给外部（tzOpenInBrowser 用），网页版无副作用
@@ -1921,7 +1981,12 @@ function startClock() {
     const tc = $('#tbClock');
     if (tc) tc.innerHTML = fmtTime(d) + '<br>' + fmtDate(d);
   };
-  tick(); setInterval(tick, 1000);
+  tick();
+  const schedule = () => {
+    const delay = 60000 - (Date.now() % 60000) + 20;
+    window.__tzClockTimer = setTimeout(() => { tick(); schedule(); }, delay);
+  };
+  schedule();
 }
 
 /* ===================== 开机流程 ===================== */
@@ -1946,6 +2011,14 @@ async function boot() {
 
   Store.addNotif({ title: '欢迎使用天择OS', body: '所有天择网功能已预装为应用。点击「🔑 AI 配置」开始使用 AI 功能。' });
   Store.addNotif({ title: '软件商城已就绪', body: '输入一句话，让 AI 为你生成专属软件。' });
+
+  // 桌面版首次启动：AI 配置独立存于本机（与网页版不共享），未配置时自动弹出引导
+  if (window.tzDesktop && !AI.isReady()) {
+    setTimeout(() => {
+      toast('桌面版需单独配置 AI：填入 API Key 即可使用对话与软件商城', 6000);
+      launchApp('ai-config');
+    }, 1200);
+  }
 }
 
 /* ===================== 全局事件绑定 ===================== */
@@ -1954,8 +2027,6 @@ function bindGlobalEvents() {
   $('#btnStart').onclick = (e) => { e.stopPropagation(); StartMenu.toggle(); };
   // 风格切换按钮（任务栏）
   $('#btnStyle').onclick = (e) => { e.stopPropagation(); toggleStyle(); };
-  // AI 配置快捷按钮（任务栏）
-  $('#btnAiConfig').onclick = (e) => { e.stopPropagation(); launchApp('ai-config'); };
   // AI 配置快捷按钮（任务栏）
   $('#btnAiConfig').onclick = (e) => { e.stopPropagation(); launchApp('ai-config'); };
   // 设置按钮
@@ -2007,8 +2078,16 @@ function bindGlobalEvents() {
   });
   // 开始菜单搜索
   $('#startSearch').oninput = (e) => StartMenu.render(e.target.value);
-  // 窗口大小变化重新适配
-  window.addEventListener('resize', () => { applyDeviceStyle(); Desktop.render(); });
+  // 窗口大小变化合并到下一帧，避免拖动窗口时反复重建桌面 DOM。
+  let resizeFrame = 0;
+  window.addEventListener('resize', () => {
+    if (resizeFrame) return;
+    resizeFrame = requestAnimationFrame(() => {
+      resizeFrame = 0;
+      applyDeviceStyle();
+      Desktop.render();
+    });
+  }, { passive: true });
   // 键盘快捷键
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
