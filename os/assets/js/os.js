@@ -2087,8 +2087,8 @@ function bindGlobalEvents() {
       items.push({ icon: '🌐', label: '打开天择网', act: () => tzOpenInBrowser('https://wjtianze.github.io/') });
       items.push({ icon: '⏻', label: '退出天择OS', act: () => { try { window.tzDesktop.quit(); } catch (e) {} } });
     } else {
-      // 网页版：返回天择网首页
-      items.push({ icon: '🌐', label: '返回天择网', act: () => { window.location.href = TZNET_BASE + 'index.html'; } });
+      // 网页版：返回天择OS 入口页（选择桌面端/网页端）
+      items.push({ icon: '🌐', label: '返回天择网', act: () => { window.location.href = 'index.html'; } });
     }
     showCtxMenu(e.clientX, e.clientY, items);
   };
@@ -2114,7 +2114,7 @@ function bindGlobalEvents() {
       { sep: true },
       { icon: '🖥️', label: '切换桌面风格', act: () => toggleStyle() },
       { icon: '⚙️', label: '系统设置', act: () => launchApp('settings') },
-      { icon: '🌐', label: '返回天择网', act: () => { window.location.href = TZNET_BASE + 'index.html'; } }
+      { icon: '🌐', label: '返回天择网', act: () => { if (window.tzDesktop) { tzOpenInBrowser('https://wjtianze.github.io/'); } else { window.location.href = 'index.html'; } } }
     ]);
   });
   // 开始菜单搜索
@@ -2175,9 +2175,9 @@ window.addEventListener('DOMContentLoaded', boot);
 Object.assign(window.TZOS, {
   launchApp, uninstallApp, Store, AI, WM, Desktop, StartMenu, refreshOpenApp, toast,
   goHome: () => {
-    // 桌面版：在 OS 内置浏览器打开天择网首页（不跳出应用）；网页版：跳转天择网首页
+    // 桌面版：在 OS 内置浏览器打开天择网首页（不跳出应用）；网页版：返回天择OS 入口页
     if (window.tzDesktop) { tzOpenInBrowser('https://wjtianze.github.io/'); }
-    else { window.location.href = TZNET_BASE + 'index.html'; }
+    else { window.location.href = 'index.html'; }
   }
 });
 

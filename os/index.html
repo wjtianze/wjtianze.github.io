@@ -3,143 +3,91 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>天择OS · 选择版本</title>
-  <meta name="description" content="天择OS —— 选择桌面版或网页版，开启你的浏览器操作系统。" />
+  <title>天择OS · 天择网</title>
+  <meta name="description" content="天择OS —— 浏览器里的全屏操作系统。选择桌面版或网页版，预装天择网全部功能与 AI 代码生成引擎。" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cpath d='M10 14h12v8a2 2 0 0 1-2 2H12a2 2 0 0 1-2-2v-8zm2-4a4 4 0 0 1 8 0v4h-8v-4z' fill='white'/%3E%3C/svg%3E" />
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    :root {
-      --grad-main: linear-gradient(135deg, #7c3aed 0%, #3b82f6 50%, #10b981 100%);
-      --ink: #1a1a2e; --ink-dim: #4a4a6a; --ink-faint: #8a8aa0;
-      --glass: rgba(255,255,255,0.72); --glass-border: rgba(255,255,255,0.6);
-    }
-    html, body { height: 100%; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-      color: var(--ink);
-      background: var(--grad-main);
-      background-attachment: fixed;
-      min-height: 100vh;
-      display: flex; flex-direction: column;
-      overflow-x: hidden;
-    }
-    /* 顶部条 */
-    .topbar {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 18px 28px;
-    }
-    .topbar a {
-      color: #fff; text-decoration: none; font-size: 14px;
-      display: inline-flex; align-items: center; gap: 6px;
-      opacity: 0.92; transition: opacity .2s;
-      padding: 8px 14px; border-radius: 999px;
-      background: rgba(255,255,255,0.14); backdrop-filter: blur(8px);
-    }
-    .topbar a:hover { opacity: 1; background: rgba(255,255,255,0.24); }
-    .topbar .brand { font-weight: 700; letter-spacing: 0.5px; }
-    /* 主体 */
-    main {
-      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-      padding: 20px 24px 60px; text-align: center;
-    }
-    .os-logo {
-      width: 84px; height: 84px; border-radius: 22px; background: rgba(255,255,255,0.16);
-      backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center;
-      margin-bottom: 22px; box-shadow: 0 12px 40px rgba(0,0,0,0.18);
-    }
-    .os-logo svg { width: 48px; height: 48px; }
-    h1 { color: #fff; font-size: 34px; font-weight: 800; letter-spacing: 1px; margin-bottom: 8px; text-shadow: 0 2px 16px rgba(0,0,0,0.15); }
-    .subtitle { color: rgba(255,255,255,0.9); font-size: 16px; margin-bottom: 44px; }
-    /* 卡片网格 */
-    .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 880px; width: 100%; }
-    .card {
-      background: var(--glass); backdrop-filter: blur(18px);
-      border: 1px solid var(--glass-border); border-radius: 22px;
-      padding: 36px 30px; text-align: left;
-      box-shadow: 0 18px 50px rgba(30,20,80,0.18);
-      transition: transform .25s, box-shadow .25s;
-      display: flex; flex-direction: column;
-    }
-    .card:hover { transform: translateY(-6px); box-shadow: 0 26px 64px rgba(30,20,80,0.26); }
-    .card-icon { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 18px; color: #fff; }
-    .card.desktop .card-icon { background: linear-gradient(135deg, #7c3aed, #3b82f6); }
-    .card.web .card-icon { background: linear-gradient(135deg, #3b82f6, #10b981); }
-    .card h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
-    .card .tagline { color: var(--ink-faint); font-size: 13px; margin-bottom: 18px; }
-    .card ul { list-style: none; margin-bottom: 26px; flex: 1; }
-    .card li { font-size: 14px; color: var(--ink-dim); padding: 7px 0 7px 26px; position: relative; line-height: 1.5; }
-    .card li::before { content: "✓"; position: absolute; left: 0; top: 7px; color: #10b981; font-weight: 700; }
-    .card.desktop li::before { color: #7c3aed; }
-    .btn {
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      padding: 14px 20px; border-radius: 14px; text-decoration: none;
-      font-size: 15px; font-weight: 600; transition: transform .15s, box-shadow .2s;
-      width: 100%;
-    }
-    .btn:hover { transform: translateY(-2px); }
-    .btn-primary { background: var(--grad-main); color: #fff; box-shadow: 0 8px 22px rgba(124,58,237,0.35); }
-    .btn-secondary { background: #fff; color: var(--ink); border: 1px solid var(--glass-border); }
-    .btn .arrow { transition: transform .2s; }
-    .btn:hover .arrow { transform: translateX(3px); }
-    .note { color: rgba(255,255,255,0.82); font-size: 12.5px; margin-top: 32px; max-width: 640px; line-height: 1.7; }
-    .note b { color: #fff; }
-    @media (max-width: 720px) {
-      .cards { grid-template-columns: 1fr; }
-      h1 { font-size: 26px; }
-      .subtitle { font-size: 14px; margin-bottom: 30px; }
-      .card { padding: 28px 22px; }
-    }
+    /* 入口页专属：版本选择双卡片 */
+    .os-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 880px; margin: 0 auto; }
+    .os-card { display: flex; flex-direction: column; padding: 30px 28px; }
+    .os-card .oc-icon { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 16px; color: #fff; }
+    .os-card.d .oc-icon { background: linear-gradient(135deg, #7c3aed, #3b82f6); }
+    .os-card.w .oc-icon { background: linear-gradient(135deg, #3b82f6, #10b981); }
+    .os-card h3 { font-size: 22px; margin-bottom: 4px; }
+    .os-card .oc-tag { color: var(--ink-faint); font-size: 13px; margin-bottom: 16px; }
+    .os-card ul { list-style: none; margin: 0 0 22px; flex: 1; }
+    .os-card li { font-size: 14px; color: var(--ink-dim); padding: 6px 0 6px 24px; position: relative; line-height: 1.5; }
+    .os-card li::before { content: "✓"; position: absolute; left: 0; top: 6px; color: #10b981; font-weight: 700; }
+    .os-card.d li::before { color: #7c3aed; }
+    .os-note { text-align: center; color: var(--ink-faint); font-size: 13px; margin-top: 28px; line-height: 1.7; }
+    @media (max-width: 720px) { .os-pick { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
-  <div class="topbar">
-    <a href="https://wjtianze.github.io/index.html" class="brand">← 天择网</a>
-    <a href="https://wjtianze.github.io/os/webos.html">直接进入网页版 →</a>
-  </div>
+  <div class="bg-mesh"></div>
+
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="https://wjtianze.github.io/index.html" aria-label="天择网首页">
+        <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/></svg></span>
+        <span class="logo-text">天择网</span>
+      </a>
+      <button class="nav-toggle" aria-label="菜单">☰</button>
+      <nav class="nav"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html" class="active"><span>天择OS</span></a></nav>
+    </div>
+  </header>
 
   <main>
-    <div class="os-logo" aria-hidden="true">
-      <svg viewBox="0 0 32 32"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c3aed"/><stop offset=".5" stop-color="#3b82f6"/><stop offset="1" stop-color="#10b981"/></linearGradient></defs><rect width="32" height="32" rx="8" fill="url(#lg)"/><path d="M10 14h12v8a2 2 0 0 1-2 2H12a2 2 0 0 1-2-2v-8zm2-4a4 4 0 0 1 8 0v4h-8v-4z" fill="white"/></svg>
-    </div>
-    <h1>天择OS</h1>
-    <p class="subtitle">浏览器里的全屏操作系统 · 选择适合你的版本</p>
-
-    <div class="cards">
-      <div class="card desktop">
-        <div class="card-icon">🖥️</div>
-        <h2>桌面版</h2>
-        <p class="tagline">Windows 原生应用 · 体验更完整</p>
-        <ul>
-          <li>独立窗口运行，不占浏览器标签</li>
-          <li>可设为系统默认浏览器，外部链接自动接管</li>
-          <li>AI 接口免跨域，调用更稳定</li>
-          <li>开机自启、桌面快捷方式一应俱全</li>
-        </ul>
-        <a class="btn btn-primary" href="https://github.com/wjtianze/wjtianze.github.io/releases/tag/v1.0.0" target="_blank" rel="noopener">
-          <span>下载 Windows 安装包</span><span class="arrow">↓</span>
-        </a>
+    <section class="section wrap" style="padding-top:48px;">
+      <div style="text-align:center;max-width:680px;margin:0 auto 36px;">
+        <div class="reveal in" style="width:72px;height:72px;margin:0 auto 18px;border-radius:18px;background:var(--grad-main);display:flex;align-items:center;justify-content:center;font-size:38px">🖥️</div>
+        <h1 class="reveal in d1" style="font-size:34px;"><span class="grad">天择OS</span></h1>
+        <p class="reveal in d2" style="color:var(--ink-dim);font-size:16px;margin-top:8px;">浏览器里的全屏操作系统 · 选择适合你的版本</p>
       </div>
 
-      <div class="card web">
-        <div class="card-icon">🌐</div>
-        <h2>网页版</h2>
-        <p class="tagline">免安装 · 浏览器即开即用</p>
-        <ul>
-          <li>无需下载，打开网页即可使用</li>
-          <li>跨平台，手机/平板/电脑都能跑</li>
-          <li>数据存浏览器本地，隐私可控</li>
-          <li>预装天择网全部功能与 AI 代码生成</li>
-        </ul>
-        <a class="btn btn-secondary" href="https://wjtianze.github.io/os/webos.html">
-          <span>进入网页版</span><span class="arrow">→</span>
-        </a>
+      <div class="os-pick">
+        <div class="card os-card d reveal d1">
+          <div class="oc-icon">🖥️</div>
+          <h3>桌面版</h3>
+          <p class="oc-tag">Windows 原生应用 · 体验更完整</p>
+          <ul>
+            <li>独立窗口运行，不占浏览器标签</li>
+            <li>可设为系统默认浏览器，外部链接自动接管</li>
+            <li>AI 接口免跨域，调用更稳定</li>
+            <li>桌面快捷方式、开机自启一应俱全</li>
+          </ul>
+          <a class="btn" href="https://github.com/wjtianze/wjtianze.github.io/releases/download/v1.0.0/tianze-os-setup-1.0.0.exe" download>
+            <span>下载 Windows 安装包</span><span>↓</span>
+          </a>
+        </div>
+        <div class="card os-card w reveal d2">
+          <div class="oc-icon">🌐</div>
+          <h3>网页版</h3>
+          <p class="oc-tag">免安装 · 浏览器即开即用</p>
+          <ul>
+            <li>无需下载，打开网页即可使用</li>
+            <li>跨平台，手机/平板/电脑都能跑</li>
+            <li>数据存浏览器本地，隐私可控</li>
+            <li>预装天择网全部功能与 AI 代码生成</li>
+          </ul>
+          <a class="btn btn--ghost" href="https://wjtianze.github.io/os/webos.html">
+            <span>进入网页版</span><span>→</span>
+          </a>
+        </div>
       </div>
-    </div>
 
-    <p class="note">
-      <b>两版数据各自独立</b>：桌面版与网页版的数据不互通，可分别使用。<br/>
-      首次使用桌面版需在「🔑 AI 配置」中单独填入 API Key。
-    </p>
+      <p class="os-note">两版数据各自独立，可分别使用。首次使用桌面版需在「🔑 AI 配置」中单独填入 API Key。</p>
+    </section>
   </main>
+
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <div>© 2026 天择网 · 物竞天择，适者生存</div>
+      <div class="links"><a href="https://wjtianze.github.io/index.html">主页</a><a href="https://wjtianze.github.io/news/index.html">新闻</a><a href="https://wjtianze.github.io/blog/index.html">博客</a><a href="https://wjtianze.github.io/open/index.html">数据开源</a><a href="https://wjtianze.github.io/ai/index.html">AI 专区</a><a href="https://wjtianze.github.io/coc/index.html">COC 专区</a><a href="https://wjtianze.github.io/game/index.html">游戏专区</a><a href="https://wjtianze.github.io/english/index.html">英语专区</a><a href="https://wjtianze.github.io/os/index.html">天择OS</a></div>
+    </div>
+  </footer>
+
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260716b"></script>
 </body>
 </html>
