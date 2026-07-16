@@ -1588,6 +1588,14 @@ function renderSettings() {
       <div><div class="sr-label">存储用量</div><div class="sr-desc" id="storageInfo">计算中…</div></div>
     </div>
     <div class="setting-row">
+      <div><div class="sr-label">存档管理</div><div class="sr-desc">导出全部数据到文件备份，或从备份文件恢复（含已装软件、AI 配置、对话历史、图标布局等）</div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn sm" onclick="TZOS.exportArchive()">📦 导出存档</button>
+        <button class="btn sm" onclick="document.getElementById('archiveInput').click()">📥 导入存档</button>
+        <input type="file" id="archiveInput" accept="application/json,.json" style="display:none" onchange="TZOS.importArchive(this)">
+      </div>
+    </div>
+    <div class="setting-row">
       <div><div class="sr-label" style="color:#fca5a5">重置天择OS</div><div class="sr-desc">清除所有本地数据并重启</div></div>
       <button class="btn sm" style="background:#ef4444" onclick="TZOS.reset()">重置</button>
     </div>
@@ -1622,6 +1630,39 @@ window.TZOS.setDefaultBrowser = function() {
   toast('正在注册…', 1500);
   try { window.tzDesktop.setAsDefaultBrowser(function (r) { toast((r && r.msg) || (r && r.ok ? '已设置' : '设置失败'), 6000); }); }
   catch (e) { toast('设置失败', 3000); }
+};
+// 存档导出：把整个天择OS 状态（localStorage tzos_state_v1）打包成 JSON 文件下载
+window.TZOS.exportArchive = function() {
+  try {
+    const state = Store.get();
+    const data = { __archive: 'tianze-os', version: 1, exportedAt: new Date().toISOString(), state };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'tianze-os-archive-' + new Date().toISOString().slice(0, 10) + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('存档已导出');
+  } catch (e) { toast('导出失败：' + (e.message || e), 4000); }
+};
+// 存档导入：读取备份 JSON，覆盖当前状态后重载
+window.TZOS.importArchive = async function(input) {
+  const file = input && input.files && input.files[0];
+  try { input.value = ''; } catch (_) {}
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if (!data || data.__archive !== 'tianze-os' || !data.state || typeof data.state !== 'object') {
+      throw new Error('存档格式不正确');
+    }
+    const ok = await confirmDialog({ title: '导入存档', message: '将用存档内容覆盖当前所有数据（已装软件、AI配置、对话历史等），并重新加载。确定继续吗？', confirmText: '导入', danger: true });
+    if (!ok) return;
+    Store.save(data.state);
+    toast('存档已导入，正在重载…', 2000);
+    setTimeout(() => location.reload(), 800);
+  } catch (e) { toast('导入失败：' + (e.message || e), 4000); }
 };
 
 /* ===================== 内置应用：关于 ===================== */
