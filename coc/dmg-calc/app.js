@@ -29,7 +29,7 @@
   var buildList = [];       /* 家乡建筑列表 [{unit, gid, cat, maxLvl}] */
   var lightningUnit = null, quakeUnit = null;
   var thUnit = null;        /* 大本营 unit */
-  var STATE = { eq:{}, spell:{l:0,q:0}, build:{}, th:0, target:"" }; /* 等级状态 */
+  var STATE = { eq:{}, eqOn:{}, spell:{l:0,q:0}, build:{}, th:0, target:"" }; /* 等级状态；eqOn=是否勾选计入伤害，默认全不勾选 */
 
   var LS_KEY = "tz_coc_dmgcalc_v1";
 
@@ -127,7 +127,9 @@
       h+='<div class="dm-eq-group"><h4>👑 '+hero+'装备</h4>';
       list.forEach(function(e){
         var cur=STATE.eq[e.id]||0;
-        h+='<div class="dm-eq-row"><span class="dm-eq-name" title="'+esc(e.info.zh)+'">'+esc(e.info.zh)+'</span>';
+        var on=!!STATE.eqOn[e.id];
+        h+='<div class="dm-eq-row'+(on?' dm-eq-on':'')+'"><label class="dm-eq-check"><input type="checkbox" data-eqon="'+e.id+'" '+(on?'checked':'')+' aria-label="勾选将'+esc(e.info.zh)+'的伤害计入"/></label>';
+        h+='<span class="dm-eq-name" title="'+esc(e.info.zh)+'">'+esc(e.info.zh)+'</span>';
         if(cur>0){ h+='<span class="dm-eq-dmg">伤害 '+fmt(equipSkillDmg(e.unit,cur))+'</span>'; }
         h+='<select class="dm-lvl-select" data-eqid="'+e.id+'">';
         h+='<option value="0"'+(cur===0?' selected':'')+'>未设</option>';
@@ -137,7 +139,15 @@
       h+='</div>';
     });
     wrap.innerHTML=h;
-    /* 绑定 */
+    /* 绑定勾选框 */
+    wrap.querySelectorAll("input[data-eqon]").forEach(function(cb){
+      cb.addEventListener("change", function(){
+        var id=cb.getAttribute("data-eqon");
+        STATE.eqOn[id]=cb.checked;
+        renderEquipGroups(); updateEquipTotal(); renderTargetInfo(); save();
+      });
+    });
+    /* 绑定等级下拉 */
     wrap.querySelectorAll("select[data-eqid]").forEach(function(sel){
       sel.addEventListener("change", function(){
         var id=sel.getAttribute("data-eqid");
@@ -150,13 +160,14 @@
 
   function totalEquipDmg(){
     var t=0;
-    dmgEquips.forEach(function(e){ var lv=STATE.eq[e.id]||0; if(lv>0&&e.hasSkillDmg)t+=equipSkillDmg(e.unit,lv); });
+    dmgEquips.forEach(function(e){ var lv=STATE.eq[e.id]||0; if(lv>0&&e.hasSkillDmg&&STATE.eqOn[e.id])t+=equipSkillDmg(e.unit,lv); });
     return t;
   }
   function updateEquipTotal(){
     var t=totalEquipDmg();
-    var cnt=0; Object.keys(STATE.eq).forEach(function(k){ if((STATE.eq[k]||0)>0)cnt++; });
-    $("dmEquipTotal").innerHTML = "装备总伤害：<b>"+fmt(t)+"</b>"+(cnt?"（已设 "+cnt+" 件装备）":"（未设定任何装备等级）");
+    var onCnt=0, setCnt=0;
+    dmgEquips.forEach(function(e){ if((STATE.eq[e.id]||0)>0)setCnt++; if(STATE.eqOn[e.id]&&e.hasSkillDmg&&(STATE.eq[e.id]||0)>0)onCnt++; });
+    $("dmEquipTotal").innerHTML = "装备总伤害：<b>"+fmt(t)+"</b>"+(onCnt?"（已勾选 "+onCnt+" 件装备计入）":"（未勾选任何装备，默认不计入装备伤害）")+(setCnt>onCnt?"，另有 "+(setCnt-onCnt)+" 件已设等级未勾选":"");
   }
 
   function renderBuildGroups(){
@@ -272,7 +283,7 @@
   }
 
   function clearAllLevels(){
-    STATE.eq={}; STATE.spell={l:0,q:0}; STATE.build={}; STATE.th=0;
+    STATE.eq={}; STATE.eqOn={}; STATE.spell={l:0,q:0}; STATE.build={}; STATE.th=0;
     renderAll(); save();
   }
 

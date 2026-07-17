@@ -27,6 +27,10 @@
     .coc-tool.dmg-calc .dm-eq-group { background: rgba(4,9,27,.45); border: 1px solid var(--coc-stroke); border-radius: 12px; padding: 13px 15px; }
     .coc-tool.dmg-calc .dm-eq-group > h4 { font-size: 13.5px; font-weight: 700; color: var(--ink); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; padding-bottom: 8px; border-bottom: 1px solid var(--coc-stroke); }
     .coc-tool.dmg-calc .dm-eq-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 0; font-size: 13px; }
+    .coc-tool.dmg-calc .dm-eq-row .dm-eq-check { flex-shrink: 0; display: flex; align-items: center; cursor: pointer; }
+    .coc-tool.dmg-calc .dm-eq-row .dm-eq-check input { width: 16px; height: 16px; accent-color: var(--coc-purple); cursor: pointer; margin: 0; }
+    .coc-tool.dmg-calc .dm-eq-row.dm-eq-on .dm-eq-name { color: var(--ink); }
+    .coc-tool.dmg-calc .dm-eq-row.dm-eq-on { background: rgba(16,185,129,.06); border-radius: 7px; padding: 6px 8px; margin: 0 -8px; }
     .coc-tool.dmg-calc .dm-eq-row .dm-eq-name { color: var(--ink-dim); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .coc-tool.dmg-calc .dm-eq-row .dm-eq-dmg { font-size: 11.5px; color: var(--coc-green); font-family: ui-monospace, Menlo, Consolas, monospace; flex-shrink: 0; }
     .coc-tool.dmg-calc .dm-lvl-select { background: rgba(15,23,42,.8); border: 1px solid var(--coc-stroke); border-radius: 7px; color: var(--ink); font: 12.5px/1.3 inherit; padding: 4px 8px; cursor: pointer; flex-shrink: 0; }
@@ -158,7 +162,7 @@
         <div class="section-head" style="margin:22px 0 10px;">
           <h3 style="font-size:15px; font-weight:700; color:var(--ink);">🛡️ 英雄装备等级</h3>
         </div>
-        <p class="dm-subhead">仅列出技能带直接伤害的装备（含 SkillDamage 数据）。设定等级后其技能伤害自动计入装备总伤害。</p>
+        <p class="dm-subhead">仅列出技能带直接伤害的装备。设定等级后，<b style="color:var(--ink);">勾选</b>装备才会将其技能伤害计入总伤害（默认全不勾选）；取消勾选即不计入，无需把等级调回「未设」。</p>
         <div id="dmEquipGroups" class="dm-eq-groups"></div>
         <div class="dm-eq-total" id="dmEquipTotal">装备总伤害：0（未设定任何装备等级）</div>
 
