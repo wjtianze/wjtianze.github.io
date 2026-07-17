@@ -137,7 +137,8 @@
       HousingSpaceAlt: "_alt人口", HousingSpaceSiege: "攻城人口", CapitalHallLevel: "都城等级",
       AmmoCost: "弹药费用", PoisonDPS: "毒伤/秒", SpeedBoost: "提速", SpeedBoost2: "提速2",
       AttackSpeedBoost: "攻速提升", ShieldTime: "护盾时间", InvisibilityTime: "隐身时间",
-      NumberOfHits: "攻击次数", BurstCount: "连发数", SummonTroopCount: "召唤数量", SummonTime: "召唤时间"
+      NumberOfHits: "攻击次数", BurstCount: "连发数", SummonTroopCount: "召唤数量", SummonTime: "召唤时间",
+      SkillDamage: "技能伤害"
     };
 
     /* ---------- 时间/费用格式化 ---------- */
@@ -322,7 +323,7 @@
       var lvHtml = "";
       if (lvs.length) {
         // 选列：固定 level + 出现率高的关键列
-        var prefer = ["level","Hitpoints","HitPoints","DPS","Damage","UpgradeCost","UpgradeCosts","UpgradeTimeH","BuildCost","BuildTimeD","LaboratoryLevel","RequiredBlacksmithLevel","requiredTownHallLevel","RequiredTownHallLevel","MainAbilityLevels","HousingSpace","UnitsInCamp","TrainingCost","TrainingTime","BoostMultiplier","Cost","RegenTime","DamageRadius","HealOnActivation","AttackSpeedPercentage"];
+        var prefer = ["level","Hitpoints","HitPoints","DPS","Damage","SkillDamage","UpgradeCost","UpgradeCosts","UpgradeTimeH","BuildCost","BuildTimeD","LaboratoryLevel","RequiredBlacksmithLevel","requiredTownHallLevel","RequiredTownHallLevel","MainAbilityLevels","HousingSpace","UnitsInCamp","TrainingCost","TrainingTime","BoostMultiplier","Cost","RegenTime","DamageRadius","HealOnActivation","AttackSpeedPercentage"];
         var cols = [];
         lvs.forEach(function (lv) { Object.keys(lv).forEach(function (k) { if (cols.indexOf(k) === -1) cols.push(k); }); });
         // 按 prefer 排序，未在 prefer 里的跳过（避免视觉/效果字段）

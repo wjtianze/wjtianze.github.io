@@ -104,7 +104,7 @@
       </div>
       <div class="coc-kicker reveal in d1">Damage Calculator · Home Village Only</div>
       <h1 class="reveal in d1">法术伤害 <span class="grad">计算器</span></h1>
-      <p class="reveal in d2">基于雷电法术、地震法术各等级伤害数据与英雄装备数据，计算给定法术空间内对家乡目标建筑能造成的<b style="color:var(--ink);">最高伤害</b>，以及<b style="color:var(--ink);">摧毁指定建筑所需的最少法术</b>。支持从村庄存档 JSON 一键导入装备与法术等级、按大本营等级自动设定建筑等级。所有计算在浏览器本地完成。</p>
+      <p class="reveal in d2">基于雷电法术、地震法术各等级伤害数据与英雄装备数据，计算给定法术空间内对家乡目标建筑能造成的<b style="color:var(--ink);">最高伤害</b>，以及<b style="color:var(--ink);">摧毁指定建筑所需的最少法术</b>。支持从村庄存档分析一键导入等级、按大本营等级自动设定建筑等级。所有计算在浏览器本地完成。</p>
     </section>
 
     <!-- 法术机制说明 -->
@@ -121,14 +121,14 @@
           </div>
           <div class="dm-mech-card">
             <h4>🌍 地震法术（百分比伤害）</h4>
-            <p>造成基于建筑<b style="color:var(--ink);">最大生命值</b>的百分比伤害，对同一建筑重复施放伤害递减。对城墙有 <b style="color:var(--ink);">5 倍</b>加成（故 5 级地震对城墙为 29%）。</p>
+            <p>造成基于建筑<b style="color:var(--ink);">最大生命值</b>的百分比伤害，对同一建筑重复施放伤害递减。该百分比对所有建筑统一（不分城墙与否）。</p>
             <div class="dm-formula">第 n 次伤害 = 全额 × 1/(2n−1)</div>
-            <p style="font-size:12px; color:var(--ink-faint); margin-top:8px;">第 2 次 = 1/3，第 3 次 = 1/5，第 4 次 = 1/7 ……全额百分比取该等级面板值（千分比），城墙额外 ×5。</p>
+            <p style="font-size:12px; color:var(--ink-faint); margin-top:8px;">第 2 次 = 1/3，第 3 次 = 1/5，第 4 次 = 1/7 ……参考：5 级地震全额为 29%，1 级为 14.5%。</p>
           </div>
           <div class="dm-mech-card">
-            <h4>🛡️ 英雄装备（固定伤害）</h4>
-            <p>装备主动技能提供额外固定伤害，不占用法术空间。此处采用数据中的 <b style="color:var(--ink);">DPS</b>（每秒伤害）值作为装备伤害的近似参与计算，已设定等级的装备伤害将自动累加。</p>
-            <div class="dm-formula">装备总伤害 = Σ 各已设装备当前等级 DPS</div>
+            <h4>🛡️ 英雄装备（技能伤害）</h4>
+            <p>装备主动技能提供额外固定伤害，不占用法术空间。此处取数据中的 <b style="color:var(--ink);">技能伤害</b>（SkillDamage，来自装备 main/extra 技能的直接伤害值，非 DPS），已设定等级的装备伤害将自动累加。</p>
+            <div class="dm-formula">装备总伤害 = Σ 各已设装备当前等级技能伤害</div>
           </div>
         </div>
       </div>
@@ -141,17 +141,15 @@
           <h2><span class="bar"></span>等级设置</h2>
           <span class="more">设定装备 / 法术 / 建筑等级</span>
         </div>
-        <p class="dm-subhead">支持手动逐项设定，或粘贴村庄存档 JSON 一键导入装备与法术等级、建筑等级。</p>
+        <p class="dm-subhead">支持手动逐项设定，或在「村庄存档分析」页解析村庄后，回到本页一键导入装备、法术、建筑等级。</p>
 
-        <!-- 导入区 -->
+        <!-- 导入区：从村庄存档分析读取 -->
         <div class="dm-import-area">
-          <label class="coc-section-label" for="dmJsonInput">从村庄存档 JSON 导入（装备 + 法术 + 建筑等级）</label>
-          <textarea id="dmJsonInput" spellcheck="false" autocomplete="off" placeholder='粘贴村庄 JSON（含 equipment / spells / buildings 字段），点击下方"导入等级"即可一键填充。数据仅在浏览器中处理。'></textarea>
+          <label class="coc-section-label">从村庄存档分析导入（装备 + 法术 + 建筑等级）</label>
           <div class="dm-import-actions">
-            <button class="btn" id="dmImportBtn"><span>导入等级</span></button>
-            <button class="btn btn--sm" id="dmSampleBtn"><span>填入示例</span></button>
+            <button class="btn" id="dmImportBtn"><span>从村庄存档分析导入</span></button>
             <button class="btn btn--sm" id="dmClearLvlsBtn"><span>清空全部等级</span></button>
-            <span class="dm-import-note">匹配规则：装备按 90000000 系列 ID，法术按 26000000（雷电）/ 26000010（地震），建筑按 1000000 系列 ID</span>
+            <span class="dm-import-note">先在「<a href="https://wjtianze.github.io/coc/village/index.html" style="color:var(--coc-blue);">村庄存档分析</a>」页粘贴并解析村庄 JSON，本页会自动读取其结果一键填充等级。</span>
           </div>
           <div class="v-error" id="dmImportError" role="alert" aria-live="assertive"></div>
         </div>
@@ -160,7 +158,7 @@
         <div class="section-head" style="margin:22px 0 10px;">
           <h3 style="font-size:15px; font-weight:700; color:var(--ink);">🛡️ 英雄装备等级</h3>
         </div>
-        <p class="dm-subhead">仅列出会直接造成伤害的装备（含 DPS 数据）。设定等级后其 DPS 自动计入装备总伤害。</p>
+        <p class="dm-subhead">仅列出技能带直接伤害的装备（含 SkillDamage 数据）。设定等级后其技能伤害自动计入装备总伤害。</p>
         <div id="dmEquipGroups" class="dm-eq-groups"></div>
         <div class="dm-eq-total" id="dmEquipTotal">装备总伤害：0（未设定任何装备等级）</div>
 

@@ -1,5 +1,5 @@
 /* ===== 天择网 · COC 伤害计算器 · app.js ===== */
-/* 仅适用于家乡。雷电固定伤害 + 地震百分比递减伤害 + 英雄装备 DPS。 */
+/* 仅适用于家乡。雷电固定伤害 + 地震百分比递减伤害 + 英雄装备技能伤害。 */
 (function () {
   "use strict";
 
@@ -25,7 +25,7 @@
   var G = null;             /* 游戏数据 */
   var IDMAP = {};           /* globalID → unit */
   var NAMEMAP = {};         /* chineseName → unit */
-  var dmgEquips = [];       /* 伤害型装备列表 [{id, info, unit, hero, maxLvl, hasDps}] */
+  var dmgEquips = [];       /* 伤害型装备列表 [{id, info, unit, hero, maxLvl, hasSkillDmg}] */
   var buildList = [];       /* 家乡建筑列表 [{unit, gid, cat, maxLvl}] */
   var lightningUnit = null, quakeUnit = null;
   var thUnit = null;        /* 大本营 unit */
@@ -47,16 +47,16 @@
 
   /* 雷电该等级伤害 */
   function lightDmg(lvl){ var r=lvlData(lightningUnit,lvl); return r?num(r.Damage):0; }
-  /* 地震该等级全额百分比（小数，城墙未乘5） */
-  function quakePctRaw(lvl){ var r=lvlData(quakeUnit,lvl); if(!r)return 0; return num(r.BuildingDamagePermil)/1000; }
-  function quakePct(lvl, targetIsWall){ var p=quakePctRaw(lvl); return targetIsWall?p*5:p; }
+  /* 地震该等级全额百分比（小数）：BuildingDamagePermil×5/1000，对所有建筑统一，无城墙加成 */
+  function quakePctRaw(lvl){ var r=lvlData(quakeUnit,lvl); if(!r)return 0; return num(r.BuildingDamagePermil)/1000*5; }
+  function quakePct(lvl, targetIsWall){ return quakePctRaw(lvl); }
   /* 地震前 b 次累计比例（1 + 1/3 + ... + 1/(2b-1)） */
   function quakeSum(b){ var s=0; for(var i=1;i<=b;i++){ s += 1/(2*i-1); } return s; }
   /* 建筑该等级 HP */
   function buildHP(unit, lvl){ var r=lvlData(unit,lvl); if(!r)return 0; return num(r.Hitpoints); }
 
-  /* 装备 DPS */
-  function equipDps(unit, lvl){ var r=lvlData(unit,lvl); if(!r)return 0; return num(r.DPS); }
+  /* 装备技能伤害（SkillDamage，来自装备主动技能的直接伤害值，非 DPS） */
+  function equipSkillDmg(unit, lvl){ var r=lvlData(unit,lvl); if(!r)return 0; return num(r.SkillDamage); }
 
   function loadGame(cb){
     fetch("../data/all_game_data_zh.json").then(function(r){return r.json();}).then(function(d){
@@ -69,15 +69,15 @@
       lightningUnit=IDMAP[LIGHT_GID];
       quakeUnit=IDMAP[QUAKE_GID];
       thUnit=NAMEMAP["大本营"]||null;
-      /* 收集伤害型装备（EQUIP_MAP 中能在数据里按中文名匹配到、且含 DPS 字段的） */
+      /* 收集伤害型装备（EQUIP_MAP 中能在数据里按中文名匹配到、且含 SkillDamage 字段的） */
       dmgEquips=[];
       Object.keys(EQUIP_MAP).forEach(function(id){
         var info=EQUIP_MAP[id];
         var u=NAMEMAP[info.zh];
         if(!u)return;
-        var hasDps=false;
-        if(u.levels){ u.levels.forEach(function(r){ if(r.DPS!=null)hasDps=true; }); }
-        dmgEquips.push({id:id, info:info, unit:u, hero:info.hero, maxLvl:maxLevel(u), hasDps:hasDps});
+        var hasSkillDmg=false;
+        if(u.levels){ u.levels.forEach(function(r){ if(r.SkillDamage!=null)hasSkillDmg=true; }); }
+        dmgEquips.push({id:id, info:info, unit:u, hero:info.hero, maxLvl:maxLevel(u), hasSkillDmg:hasSkillDmg});
       });
       /* 收集家乡建筑 */
       buildList=[];
@@ -122,13 +122,13 @@
     dmgEquips.forEach(function(e){ if(byHero[e.hero])byHero[e.hero].push(e); });
     var h="";
     HERO_ORDER.forEach(function(hero){
-      var list=(byHero[hero]||[]).filter(function(e){return e.hasDps;});
+      var list=(byHero[hero]||[]).filter(function(e){return e.hasSkillDmg;});
       if(!list.length)return;
       h+='<div class="dm-eq-group"><h4>👑 '+hero+'装备</h4>';
       list.forEach(function(e){
         var cur=STATE.eq[e.id]||0;
         h+='<div class="dm-eq-row"><span class="dm-eq-name" title="'+esc(e.info.zh)+'">'+esc(e.info.zh)+'</span>';
-        if(cur>0){ h+='<span class="dm-eq-dmg">DPS '+fmt(equipDps(e.unit,cur))+'</span>'; }
+        if(cur>0){ h+='<span class="dm-eq-dmg">伤害 '+fmt(equipSkillDmg(e.unit,cur))+'</span>'; }
         h+='<select class="dm-lvl-select" data-eqid="'+e.id+'">';
         h+='<option value="0"'+(cur===0?' selected':'')+'>未设</option>';
         for(var lv=1; lv<=e.maxLvl; lv++){ h+='<option value="'+lv+'"'+(lv===cur?' selected':'')+'>Lv '+lv+'</option>'; }
@@ -150,7 +150,7 @@
 
   function totalEquipDmg(){
     var t=0;
-    dmgEquips.forEach(function(e){ var lv=STATE.eq[e.id]||0; if(lv>0&&e.hasDps)t+=equipDps(e.unit,lv); });
+    dmgEquips.forEach(function(e){ var lv=STATE.eq[e.id]||0; if(lv>0&&e.hasSkillDmg)t+=equipSkillDmg(e.unit,lv); });
     return t;
   }
   function updateEquipTotal(){
@@ -211,20 +211,21 @@
     var hp=buildHP(b.unit,cur);
     var wall=isWall(b.unit);
     var ql=STATE.spell.q, qpRaw=quakePctRaw(ql);
-    var qpct=quakePct(ql,wall);
-    info.innerHTML = esc(b.unit.chineseName)+" · Lv"+cur+" · 最大生命值 <b>"+fmt(hp)+"</b>"+(wall?' · <span style="color:#fbbf24">城墙（地震×5）</span>':'')+(ql>0?(' · 地震全额 '+(qpRaw*100).toFixed(1)+'%'+(wall?' → '+(qpct*100).toFixed(1)+'%':'')):'');
+    info.innerHTML = esc(b.unit.chineseName)+" · Lv"+cur+" · 最大生命值 <b>"+fmt(hp)+"</b>"+(ql>0?(' · 地震全额 '+(qpRaw*100).toFixed(1)+'%'):'');
   }
 
   function findBuild(gid){ for(var i=0;i<buildList.length;i++){ if(buildList[i].gid===gid)return buildList[i]; } return null; }
 
-  /* ===== 导入村庄 JSON ===== */
-  function parseVillage(text){ try{ return JSON.parse(text); }catch(e){ showImportError("JSON 格式错误："+e.message); return null; } }
-
+  /* ===== 从村庄存档分析导入等级（读取 localStorage，由 village/app.js 写入） ===== */
   function importVillage(){
     clearImportError();
-    var text=$("dmJsonInput").value.trim();
-    if(!text){ showImportError("请先粘贴村庄 JSON 数据。"); return; }
-    var V=parseVillage(text); if(!V)return;
+    var raw=null;
+    try{ raw=localStorage.getItem("tz_coc_village"); }catch(e){}
+    if(!raw){ showImportError("未找到村庄存档数据。请先前往「村庄存档分析」页粘贴并解析村庄 JSON，再回到此处点击导入。"); return; }
+    var parsed;
+    try{ parsed=JSON.parse(raw); }catch(e){ showImportError("村庄存档数据解析失败："+e.message); return; }
+    var V=parsed.village;
+    if(!V){ showImportError("村庄存档数据格式异常（无 village 字段）。请重新到村庄存档分析页解析。"); return; }
     var eqCnt=0, spCnt=0, bCnt=0;
     /* 装备 */
     (V.equipment||[]).forEach(function(e){
@@ -255,7 +256,7 @@
     if(!th)(V.buildings||[]).forEach(function(b){ if(b.data===1000001||/大本营/.test(b.data&&IDMAP[String(b.data)]?IDMAP[String(b.data)].chineseName:""))th=intv(b.lvl); });
     if(th)STATE.th=th;
     renderAll();
-    var msg="导入成功：装备 "+eqCnt+" 件、法术 "+spCnt+" 项（雷电/地震）、建筑 "+bCnt+" 类";
+    var msg="已从村庄存档分析导入：装备 "+eqCnt+" 件、法术 "+spCnt+" 项（雷电/地震）、建筑 "+bCnt+" 类";
     if(th)msg+="，大本营 "+th+" 本";
     flashImportOk(msg);
   }
@@ -376,7 +377,7 @@
   function breakdownTable(r, b, eqDmg, liDmg, qDmg){
     var H=r.H, ql=r.ql, ll=r.ll;
     var html='<div class="dm-breakdown"><table><thead><tr><th>伤害来源</th><th>数量</th><th>单次伤害</th><th style="text-align:right">小计</th></tr></thead><tbody>';
-    if(eqDmg>0)html+='<tr><td>🛡️ 英雄装备（DPS 累计）</td><td>—</td><td>—</td><td class="dm-num">'+fmt(eqDmg)+'</td></tr>';
+    if(eqDmg>0)html+='<tr><td>🛡️ 英雄装备（技能伤害累计）</td><td>—</td><td>—</td><td class="dm-num">'+fmt(eqDmg)+'</td></tr>';
     if(b.a>0){
       html+='<tr><td>⚡ 雷电法术 Lv'+ll+'</td><td>'+b.a+'</td><td class="dm-num">'+fmt(lightDmg(ll))+'</td><td class="dm-num">'+fmt(liDmg)+'</td></tr>';
     }
@@ -427,7 +428,7 @@
   function minBreakdownTable(r, b, eqDmg, liDmg, qDmg, total){
     var H=r.H, ql=r.ql, ll=r.ll;
     var html='<div class="dm-breakdown"><table><thead><tr><th>伤害来源</th><th>数量 / 占法术空间</th><th>单次伤害</th><th style="text-align:right">小计</th></tr></thead><tbody>';
-    if(eqDmg>0)html+='<tr><td>🛡️ 英雄装备（DPS 累计）</td><td>—（不占法术空间）</td><td>—</td><td class="dm-num">'+fmt(eqDmg)+'</td></tr>';
+    if(eqDmg>0)html+='<tr><td>🛡️ 英雄装备（技能伤害累计）</td><td>—（不占法术空间）</td><td>—</td><td class="dm-num">'+fmt(eqDmg)+'</td></tr>';
     if(b.b>0){
       html+='<tr><td>🌍 地震法术 Lv'+ql+'（'+fmtPct(quakePct(ql,r.wall))+' 全额，'+b.b+' 次累计系数 '+quakeSum(b.b).toFixed(4)+'）</td><td>'+b.b+' 格</td><td class="dm-num">按递减</td><td class="dm-num">'+fmt(qDmg)+'</td></tr>';
       for(var i=1;i<=b.b;i++){
@@ -477,7 +478,6 @@
       $("dmTargetBuild").addEventListener("change", function(){ STATE.target=this.value; renderTargetInfo(); save(); });
       /* 导入 */
       $("dmImportBtn").addEventListener("click", importVillage);
-      $("dmSampleBtn").addEventListener("click", function(){ $("dmJsonInput").value=SAMPLE_VILLAGE; clearImportError(); });
       $("dmClearLvlsBtn").addEventListener("click", function(){ if(confirm("确定清空所有装备、法术、建筑等级设置？"))clearAllLevels(); });
       /* 计算按钮 */
       $("dmCalcMaxBtn").addEventListener("click", calcMax);
@@ -498,9 +498,6 @@
       renderTargetOptions(); renderTargetInfo();
     });
   }
-
-  /* 示例村庄 JSON（与村庄存档分析一致，精简版） */
-  var SAMPLE_VILLAGE = '{"tag":"#SAMPLE","buildings":[{"data":1000001,"lvl":14,"weapon":1},{"data":1000010,"lvl":14,"cnt":100},{"data":1000008,"lvl":20,"cnt":6},{"data":1000012,"lvl":10,"cnt":3},{"data":1000021,"lvl":9,"cnt":2}],"spells":[{"data":26000000,"lvl":9},{"data":26000010,"lvl":5}],"equipment":[{"data":90000000,"lvl":9},{"data":90000010,"lvl":18},{"data":90000004,"lvl":15},{"data":90000006,"lvl":15},{"data":90000022,"lvl":18}]}';
 
   init();
 })();
