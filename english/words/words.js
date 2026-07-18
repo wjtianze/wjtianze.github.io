@@ -1225,26 +1225,23 @@ const Stats = {
 const AI = {
   // 检测是否在天择OS内运行（被 iframe 嵌入且同源）
   _inOS() {
-    try { return window.parent !== window && window.parent.location && localStorage.getItem('tzos_state_v1'); }
-    catch (e) { return window.parent !== window && localStorage.getItem('tzos_state_v1'); }
+    try { return window.parent !== window && !!localStorage.getItem('tzos_state_v1'); }
+    catch (e) { return false; }
   },
 
-  // 读取天择OS的AI配置
+  // 读取天择OS的AI配置（统一走全站 TZAI 助手，见 assets/js/main.js）
   _osAIConfig() {
-    try {
-      const osState = JSON.parse(localStorage.getItem('tzos_state_v1') || '{}');
-      const provider = osState.aiProvider || 'custom';
-      const cfg = provider === 'doubao' ? osState.doubaoConfig : osState.aiConfig;
-      if (cfg && cfg.url && cfg.key && cfg.model) return Object.assign({}, cfg);
-    } catch (e) {}
+    if (window.TZAI && window.TZAI.osConfig) return window.TZAI.osConfig();
     return null;
   },
 
   config() {
-    // 在OS内运行时优先使用OS的AI配置
+    // 在OS内运行时必须使用OS的通用AI配置（不再使用应用内单独配置）
     if (this._inOS()) {
       const osCfg = this._osAIConfig();
       if (osCfg) { if (typeof osCfg.temperature !== 'number') osCfg.temperature = 0.6; return osCfg; }
+      // OS 未配置：返回空配置（isReady=false），引导用户去 OS 的「AI 配置」设置
+      return { url: '', key: '', model: '', temperature: 0.6 };
     }
     const c = Object.assign({}, Store.aiConfig());
     if (typeof c.temperature !== 'number') c.temperature = 0.6;
@@ -1260,7 +1257,9 @@ const AI = {
     opts = opts || {};
     const c = this.config();
     if (!this.isReady()) {
-      throw new Error('AI 未配置，请先在「🔑 AI 配置」中设置 URL、Key 和模型');
+      throw new Error(this._inOS()
+        ? 'AI 未配置：天择OS 通用配置中尚未设置 API Key，请在天择OS 的「🔑 AI 配置」中设置'
+        : 'AI 未配置，请先在「🔑 AI 配置」中设置 URL、Key 和模型');
     }
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 90000);

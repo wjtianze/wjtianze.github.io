@@ -5,6 +5,34 @@
 (function () {
   "use strict";
 
+  /* ============================================================
+     TZAI · 全站统一 AI 配置助手
+     天择网内任何需要 AI 的页面一律通过 TZAI.config() 取配置：
+     天择OS 内（同源 iframe）自动使用 OS 通用配置，OS 未配置时返回 null；
+     独立访问（不在 OS 内）返回 null，由页面自身决定是否提供本地配置入口。
+     ============================================================ */
+  window.TZAI = {
+    // 是否在天择OS内运行（被 iframe 嵌入且能读到 OS 状态）
+    inOS: function () {
+      try { return window.parent !== window && !!localStorage.getItem("tzos_state_v1"); }
+      catch (e) { return false; }
+    },
+    // 读取天择OS通用 AI 配置（localStorage 同源共享）；未配置或不完整返回 null
+    osConfig: function () {
+      try {
+        var s = JSON.parse(localStorage.getItem("tzos_state_v1") || "{}");
+        var c = s.aiConfig;
+        if (c && c.url && c.key && c.model) return { url: c.url, key: c.key, model: c.model, maxTokens: c.maxTokens || 0 };
+      } catch (e) {}
+      return null;
+    },
+    // 统一入口：OS 内 → OS 配置；OS 外 → null（页面可用自有配置兜底）
+    config: function () {
+      if (this.inOS()) return this.osConfig();
+      return null;
+    }
+  };
+
   var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   var mobileNav = window.matchMedia("(max-width: 680px)");
   var topbar = document.querySelector(".topbar");
@@ -181,11 +209,35 @@
       var a = event.target.closest && event.target.closest("a");
       if (!a || !a.href || a.hasAttribute("download")) return;
       var tgt = a.target;
+      // <base target="_blank"> 场景：a.target 为空但实际按 _blank 打开
+      if (!tgt) { try { var b = document.querySelector("base[target]"); if (b) tgt = b.getAttribute("target"); } catch (e) {} }
       var isExternal = false;
       try { isExternal = new URL(a.href, location.href).origin !== location.origin; } catch (e) {}
       if (tgt === "_blank" || tgt === "_new" || tgt === "_top" || tgt === "_parent" || isExternal) {
         event.preventDefault();
         try { window.parent.postMessage({ type: TZ_OPEN, url: a.href }, "*"); } catch (e) {}
+      }
+    }, true);
+    // window.open 在 OS 沙箱 iframe 内会被静默拦截（无 allow-popups）→ 改为桥接到 OS 新标签页，
+    // 修复"点按钮啥都不干"的问题
+    var _origOpen = window.open;
+    window.open = function (url, target, features) {
+      if (url && target !== "_self") {
+        try { window.parent.postMessage({ type: TZ_OPEN, url: new URL(url, location.href).href }, "*"); } catch (e) {}
+        return null;
+      }
+      if (url) { try { location.href = new URL(url, location.href).href; } catch (e) {} }
+      return null;
+    };
+    // 点击 iframe 内容也算点击了系统/应用：转发给 OS 用于聚焦所属窗口
+    document.addEventListener("pointerdown", function () {
+      try { window.parent.postMessage({ type: "tz_iframe_focus" }, "*"); } catch (e) {}
+    }, true);
+    // Ctrl+Q 全屏快捷键：iframe 内按键到不了 OS 顶层，桥接转发
+    document.addEventListener("keydown", function (e) {
+      if (e.ctrlKey && (e.key === "q" || e.key === "Q")) {
+        e.preventDefault();
+        try { window.parent.postMessage({ type: "tz_hotkey", key: "ctrl+q" }, "*"); } catch (e) {}
       }
     }, true);
     // 上报当前网址：覆盖多页跳转与单页路由（pushState/replaceState/popstate/hashchange）

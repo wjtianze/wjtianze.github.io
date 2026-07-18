@@ -7,6 +7,30 @@
   <meta name="description" content="部落冲突全部单位静态游戏数据查询：兵种、建筑、法术、英雄、战宠、装备、陷阱、守卫、帮手等分类浏览与搜索，含各等级数值与所需大本营等级。" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css" />
+  <style>
+    /* 附属单位（仅数据查询页使用，dq-sub- 前缀） */
+    .dc-attach { margin-top:8px; font-size:12px; color:var(--ink-faint); line-height:1.6; border-top:1px dashed rgba(255,255,255,.1); padding-top:8px; }
+    .dc-attach b { color:var(--ink-dim); font-weight:600; }
+    .dm-cols { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:18px; align-items:start; }
+    @media (max-width:720px){ .dm-cols { grid-template-columns:1fr; } }
+    .dq-sub-side h4 { font-size:13px; color:var(--ink-faint); margin:0 0 10px; letter-spacing:.5px; }
+    .dq-sub-card { position:relative; display:block; width:100%; text-align:left; cursor:pointer; border:1px solid rgba(139,92,246,.35); background:rgba(139,92,246,.08); border-radius:12px; padding:12px; margin-bottom:10px; color:var(--ink); transition:border-color .15s, background .15s; }
+    .dq-sub-card:hover { border-color:var(--coc-purple,#8b5cf6); background:rgba(139,92,246,.16); }
+    .dq-sub-badge { display:inline-block; font-size:11px; padding:2px 8px; border-radius:999px; background:linear-gradient(135deg,#f59e0b,#ef4444); color:#fff; margin-bottom:6px; }
+    .dq-sub-name { font-size:14px; font-weight:700; }
+    .dq-sub-en { font-size:11px; color:var(--ink-faint); margin-top:1px; }
+    .dq-sub-kind { font-size:11.5px; color:var(--ink-faint); margin-top:6px; }
+    .dq-sub-stats { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+    .dq-sub-stats span { font-size:11px; padding:2px 8px; border-radius:6px; background:rgba(255,255,255,.06); color:var(--ink-dim); }
+    .dq-badge-sub-inline { display:inline-block; font-size:11px; padding:2px 8px; border-radius:999px; background:linear-gradient(135deg,#f59e0b,#ef4444); color:#fff; }
+    .dq-back { display:inline-flex; align-items:center; gap:6px; margin-bottom:12px; font-size:12.5px; padding:6px 12px; border-radius:8px; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12); color:var(--ink-dim); cursor:pointer; }
+    .dq-back:hover { background:rgba(255,255,255,.12); }
+    .dq-abil { margin-top:6px; }
+    .dq-abil-head { display:flex; align-items:center; gap:8px; margin:14px 0 8px; }
+    .dq-abil-tag { font-size:11px; padding:2px 8px; border-radius:999px; background:rgba(59,130,246,.2); color:#93c5fd; }
+    .dq-abil-tag.extra { background:rgba(16,185,129,.18); color:#6ee7b7; }
+    .dq-abil-name { font-size:14px; font-weight:700; color:var(--ink); }
+  </style>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
 </head>
 <body class="coc-tool coc-data-tool">
@@ -164,6 +188,40 @@
     var currentKw = "";
     var lastFocus = null;
 
+    /* ---------- 附属单位（被其它单位 SecondaryTroop/SummonTroop 引用的单位，如小戈仑石人） ---------- */
+    var BY_EN = {};      // englishName -> unit
+    var CHILD_OF = {};   // child englishName -> [{parent, kind}]
+    function buildSubIndex() {
+      BY_EN = {}; CHILD_OF = {};
+      UNITS.forEach(function (u) { if (u.englishName) BY_EN[u.englishName] = u; });
+      UNITS.forEach(function (u) {
+        var sa = u.staticAttributes || {};
+        [["SecondaryTroop", "死亡分裂"], ["SummonTroop", "召唤"]].forEach(function (pair) {
+          var v = sa[pair[0]];
+          if (!v) return;
+          String(v).split(";").forEach(function (c) {
+            c = c.trim(); if (!c) return;
+            (CHILD_OF[c] = CHILD_OF[c] || []).push({ parent: u, kind: pair[1] });
+          });
+        });
+      });
+    }
+    function isSub(u) { return !!(u && u.englishName && CHILD_OF[u.englishName]); }
+    function subsOf(u) {  // 主单位 -> 附属单位列表 [{unit, kind}]
+      var sa = (u && u.staticAttributes) || {};
+      var out = [];
+      [["SecondaryTroop", "死亡分裂"], ["SummonTroop", "召唤"]].forEach(function (pair) {
+        var v = sa[pair[0]];
+        if (!v) return;
+        String(v).split(";").forEach(function (c) {
+          c = c.trim(); if (!c) return;
+          var child = BY_EN[c];
+          if (child) out.push({ unit: child, kind: pair[1] });
+        });
+      });
+      return out;
+    }
+
     /* ---------- 卡片关键属性 ---------- */
     function cardStats(u) {
       var sa = u.staticAttributes || {};
@@ -195,6 +253,7 @@
         .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
         .then(function (d) {
           UNITS = (d && d.units) ? d.units : [];
+          buildSubIndex();
           renderCats();
           render();
           document.getElementById("dqLoading").style.display = "none";
@@ -246,14 +305,18 @@
         if (bm !== currentBig) return false;
       }
       if (currentKw) {
-        var hay = [u.englishName, u.chineseName, u.description, u.category].filter(Boolean).join(" ").toLowerCase();
-        if (hay.indexOf(currentKw) === -1) return false;
+        // 主单位的搜索域包含其附属单位名称（搜"小戈仑"可命中戈仑石人）
+        var hay = [u.englishName, u.chineseName, u.description, u.category];
+        subsOf(u).forEach(function (s) { hay.push(s.unit.englishName, s.unit.chineseName); });
+        var text = hay.filter(Boolean).join(" ").toLowerCase();
+        if (text.indexOf(currentKw) === -1) return false;
       }
       return true;
     }
 
     function render() {
-      var list = UNITS.filter(match);
+      // 附属单位不单独成卡，合并到主单位卡片中展示
+      var list = UNITS.filter(function (u) { return !isSub(u); }).filter(match);
       document.getElementById("dqCount").innerHTML = '共 <b>' + list.length + '</b> 条结果';
       var grid = document.getElementById("dqGrid"), empty = document.getElementById("dqEmpty");
       if (!list.length) { grid.innerHTML = ""; grid.style.display = "none"; empty.style.display = ""; return; }
@@ -266,6 +329,14 @@
         var desc = u.description || "";
         var stats = cardStats(u);
         var statsHtml = stats.map(function (s) { return '<span class="dc-stat">' + esc(s.k) + ' <b>' + esc(String(s.v)) + '</b></span>'; }).join("");
+        // 附属单位概览：显示在主单位卡片下部
+        var subs = subsOf(u);
+        var attachHtml = "";
+        if (subs.length) {
+          attachHtml = '<div class="dc-attach">附属单位：' + subs.map(function (s) {
+            return '<b>' + esc(s.unit.chineseName || s.unit.englishName) + '</b><span style="opacity:.75">（' + s.kind + '）</span>';
+          }).join("、") + '</div>';
+        }
         frag += '' +
           '<button type="button" class="card dq-card" data-idx="' + idx + '" aria-label="查看' + esc(zh) + '详细数据">' +
             '<div class="dc-top">' +
@@ -278,6 +349,7 @@
             '<span class="dc-pill">' + esc(u.category || "") + '</span>' +
             (desc ? '<div class="dc-info">' + esc(desc) + '</div>' : '') +
             (statsHtml ? '<div class="dc-stats">' + statsHtml + '</div>' : '') +
+            attachHtml +
           '</button>';
       });
       grid.innerHTML = frag;
@@ -288,7 +360,7 @@
     }
 
     /* ---------- 详情弹窗 ---------- */
-    function openDetail(u) {
+    function openDetail(u, parentUnit) {
       var bm = bigMeta(SUB2BIG[u.category] || "");
       var sa = u.staticAttributes || {};
       var lvs = u.levels || [];
@@ -315,6 +387,12 @@
       // pills
       var res = sa.UpgradeResource || sa.BuildResource;
       var pills = '<span class="p">' + esc(u.category || "") + '</span>';
+      // 附属单位标识：明确标注此单位为附属单位及来源
+      if (isSub(u)) {
+        var srcs = CHILD_OF[u.englishName] || [];
+        pills += '<span class="p"><span class="dq-badge-sub-inline">附属单位</span></span>';
+        if (srcs.length) pills += '<span class="p">来源：' + srcs.map(function (s) { return esc(s.parent.chineseName || s.parent.englishName) + "（" + s.kind + "）"; }).join("、") + '</span>';
+      }
       pills += '<span class="p">📍 ' + (isBB(u.category) ? "建筑大师基地" : "家乡村庄") + '</span>';
       if (res) pills += '<span class="p">🔁 ' + resZh(res) + '</span>';
       if (sa.HousingSpace) pills += '<span class="p">👥 人口 ' + esc(String(sa.HousingSpace)) + '</span>';
@@ -355,32 +433,90 @@
         lvHtml = '<div class="dm-section-h"><span class="bar"></span>等级数据（共 ' + lvs.length + ' 级）</div>' +
           '<div class="dm-table-wrap"><table class="dm-table"><thead><tr>' + head + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
 
-        // 装备技能
-        var hasSkills = lvs.some(function (lv) { return lv.skills && lv.skills.length; });
-        if (hasSkills) {
-          var maxSkills = lvs[lvs.length - 1].skills || [];
-          var skHtml = maxSkills.map(function (sk) {
-            return '<div class="dm-attr"><div class="ak">' + esc(sk.chineseName || sk.name || "技能") + (sk.type ? " (" + sk.type + ")" : "") + '</div><div class="av">技能等级 ' + esc(String(sk.abilityLevel || "-")) + '</div></div>';
-          }).join("");
-          lvHtml += '<div class="dm-section-h"><span class="bar"></span>满级装备技能</div><div class="dm-attrs">' + skHtml + '</div>';
+        // 装备技能数据（主技能 + 副技能全等级，与装备数据展示在一块，不再单列）
+        if (u.abilityData && u.abilityData.length) {
+          u.abilityData.forEach(function (ab) {
+            var abLvs = ab.levels || [];
+            if (!abLvs.length) return;
+            // 列并集（等级在前）
+            var keys = [];
+            abLvs.forEach(function (lv) {
+              Object.keys(lv).forEach(function (k) { if (k !== "等级" && keys.indexOf(k) === -1) keys.push(k); });
+            });
+            var head = '<th>技能等级</th>' + keys.map(function (k) { return '<th>' + esc(k) + '</th>'; }).join("");
+            var rows = abLvs.map(function (lv) {
+              return '<tr><td><span class="lv">' + esc(String(lv["等级"] || "-")) + '</span></td>' +
+                keys.map(function (k) {
+                  var v = lv[k];
+                  return '<td>' + (v === undefined || v === null || v === "" ? "-" : esc(String(v))) + '</td>';
+                }).join("") + '</tr>';
+            }).join("");
+            var isMain = ab.type === "主技能";
+            lvHtml += '<div class="dq-abil"><div class="dq-abil-head">' +
+              '<span class="dq-abil-tag' + (isMain ? "" : " extra") + '">' + esc(ab.type || "技能") + '</span>' +
+              '<span class="dq-abil-name">' + esc(ab.chineseName || ab.name || "技能") + '</span></div>' +
+              '<div class="dm-table-wrap"><table class="dm-table"><thead><tr>' + head + '</tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+          });
+        } else {
+          var hasSkills = lvs.some(function (lv) { return lv.skills && lv.skills.length; });
+          if (hasSkills) {
+            var maxSkills = lvs[lvs.length - 1].skills || [];
+            var skHtml = maxSkills.map(function (sk) {
+              return '<div class="dm-attr"><div class="ak">' + esc(sk.chineseName || sk.name || "技能") + (sk.type ? " (" + sk.type + ")" : "") + '</div><div class="av">技能等级 ' + esc(String(sk.abilityLevel || "-")) + '</div></div>';
+            }).join("");
+            lvHtml += '<div class="dm-section-h"><span class="bar"></span>满级装备技能</div><div class="dm-attrs">' + skHtml + '</div>';
+          }
         }
         lvHtml += '<div class="dm-note">数据来自《部落冲突》APK 提取的静态游戏数据，时间已换算为可读格式，资源数量带图标标注。所需大本营等级为该等级解锁的最低大本营等级。</div>';
       } else {
         lvHtml = '<div class="dm-section-h"><span class="bar"></span>等级数据</div><div class="dm-note">该单位无等级数据。</div>';
       }
 
+      // 主体内容
+      var mainHtml = (desc ? '<div class="dm-desc">' + esc(desc) + '</div>' : '') +
+        (attrsHtml ? '<div class="dm-section-h"><span class="bar"></span>基础属性</div><div class="dm-attrs">' + attrsHtml + '</div>' : '') +
+        lvHtml;
+      // 附属单位：详细信息中显示在主单位右侧，带明确标识
+      var subs = subsOf(u);
+      var bodyHtml;
+      if (subs.length) {
+        var sideHtml = '<div class="dq-sub-side"><h4>附属单位（' + subs.length + '）</h4>' +
+          subs.map(function (s, i) {
+            var cu = s.unit;
+            var cstats = cardStats(cu).map(function (x) { return '<span>' + esc(x.k) + ' ' + esc(String(x.v)) + '</span>'; }).join("");
+            return '<button type="button" class="dq-sub-card" data-sub="' + i + '">' +
+              '<span class="dq-sub-badge">附属单位</span>' +
+              '<div class="dq-sub-name">' + esc(cu.chineseName || cu.englishName) + '</div>' +
+              (cu.englishName ? '<div class="dq-sub-en">' + esc(cu.englishName) + '</div>' : '') +
+              '<div class="dq-sub-kind">来源：' + esc(zh) + ' · ' + s.kind + '</div>' +
+              (cstats ? '<div class="dq-sub-stats">' + cstats + '</div>' : '') +
+            '</button>';
+          }).join("") + '</div>';
+        bodyHtml = '<div class="dm-cols"><div class="dm-maincol">' + mainHtml + '</div>' + sideHtml + '</div>';
+      } else {
+        bodyHtml = mainHtml;
+      }
+
       document.getElementById("dqModal").innerHTML = '' +
         '<button type="button" class="dq-close" id="dqClose" aria-label="关闭详情">×</button>' +
+        (parentUnit ? '<button type="button" class="dq-back" id="dqBack">← 返回 ' + esc(parentUnit.chineseName || parentUnit.englishName) + '</button>' : '') +
         '<div class="dm-head">' +
           '<div class="dm-emoji" aria-hidden="true">' + bm.emoji + '</div>' +
           '<div class="dm-title"><h2 id="dqDialogTitle">' + esc(zh) + '</h2>' + (en ? '<div class="dm-en">' + esc(en) + '</div>' : '') + '</div>' +
         '</div>' +
         '<div class="dm-pills">' + pills + '</div>' +
-        (desc ? '<div class="dm-desc">' + esc(desc) + '</div>' : '') +
-        (attrsHtml ? '<div class="dm-section-h"><span class="bar"></span>基础属性</div><div class="dm-attrs">' + attrsHtml + '</div>' : '') +
-        lvHtml;
+        bodyHtml;
 
       document.getElementById("dqClose").addEventListener("click", closeDetail);
+      if (parentUnit) {
+        document.getElementById("dqBack").addEventListener("click", function () { openDetail(parentUnit); });
+      }
+      document.getElementById("dqModal").querySelectorAll("[data-sub]").forEach(function (node) {
+        node.addEventListener("click", function () {
+          var s = subs[Number(node.getAttribute("data-sub"))];
+          if (s) openDetail(s.unit, u);
+        });
+      });
       var overlay = document.getElementById("dqOverlay");
       lastFocus = document.activeElement;
       overlay.classList.add("open");

@@ -588,3 +588,136 @@ textarea.tz-dialog-input { resize: vertical; min-height: 70px; line-height: 1.5;
 .tz-dialog-btn:active { transform: scale(0.96); }
 .tz-dialog-btn.confirm { background: linear-gradient(135deg,#7c3aed,#3b82f6); color: #fff; border: none; }
 .tz-dialog-btn.confirm.danger { background: linear-gradient(135deg,#ef4444,#dc2626); }
+
+/* ============ Windows 风格窗口按钮（真正的 Windows 样式：矩形全高 — ▢ ✕） ============ */
+.win:not(.mac-style) .win-title-icons { order: 3; align-self: stretch; gap: 0; margin-right: -10px; }
+.win:not(.mac-style) .wctrl {
+  width: 46px; height: 100%; border-radius: 0; background: transparent;
+  display: flex; align-items: center; justify-content: center;
+}
+.win:not(.mac-style) .wctrl svg { opacity: 1; stroke: var(--ink-dim); width: 10px; height: 10px; }
+.win:not(.mac-style) .wctrl:hover { background: rgba(128,128,128,0.18); filter: none; }
+.win:not(.mac-style) .wctrl.close:hover { background: #e81123; }
+.win:not(.mac-style) .wctrl.close:hover svg { stroke: #fff; }
+/* 顺序：刷新/卸载 → 最小化 → 最大化 → 关闭 */
+.win:not(.mac-style) .wctrl.reload, .win:not(.mac-style) .wctrl.uninst { order: -1; width: 34px; background: transparent; }
+.win:not(.mac-style) .wctrl.min { order: 1; }
+.win:not(.mac-style) .wctrl.max { order: 2; }
+.win:not(.mac-style) .wctrl.close { order: 3; }
+
+/* ============ 任务栏：Windows 与 macOS 高度统一 52px ============ */
+.desktop.mac-style .taskbar { height: var(--tb-h); padding: 5px 10px; }
+.desktop.mac-style .tb-task { height: 42px; width: 42px; min-width: 42px; }
+.desktop.mac-style .tb-task .tb-task-icon { font-size: 20px; }
+
+/* 显示桌面按钮（Windows 风格最右细条） */
+.tb-show-desktop {
+  width: 10px; align-self: stretch; margin-left: 2px; flex-shrink: 0;
+  border-left: 1px solid var(--glass-border); background: transparent; cursor: pointer;
+  transition: background 0.14s;
+}
+.tb-show-desktop:hover { background: rgba(128,128,128,0.18); }
+.tb-show-desktop.active { background: rgba(99,102,241,0.32); }
+.desktop.mac-style .tb-show-desktop, body.mobile .tb-show-desktop { display: none; }
+
+/* ============ 浏览器：标签页栏并入窗口标题栏 ============ */
+.win-tabs { order: 2; flex: 1; display: flex; align-items: center; gap: 4px; overflow-x: auto; min-width: 0; height: 100%; padding: 0 2px; }
+.win-tabs::-webkit-scrollbar { display: none; }
+.br-tab {
+  display: flex; align-items: center; gap: 6px; padding: 0 10px; height: 28px; border-radius: 6px;
+  background: rgba(128,128,128,0.12); font-size: 12px; color: var(--ink-dim); cursor: pointer;
+  white-space: nowrap; max-width: 170px; flex-shrink: 0;
+}
+.br-tab.active { background: rgba(99,102,241,0.30); color: var(--ink); }
+.br-tab-label { overflow: hidden; text-overflow: ellipsis; }
+.br-tab .br-x { opacity: .55; padding: 0 3px; border-radius: 3px; font-size: 11px; }
+.br-tab .br-x:hover { opacity: 1; background: rgba(239,68,68,0.45); color: #fff; }
+.br-tab-plus {
+  flex-shrink: 0; width: 26px; height: 28px; border-radius: 6px; background: rgba(128,128,128,0.12);
+  color: var(--ink-dim); font-size: 14px; display: flex; align-items: center; justify-content: center;
+}
+.br-tab-plus:hover { background: rgba(128,128,128,0.22); }
+.win.mac-style .win-tabs { order: 1; }
+
+/* ============ AI 对话：消息体 / token 统计 / 消息操作 ============ */
+.msg-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; max-width: 100%; }
+.msg-usage { font-size: 11px; color: var(--ink-muted); padding: 0 4px; user-select: text; }
+.msg-actions { display: flex; gap: 6px; opacity: 0; transition: opacity 0.15s; padding: 0 4px; }
+.msg:hover .msg-actions { opacity: 1; }
+.msg-act {
+  font-size: 11.5px; padding: 3px 10px; border-radius: var(--r-pill);
+  background: rgba(128,128,128,0.10); border: 1px solid var(--glass-border); color: var(--ink-faint);
+}
+.msg-act:hover { background: rgba(99,102,241,0.22); color: var(--ink); }
+.chat-send.stopping { background: linear-gradient(135deg,#ef4444,#dc2626); }
+
+/* ============ 开始菜单分类标题 ============ */
+.start-cat {
+  grid-column: 1/-1; font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  color: var(--ink-faint); padding: 12px 6px 4px; text-transform: uppercase;
+}
+.start-cat:first-child { padding-top: 2px; }
+
+/* ============ 天择导航树状图 ============ */
+.tt-tree, .tt-kids { list-style: none; padding: 0; margin: 0; }
+.tt-kids { margin-left: 14px; border-left: 1px dashed var(--glass-border); padding-left: 10px; }
+.tt-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 13.5px; color: var(--ink-dim); }
+.tt-row:hover { background: rgba(128,128,128,0.12); color: var(--ink); }
+.tt-toggle { width: 16px; color: var(--ink-faint); flex-shrink: 0; font-size: 11px; }
+.tt-leaf { width: 16px; text-align: center; color: var(--ink-muted); flex-shrink: 0; }
+.tt-icon { font-size: 16px; }
+.tt-name { flex: 1; }
+.tt-open { opacity: 0; color: var(--c-blue); transition: opacity 0.15s; }
+.tt-row:hover .tt-open { opacity: 1; }
+
+/* ============ 浅色主题 ============ */
+body.tzos.light {
+  --glass: rgba(248, 250, 255, 0.72);
+  --glass-strong: rgba(252, 253, 255, 0.90);
+  --glass-light: rgba(15, 23, 42, 0.05);
+  --glass-border: rgba(15, 23, 42, 0.14);
+  --glass-border-strong: rgba(15, 23, 42, 0.22);
+  --ink: #0f172a;
+  --ink-dim: #334155;
+  --ink-faint: #64748b;
+  --ink-muted: #94a3b8;
+  --sh-sm: 0 4px 16px rgba(15, 23, 42, 0.12);
+  --sh-md: 0 12px 40px rgba(15, 23, 42, 0.18);
+  --sh-lg: 0 24px 70px rgba(15, 23, 42, 0.22);
+}
+body.tzos.light .desktop {
+  background:
+    radial-gradient(120vmax 80vmax at 15% 12%, rgba(124,58,237,0.20), transparent 55%),
+    radial-gradient(110vmax 70vmax at 88% 85%, rgba(16,185,129,0.18), transparent 55%),
+    radial-gradient(90vmax 90vmax at 75% 20%, rgba(59,130,246,0.18), transparent 55%),
+    linear-gradient(160deg, #e8ecf8 0%, #dde4f2 100%);
+}
+body.tzos.light .desktop::before {
+  background-image:
+    linear-gradient(rgba(15,23,42,0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15,23,42,0.045) 1px, transparent 1px);
+}
+body.tzos.light .desktop.mac-style {
+  background:
+    radial-gradient(120vmax 80vmax at 20% 15%, rgba(124,58,237,0.18), transparent 55%),
+    radial-gradient(110vmax 70vmax at 80% 80%, rgba(16,185,129,0.16), transparent 55%),
+    linear-gradient(150deg, #ece4f7 0%, #e2e8f5 100%);
+}
+body.tzos.light .boot-screen { background: radial-gradient(ellipse at 50% 40%, #e6ebf9 0%, #dfe5f3 70%); }
+body.tzos.light .di-label { color: #0f172a; text-shadow: 0 1px 4px rgba(255,255,255,0.7); }
+body.tzos.light .zone-label { text-shadow: 0 1px 4px rgba(255,255,255,0.85); }
+body.tzos.light .win-title { background: rgba(255,255,255,0.40); }
+body.tzos.light .win-body { background: rgba(255,255,255,0.35); }
+body.tzos.light .app-chat, body.tzos.light .app-browser { background: rgba(255,255,255,0.4) !important; }
+body.tzos.light .chat-input-bar { background: rgba(240,244,252,0.7); }
+body.tzos.light .msg.ai .msg-bubble { background: rgba(15,23,42,0.05); }
+body.tzos.light .start-search input,
+body.tzos.light .input, body.tzos.light .textarea { background: rgba(15,23,42,0.05); }
+body.tzos.light .store-installed-item, body.tzos.light .store-prompt-box { background: rgba(15,23,42,0.05); }
+body.tzos.light .di-icon, body.tzos.light .sa-icon, body.tzos.light .fw-btn, body.tzos.light .dock-app { background: rgba(255,255,255,0.55); }
+body.tzos.light ::-webkit-scrollbar-thumb { background: rgba(15,23,42,0.18); background-clip: content-box; }
+body.tzos.light .btn.ghost { background: rgba(15,23,42,0.06); }
+body.tzos.light .preset-chip, body.tzos.light .chat-suggest-chip { background: rgba(15,23,42,0.05); }
+body.tzos.light .notif { background: rgba(15,23,42,0.05); }
+body.tzos.light .floating-widget .fw-header { background: rgba(15,23,42,0.04); }
+body.tzos.light .fw-close { color: #fff; }

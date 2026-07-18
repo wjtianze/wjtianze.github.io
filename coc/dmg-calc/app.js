@@ -21,6 +21,11 @@
   var WALL_NAMES = ["城墙","Wall"];
   var TH_MIN = 3, TH_MAX = 18;
   var QUAKE_SEARCH_CAP = 80; /* 地震遍历上限 */
+  /* 法术免疫（游戏机制）：资源储罐对全部法术免疫；部落城堡/大本营对雷电免疫但不免疫地震 */
+  var IMMUNE_ALL_NAMES = ["储金罐","圣水瓶","暗黑重油罐"];
+  var IMMUNE_LIGHT_NAMES = ["部落城堡","大本营"];
+  function immuneAll(unit){ return !!(unit && IMMUNE_ALL_NAMES.indexOf(unit.chineseName)>=0); }
+  function immuneLight(unit){ return !!(unit && IMMUNE_LIGHT_NAMES.indexOf(unit.chineseName)>=0); }
 
   var G = null;             /* 游戏数据 */
   var IDMAP = {};           /* globalID → unit */
@@ -207,6 +212,8 @@
     sorted.forEach(function(b){
       var gid=b.gid, cur=STATE.build[gid]||0;
       var name=b.unit.chineseName;
+      if(immuneAll(b.unit))name+=" 🛡全免疫";
+      else if(immuneLight(b.unit))name+=" 🛡免疫雷电";
       var tag = cur>0 ? (" Lv"+cur+" · HP "+fmt(buildHP(b.unit,cur))) : "（未设等级）";
       h+='<option value="'+gid+'"'+(gid===STATE.target?' selected':'')+'>'+esc(name)+tag+'</option>';
     });
@@ -220,9 +227,11 @@
     var cur=STATE.build[STATE.target]||0;
     if(cur<=0){ info.innerHTML=esc(b.unit.chineseName)+"：<span style='color:var(--ink-faint)'>未设置等级，请先在上方设定等级</span>"; return; }
     var hp=buildHP(b.unit,cur);
-    var wall=isWall(b.unit);
     var ql=STATE.spell.q, qpRaw=quakePctRaw(ql);
-    info.innerHTML = esc(b.unit.chineseName)+" · Lv"+cur+" · 最大生命值 <b>"+fmt(hp)+"</b>"+(ql>0?(' · 地震全额 '+(qpRaw*100).toFixed(1)+'%'):'');
+    var immHtml="";
+    if(immuneAll(b.unit))immHtml=' · <span style="color:#fbbf24">🛡 对所有法术免疫（仅装备伤害有效）</span>';
+    else if(immuneLight(b.unit))immHtml=' · <span style="color:#fbbf24">🛡 对雷电法术免疫（地震有效）</span>';
+    info.innerHTML = esc(b.unit.chineseName)+" · Lv"+cur+" · 最大生命值 <b>"+fmt(hp)+"</b>"+(ql>0?(' · 地震全额 '+(qpRaw*100).toFixed(1)+'%'):'')+immHtml;
   }
 
   function findBuild(gid){ for(var i=0;i<buildList.length;i++){ if(buildList[i].gid===gid)return buildList[i]; } return null; }
@@ -276,6 +285,8 @@
     var th=intv($("dmTHLvl").value);
     if(th<=0){ alert("请先选择大本营等级。"); return; }
     buildList.forEach(function(b){
+      /* 大本营特殊：其等级即大本营本数（原始数据 requiredTownHallLevel=下一级所需，直接取 th 本身） */
+      if(b.gid==="1000001"){ STATE.build[b.gid]=Math.min(th, b.maxLvl); return; }
       var m=maxLevelForTH(b.unit, th);
       if(m>0)STATE.build[b.gid]=m;
     });
@@ -305,6 +316,10 @@
     var ql=STATE.spell.q, ll=STATE.spell.l;
     var Dl=lightDmg(ll), pct=quakePct(ql,wall);
     var D_eq=totalEquipDmg();
+    /* 法术免疫：全免疫 → 雷电与地震均无效；免疫雷电 → 仅地震有效 */
+    var immA=immuneAll(b.unit), immL=immuneLight(b.unit);
+    if(immA){ Dl=0; pct=0; }
+    else if(immL){ Dl=0; }
 
     var best={a:0,b:0,dmg:D_eq};
     if(ql<=0 && ll<=0){
@@ -318,7 +333,7 @@
         if(d>best.dmg)best={a:atry,b:btry,dmg:d};
       }
     }
-    renderMaxResult({best:best, H:H, wall:wall, S:S, ql:ql, ll:ll, Dl:Dl, pct:pct, D_eq:D_eq}, null);
+    renderMaxResult({best:best, H:H, wall:wall, S:S, ql:ql, ll:ll, Dl:Dl, pct:pct, D_eq:D_eq, immA:immA, immL:immL}, null);
   }
 
   function calcMin(){
@@ -330,11 +345,19 @@
     var ql=STATE.spell.q, ll=STATE.spell.l;
     var Dl=lightDmg(ll), pct=quakePct(ql,wall);
     var D_eq=totalEquipDmg();
+    /* 法术免疫 */
+    var immA=immuneAll(b.unit), immL=immuneLight(b.unit);
+    if(immA){ Dl=0; pct=0; }
+    else if(immL){ Dl=0; }
 
     if(H<=0){ renderMinResult(null,"目标建筑生命值为 0，无需法术。"); return; }
+    if(immA && D_eq<H){
+      renderMinResult(null,"「"+b.unit.chineseName+"」对所有法术免疫，只有英雄装备伤害有效。当前装备总伤害 "+fmt(D_eq)+" < HP "+fmt(H)+"，无法摧毁。");
+      return;
+    }
     if(D_eq>=H){
       /* 装备单独即可摧毁 */
-      renderMinResult({best:{a:0,b:0,space:0}, H:H, wall:wall, ql:ql, ll:ll, Dl:Dl, pct:pct, D_eq:D_eq, destroyed:true, eqSolo:true}, null);
+      renderMinResult({best:{a:0,b:0,space:0}, H:H, wall:wall, ql:ql, ll:ll, Dl:Dl, pct:pct, D_eq:D_eq, destroyed:true, eqSolo:true, immA:immA, immL:immL}, null);
       return;
     }
     var best=null;
@@ -344,21 +367,21 @@
       var remain = H - D_eq - eqDmg;
       var atry=0;
       if(remain>0){
-        if(Dl<=0) continue; /* 此 b 下雷电无效且地震未够，跳过 */
+        if(Dl<=0) continue; /* 此 b 下雷电无效（未设定或目标免疫雷电）且地震未够，跳过 */
         atry=Math.ceil(remain/Dl);
       }
       var space=btry+atry;
       if(best==null || space<best.space){ best={a:atry,b:btry,space:space,eqDmg:eqDmg,liDmg:atry*Dl}; }
-      if(remain<=0 && btry>0){
-        /* 地震已足够，更大 b 不会更优（space=btry+0），但可能更小 b 已够，break 后续只会更大 */
-        /* 不 break，继续找可能 a+更小b 更优... 实际 b 增加地震递减，space=btry，已最小 b 的纯地震解 */
-      }
     }
     if(best==null){
-      renderMinResult(null,"在 "+cap+" 个地震范围内无法摧毁（雷电未设定且地震不足以覆盖）。请提升法术等级。");
+      if(immL){
+        renderMinResult(null,"「"+b.unit.chineseName+"」对雷电法术免疫，只能靠地震；在 "+cap+" 个地震范围内伤害不足以摧毁（装备 "+fmt(D_eq)+" + 地震不足 "+fmt(H-D_eq)+"）。请提升地震等级或装备。");
+      }else{
+        renderMinResult(null,"在 "+cap+" 个地震范围内无法摧毁（雷电未设定且地震不足以覆盖）。请提升法术等级。");
+      }
       return;
     }
-    renderMinResult({best:best, H:H, wall:wall, ql:ql, ll:ll, Dl:Dl, pct:pct, D_eq:D_eq, destroyed:true}, null);
+    renderMinResult({best:best, H:H, wall:wall, ql:ql, ll:ll, Dl:Dl, pct:pct, D_eq:D_eq, destroyed:true, immA:immA, immL:immL}, null);
   }
 
   /* ===== 结果渲染 ===== */
@@ -381,6 +404,8 @@
     if(r.S>0 && b.a===0 && b.b===0 && r.D_eq===0)html+='<span class="dm-chip">⚠️ 未设定法术等级，仅装备伤害</span>';
     html+='</div></div>';
     html+=breakdownTable(r, b, eqDmg, liDmg, qDmg);
+    if(r.immA){ html+='<div class="dm-warn">🛡 该建筑对所有法术免疫，雷电与地震均无效，仅英雄装备伤害生效。</div>'; }
+    else if(r.immL){ html+='<div class="dm-warn">🛡 该建筑对雷电法术免疫（雷电伤害按 0 计），地震法术仍然有效。</div>'; }
     if(r.ql<=0 && r.ll<=0){ html+='<div class="dm-warn">未设定雷电/地震法术等级，无法术伤害贡献。请先设定法术等级。</div>'; }
     box.innerHTML=html; box.classList.add("show");
   }
@@ -433,6 +458,8 @@
     if(!r.eqSolo){
       html+=minBreakdownTable(r, b, eqDmg, liDmg, qDmg, total);
     }
+    if(r.immA){ html+='<div class="dm-warn">🛡 该建筑对所有法术免疫，仅英雄装备伤害生效。</div>'; }
+    else if(r.immL){ html+='<div class="dm-warn">🛡 该建筑对雷电法术免疫（雷电伤害按 0 计），地震法术仍然有效。</div>'; }
     box.innerHTML=html; box.classList.add("show");
   }
 
