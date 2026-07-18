@@ -64,7 +64,7 @@
   function equipSkillDmg(unit, lvl){ var r=lvlData(unit,lvl); if(!r)return 0; return num(r.SkillDamage); }
 
   function loadGame(cb){
-    fetch("../data/all_game_data_zh.json").then(function(r){return r.json();}).then(function(d){
+    fetch("../data/all_game_data_zh.json?v=20260718a").then(function(r){return r.json();}).then(function(d){
       G=d;
       d.units.forEach(function(u){
         var g=String(u.globalID||"").trim();
