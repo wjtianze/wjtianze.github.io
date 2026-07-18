@@ -9,7 +9,7 @@
 'use strict';
 
 /* 系统版本（每次发布更新必须同步递增，并更新 dev/os/version.json） */
-const OS_VERSION = '2.0.0';
+const OS_VERSION = '2.1.0';
 
 /* ===================== 存储层 ===================== */
 const Store = {
@@ -82,7 +82,13 @@ const Store = {
   setMemAuto(b) { this.set('memAutoWrite', !!b); },
   // 记忆总开关：将启用的记忆注入提示词
   getMemInject() { return this.get('memInject', true); },
-  setMemInject(b) { this.set('memInject', !!b); }
+  setMemInject(b) { this.set('memInject', !!b); },
+  // AI 命令行模式（Agent）：开启后 AI 可在对话中直接执行命令行命令（消耗大量 token）
+  getAgentMode() { return this.get('agentMode', false); },
+  setAgentMode(b) { this.set('agentMode', !!b); },
+  // 对话自动截图开关（需视觉模型）
+  getScreenshotMode() { return this.get('chatScreenshot', false); },
+  setScreenshotMode(b) { this.set('chatScreenshot', !!b); }
 };
 
 /* ===================== 工具函数 ===================== */
@@ -188,6 +194,11 @@ const BUILTIN_APPS = {
     name: '天择导航', icon: '🌳', grad: true, category: 'tznet',
     desc: '天择网专区树状导航',
     render: () => renderTzTree()
+  },
+  'terminal': {
+    name: '命令行', icon: '⌨️', grad: true, category: 'system',
+    desc: '用命令操作天择OS（也供 AI Agent 调用）',
+    render: () => renderTerminal()
   }
 };
 
@@ -215,9 +226,10 @@ const PRESET_APPS = [
   { id: 'tz-gpa', name: '绩点战争', icon: '⚔️', grad: true, category: 'game', url: TZNET_BASE + 'game/gpa-card/index.html', desc: '卡牌对战游戏' },
   { id: 'tz-en', name: '英语专区', icon: '📖', grad: false, category: 'tznet', url: TZNET_BASE + 'english/index.html', desc: '英语学习' },
   { id: 'tz-words', name: '背单词', icon: '📚', grad: true, category: 'tznet', url: TZNET_BASE + 'english/words/index.html', desc: '四阶段背单词' },
-  // 系统模拟器（免费、浏览器内运行的真实 x86 模拟器 v86）
-  { id: 'emu-win', name: 'Windows 模拟器', icon: '🪟', grad: true, category: 'emu', url: 'https://copy.sh/v86/?profile=windows98', desc: '浏览器内运行的 Windows 98（v86 x86 模拟器）' },
-  { id: 'emu-android', name: '安卓模拟器', icon: '🤖', grad: true, category: 'emu', url: 'https://copy.sh/v86/?profile=android', desc: '浏览器内运行的 Android x86（v86 x86 模拟器）' }
+  // 系统模拟器（现代系统的网页高仿真版，均可被 iframe 嵌入；均为界面级模拟，非真实虚拟机）
+  { id: 'emu-win', name: 'Windows 11 模拟器', icon: '🪟', grad: true, category: 'emu', url: 'https://win11.blueedge.me/', desc: '浏览器内的 Windows 11 高仿真版（开源 Win11React）' },
+  { id: 'emu-win10', name: 'Windows 10 模拟器', icon: '💻', grad: false, category: 'emu', url: 'https://dustinbrett.com/', desc: '浏览器内的 Win10 风格功能桌面（daedalOS）' },
+  { id: 'emu-android', name: '安卓模拟器', icon: '🤖', grad: true, category: 'emu', url: 'https://mobilegym.dev/', desc: '浏览器内的现代安卓仿真环境（MobileGym，中科院开源，28 个应用）' }
 ];
 
 function getAllApps() {
@@ -895,16 +907,28 @@ const FloatingWidget = {
     else if (st.x != null && st.y != null) { reopen.style.left = st.x + 'px'; reopen.style.top = st.y + 'px'; reopen.style.bottom = 'auto'; reopen.style.right = 'auto'; }
   },
   close() {
+    // 关闭面板时，悬浮球出现在面板当前位置（形态切换位置不变）
+    const cur = Store.getWidget();
+    cur.bx = this.el.offsetLeft; cur.by = this.el.offsetTop;
+    cur.closed = true;
+    Store.setWidget(cur);
     this.el.classList.add('hidden');
     const reopen = $('#fwReopen');
     reopen.classList.remove('hidden');
-    this.placeReopen(reopen, Store.getWidget());
-    const cur = Store.getWidget(); cur.closed = true; Store.setWidget(cur);
+    reopen.style.left = cur.bx + 'px'; reopen.style.top = cur.by + 'px';
+    reopen.style.bottom = 'auto'; reopen.style.right = 'auto';
   },
   open() {
+    // 重新打开面板时，面板出现在悬浮球当前位置（形态切换位置不变）
+    const ball = $('#fwReopen');
+    const cur = Store.getWidget();
+    cur.x = ball.offsetLeft; cur.y = ball.offsetTop;
+    cur.closed = false;
+    Store.setWidget(cur);
+    this.el.style.left = cur.x + 'px'; this.el.style.top = cur.y + 'px';
+    this.el.style.bottom = 'auto'; this.el.style.right = 'auto';
     this.el.classList.remove('hidden');
-    $('#fwReopen').classList.add('hidden');
-    const cur = Store.getWidget(); cur.closed = false; Store.setWidget(cur);
+    ball.classList.add('hidden');
   }
 };
 
@@ -923,6 +947,8 @@ function launchApp(id, opts = {}) {
     defaults.width = 760; defaults.height = 640;
   } else if (id === 'browser') {
     defaults.width = 980; defaults.height = 680;
+  } else if (id === 'terminal') {
+    defaults.width = 680; defaults.height = 480;
   } else if (id === 'tips') {
     defaults.width = 600; defaults.height = 560;
   } else if (id === 'about' || id === 'ai-config' || id === 'settings' || id === 'file-manager') {
@@ -1198,7 +1224,7 @@ ${userPrompt}
     return await this.chatStream([{ role: 'system', content: sys }, { role: 'user', content: '请生成这个软件。记住：只输出代码，第一个字符必须是 <' }], onChunk, { temperature: 0.7, max_tokens: this.maxTokens(this.config(), 16384), onReasoning: opts.onReasoning, signal: opts.signal });
   },
 
-  async fixApp(app, instruction, onChunk) {
+  async fixApp(app, instruction, onChunk, opts = {}) {
     const sys = `你是一位顶尖前端工程师。用户有一个已生成的单文件 HTML 软件，现在要按用户的需求修改或修复它。
 
 【硬性要求】
@@ -1263,6 +1289,7 @@ const Mem = {
   remove(id) { Store.setMemories(this.list().filter(m => m.id !== id)); },
   // 生成完成后，让 AI 自动判断是否有值得记忆的内容（静默后台执行）
   async autoLearn(userText, aiText) {
+    if (Store.getAgentMode()) return; // 命令行模式开启时由 AI 通过 mem 命令自行写记忆
     if (!Store.getMemAuto() || !AI.isReady()) return;
     const cur = this.list();
     const sys = `你是用户记忆管理器。根据刚才的一轮对话，判断是否有值得长期记忆的关于用户的事实（如身份、偏好、习惯、项目、目标等；闲聊、一次性请求不算）。
@@ -1301,6 +1328,326 @@ ${cur.length ? cur.map((m, i) => (i + 1) + '. ' + m.text).join('\n') : '（空�
   }
 };
 
+/* ===================== 命令行引擎（供终端应用与 AI Agent 调用） ===================== */
+const CLI = {
+  history: [],
+  // 执行一行命令，返回 { ok, out }；out 为文本输出
+  exec(line) {
+    line = String(line || '').trim();
+    if (!line) return { ok: true, out: '' };
+    const sp = line.indexOf(' ');
+    const cmd = (sp < 0 ? line : line.slice(0, sp)).toLowerCase();
+    const rest = sp < 0 ? '' : line.slice(sp + 1).trim();
+    const fn = this.cmds[cmd];
+    if (!fn) return { ok: false, out: '未知命令：' + cmd + '（输入 help 查看全部命令）' };
+    try { return { ok: true, out: String(fn(rest) ?? '') }; }
+    catch (e) { return { ok: false, out: '执行出错：' + (e.message || e) }; }
+  },
+  // 完整教程（终端 help 用）
+  manual() {
+    return '天择OS 命令行 · 全部命令\n' +
+'── 系统 ──\n' +
+'  version                     查看系统版本\n' +
+'  theme dark|light            切换深色/浅色主题\n' +
+'  style win|mac|auto          切换桌面风格\n' +
+'  widget open|close           打开/关闭快捷面板\n' +
+'  resetlayout                 重置桌面图标布局\n' +
+'  export                      导出全量存档\n' +
+'── 应用 ──\n' +
+'  apps                        列出所有应用（含 id）\n' +
+'  open 应用id                 打开应用\n' +
+'  close 应用id                关闭应用窗口\n' +
+'  install 名称|图标|HTML       安装新软件（三段以 | 分隔）\n' +
+'  uninstall 应用id            卸载 AI 软件\n' +
+'  rename 应用id|新名[|图标]    重命名软件\n' +
+'  sethtml 应用id|HTML          改写软件代码并热更新\n' +
+'  gethtml 应用id              查看软件代码概要\n' +
+'── AI ──\n' +
+'  aiconfig                    查看当前 AI 配置\n' +
+'  aiconfig url|key|model|maxtokens 值    修改配置\n' +
+'  price                       查看 token 单价\n' +
+'  price hit|write|input|output 数值      设置单价（每百万 tokens）\n' +
+'  price unit usd|cny          设置货币单位\n' +
+'  deepthink on|off            深度思考开关\n' +
+'  agent on|off                AI 命令行模式开关\n' +
+'── 记忆 ──\n' +
+'  mem                         列出全部记忆（带编号）\n' +
+'  mem add 内容                写入一条记忆\n' +
+'  mem del 编号                删除记忆\n' +
+'  mem on|off 编号             启用/停用某条记忆\n' +
+'── 对话与通知 ──\n' +
+'  clear chat                  清空 AI 对话历史\n' +
+'  clear notifs                清空通知\n' +
+'  clear                       清空本终端屏幕\n' +
+'  notify 文本                 发送一条系统通知\n' +
+'── 浏览器 ──\n' +
+'  bm                          列出收藏夹\n' +
+'  bm add 网址 [| 标题]         收藏网址\n' +
+'  bm del 编号                 删除收藏\n' +
+'── 其他 ──\n' +
+'  js 代码                     执行任意 JavaScript（万能兜底，慎用）\n' +
+'  echo 文本                   原样输出\n' +
+'  help                        显示本教程\n' +
+'快捷键：↑/↓ 翻阅历史命令，Enter 执行。';
+  },
+  // AI 提示词片段（命令行模式开启时注入系统提示词，尽量紧凑以节省 token）
+  aiPrompt() {
+    return '\n\n【天择OS 命令行能力】你可以输出 tzcli 代码块让操作系统执行命令，格式（每行一条命令）：\n' +
+'```tzcli\nopen ai-config\nmem add 用户喜欢简洁的回答\n```\n' +
+'可用命令：apps 列出应用id | open/close 应用id | install 名称|图标|完整HTML | uninstall 应用id | rename 应用id|新名[|图标] | sethtml 应用id|完整HTML | gethtml 应用id | aiconfig [url|key|model|maxtokens 值] | price [hit|write|input|output 值] / price unit usd|cny | mem / mem add 内容 / mem del 编号 / mem on|off 编号 | theme dark|light | style win|mac|auto | deepthink on|off | clear chat | notify 文本 | bm / bm add 网址|标题 / bm del 编号 | js JavaScript代码 | version\n' +
+'规则：仅在确有必要时使用（普通问答不要用）；命令在你输出后立即执行，结果会以用户消息回传，你再据此继续回答；块内不要写注释和空行；一次不超过 5 条；写记忆、改配置、装改软件等操作优先用命令完成，不要只口头描述。';
+  },
+  cmds: {
+    help: () => CLI.manual(),
+    version: () => '天择OS v' + OS_VERSION + ' · ' + (isMobile() ? '移动端' : '桌面端'),
+    apps: () => getAllApps().map(a => a.id + '  ' + a.name + '  [' + a.type + ']').join('\n'),
+    open: (r) => { need(r, 'open 应用id'); const app = findApp(r); if (!app) throw new Error('应用不存在：' + r); launchApp(r); return '已打开 ' + app.name; },
+    close: (r) => { need(r, 'close 应用id'); const ws = WM.windows.filter(w => w.appId === r); if (!ws.length) return '没有该应用的窗口'; ws.forEach(w => WM.close(w.id)); return '已关闭 ' + ws.length + ' 个窗口'; },
+    install: (r) => {
+      const p = r.split('|').map(s => s.trim());
+      if (p.length < 3) throw new Error('用法：install 名称 | 图标 | 完整HTML代码');
+      const name = p[0], icon = p[1], html = p.slice(2).join('|');
+      if (!name) throw new Error('名称不能为空');
+      if (!/<html|<!doctype/i.test(html)) throw new Error('第三段必须是完整 HTML 代码（以 <!DOCTYPE 或 <html 开头）');
+      const id = 'app-' + Date.now();
+      Store.saveApp({ id, name, icon: icon || '📦', desc: '通过命令行安装', grad: true, html, createdAt: Date.now() });
+      Desktop.render(); StartMenu.render();
+      return '已安装「' + name + '」（id: ' + id + '）';
+    },
+    uninstall: (r) => {
+      need(r, 'uninstall 应用id');
+      const app = Store.getApps().find(a => a.id === r);
+      if (!app) throw new Error('未安装该软件（仅 AI 生成的软件可卸载）：' + r);
+      Store.removeApp(r);
+      WM.windows.filter(w => w.appId === r).forEach(w => WM.close(w.id));
+      Desktop.render(); StartMenu.render(); refreshOpenApp('file-manager');
+      return '已卸载「' + app.name + '」';
+    },
+    rename: (r) => {
+      const p = r.split('|').map(s => s.trim());
+      if (p.length < 2) throw new Error('用法：rename 应用id | 新名称 [| 新图标]');
+      const app = Store.getApps().find(a => a.id === p[0]);
+      if (!app) throw new Error('未找到已安装软件：' + p[0]);
+      const patch = {};
+      if (p[1]) patch.name = p[1];
+      if (p[2] && /\p{Extended_Pictographic}/u.test(p[2])) patch.icon = p[2];
+      Store.updateApp(p[0], patch);
+      Desktop.render(); StartMenu.render(); refreshOpenApp('file-manager');
+      return '已重命名为「' + (patch.name || app.name) + '」';
+    },
+    sethtml: (r) => {
+      const sp2 = r.indexOf('|');
+      if (sp2 < 0) throw new Error('用法：sethtml 应用id | 完整HTML代码');
+      const id = r.slice(0, sp2).trim(), html = r.slice(sp2 + 1).trim();
+      const app = Store.getApps().find(a => a.id === id);
+      if (!app) throw new Error('未找到已安装软件：' + id);
+      if (!/<html|<!doctype/i.test(html)) throw new Error('第二段必须是完整 HTML 代码');
+      Store.updateApp(id, { html });
+      WM.windows.filter(w => w.appId === id).forEach(w => WM.reload(w.id));
+      return '已更新「' + app.name + '」的代码（' + html.length + ' 字符）';
+    },
+    gethtml: (r) => {
+      need(r, 'gethtml 应用id');
+      const app = Store.getApps().find(a => a.id === r);
+      if (!app) throw new Error('未找到已安装软件：' + r);
+      return '「' + app.name + '」代码共 ' + (app.html || '').length + ' 字符，开头片段：\n' + (app.html || '').slice(0, 400);
+    },
+    aiconfig: (r) => {
+      if (!r) {
+        const c = Store.getAIConfig(); const p = c.prices || {};
+        return 'URL：' + c.url + '\n模型：' + c.model + '\nKey：' + maskKey(c.key) + '\nmaxTokens：' + (c.maxTokens || '默认 8192') +
+          '\n单价：命中 ' + (p.hit || 0) + ' / 写入 ' + (p.write || 0) + ' / 输入 ' + (p.input || 0) + ' / 输出 ' + (p.output || 0) + '（' + (p.unit === 'usd' ? '美元' : '人民币') + '/百万）';
+      }
+      const sp = r.indexOf(' '); const k = (sp < 0 ? r : r.slice(0, sp)).toLowerCase(); const v = sp < 0 ? '' : r.slice(sp + 1).trim();
+      if (!v) throw new Error('用法：aiconfig url|key|model|maxtokens 值');
+      const c = Store.getAIConfig();
+      if (k === 'url') c.url = v;
+      else if (k === 'key') c.key = v;
+      else if (k === 'model') c.model = v;
+      else if (k === 'maxtokens') { const n = parseInt(v, 10); if (!(n > 0)) throw new Error('maxtokens 必须是正整数'); c.maxTokens = n; }
+      else throw new Error('用法：aiconfig url|key|model|maxtokens 值');
+      Store.setAIConfig(c);
+      return 'AI 配置已更新：' + k;
+    },
+    price: (r) => {
+      if (!r) {
+        const p = Store.getAIConfig().prices || {};
+        return '缓存命中 ' + (p.hit || 0) + ' / 缓存写入 ' + (p.write || 0) + ' / 输入 ' + (p.input || 0) + ' / 输出 ' + (p.output || 0) + '（' + (p.unit === 'usd' ? '美元' : '人民币') + '/百万 tokens）';
+      }
+      const sp = r.indexOf(' '); const k = (sp < 0 ? r : r.slice(0, sp)).toLowerCase(); const v = sp < 0 ? '' : r.slice(sp + 1).trim();
+      const c = Store.getAIConfig(); c.prices = c.prices || {};
+      if (k === 'unit') { if (v !== 'usd' && v !== 'cny') throw new Error('unit 只能是 usd 或 cny'); c.prices.unit = v; }
+      else if (['hit', 'write', 'input', 'output'].includes(k)) { const n = parseFloat(v); if (isNaN(n) || n < 0) throw new Error('价格必须是非负数字'); c.prices[k] = n; }
+      else throw new Error('用法：price hit|write|input|output 数值 或 price unit usd|cny');
+      Store.setAIConfig(c);
+      return 'token 单价已更新';
+    },
+    mem: (r) => {
+      if (!r) {
+        const ms = Mem.list();
+        return ms.length ? ms.map((m, i) => (i + 1) + '. [' + (m.enabled !== false ? '启用' : '停用') + '] ' + m.text).join('\n') : '（暂无记忆）';
+      }
+      const sp = r.indexOf(' '); const sub = (sp < 0 ? r : r.slice(0, sp)).toLowerCase(); const v = sp < 0 ? '' : r.slice(sp + 1).trim();
+      if (sub === 'add') { if (!v) throw new Error('用法：mem add 内容'); Mem.add(v); refreshOpenApp('ai-config'); return '已写入记忆：' + v; }
+      if (sub === 'del' || sub === 'on' || sub === 'off') {
+        const n = parseInt(v, 10); const ms = Mem.list();
+        if (!(n >= 1 && n <= ms.length)) throw new Error('编号无效（1-' + ms.length + '）');
+        if (sub === 'del') { const t = ms[n - 1].text; Mem.remove(ms[n - 1].id); refreshOpenApp('ai-config'); return '已删除记忆：' + t; }
+        Mem.update(ms[n - 1].id, { enabled: sub === 'on' }); refreshOpenApp('ai-config');
+        return '已' + (sub === 'on' ? '启用' : '停用') + '记忆 ' + n;
+      }
+      throw new Error('用法：mem [add 内容 | del 编号 | on 编号 | off 编号]');
+    },
+    theme: (r) => {
+      if (r !== 'dark' && r !== 'light') throw new Error('用法：theme dark|light');
+      Store.setTheme(r); applyTheme(); refreshOpenApp('settings');
+      return '已切换为' + (r === 'light' ? '浅色' : '深色') + '主题';
+    },
+    style: (r) => {
+      if (!['win', 'mac', 'auto'].includes(r)) throw new Error('用法：style win|mac|auto');
+      Store.setStyle(r === 'auto' ? null : r); applyDeviceStyle(); Desktop.render(); refreshOpenApp('settings');
+      return '桌面风格已切换为 ' + r;
+    },
+    deepthink: (r) => { const on = parseOnOff(r); Store.setDeepThink(on); syncDeepBtns(); return '深度思考已' + (on ? '开启' : '关闭'); },
+    agent: (r) => { const on = parseOnOff(r); Store.setAgentMode(on); refreshOpenApp('settings'); return 'AI 命令行模式已' + (on ? '开启（自动写入记忆已关闭）' : '关闭'); },
+    clear: (r) => {
+      if (r === 'chat') { Store.setChat([]); refreshOpenApp('ai-chat'); return 'AI 对话历史已清空'; }
+      if (r === 'notifs') { Store.clearNotifs(); return '通知已清空'; }
+      if (!r) return '__CLEAR__';
+      throw new Error('用法：clear [chat|notifs]');
+    },
+    notify: (r) => { need(r, 'notify 文本'); Store.addNotif({ title: '命令行', body: r }); return '已发送通知'; },
+    bm: (r) => {
+      if (!r || r === 'list') { const b = Store.getBookmarks(); return b.length ? b.map((x, i) => (i + 1) + '. ' + x.title + '  ' + x.url).join('\n') : '（收藏夹为空）'; }
+      const sp = r.indexOf(' '); const sub = (sp < 0 ? r : r.slice(0, sp)).toLowerCase(); const v = sp < 0 ? '' : r.slice(sp + 1).trim();
+      if (sub === 'add') {
+        const pp = v.split('|').map(s => s.trim());
+        if (!/^https?:\/\//i.test(pp[0] || '')) throw new Error('用法：bm add http(s)网址 [| 标题]');
+        const b = Store.getBookmarks(); b.unshift({ title: pp[1] || pp[0], url: pp[0], time: Date.now() }); Store.setBookmarks(b);
+        return '已收藏 ' + pp[0];
+      }
+      if (sub === 'del') {
+        const n = parseInt(v, 10); const b = Store.getBookmarks();
+        if (!(n >= 1 && n <= b.length)) throw new Error('编号无效（1-' + b.length + '）');
+        const t = b.splice(n - 1, 1)[0]; Store.setBookmarks(b);
+        return '已删除收藏：' + t.title;
+      }
+      throw new Error('用法：bm [list | add 网址 [| 标题] | del 编号]');
+    },
+    widget: (r) => {
+      if (r === 'open') { FloatingWidget.open(); return '快捷面板已打开'; }
+      if (r === 'close') { FloatingWidget.close(); return '快捷面板已收起为悬浮球'; }
+      throw new Error('用法：widget open|close');
+    },
+    resetlayout: () => { Store.clearIconPositions(); Desktop.render(); return '桌面图标布局已重置'; },
+    export: () => { window.TZOS.exportArchive(); return '正在导出存档…'; },
+    js: (r) => {
+      need(r, 'js 代码');
+      const ret = (0, eval)(r);
+      if (ret === undefined) return '（无返回值）';
+      const s = typeof ret === 'object' ? JSON.stringify(ret) : String(ret);
+      return String(s).slice(0, 2000);
+    },
+    echo: (r) => r
+  }
+};
+function need(v, usage) { if (!v) throw new Error('用法：' + usage); }
+function parseOnOff(r) {
+  const v = String(r || '').toLowerCase();
+  if (['on', '开', 'true', '1', '开启'].includes(v)) return true;
+  if (['off', '关', 'false', '0', '关闭'].includes(v)) return false;
+  throw new Error('参数只能是 on 或 off');
+}
+function maskKey(k) { if (!k) return '（未设置）'; if (k.length <= 8) return '****'; return k.slice(0, 4) + '…' + k.slice(-4); }
+
+/* ===================== 屏幕截图（对话自动附图，需视觉模型） ===================== */
+const Shot = {
+  stream: null, video: null,
+  supported() { return !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia); },
+  // 申请并保持屏幕共享流（首次需用户在弹窗中选择「此标签页」）
+  async ensure() {
+    if (this.stream && this.stream.active && this.video) return true;
+    if (!this.supported()) return false;
+    try {
+      this.stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+      const track = this.stream.getVideoTracks()[0];
+      if (!track) { this.stop(); return false; }
+      track.onended = () => {
+        // 用户从浏览器 UI 停止了共享 → 自动关闭开关
+        this.stream = null; this.video = null;
+        if (Store.getScreenshotMode()) { Store.setScreenshotMode(false); refreshOpenApp('settings'); refreshOpenApp('ai-chat'); toast('屏幕共享已停止，自动截图已关闭'); }
+      };
+      const v = document.createElement('video');
+      v.srcObject = this.stream; v.muted = true;
+      await v.play();
+      this.video = v;
+      return true;
+    } catch (e) { this.stop(); return false; }
+  },
+  // 抓一帧并压缩为 JPEG dataURL（控制宽度以节省 token）
+  capture(maxW = 1280) {
+    const v = this.video;
+    if (!v || !v.videoWidth) return null;
+    try {
+      const scale = Math.min(1, maxW / v.videoWidth);
+      const cv = document.createElement('canvas');
+      cv.width = Math.round(v.videoWidth * scale);
+      cv.height = Math.round(v.videoHeight * scale);
+      cv.getContext('2d').drawImage(v, 0, 0, cv.width, cv.height);
+      return cv.toDataURL('image/jpeg', 0.7);
+    } catch (e) { return null; }
+  },
+  stop() {
+    if (this.stream) { try { this.stream.getTracks().forEach(t => t.stop()); } catch (e) {} }
+    this.stream = null; this.video = null;
+  }
+};
+
+/* ===================== 内置应用：命令行终端 ===================== */
+function renderTerminal() {
+  return `
+  <div class="term-app">
+    <div class="term-out" id="termOut"></div>
+    <div class="term-input-row"><span class="term-prompt">天择OS ></span><input id="termIn" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="输入命令，help 查看教程…" /></div>
+  </div>`;
+}
+function initTerminal() {
+  const out = $('#termOut'), inp = $('#termIn');
+  if (!out || !inp) return;
+  const print = (text, cls) => {
+    if (text === '' || text == null) return;
+    const d = el('div', cls || '');
+    d.textContent = text;
+    out.appendChild(d);
+  };
+  const scroll = () => { out.scrollTop = out.scrollHeight; };
+  print('天择OS 命令行 v' + OS_VERSION + ' —— 输入 help 查看全部命令教程。', 't-dim');
+  print('系统提示：apps 可查看全部应用 id；AI 命令行模式可在「系统设置」中开启。', 't-dim');
+  print(' ');
+  let hIdx = CLI.history.length;
+  inp.onkeydown = (e) => {
+    if (e.key === 'Enter') {
+      const line = inp.value.trim();
+      inp.value = '';
+      if (!line) return;
+      print('天择OS > ' + line, 't-cmd');
+      CLI.history.push(line); hIdx = CLI.history.length;
+      const r = CLI.exec(line);
+      if (r.out === '__CLEAR__') { out.innerHTML = ''; return; }
+      print(r.out || '(完成)', r.ok ? '' : 't-err');
+      print(' ');
+      scroll();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (hIdx > 0) { hIdx--; inp.value = CLI.history[hIdx] || ''; setTimeout(() => inp.setSelectionRange(inp.value.length, inp.value.length)); }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (hIdx < CLI.history.length) { hIdx++; inp.value = CLI.history[hIdx] || ''; }
+    }
+  };
+  setTimeout(() => inp.focus(), 60);
+}
+
 /* ===================== 内置应用：AI 配置 ===================== */
 function renderAIConfig() {
   const c = Store.getAIConfig();
@@ -1334,6 +1681,22 @@ function renderAIConfig() {
     <div class="field">
       <label>最大输出 Token（留空默认 8192；生成软件时代码较长，可适当调大，如 16384）</label>
       <input class="input" id="cfgMaxTokens" type="number" min="1024" max="131072" value="${escapeHtml(String(c.maxTokens || ''))}" placeholder="8192" />
+    </div>
+    <hr style="margin:18px 0;border:none;border-top:1px solid var(--glass-border)" />
+    <h3 style="font-size:15px;margin-bottom:4px">💰 Token 单价（选填）</h3>
+    <p class="sub" style="margin-bottom:12px">每百万 tokens 的价格，填后每条 AI 消息下的用量统计会自动估算费用；留空则不显示费用。价格以你的服务商页面为准。</p>
+    <div class="field">
+      <label>货币单位</label>
+      <div class="style-pick">
+        <button id="priceUnitCny" class="${(c.prices && c.prices.unit === 'usd') ? '' : 'active'}">¥ 人民币</button>
+        <button id="priceUnitUsd" class="${(c.prices && c.prices.unit === 'usd') ? 'active' : ''}">$ 美元</button>
+      </div>
+    </div>
+    <div class="price-grid">
+      <div class="field"><label>缓存命中</label><input class="input" id="cfgPriceHit" type="number" min="0" step="0.0001" value="${escapeHtml(String((c.prices && c.prices.hit) || ''))}" placeholder="如 0.5" /></div>
+      <div class="field"><label>缓存写入</label><input class="input" id="cfgPriceWrite" type="number" min="0" step="0.0001" value="${escapeHtml(String((c.prices && c.prices.write) || ''))}" placeholder="如 1" /></div>
+      <div class="field"><label>输入（未命中缓存）</label><input class="input" id="cfgPriceInput" type="number" min="0" step="0.0001" value="${escapeHtml(String((c.prices && c.prices.input) || ''))}" placeholder="如 2" /></div>
+      <div class="field"><label>输出</label><input class="input" id="cfgPriceOutput" type="number" min="0" step="0.0001" value="${escapeHtml(String((c.prices && c.prices.output) || ''))}" placeholder="如 8" /></div>
     </div>
     <div style="display:flex;gap:8px;margin-top:18px">
       <button class="btn" onclick="TZOS.saveConfig()">💾 保存配置</button>
@@ -1378,11 +1741,11 @@ function renderMemList() {
   if (!box) return;
   const ms = Mem.list();
   if (!ms.length) {
-    box.innerHTML = '<div style="color:var(--ink-faint);font-size:12.5px;padding:10px;text-align:center;background:rgba(255,255,255,0.04);border-radius:8px">暂无记忆。AI 会在对话后自动积累（需开启"自动写入"），也可在下方手动添加。</div>';
+    box.innerHTML = '<div style="color:var(--ink-faint);font-size:12.5px;padding:10px;text-align:center;background:var(--surface);border-radius:8px">暂无记忆。AI 会在对话后自动积累（需开启"自动写入"），也可在下方手动添加。</div>';
     return;
   }
   box.innerHTML = ms.map(m => `
-    <div class="mem-row" data-id="${m.id}" style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);margin-bottom:6px">
+    <div class="mem-row" data-id="${m.id}" style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;background:var(--surface);border:1px solid var(--glass-border);margin-bottom:6px">
       <input type="checkbox" class="mem-en" ${m.enabled !== false ? 'checked' : ''} title="是否注入提示词" style="flex-shrink:0;accent-color:var(--c-blue)" />
       <span class="mem-text" style="flex:1;font-size:13px;color:var(--ink-dim);line-height:1.5;word-break:break-all">${escapeHtml(m.text)}</span>
       <button class="btn sm ghost mem-edit" title="修改" style="padding:3px 8px">✏️</button>
@@ -1423,15 +1786,28 @@ window.TZOS.memAll = function(on) {
   Store.setMemories(ms);
   renderMemList();
 };
+// 从表单读取完整 AI 配置（含 token 单价与货币单位）
+function readConfigForm() {
+  const num = (id) => { const elx = document.getElementById(id); const v = parseFloat(elx && elx.value); return (isNaN(v) || v < 0) ? 0 : v; };
+  const usdBtn = document.getElementById('priceUnitUsd');
+  return {
+    url: $('#cfgUrl').value.trim(),
+    key: $('#cfgKey').value.trim(),
+    model: $('#cfgModel').value.trim(),
+    maxTokens: parseInt(($('#cfgMaxTokens') || {}).value, 10) || 0,
+    prices: {
+      hit: num('cfgPriceHit'), write: num('cfgPriceWrite'), input: num('cfgPriceInput'), output: num('cfgPriceOutput'),
+      unit: (usdBtn && usdBtn.classList.contains('active')) ? 'usd' : 'cny'
+    }
+  };
+}
 window.TZOS.saveConfig = function() {
-  const cfg = { url: $('#cfgUrl').value.trim(), key: $('#cfgKey').value.trim(), model: $('#cfgModel').value.trim(), maxTokens: parseInt($('#cfgMaxTokens').value, 10) || 0 };
-  Store.setAIConfig(cfg);
+  Store.setAIConfig(readConfigForm());
   toast('配置已保存');
   refreshOpenApp('ai-config');
 };
 window.TZOS.testConfig = async function() {
-  const cfg = { url: $('#cfgUrl').value.trim(), key: $('#cfgKey').value.trim(), model: $('#cfgModel').value.trim(), maxTokens: parseInt($('#cfgMaxTokens')?.value, 10) || 0 };
-  Store.setAIConfig(cfg);
+  Store.setAIConfig(readConfigForm());
   toast('正在测试连接…', 1500);
   try {
     const r = await AI.chat([{role:'user',content:'请回复"OK"'}], { max_tokens: 10 });
@@ -1446,7 +1822,7 @@ function renderAIChat() {
   if (provider === 'doubao') {
     return `
     <div class="app-chat" id="chatApp" style="background:rgba(5,8,19,0.4)">
-      <div class="chat-toolbar" style="display:flex;gap:6px;padding:6px 10px;border-bottom:1px solid var(--glass-border);background:rgba(255,255,255,0.04);align-items:center">
+      <div class="chat-toolbar" style="display:flex;gap:6px;padding:6px 10px;border-bottom:1px solid var(--glass-border);background:var(--surface);align-items:center">
         <button class="btn sm" id="chatProvider" title="切换回自定义AI">🫘 豆包AI（网页版）</button>
         <span style="flex:1"></span>
         <a class="btn sm ghost" href="https://www.doubao.com/chat" target="_blank" rel="noopener" title="在系统外新标签页打开豆包">↗ 外部打开</a>
@@ -1463,11 +1839,14 @@ function renderAIChat() {
     </div>`;
   }
   const deep = Store.getDeepThink();
+  const shotOn = Store.getScreenshotMode();
   return `
   <div class="app-chat" id="chatApp">
-    <div class="chat-toolbar" style="display:flex;gap:6px;padding:6px 10px;border-bottom:1px solid var(--glass-border);background:rgba(255,255,255,0.04);align-items:center">
+    <div class="chat-toolbar" style="display:flex;gap:6px;padding:6px 10px;border-bottom:1px solid var(--glass-border);background:var(--surface);align-items:center">
       <button class="btn sm ghost" id="chatProvider" title="切换 AI 提供方">⚙️ 自定义AI</button>
-      <button class="btn sm ${deep?'':'ghost'}" id="chatDeep" title="深度思考（显示思考过程）">🧠 深度思考${deep?'·开':'·关'}</button>
+      <button class="btn sm ${deep?'':'ghost'} js-deep-btn" id="chatDeep" title="深度思考（显示思考过程）">🧠 深度思考${deep?'·开':'·关'}</button>
+      <button class="btn sm ${shotOn?'':'ghost'}" id="chatShot" title="发送消息时自动截取当前屏幕（需视觉模型）">📷 截图${shotOn?'·开':'·关'}</button>
+      ${Store.getAgentMode() ? '<span style="font-size:11px;color:var(--c-violet);padding:3px 8px;border:1px dashed var(--c-violet);border-radius:999px;flex-shrink:0" title="AI 可在对话中直接执行命令行命令">⌨️ 命令行模式</span>' : ''}
       <span style="flex:1"></span>
       <button class="btn sm ghost" id="chatClear" title="清空当前对话">🗑</button>
     </div>
@@ -1481,7 +1860,7 @@ function renderAIChat() {
 function reasoningHtml(reasoning, ongoing) {
   if (!reasoning) return '';
   const tag = ongoing ? '（进行中…）' : '';
-  return `<details class="msg-reasoning"${ongoing?' open':''} style="margin-bottom:6px"><summary style="cursor:pointer;color:var(--ink-faint);font-size:12px">🧠 思考过程${tag}</summary><div style="font-size:12px;color:var(--ink-faint);line-height:1.6;padding:6px 8px;background:rgba(255,255,255,0.03);border-radius:6px;margin-top:4px;white-space:pre-wrap">${escapeHtml(reasoning)}</div></details>`;
+  return `<details class="msg-reasoning"${ongoing?' open':''} style="margin-bottom:6px"><summary style="cursor:pointer;color:var(--ink-faint);font-size:12px">🧠 思考过程${tag}</summary><div style="font-size:12px;color:var(--ink-faint);line-height:1.6;padding:6px 8px;background:var(--surface);border-radius:6px;margin-top:4px;white-space:pre-wrap">${escapeHtml(reasoning)}</div></details>`;
 }
 function initChat() {
   // 豆包网页嵌入模式：只绑定切换按钮 + iframe 加载隐藏提示
@@ -1539,12 +1918,27 @@ function initChat() {
   if (deepBtn) deepBtn.onclick = () => {
     Store.setDeepThink(!Store.getDeepThink());
     const d = Store.getDeepThink();
-    // 只更新按钮状态，不重渲染对话，避免影响已有内容
-    deepBtn.classList.toggle('ghost', !d);
-    deepBtn.textContent = '🧠 深度思考' + (d ? '·开' : '·关');
+    // 全局同步所有窗口的深度思考按钮（修复多窗口状态不一致导致的"关不掉"）
+    syncDeepBtns();
     const eh = $('#chatEmptyHint');
     if (eh && AI.isReady()) eh.textContent = d ? '深度思考已开启，会显示思考过程。' : '问我任何问题，或试试下面的建议';
     toast('深度思考已' + (d ? '开启' : '关闭') + '（仅影响后续回复）');
+  };
+  // 自动截图开关（需视觉模型；首次开启需授权屏幕共享，选择「此标签页」）
+  const shotBtn = $('#chatShot');
+  if (shotBtn) shotBtn.onclick = async () => {
+    const next = !Store.getScreenshotMode();
+    if (next) {
+      if (!Shot.supported()) { toast('当前环境不支持屏幕截取'); return; }
+      toast('请在弹窗中选择「此标签页」共享天择OS画面', 3600);
+      if (!(await Shot.ensure())) { toast('未获得屏幕共享授权，功能未开启', 3000); return; }
+    } else {
+      Shot.stop();
+    }
+    Store.setScreenshotMode(next);
+    shotBtn.classList.toggle('ghost', !next);
+    shotBtn.textContent = '📷 截图' + (next ? '·开' : '·关');
+    toast('自动截图已' + (next ? '开启（请确认模型支持视觉）' : '关闭'));
   };
   const clrBtn = $('#chatClear');
   if (clrBtn) clrBtn.onclick = async () => {
@@ -1554,7 +1948,7 @@ function initChat() {
     refreshOpenApp('ai-chat');
   };
 }
-// token 用量格式化（缓存命中/缓存写入/普通输入/输出/总量）
+// token 用量格式化（缓存命中/缓存写入/普通输入/输出/总量 + 按单价估算费用）
 function usageText(u) {
   if (!u) return '';
   const hit = u.prompt_cache_hit_tokens || 0;
@@ -1562,26 +1956,45 @@ function usageText(u) {
   const miss = (u.prompt_cache_miss_tokens != null) ? u.prompt_cache_miss_tokens : Math.max(0, (u.prompt_tokens || 0) - hit);
   const out = u.completion_tokens || 0;
   const total = u.total_tokens || (hit + miss + out);
-  return '🔢 缓存命中 ' + hit + ' · 缓存写入 ' + write + ' · 普通输入 ' + miss + ' · 输出 ' + out + ' · 总量 ' + total;
+  return '🔢 缓存命中 ' + hit + ' · 缓存写入 ' + write + ' · 普通输入 ' + miss + ' · 输出 ' + out + ' · 总量 ' + total + usageCostText(u);
+}
+// 按 AI 配置中的单价（每百万 tokens）估算本条消息费用；未填单价或费用为 0 时不显示
+function usageCostText(u) {
+  const p = (Store.getAIConfig() || {}).prices || {};
+  const rates = { hit: +p.hit || 0, write: +p.write || 0, input: +p.input || 0, output: +p.output || 0 };
+  if (!(rates.hit || rates.write || rates.input || rates.output)) return '';
+  const hit = u.prompt_cache_hit_tokens || 0;
+  const write = u.cache_creation_input_tokens || u.cache_write_tokens || 0;
+  const miss = (u.prompt_cache_miss_tokens != null) ? u.prompt_cache_miss_tokens : Math.max(0, (u.prompt_tokens || 0) - hit);
+  const out = u.completion_tokens || 0;
+  const cost = (hit * rates.hit + write * rates.write + miss * rates.input + out * rates.output) / 1e6;
+  if (!(cost > 0)) return '';
+  const sym = p.unit === 'usd' ? '$' : '¥';
+  const txt = cost >= 0.01 ? cost.toFixed(4) : (cost >= 0.0001 ? cost.toFixed(5) : cost.toExponential(2));
+  return ' · 💰 ≈' + sym + txt;
 }
 function appendMsg(role, content, opts = {}) {
   const msgs = $('#chatMsgs');
   const empty = msgs.querySelector('.chat-empty');
   if (empty) empty.remove();
   const m = el('div', 'msg ' + role);
-  const inner = opts.raw ? content : reasoningHtml(opts.reasoning, false) + renderMd(content);
+  const inner = opts.raw ? content : reasoningHtml(opts.reasoning, false) + (role === 'ai' ? renderAiBody(content) : renderMd(content));
   m.innerHTML = `<div class="msg-avatar">${role==='ai'?'🤖':'🧑'}</div><div class="msg-body"><div class="msg-bubble">${inner}</div>` +
     (opts.usage ? `<div class="msg-usage">${escapeHtml(usageText(opts.usage))}</div>` : '') +
-    (opts.actions ? `<div class="msg-actions">${role === 'user'
-      ? '<button class="msg-act" data-act="edit" title="编辑此消息并重新发送（后续消息将删除）">✏️ 编辑重发</button>'
-      : '<button class="msg-act" data-act="regen" title="重新生成回答（此条及后续消息将删除）">⟳ 重新生成</button>'}</div>` : '') +
+    (opts.actions ? `<div class="msg-actions">` +
+      '<button class="msg-act" data-act="copy" title="复制这条内容">📋 复制</button>' +
+      (role === 'user'
+        ? '<button class="msg-act" data-act="edit" title="编辑此消息并重新发送（后续消息将删除）">✏️ 编辑重发</button>'
+        : '<button class="msg-act" data-act="regen" title="重新生成回答（此条及后续消息将删除）">⟳ 重新生成</button>') +
+      `</div>` : '') +
     `</div>`;
   msgs.appendChild(m);
   if (role === 'ai' && !opts.raw) renderMath(m);
   if (opts.actions) {
     m.querySelectorAll('.msg-act').forEach(b => {
       b.onclick = () => {
-        if (b.dataset.act === 'edit') startEditMessage(opts.index);
+        if (b.dataset.act === 'copy') copyText(typeof content === 'string' ? content : '');
+        else if (b.dataset.act === 'edit') startEditMessage(opts.index);
         else if (b.dataset.act === 'regen') regenerateMessage(opts.index);
       };
     });
@@ -1590,22 +2003,142 @@ function appendMsg(role, content, opts = {}) {
   return m;
 }
 function renderMd(text) {
-  // 先抽取数学公式占位符，保护 $$...$$ 跨行不被 <br> 与转义破坏
+  // 1) 抽取数学公式占位符，保护 $$...$$ 跨行不被破坏
   const maths = [];
-  let work = text.replace(/\$\$([\s\S]*?)\$\$/g, (m, c) => { maths.push({ d: true, c }); return '\u0000M' + (maths.length - 1) + '\u0000'; });
+  let work = String(text == null ? '' : text);
+  work = work.replace(/\$\$([\s\S]*?)\$\$/g, (m, c) => { maths.push({ d: true, c }); return '\u0000M' + (maths.length - 1) + '\u0000'; });
   work = work.replace(/(?<!\$)\$([^\$\n]+?)\$(?!\$)/g, (m, c) => { maths.push({ d: false, c }); return '\u0000M' + (maths.length - 1) + '\u0000'; });
-  let html = escapeHtml(work);
-  html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (_,l,c) => `<pre><code>${c.replace(/&lt;\/?pre.*?>/g,'')}</code></pre>`);
-  html = html.replace(/`([^`]+)`/g, '<code style="background:rgba(0,0,0,0.3);padding:2px 5px;border-radius:4px;font-size:0.9em">$1</code>');
-  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  html = html.replace(/\n/g, '<br>');
-  // 还原数学占位符为 span（内含原始 LaTeX 文本，供 KaTeX auto-render 处理）
-  html = html.replace(/\u0000M(\d+)\u0000/g, (m, i) => {
-    const x = maths[+i]; if (!x) return '';
+  // 2) 抽取围栏代码块（防止内部文本被 markdown 规则误伤）
+  const codes = [];
+  work = work.replace(/```(\w*)\n?([\s\S]*?)```/g, (m, l, c) => { codes.push(c.replace(/\n$/, '')); return '\n\u0000C' + (codes.length - 1) + '\u0000\n'; });
+  // 3) 抽取行内代码
+  const ics = [];
+  work = work.replace(/`([^`\n]+)`/g, (m, c) => { ics.push(c); return '\u0000I' + (ics.length - 1) + '\u0000'; });
+  // 4) 转义后按行做块级解析
+  const lines = escapeHtml(work).split('\n');
+  const inlineFmt = (s) => s
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/(?<!\w)\*([^*\n]+)\*(?!\w)/g, '<em>$1</em>')
+    .replace(/~~([^~]+)~~/g, '<s>$1</s>');
+  const out = [];
+  let i = 0, para = [];
+  const flushPara = () => { if (para.length) { out.push('<p>' + para.map(inlineFmt).join('<br>') + '</p>'); para = []; } };
+  const splitRow = (r) => { let s = r.trim(); if (s.startsWith('|')) s = s.slice(1); if (s.endsWith('|')) s = s.slice(0, -1); return s.split('|').map(c => c.trim()); };
+  while (i < lines.length) {
+    const line = lines[i];
+    const trim = line.trim();
+    let m;
+    if ((m = trim.match(/^\u0000C(\d+)\u0000$/))) { flushPara(); out.push('\u0000C' + m[1] + '\u0000'); i++; continue; }
+    if (!trim) { flushPara(); i++; continue; }
+    // 标题 # ~ ######
+    if ((m = line.match(/^(#{1,6})\s+(.+)$/))) { flushPara(); const lv = m[1].length; out.push('<h' + lv + '>' + inlineFmt(m[2].trim()) + '</h' + lv + '>'); i++; continue; }
+    // 分割线 --- / *** / ___
+    if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(line)) { flushPara(); out.push('<hr>'); i++; continue; }
+    // 表格（GFM）：当前行含 | 且下一行是分隔行
+    if (line.indexOf('|') >= 0 && i + 1 < lines.length && /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$/.test(lines[i + 1])) {
+      flushPara();
+      const head = splitRow(line);
+      const aligns = splitRow(lines[i + 1]).map(a => /^:-+:$/.test(a) ? 'center' : /^-+:$/.test(a) ? 'right' : 'left');
+      const rows = [];
+      i += 2;
+      while (i < lines.length && lines[i].indexOf('|') >= 0 && lines[i].trim()) { rows.push(splitRow(lines[i])); i++; }
+      const cell = (t, tag, j) => '<' + tag + (aligns[j] && aligns[j] !== 'left' ? ' style="text-align:' + aligns[j] + '"' : '') + '>' + inlineFmt(t) + '</' + tag + '>';
+      let th = '<div class="md-table-wrap"><table class="md-table"><thead><tr>' + head.map((h, j) => cell(h, 'th', j)).join('') + '</tr></thead><tbody>';
+      th += rows.map(r => '<tr>' + head.map((_, j) => cell(r[j] || '', 'td', j)).join('') + '</tr>').join('');
+      out.push(th + '</tbody></table></div>');
+      continue;
+    }
+    // 无序列表
+    if (/^\s*[-*+]\s+/.test(line)) {
+      flushPara();
+      const items = [];
+      while (i < lines.length && /^\s*[-*+]\s+/.test(lines[i])) { items.push(lines[i].replace(/^\s*[-*+]\s+/, '')); i++; }
+      out.push('<ul>' + items.map(t => '<li>' + inlineFmt(t) + '</li>').join('') + '</ul>');
+      continue;
+    }
+    // 有序列表
+    if (/^\s*\d{1,3}[.)]\s+/.test(line)) {
+      flushPara();
+      const items = [];
+      while (i < lines.length && /^\s*\d{1,3}[.)]\s+/.test(lines[i])) { items.push(lines[i].replace(/^\s*\d{1,3}[.)]\s+/, '')); i++; }
+      out.push('<ol>' + items.map(t => '<li>' + inlineFmt(t) + '</li>').join('') + '</ol>');
+      continue;
+    }
+    // 引用块（转义后的 > 为 &gt;）
+    if (/^\s*&gt;\s?/.test(line)) {
+      flushPara();
+      const items = [];
+      while (i < lines.length && /^\s*&gt;\s?/.test(lines[i])) { items.push(lines[i].replace(/^\s*&gt;\s?/, '')); i++; }
+      out.push('<blockquote>' + items.map(inlineFmt).join('<br>') + '</blockquote>');
+      continue;
+    }
+    para.push(line);
+    i++;
+  }
+  flushPara();
+  let html = out.join('\n');
+  // 5) 还原行内代码 / 代码块 / 数学公式
+  html = html.replace(/\u0000I(\d+)\u0000/g, (m, n) => '<code class="md-ic">' + escapeHtml(ics[+n]) + '</code>');
+  html = html.replace(/\u0000C(\d+)\u0000/g, (m, n) => '<pre><code>' + escapeHtml(codes[+n]) + '</code></pre>');
+  html = html.replace(/\u0000M(\d+)\u0000/g, (m, n) => {
+    const x = maths[+n]; if (!x) return '';
     const delim = x.d ? '$$' : '$';
     return '<span class="tz-math">' + escapeHtml(delim + x.c + delim) + '</span>';
   });
   return html;
+}
+/* ---- AI 消息正文渲染（剥离 tzcli 命令块并生成执行卡片） ---- */
+function parseTzcli(text) {
+  const out = [];
+  String(text || '').replace(/```tzcli\s*\n([\s\S]*?)```/g, (m, body) => {
+    body.split('\n').map(s => s.trim()).filter(s => s && !s.startsWith('#')).forEach(s => out.push(s));
+    return m;
+  });
+  return out;
+}
+function renderAiBody(text, cmdLog, ongoing) {
+  if (!cmdLog) cmdLog = parseTzcli(text).map(c => ({ cmd: c, ok: true, out: '' }));
+  const stripped = String(text || '').replace(/```tzcli\s*\n[\s\S]*?```/g, '').trim();
+  let html = stripped ? renderMd(stripped) : '';
+  if (cmdLog.length) {
+    html += '<details class="cmd-card" open><summary>执行了 ' + cmdLog.length + ' 条系统命令</summary><div class="cmd-body">' +
+      cmdLog.map(c => '<div class="cmd-line">' + escapeHtml(c.cmd) + '</div>' +
+        (c.out ? '<div class="cmd-res' + (c.ok ? '' : ' err') + '">' + escapeHtml(String(c.out).slice(0, 600)) + '</div>' : '<div class="cmd-res">(完成)</div>')
+      ).join('') + '</div></details>';
+  }
+  if (!html && ongoing) html = '';
+  return html;
+}
+// 复制文本到剪贴板（带降级方案）
+function copyText(text) {
+  const done = () => toast('📋 已复制');
+  const fallback = () => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { toast('复制失败'); }
+    ta.remove();
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback);
+  else fallback();
+}
+// 多轮 Agent 生成时合并 usage（token 累加）
+function mergeUsage(a, b) {
+  if (!a) return b || null;
+  if (!b) return a;
+  const o = { ...a };
+  Object.keys(b).forEach(k => { if (typeof b[k] === 'number') o[k] = (o[k] || 0) + b[k]; });
+  return o;
+}
+// 深度思考开关变化时同步所有窗口中的按钮（修复多窗口状态不一致导致的"关不掉"）
+function syncDeepBtns() {
+  const d = Store.getDeepThink();
+  $$('.js-deep-btn').forEach(b => {
+    b.classList.toggle('ghost', !d);
+    b.textContent = '🧠 深度思考' + (d ? '·开' : '·关');
+  });
 }
 // LaTeX 仅在 AI 回复需要公式时加载，避免 KaTeX 阻塞 OS 首屏和开机动画。
 const KATEX_OPTS = { delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}], throwOnError:false };
@@ -1712,38 +2245,79 @@ async function sendChat() {
   await runGeneration(text);
 }
 
-// 核心生成流程：流式 + 实时公式渲染 + 思考过程显示 + token 统计 + 记忆
+// 核心生成流程：流式 + 实时公式渲染 + 思考过程 + token 统计 + 命令行 Agent 轮次 + 自动截图 + 记忆
 async function runGeneration(userText) {
   const msgs = $('#chatMsgs');
   if (!msgs) return;
-  const sendBtn = $('#chatSend');
   const aiMsg = appendMsg('ai', '<span class="typing-dots"><span></span><span></span><span></span></span>', { raw: true });
   const bubble = aiMsg.querySelector('.msg-bubble');
   const bodyEl = aiMsg.querySelector('.msg-body');
   chatCtl = new AbortController();
   updateChatSendBtn();
   ensureKatex().catch(() => {});
-  let full = '', reasoning = '', usage = null, stopped = false;
+  const agentOn = Store.getAgentMode();
+  const deepOn = Store.getDeepThink();
+  let reasoning = '', usage = null, stopped = false;
+  const roundTexts = [];
+  const cmdLog = [];
+  let displayText = '';
   let paintFrame = 0;
   const paint = () => {
     if (paintFrame) return;
     paintFrame = requestAnimationFrame(() => {
       paintFrame = 0;
-      bubble.innerHTML = reasoningHtml(reasoning, true) + renderMd(full);
-      // 流式期间实时渲染 LaTeX（参照 TLH：每次内容更新立即渲染，已渲染的 .katex 会被 auto-render 自动跳过）
+      bubble.innerHTML = reasoningHtml(reasoning, true) + renderAiBody(displayText, cmdLog, true);
+      // 流式期间实时渲染 LaTeX（已渲染的 .katex 会被 auto-render 自动跳过）
       if (window.renderMathInElement) { try { window.renderMathInElement(bubble, KATEX_OPTS); } catch {} }
       msgs.scrollTop = msgs.scrollHeight;
     });
   };
+  // 自动截图（需视觉模型；失败则降级为纯文本）
+  let shot = null;
+  if (Store.getScreenshotMode() && Shot.supported()) {
+    if (await Shot.ensure()) {
+      await new Promise(r => setTimeout(r, 150));
+      shot = Shot.capture();
+    }
+    if (!shot) toast('📷 截图失败，本条按纯文本发送', 2800);
+  }
+  const sysContent = '你是天择 AI 助手，运行在天择OS中。回答简洁有用，使用中文。可写代码（markdown代码块）。数学公式用 LaTeX：行内 $...$，块级 $$...$$。' + Mem.promptSnippet() + (agentOn ? CLI.aiPrompt() : '') +
+    (shot ? '\n\n用户开启了屏幕共享，本条消息附带一张当前屏幕截图，请结合截图内容回答。' : '');
+  const baseHistory = Store.getChat().slice(-12).map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content }));
+  if (shot && baseHistory.length && baseHistory[baseHistory.length - 1].role === 'user') {
+    const last = baseHistory[baseHistory.length - 1];
+    baseHistory[baseHistory.length - 1] = { role: 'user', content: [{ type: 'text', text: last.content }, { type: 'image_url', image_url: { url: shot } }] };
+  }
+  const extra = [];
   try {
-    const sysMsg = { role: 'system', content: '你是天择 AI 助手，运行在天择OS中。回答简洁有用，使用中文。可写代码（markdown代码块）。数学公式用 LaTeX：行内 $...$，块级 $$...$$。' + Mem.promptSnippet() };
-    const history = Store.getChat();
-    const r = await AI.chatStream(
-      [sysMsg, ...history.slice(-12).map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content }))],
-      (delta, all) => { full = all; paint(); },
-      { onReasoning: (d, allR) => { reasoning = allR; paint(); }, signal: chatCtl.signal }
-    );
-    full = r.content || full; reasoning = r.reasoning || reasoning; usage = r.usage;
+    let round = 0;
+    while (true) {
+      let roundText = '';
+      const r = await AI.chatStream(
+        [{ role: 'system', content: sysContent }, ...baseHistory, ...extra],
+        (delta, all) => { roundText = all; displayText = roundTexts.concat([roundText]).join('\n'); paint(); },
+        deepOn ? { onReasoning: (d, allR) => { reasoning = allR; paint(); }, signal: chatCtl.signal } : { signal: chatCtl.signal }
+      );
+      roundText = r.content || roundText;
+      if (deepOn && r.reasoning) reasoning = r.reasoning;
+      if (r.usage) usage = mergeUsage(usage, r.usage);
+      roundTexts.push(roundText);
+      displayText = roundTexts.join('\n');
+      if (!agentOn) break;
+      const cmds = parseTzcli(roundText);
+      if (!cmds.length || round >= 3) break; // 最多 3 轮命令，避免 token 失控
+      round++;
+      const results = [];
+      for (const c of cmds) {
+        const res = CLI.exec(c);
+        cmdLog.push({ cmd: c, ok: res.ok, out: res.out });
+        results.push('$ ' + c + '\n' + (res.out || '(完成)'));
+        paint();
+      }
+      toast('⌨️ AI 执行了 ' + cmds.length + ' 条系统命令', 2400);
+      extra.push({ role: 'assistant', content: roundText });
+      extra.push({ role: 'user', content: '（系统回执）你请求执行的命令行命令已完成，结果如下：\n' + results.join('\n------\n').slice(0, 4000) + '\n请据此继续回答用户；如无需再执行命令，请直接给出最终回答，不要重复执行同一命令。' });
+    }
   } catch (e) {
     if (e.name === 'AbortError' || /已停止/.test(e.message || '')) stopped = true;
     else bubble.innerHTML = `<span style="color:#fca5a5">⚠ ${escapeHtml(e.message)}</span>`;
@@ -1752,9 +2326,10 @@ async function runGeneration(userText) {
     chatCtl = null;
     updateChatSendBtn();
   }
+  const full = displayText.trim();
   if (!full && !reasoning) return; // 仅错误信息
   // 完成（含手动停止的部分内容）：定稿渲染 + 入库
-  bubble.innerHTML = reasoningHtml(reasoning, false) + renderMd(full) +
+  bubble.innerHTML = reasoningHtml(reasoning, false) + renderAiBody(displayText, cmdLog, false) +
     (stopped ? '<div style="color:var(--ink-faint);font-size:12px;margin-top:6px">⏹ 已停止生成</div>' : '');
   if (window.renderMathInElement) { try { window.renderMathInElement(bubble, KATEX_OPTS); } catch {} }
   else renderMath(aiMsg);
@@ -1764,11 +2339,12 @@ async function runGeneration(userText) {
   if (usage) bodyEl.appendChild(el('div', 'msg-usage', escapeHtml(usageText(usage))));
   const acts = el('div', 'msg-actions');
   const idx = history.length - 1;
-  acts.innerHTML = '<button class="msg-act" data-act="regen" title="重新生成回答（此条及后续消息将删除）">⟳ 重新生成</button>';
-  acts.querySelector('.msg-act').onclick = () => regenerateMessage(idx);
+  acts.innerHTML = '<button class="msg-act" data-act="copy" title="复制这条内容">📋 复制</button><button class="msg-act" data-act="regen" title="重新生成回答（此条及后续消息将删除）">⟳ 重新生成</button>';
+  acts.querySelector('[data-act="copy"]').onclick = () => copyText(full);
+  acts.querySelector('[data-act="regen"]').onclick = () => regenerateMessage(idx);
   bodyEl.appendChild(acts);
   msgs.scrollTop = msgs.scrollHeight;
-  if (!stopped && full) Mem.autoLearn(userText, full);
+  if (!stopped && full && !agentOn) Mem.autoLearn(userText, full);
 }
 window.TZOS.chatSuggest = function(t) { const i = $('#chatInput'); if (i) { i.value = t; sendChat(); } };
 window.TZOS.openConfig = function() { launchApp('ai-config'); };
@@ -1786,13 +2362,13 @@ function renderAppStore() {
     </div>
     <div class="store-form">
       <input class="input" id="storePrompt" placeholder="例如：一个贪吃蛇游戏 / 一个番茄钟计时器 / 一个markdown笔记…" />
-      <button class="btn sm ${deep?'':'ghost'}" id="storeDeep" title="深度思考（用推理模型生成更严谨的代码，速度较慢）">🧠 深度思考${deep?'·开':'·关'}</button>
+      <button class="btn sm ${deep?'':'ghost'} js-deep-btn" id="storeDeep" title="深度思考（用推理模型生成更严谨的代码，速度较慢）">🧠 深度思考${deep?'·开':'·关'}</button>
       <button class="btn" id="storeGen" onclick="TZOS.startGen()">✨ 生成</button>
     </div>
     <div class="store-step" id="storeSteps" style="display:none">
       <div class="store-step-label"><span class="step-dot">1</span><span id="step1Label">智能优化提示词…</span></div>
       <div class="store-prompt-box" id="refinedBox"></div>
-      <details class="msg-reasoning" id="storeReasonBox" style="display:none;margin-top:10px"><summary style="cursor:pointer;color:var(--ink-faint);font-size:12px">🧠 思考过程</summary><div id="storeReasonBody" style="font-size:12px;color:var(--ink-faint);line-height:1.6;padding:6px 8px;background:rgba(255,255,255,0.03);border-radius:6px;margin-top:4px;white-space:pre-wrap;max-height:160px;overflow-y:auto"></div></details>
+      <details class="msg-reasoning" id="storeReasonBox" style="display:none;margin-top:10px"><summary style="cursor:pointer;color:var(--ink-faint);font-size:12px">🧠 思考过程</summary><div id="storeReasonBody" style="font-size:12px;color:var(--ink-faint);line-height:1.6;padding:6px 8px;background:var(--surface);border-radius:6px;margin-top:4px;white-space:pre-wrap;max-height:160px;overflow-y:auto"></div></details>
       <div class="store-step-label" style="margin-top:14px"><span class="step-dot">2</span><span id="step2Label">生成软件代码…</span></div>
       <div class="store-prompt-box" id="codeProgress" style="font-family:monospace;font-size:11px;max-height:120px;color:var(--ink-muted)"></div>
     </div>
@@ -1810,8 +2386,7 @@ function initAppStore() {
   if (deepBtn) deepBtn.onclick = () => {
     Store.setDeepThink(!Store.getDeepThink());
     const d = Store.getDeepThink();
-    deepBtn.classList.toggle('ghost', !d);
-    deepBtn.textContent = '🧠 深度思考' + (d ? '·开' : '·关');
+    syncDeepBtns();
     toast('深度思考已' + (d ? '开启' : '关闭') + '（影响后续生成）');
   };
 }
@@ -1942,7 +2517,7 @@ window.TZOS.fixApp = async function(id) {
   const mask = el('div', 'tz-dialog-mask show');
   const card = el('div', 'tz-dialog');
   card.style.width = 'min(520px,92vw)';
-  card.innerHTML = '<div class="tz-dialog-title">🔧 正在改进「' + escapeHtml(app.name) + '」</div><div class="tz-dialog-msg" id="fixStatus" style="margin-bottom:8px">⌨ AI 正在修改代码…（模型 ' + escapeHtml(AI.config().model) + '）</div><details class="msg-reasoning" id="fixReasonBox" style="display:none;margin-bottom:6px"><summary style="cursor:pointer;color:var(--ink-faint);font-size:12px">🧠 思考过程</summary><div id="fixReasonBody" style="font-size:12px;color:var(--ink-faint);line-height:1.6;padding:6px 8px;background:rgba(255,255,255,0.03);border-radius:6px;margin-top:4px;white-space:pre-wrap;max-height:140px;overflow-y:auto"></div></details><div id="fixCode" style="max-height:220px;overflow:auto;font-family:monospace;font-size:11px;white-space:pre-wrap;word-break:break-all;color:var(--ink-muted);background:rgba(0,0,0,0.25);border-radius:8px;padding:10px;margin-bottom:4px"></div>';
+  card.innerHTML = '<div class="tz-dialog-title">🔧 正在改进「' + escapeHtml(app.name) + '」</div><div class="tz-dialog-msg" id="fixStatus" style="margin-bottom:8px">⌨ AI 正在修改代码…（模型 ' + escapeHtml(AI.config().model) + '）</div><details class="msg-reasoning" id="fixReasonBox" style="display:none;margin-bottom:6px"><summary style="cursor:pointer;color:var(--ink-faint);font-size:12px">🧠 思考过程</summary><div id="fixReasonBody" style="font-size:12px;color:var(--ink-faint);line-height:1.6;padding:6px 8px;background:var(--surface);border-radius:6px;margin-top:4px;white-space:pre-wrap;max-height:140px;overflow-y:auto"></div></details><div id="fixCode" style="max-height:220px;overflow:auto;font-family:monospace;font-size:11px;white-space:pre-wrap;word-break:break-all;color:var(--ink-muted);background:rgba(0,0,0,0.25);border-radius:8px;padding:10px;margin-bottom:4px"></div>';
   mask.appendChild(card); document.body.appendChild(mask);
   const fixCode = card.querySelector('#fixCode');
   const fixStatus = card.querySelector('#fixStatus');
@@ -2037,6 +2612,14 @@ function renderSettings() {
       <div><div class="sr-label">清空通知</div><div class="sr-desc">删除所有通知</div></div>
       <button class="btn sm ghost" onclick="TZOS.Store.clearNotifs();TZOS.toast('已清空')">清空</button>
     </div>
+    <div class="setting-row">
+      <div><div class="sr-label">AI 命令行模式（Agent）</div><div class="sr-desc">开启后 AI 对话可直接执行命令行命令（装/改/卸软件、改配置、写记忆等），消耗大量 token；开启期间「生成后自动写入记忆」自动关闭，由命令行接管</div></div>
+      <div class="toggle ${Store.getAgentMode()?'on':''}" id="agentModeTg"></div>
+    </div>
+    <div class="setting-row">
+      <div><div class="sr-label">发送时自动截图</div><div class="sr-desc">每次向 AI 发送消息时自动截取当前屏幕一并发送（需视觉模型，纯文本模型会浪费 token 甚至报错）；首次开启需授权屏幕共享</div></div>
+      <div class="toggle ${Store.getScreenshotMode()?'on':''}" id="shotModeTg"></div>
+    </div>
     ${window.tzDesktop ? `<div class="setting-row">
       <div><div class="sr-label">设为默认浏览器</div><div class="sr-desc">外部链接自动在天择OS 内打开（需在系统设置确认）</div></div>
       <button class="btn sm" onclick="TZOS.setDefaultBrowser()">设置</button>
@@ -2069,6 +2652,32 @@ function initSettings() {
   if (chk) chk.onclick = () => Updater.check(true);
   const doUp = $('#btnDoUpdate');
   if (doUp) doUp.onclick = () => Updater.apply();
+  // AI 命令行模式（Agent）开关
+  const ag = $('#agentModeTg');
+  if (ag) ag.onclick = () => {
+    const next = !Store.getAgentMode();
+    Store.setAgentMode(next);
+    ag.classList.toggle('on', next);
+    toast('AI 命令行模式已' + (next ? '开启（自动写入记忆已交给命令行）' : '关闭'), 3200);
+    refreshOpenApp('ai-config');
+    refreshOpenApp('ai-chat');
+  };
+  // 自动截图开关（首次开启需授权屏幕共享）
+  const st = $('#shotModeTg');
+  if (st) st.onclick = async () => {
+    const next = !Store.getScreenshotMode();
+    if (next) {
+      if (!Shot.supported()) { toast('当前环境不支持屏幕截取'); return; }
+      toast('请在弹窗中选择「此标签页」共享天择OS画面', 3600);
+      if (!(await Shot.ensure())) { toast('未获得屏幕共享授权，功能未开启', 3000); return; }
+    } else {
+      Shot.stop();
+    }
+    Store.setScreenshotMode(next);
+    st.classList.toggle('on', next);
+    refreshOpenApp('ai-chat');
+    toast('自动截图已' + (next ? '开启（请确认模型支持视觉）' : '关闭'));
+  };
   // 已有待更新信息时直接显示
   const pending = Store.get('updateAvailable', null);
   if (pending && compareVersions(pending, OS_VERSION) > 0) showUpdateRow(pending);
@@ -2304,7 +2913,7 @@ function renderAbout() {
     <p style="color:var(--ink-faint);font-size:13px;margin-top:6px">v${OS_VERSION} · 浏览器内全屏操作系统</p>
     <p id="aboutUpdate" style="font-size:12px;margin-top:4px;color:var(--c-emerald)"></p>
     <div style="margin-top:10px"><button class="btn sm ghost" onclick="TZOS.checkUpdate()">🔄 检查更新</button></div>
-    <div style="margin:24px 0;padding:16px;background:rgba(255,255,255,0.04);border-radius:12px;text-align:left;font-size:13px;line-height:1.9;color:var(--ink-dim)">
+    <div style="margin:24px 0;padding:16px;background:var(--surface);border-radius:12px;text-align:left;font-size:13px;line-height:1.9;color:var(--ink-dim)">
       <div>🌐 <b>天择网</b> —— 所有功能预装为应用</div>
       <div>🤖 <b>AI 引擎</b> —— 对话 + 代码生成</div>
       <div>🛒 <b>软件商城</b> —— 一句话生成新软件</div>
@@ -2363,7 +2972,14 @@ const TIPS_DATA = [
   { cat: '软件商城', title: '更稳的代码生成', body: '生成软件时若输出达到 token 上限会自动续写（最多 3 次）；可在「AI 配置」调大"最大输出 Token"。提示词已内置 KaTeX 公式、Markdown、本地存储教程与你的 AI 配置，需要 AI 功能的软件会自动带上。' },
   { cat: '浏览器', title: '收藏夹书签', body: '点导航栏 ☆ 收藏当前页；📑 打开收藏夹，支持导入/导出书签文件（兼容 Chrome/Edge/Firefox 的 Netscape 书签格式）。' },
   { cat: '浏览器', title: '标签页栏在标题栏里', body: '浏览器的标签页已并入窗口标题栏，标签显示网页自带的标题（取不到时显示域名）。' },
-  { cat: '模拟器', title: 'Windows / 安卓模拟器', body: '桌面「模拟器」分类内置 Windows 98 与 Android x86 两款免费模拟器（基于 v86，真实 x86 虚拟化，全部在浏览器内运行）。' },
+  { cat: '模拟器', title: 'Windows / 安卓模拟器', body: '桌面「模拟器」分类内置三款现代系统的网页模拟器：Windows 11 高仿真版（Win11React）、Windows 10 风格功能桌面（daedalOS）、现代安卓仿真环境（MobileGym，28 个应用）。均为浏览器内的界面级模拟，非真实虚拟机。' },
+  { cat: '命令行', title: '命令行终端', body: '打开「⌨️ 命令行」应用，输入 help 查看全部命令教程：开关应用、安装/卸载/改写软件、修改 AI 配置与 token 单价、写入/删除记忆、切换主题风格、管理收藏夹等，系统里能做的几乎都能用命令完成。' },
+  { cat: '命令行', title: 'AI 命令行模式（Agent）', body: '系统设置开启「AI 命令行模式」后，AI 在对话中可直接输出命令操作系统（比如帮你改软件、记偏好、调配置），命令执行结果会自动回传给 AI 继续处理，最多连续 3 轮。该模式会消耗大量 token；开启期间「生成后自动写入记忆」自动关闭，由 AI 通过 mem 命令自行写记忆。' },
+  { cat: 'AI 对话', title: '复制消息', body: '鼠标悬停任意一条消息，点「📋 复制」即可复制该条内容（AI 的回答复制的是 markdown 原文）。' },
+  { cat: 'AI 对话', title: 'Token 费用统计', body: '在「AI 配置 → Token 单价」填入缓存命中/缓存写入/输入/输出四类单价（支持人民币或美元），每条 AI 消息下方的用量统计会自动估算本次费用。' },
+  { cat: 'AI 对话', title: '自动截图（视觉模型）', body: '对话工具栏「📷 截图」或系统设置开启后，每次发送消息自动截取当前屏幕一并发送。需搭配视觉模型（如 GLM-4V、GPT-4o），纯文本模型会浪费 token 甚至报错；首次开启需在浏览器弹窗中选择「此标签页」授权。' },
+  { cat: '浏览器', title: '中键关闭标签页', body: '在标签页上按下鼠标中键（滚轮）可直接关闭该标签，与桌面浏览器习惯一致。' },
+  { cat: '窗口与任务栏', title: '快捷面板与悬浮球', body: '关闭快捷面板会收起为小悬浮球，二者位置始终一致；拖动任意一个，切换形态后位置不变。' },
   { cat: '数据与安全', title: '全量存档', body: '系统设置 → 存档管理可导出/导入本机全部数据：AI 配置、系统设置、已装软件、对话历史、收藏夹、AI 记忆、背单词等天择网各应用数据（含 IndexedDB）。' },
   { cat: '快捷键', title: 'Ctrl+空格 开始菜单', body: '按 Ctrl+空格 快速打开/关闭开始菜单（应用列表）。' },
   { cat: '快捷键', title: 'Esc 关闭菜单', body: '开始菜单、右键菜单、通知中心打开时，按 Esc 即可关闭。' },
@@ -2404,7 +3020,7 @@ function initTips() {
     const items = TIPS_DATA.filter(t => (!curCat || t.cat === curCat) && (!kw || t.title.toLowerCase().includes(kw) || t.body.toLowerCase().includes(kw)));
     if (!items.length) { list.innerHTML = '<div style="color:var(--ink-faint);font-size:13px;text-align:center;padding:24px">未找到匹配的技巧</div>'; return; }
     list.innerHTML = items.map(t => `
-      <div style="background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);border-radius:10px;padding:12px 14px">
+      <div style="background:var(--surface);border:1px solid var(--glass-border);border-radius:10px;padding:12px 14px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(99,102,241,0.2);color:var(--c-violet)">${escapeHtml(t.cat)}</span><strong style="font-size:14px">${escapeHtml(t.title)}</strong></div>
         <div style="font-size:13px;color:var(--ink-dim);line-height:1.7">${escapeHtml(t.body)}</div>
       </div>`).join('');
@@ -2491,7 +3107,7 @@ function initTzTree() {
 function renderBrowser() {
   return `
   <div class="app-browser" style="position:absolute;inset:0;display:flex;flex-direction:column;background:rgba(5,8,19,0.4)">
-    <div style="display:flex;gap:6px;padding:8px;border-bottom:1px solid var(--glass-border);background:rgba(255,255,255,0.04);align-items:center">
+    <div style="display:flex;gap:6px;padding:8px;border-bottom:1px solid var(--glass-border);background:var(--surface);align-items:center">
       <button class="btn sm ghost" id="brBack" title="后退">←</button>
       <button class="btn sm ghost" id="brFwd" title="前进">→</button>
       <button class="btn sm ghost" id="brReload" title="刷新">⟳</button>
@@ -2636,6 +3252,9 @@ function initBrowser() {
       tab.title = (t.title ? t.title + '\n' : '') + (t.url || '');
       tab.innerHTML = `<span class="br-tab-label">${escapeHtml(label)}</span><span class="br-x">✕</span>`;
       tab.onclick = (e) => { if (e.target.classList.contains('br-x')) { e.stopPropagation(); closeTab(t.id); } else activate(t.id); };
+      // 中键（滚轮）点击标签页直接关闭
+      tab.addEventListener('auxclick', (e) => { if (e.button === 1) { e.preventDefault(); e.stopPropagation(); closeTab(t.id); } });
+      tab.addEventListener('mousedown', (e) => { if (e.button === 1) e.preventDefault(); });
       tabsEl.appendChild(tab);
     });
     const plus = el('button', 'br-tab-plus', '＋');
@@ -2827,6 +3446,7 @@ function initAppHooks(appId) {
   if (appId === 'settings') initSettings();
   if (appId === 'ai-config') initAIConfig();
   if (appId === 'browser') initBrowser();
+  if (appId === 'terminal') initTerminal();
   if (appId === 'tips') initTips();
   if (appId === 'tz-tree') initTzTree();
   if (appId === 'about') {
@@ -2848,6 +3468,12 @@ function initAIConfig() {
       toast('已填入 ' + chip.textContent);
     };
   });
+  // 货币单位切换（仅切换选中态，保存时读取）
+  const puC = $('#priceUnitCny'), puU = $('#priceUnitUsd');
+  if (puC && puU) {
+    puC.onclick = () => { puC.classList.add('active'); puU.classList.remove('active'); };
+    puU.onclick = () => { puU.classList.add('active'); puC.classList.remove('active'); };
+  }
   // 记忆开关
   const bindTg = (id, get, set) => {
     const tg = $(id);
@@ -2856,6 +3482,17 @@ function initAIConfig() {
   };
   bindTg('#memAutoTg', Store.getMemAuto.bind(Store), Store.setMemAuto.bind(Store));
   bindTg('#memInjectTg', Store.getMemInject.bind(Store), Store.setMemInject.bind(Store));
+  // AI 命令行模式开启期间：自动写入记忆被接管（由 AI 通过 mem 命令写），开关禁用并提示
+  if (Store.getAgentMode()) {
+    const tg = $('#memAutoTg');
+    if (tg) {
+      tg.classList.remove('on');
+      tg.style.opacity = '0.4';
+      tg.onclick = () => toast('AI 命令行模式开启期间，记忆由 AI 通过命令行写入（可在系统设置关闭命令行模式）', 3200);
+      const desc = tg.closest('.setting-row') && tg.closest('.setting-row').querySelector('.sr-desc');
+      if (desc) desc.textContent = '已被「AI 命令行模式」接管（系统设置可关）';
+    }
+  }
   renderMemList();
   const memInp = $('#memNewInput');
   if (memInp) memInp.onkeydown = (e) => { if (e.key === 'Enter') window.TZOS.memAdd(); };
