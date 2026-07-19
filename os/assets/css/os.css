@@ -328,9 +328,11 @@ input, textarea { font-family: inherit; }
 .win.mac-style .win-title-icons .wctrl.uninst svg { opacity: 0; }
 .win.mac-style .win-title-icons:hover .wctrl.uninst svg { opacity: 1; }
 
-.win-body { flex: 1; overflow: auto; position: relative; background: rgba(8,12,28,0.4); }
+.win-body { flex: 1; min-height: 0; overflow: auto; position: relative; background: rgba(8,12,28,0.4); }
 .win-body.no-pad { padding: 0; }
 .win-body.pad { padding: 16px; }
+/* AI 对话与终端内部已有唯一滚动区，外层固定以避免长内容出现双滚动条。 */
+.win-body.app-shell-body { overflow: hidden; padding: 0; }
 
 .win-resizer { position: absolute; z-index: 10; }
 .win-resizer.r-e { top: 0; right: 0; width: 6px; height: 100%; cursor: e-resize; }
@@ -422,6 +424,11 @@ input, textarea { font-family: inherit; }
 .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
 .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
 @keyframes td { 0%,60%,100% { opacity: 0.3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-4px); } }
+/* AI 消息主体流式占位：避免与"🧠 思考过程（进行中…）"details 同时显示成"两个进度条"。
+   当 reasoning 还没出来或主体内容尚未到达首字时，用一行轻量文字代替独立的 typing-dots。 */
+.chat-streaming-placeholder { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-faint); font-size: 12.5px; }
+.chat-streaming-placeholder::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--ink-faint); animation: td 1.2s infinite; box-shadow: 12px 0 0 var(--ink-faint), 24px 0 0 var(--ink-faint); box-shadow: 12px 0 0 0 var(--ink-faint), 24px 0 0 0 var(--ink-faint); }
+.tz-stopped-tip { color: var(--ink-faint); font-size: 12px; margin-top: 6px; }
 
 /* ============ 软件商城应用 ============ */
 .app-store { display: flex; flex-direction: column; height: 100%; }
@@ -773,6 +780,14 @@ body.tzos.light .cmd-res.err { color: #dc2626; }
 .term-out .t-cmd { color: #6ee7b7; }
 .term-out .t-err { color: #fca5a5; }
 .term-out .t-dim { color: #7c86a8; }
+/* 大段输出（如 gethtml 返回的完整 HTML 代码）折叠容器，避免一次性渲染拖累 term-out */
+.term-out .tz-term-big { margin: 4px 0; border: 1px solid var(--glass-border); border-radius: 8px; background: rgba(4,9,27,.4); overflow: hidden; }
+.term-out .tz-term-big > summary { cursor: pointer; padding: 8px 12px; font-size: 12px; color: var(--ink-faint); list-style: none; user-select: none; }
+.term-out .tz-term-big > summary::before { content: "▸ "; color: var(--c-blue); }
+.term-out .tz-term-big[open] > summary::before { content: "▾ "; }
+.term-out .tz-term-pre { margin: 0; padding: 10px 14px; max-height: 420px; overflow: auto; font: 12px/1.55 ui-monospace, Menlo, Consolas, monospace; color: var(--ink-dim); white-space: pre-wrap; word-break: break-word; background: rgba(0,0,0,.25); }
+body.tzos.light .term-out .tz-term-big { background: rgba(255,255,255,.6); }
+body.tzos.light .term-out .tz-term-pre { background: rgba(15,23,42,.05); color: #1e293b; }
 .term-input-row { flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--glass-border); background: rgba(10,15,36,0.5); }
 .term-prompt { color: #6ee7b7; font-size: 13px; font-family: inherit; flex-shrink: 0; }
 .term-input-row input { flex: 1; background: transparent; border: none; outline: none; color: #d7e0f4; font-family: inherit; font-size: 13px; }

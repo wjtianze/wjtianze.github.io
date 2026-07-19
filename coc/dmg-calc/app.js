@@ -33,8 +33,8 @@
   var dmgEquips = [];       /* 伤害型装备列表 [{id, info, unit, hero, maxLvl, hasSkillDmg}] */
   var buildList = [];       /* 家乡建筑列表 [{unit, gid, cat, maxLvl}] */
   var lightningUnit = null, quakeUnit = null;
-  var thUnit = null;        /* 大本营 unit */
-  var STATE = { eq:{}, eqOn:{}, spell:{l:0,q:0}, build:{}, th:0, target:"" }; /* 等级状态；eqOn=是否勾选计入伤害，默认全不勾选 */
+  var thUnit = null, builderHutUnit = null; /* 大本营 / 建筑工人小屋 unit */
+  var STATE = { eq:{}, eqOn:{}, spell:{l:0,q:0}, build:{}, th:0, target:"", builders:{count:0,levels:[]} }; /* eqOn=是否计入伤害；builders=参与回血的小屋 */
 
   var LS_KEY = "tz_coc_dmgcalc_v1";
 
@@ -52,11 +52,29 @@
 
   /* 雷电该等级伤害 */
   function lightDmg(lvl){ var r=lvlData(lightningUnit,lvl); return r?num(r.Damage):0; }
-  /* 地震该等级全额百分比（小数）：BuildingDamagePermil×5/1000，对所有建筑统一，无城墙加成 */
+  /* 地震该等级全额百分比（小数）：普通建筑按 BuildingDamagePermil×5/1000 逐次递减。 */
   function quakePctRaw(lvl){ var r=lvlData(quakeUnit,lvl); if(!r)return 0; return num(r.BuildingDamagePermil)/1000*5; }
-  function quakePct(lvl, targetIsWall){ return quakePctRaw(lvl); }
-  /* 地震前 b 次累计比例（1 + 1/3 + ... + 1/(2b-1)） */
+  function quakePct(lvl){ return quakePctRaw(lvl); }
   function quakeSum(b){ var s=0; for(var i=1;i<=b;i++){ s += 1/(2*i-1); } return s; }
+  /* 单次/累计地震伤害。
+   * 城墙固定游戏规则（与等级无关）：
+   *   - 3 瓶地震无论如何（任何城墙等级、任何地震等级）都不能单独摧毁城墙；
+   *   - 4 瓶地震无论如何都必定摧毁城墙。
+   * 实现方式：前 3 瓶按真实递减公式累加；第 4 瓶补足剩余 HP（quakeHitDmg(4) 直接返回 H - quakeDmg(3)），
+   * 于是累计正好等于 H；5 瓶及以上时 quakeHitDmg 全部返回 0，quakeDmg 末尾的 wall&&count>=4 分支直接返回 H。
+   * 而 count<4 时通过 min(d, H-0.0001) 严格把上限压在「未摧毁」一侧。 */
+  function quakeHitDmg(index, H, lvl, wall){
+    if(index<=0 || H<=0 || lvl<=0)return 0;
+    if(wall && index===4)return Math.max(0, H-quakeDmg(3,H,lvl,true));
+    if(wall && index>4)return 0;
+    return H*quakePct(lvl)/(2*index-1);
+  }
+  function quakeDmg(count, H, lvl, wall){
+    var d=0;
+    for(var i=1;i<=count;i++)d+=quakeHitDmg(i,H,lvl,wall);
+    if(wall && count<4)d=Math.min(d, Math.max(0,H-0.0001));
+    return wall && count>=4 ? H : d;
+  }
   /* 建筑该等级 HP */
   function buildHP(unit, lvl){ var r=lvlData(unit,lvl); if(!r)return 0; return num(r.Hitpoints); }
 
@@ -74,6 +92,7 @@
       lightningUnit=IDMAP[LIGHT_GID];
       quakeUnit=IDMAP[QUAKE_GID];
       thUnit=NAMEMAP["大本营"]||null;
+      builderHutUnit=NAMEMAP["建筑工人小屋"]||null;
       /* 收集伤害型装备（EQUIP_MAP 中能在数据里按中文名匹配到、且含 SkillDamage 字段的） */
       dmgEquips=[];
       Object.keys(EQUIP_MAP).forEach(function(id){
@@ -175,6 +194,81 @@
     $("dmEquipTotal").innerHTML = "装备总伤害：<b>"+fmt(t)+"</b>"+(onCnt?"（已勾选 "+onCnt+" 件装备计入）":"（未勾选任何装备，默认不计入装备伤害）")+(setCnt>onCnt?"，另有 "+(setCnt-onCnt)+" 件已设等级未勾选":"");
   }
 
+  function builderRepairRate(hutLevel){
+    var r=lvlData(builderHutUnit,hutLevel);
+    return r?num(r.BuilderRepairPerSecond):0;
+  }
+  function totalBuilderRepair(){
+    var total=0, count=Math.max(0,Math.min(6,intv(STATE.builders.count)));
+    for(var i=0;i<count;i++)total+=builderRepairRate(intv(STATE.builders.levels[i]));
+    return total;
+  }
+  /* 当前法术方案对目标建筑可造成的最大伤害（用于实时显示回血容错时间）。
+   复用 calcMax 的搜索逻辑：给定法术空间上限 S = 11（雷电法术+地震法术的标准满空间），
+   找让目标建筑 H 受损最大的 (雷电数, 地震数) 组合。返回 {dmg, H, wall, overflow, toleranceSec}。 */
+  function estimateMaxDmgForTarget(S, targetGid){
+    var b=findBuild(targetGid);
+    if(!b)return null;
+    var cur=STATE.build[targetGid]||0;
+    if(cur<=0)return null;
+    var H=buildHP(b.unit,cur);
+    var wall=isWall(b.unit);
+    var ql=STATE.spell.q, ll=STATE.spell.l;
+    var Dl=lightDmg(ll), pct=quakePct(ql);
+    var D_eq=totalEquipDmg();
+    var immA=immuneAll(b.unit), immL=immuneLight(b.unit);
+    if(immA){ Dl=0; pct=0; }
+    else if(immL){ Dl=0; }
+    if(ql<=0 && ll<=0) return {dmg:D_eq, H:H, wall:wall, overflow:Math.max(0,D_eq-H), toleranceSec:null};
+    var best={a:0,b:0,dmg:D_eq};
+    for(var btry=0; btry<=S; btry++){
+      var atry=S-btry;
+      var d=D_eq + atry*Dl + (pct>0?quakeDmg(btry,H,ql,wall):0);
+      if(d>best.dmg)best={a:atry,b:btry,dmg:d};
+    }
+    var repair=totalBuilderRepair();
+    var overflow=Math.max(0, best.dmg-H);
+    return {
+      dmg: best.dmg, H: H, wall: wall, overflow: overflow,
+      toleranceSec: (repair>0 && overflow>0) ? (overflow/repair) : null
+    };
+  }
+
+  function renderBuilders(){
+    var count=Math.max(0,Math.min(6,intv(STATE.builders.count)));
+    STATE.builders.count=count;
+    while(STATE.builders.levels.length<count)STATE.builders.levels.push(1);
+    STATE.builders.levels=STATE.builders.levels.slice(0,count);
+    $("dmBuilderCount").value=count;
+    var wrap=$("dmBuilderLevels"), h="";
+    for(var i=0;i<count;i++){
+      var cur=intv(STATE.builders.levels[i])||1;
+      h+='<div class="dm-builder-row"><span>小屋 '+(i+1)+'</span><select class="dm-lvl-select" data-builder="'+i+'">';
+      for(var lv=1;lv<=maxLevel(builderHutUnit);lv++)h+='<option value="'+lv+'"'+(lv===cur?' selected':'')+'>Lv '+lv+' · '+fmt(builderRepairRate(lv))+'/秒</option>';
+      h+='</select></div>';
+    }
+    if(!count)h='<div class="dm-builder-empty">未设置参与回血的建筑工人小屋</div>';
+    wrap.innerHTML=h;
+    wrap.querySelectorAll("select[data-builder]").forEach(function(sel){
+      sel.addEventListener("change",function(){ STATE.builders.levels[intv(sel.getAttribute("data-builder"))]=intv(sel.value); renderBuilders(); save(); });
+    });
+    var totalRepair=totalBuilderRepair();
+    var html='总回复量：<b>'+fmt(totalRepair)+'</b> 生命值/秒';
+    /* 实时容错时间（基于默认 11 格法术 + 当前目标建筑）—— 让用户调整小屋时立即看到反馈 */
+    var est=estimateMaxDmgForTarget(11, STATE.target);
+    if(est){
+      html+='<div class="dm-builder-tol" style="margin-top:6px;font-size:12px;color:var(--coc-blue);font-family:ui-monospace,Menlo,Consolas,monospace">';
+      if(est.toleranceSec==null){
+        if(totalRepair<=0) html+='容错时间：<span style="color:var(--ink-faint)">未设置回血小屋，无法覆盖溢出</span>';
+        else html+='容错时间：<span style="color:var(--ink-faint)">'+esc(findBuild(STATE.target).unit.chineseName)+' 生命值未被溢出，无需容错</span>';
+      } else {
+        html+='对 '+esc(findBuild(STATE.target).unit.chineseName)+'（'+fmt(est.H)+' HP）11格法术溢出 '+fmt(est.overflow)+' ÷ '+fmt(totalRepair)+'/秒 = <b>'+est.toleranceSec.toFixed(2)+' 秒</b>';
+      }
+      html+='</div>';
+    }
+    $("dmBuilderTotal").innerHTML=html;
+  }
+
   function renderBuildGroups(){
     var wrap=$("dmBuildGroups");
     var h="";
@@ -223,15 +317,17 @@
   function renderTargetInfo(){
     var b=findBuild(STATE.target);
     var info=$("dmTargetInfo");
-    if(!b){ info.textContent="—"; return; }
+    if(!b){ info.textContent="—"; renderBuilders(); return; }
     var cur=STATE.build[STATE.target]||0;
-    if(cur<=0){ info.innerHTML=esc(b.unit.chineseName)+"：<span style='color:var(--ink-faint)'>未设置等级，请先在上方设定等级</span>"; return; }
+    if(cur<=0){ info.innerHTML=esc(b.unit.chineseName)+"：<span style='color:var(--ink-faint)'>未设置等级，请先在上方设定等级</span>"; renderBuilders(); return; }
     var hp=buildHP(b.unit,cur);
     var ql=STATE.spell.q, qpRaw=quakePctRaw(ql);
     var immHtml="";
     if(immuneAll(b.unit))immHtml=' · <span style="color:#fbbf24">🛡 对所有法术免疫（仅装备伤害有效）</span>';
     else if(immuneLight(b.unit))immHtml=' · <span style="color:#fbbf24">🛡 对雷电法术免疫（地震有效）</span>';
     info.innerHTML = esc(b.unit.chineseName)+" · Lv"+cur+" · 最大生命值 <b>"+fmt(hp)+"</b>"+(ql>0?(' · 地震全额 '+(qpRaw*100).toFixed(1)+'%'):'')+immHtml;
+    /* 目标变化时同步刷新"建筑工人小屋回血"区的实时容错时间 */
+    renderBuilders();
   }
 
   function findBuild(gid){ for(var i=0;i<buildList.length;i++){ if(buildList[i].gid===gid)return buildList[i]; } return null; }
@@ -247,6 +343,7 @@
     var V=parsed.village;
     if(!V){ showImportError("村庄存档数据格式异常（无 village 字段）。请重新到村庄存档分析页解析。"); return; }
     var eqCnt=0, spCnt=0, bCnt=0;
+    var importedHuts=[];
     /* 装备 */
     (V.equipment||[]).forEach(function(e){
       var info=EQUIP_MAP[e.data];
@@ -263,6 +360,7 @@
     (V.buildings||[]).forEach(function(b){
       var gid=String(b.data);
       var lv=intv(b.lvl);
+      if(gid==="1000015")importedHuts.push(lv);
       if(bmax[gid]==null||lv>bmax[gid])bmax[gid]=lv;
     });
     Object.keys(bmax).forEach(function(gid){
@@ -275,8 +373,14 @@
     (V.buildings||[]).forEach(function(b){ if(b.weapon!=null)th=intv(b.lvl); });
     if(!th)(V.buildings||[]).forEach(function(b){ if(b.data===1000001||/大本营/.test(b.data&&IDMAP[String(b.data)]?IDMAP[String(b.data)].chineseName:""))th=intv(b.lvl); });
     if(th)STATE.th=th;
+    if(importedHuts.length){
+      importedHuts.sort(function(a,b){return b-a;});
+      STATE.builders.count=Math.min(6,importedHuts.length);
+      STATE.builders.levels=importedHuts.slice(0,STATE.builders.count);
+    }
     renderAll();
     var msg="已从村庄存档分析导入：装备 "+eqCnt+" 件、法术 "+spCnt+" 项（雷电/地震）、建筑 "+bCnt+" 类";
+    if(importedHuts.length)msg+="、建筑工人小屋 "+Math.min(6,importedHuts.length)+" 座";
     if(th)msg+="，大本营 "+th+" 本";
     flashImportOk(msg);
   }
@@ -294,16 +398,23 @@
   }
 
   function clearAllLevels(){
-    STATE.eq={}; STATE.eqOn={}; STATE.spell={l:0,q:0}; STATE.build={}; STATE.th=0;
+    STATE.eq={}; STATE.eqOn={}; STATE.spell={l:0,q:0}; STATE.build={}; STATE.th=0; STATE.builders={count:0,levels:[]};
     renderAll(); save();
   }
 
   /* ===== 计算 ===== */
   /* 总伤害（不含装备，仅法术）：给定雷电数 a、地震数 b、目标HP H、是否城墙 */
   function spellDmg(a, b, H, ql, ll, wall){
-    var d = a * lightDmg(ll);
-    if(b>0 && ql>0 && H>0){ d += H * quakePct(ql, wall) * quakeSum(b); }
-    return d;
+    return a*lightDmg(ll)+quakeDmg(b,H,ql,wall);
+  }
+  function toleranceData(total,H){
+    var overflow=Math.max(0,total-H), repair=totalBuilderRepair();
+    return {overflow:overflow,repair:repair,seconds:repair>0?overflow/repair:null};
+  }
+  function toleranceHtml(total,H){
+    var t=toleranceData(total,H);
+    if(t.repair<=0)return '<div class="dm-tolerance"><b>回血容错：</b>未设置有效建筑工人小屋，总回复量为 0/秒。</div>';
+    return '<div class="dm-tolerance"><b>回血容错：</b>溢出伤害 '+fmt(t.overflow)+' ÷ '+fmt(t.repair)+'/秒 = <strong>'+t.seconds.toFixed(2)+' 秒</strong></div>';
   }
 
   function calcMax(){
@@ -314,7 +425,7 @@
     var H=buildHP(b.unit,cur), wall=isWall(b.unit);
     var S=intv($("dmSpaceMax").value); if(S<0)S=0; if(S>200)S=200;
     var ql=STATE.spell.q, ll=STATE.spell.l;
-    var Dl=lightDmg(ll), pct=quakePct(ql,wall);
+    var Dl=lightDmg(ll), pct=quakePct(ql);
     var D_eq=totalEquipDmg();
     /* 法术免疫：全免疫 → 雷电与地震均无效；免疫雷电 → 仅地震有效 */
     var immA=immuneAll(b.unit), immL=immuneLight(b.unit);
@@ -328,8 +439,7 @@
     }else{
       for(var btry=0; btry<=S; btry++){
         var atry=S-btry;
-        var d=D_eq + atry*Dl;
-        if(btry>0 && pct>0 && H>0) d += H*pct*quakeSum(btry);
+        var d=D_eq + atry*Dl + (pct>0?quakeDmg(btry,H,ql,wall):0);
         if(d>best.dmg)best={a:atry,b:btry,dmg:d};
       }
     }
@@ -343,7 +453,7 @@
     if(cur<=0){ renderMinResult(null,"目标建筑未设置等级，请先在上方设定。"); return; }
     var H=buildHP(b.unit,cur), wall=isWall(b.unit);
     var ql=STATE.spell.q, ll=STATE.spell.l;
-    var Dl=lightDmg(ll), pct=quakePct(ql,wall);
+    var Dl=lightDmg(ll), pct=quakePct(ql);
     var D_eq=totalEquipDmg();
     /* 法术免疫 */
     var immA=immuneAll(b.unit), immL=immuneLight(b.unit);
@@ -363,7 +473,7 @@
     var best=null;
     var cap = QUAKE_SEARCH_CAP;
     for(var btry=0; btry<=cap; btry++){
-      var eqDmg = (btry>0 && pct>0) ? H*pct*quakeSum(btry) : 0;
+      var eqDmg = (btry>0 && pct>0) ? quakeDmg(btry,H,ql,wall) : 0;
       var remain = H - D_eq - eqDmg;
       var atry=0;
       if(remain>0){
@@ -392,7 +502,7 @@
     if(err){ box.innerHTML='<div class="dm-warn">'+esc(err)+'</div>'; box.classList.add("show"); return; }
     if(!r){ box.classList.remove("show"); return; }
     var b=r.best;
-    var eqDmg=r.D_eq, liDmg=b.a*r.Dl, qDmg=b.b>0?(r.H*r.pct*quakeSum(b.b)):0;
+    var eqDmg=r.D_eq, liDmg=b.a*r.Dl, qDmg=b.b>0?quakeDmg(b.b,r.H,r.ql,r.wall):0;
     var html='<div class="dm-result-headline">';
     html+='<div class="dm-rh-label">最高伤害（法术空间上限 '+r.S+'）</div>';
     html+='<div class="dm-rh-value"><span class="dm-grad">'+fmt(b.dmg)+'</span></div>';
@@ -404,6 +514,7 @@
     if(r.S>0 && b.a===0 && b.b===0 && r.D_eq===0)html+='<span class="dm-chip">⚠️ 未设定法术等级，仅装备伤害</span>';
     html+='</div></div>';
     html+=breakdownTable(r, b, eqDmg, liDmg, qDmg);
+    html+=toleranceHtml(b.dmg,r.H);
     if(r.immA){ html+='<div class="dm-warn">🛡 该建筑对所有法术免疫，雷电与地震均无效，仅英雄装备伤害生效。</div>'; }
     else if(r.immL){ html+='<div class="dm-warn">🛡 该建筑对雷电法术免疫（雷电伤害按 0 计），地震法术仍然有效。</div>'; }
     if(r.ql<=0 && r.ll<=0){ html+='<div class="dm-warn">未设定雷电/地震法术等级，无法术伤害贡献。请先设定法术等级。</div>'; }
@@ -418,11 +529,12 @@
       html+='<tr><td>⚡ 雷电法术 Lv'+ll+'</td><td>'+b.a+'</td><td class="dm-num">'+fmt(lightDmg(ll))+'</td><td class="dm-num">'+fmt(liDmg)+'</td></tr>';
     }
     if(b.b>0){
-      html+='<tr><td>🌍 地震法术 Lv'+ql+'（'+fmtPct(quakePct(ql,r.wall))+' 全额，'+b.b+' 次累计系数 '+quakeSum(b.b).toFixed(4)+'）</td><td>'+b.b+'</td><td class="dm-num">按递减</td><td class="dm-num">'+fmt(qDmg)+'</td></tr>';
+      html+='<tr><td>🌍 地震法术 Lv'+ql+'（'+fmtPct(quakePct(ql))+' 全额'+(r.wall?'，城墙四震必毁':'，逐次递减')+'）</td><td>'+b.b+'</td><td class="dm-num">'+(r.wall&&b.b>=4?'第4瓶补足':'按递减')+'</td><td class="dm-num">'+fmt(qDmg)+'</td></tr>';
       /* 逐次明细 */
       for(var i=1;i<=b.b;i++){
-        var once=H*quakePct(ql,r.wall)*(1/(2*i-1));
-        html+='<tr><td style="padding-left:30px; color:var(--ink-faint);">└ 第 '+i+' 次（系数 1/'+(2*i-1)+'）</td><td>1</td><td class="dm-num">'+fmt(once)+'</td><td class="dm-num">'+fmt(once)+'</td></tr>';
+        var once=quakeHitDmg(i,H,ql,r.wall);
+        var note=r.wall&&i===4?'补足剩余生命值':(r.wall&&i>4?'目标已摧毁':'系数 1/'+(2*i-1));
+        html+='<tr><td style="padding-left:30px; color:var(--ink-faint);">└ 第 '+i+' 次（'+note+'）</td><td>1</td><td class="dm-num">'+fmt(once)+'</td><td class="dm-num">'+fmt(once)+'</td></tr>';
       }
     }
     html+='<tr class="dm-total"><td>合计</td><td>'+((b.a||0)+(b.b||0))+' 法术</td><td></td><td class="dm-num">'+fmt(b.dmg!=null?b.dmg:(eqDmg+liDmg+qDmg))+'</td></tr>';
@@ -439,7 +551,7 @@
     if(err){ box.innerHTML='<div class="dm-warn">'+esc(err)+'</div>'; box.classList.add("show"); return; }
     if(!r){ box.classList.remove("show"); return; }
     var b=r.best;
-    var eqDmg=r.D_eq, liDmg=b.liDmg!=null?b.liDmg:(b.a*r.Dl), qDmg=b.eqDmg!=null?b.eqDmg:(b.b>0?r.H*r.pct*quakeSum(b.b):0);
+    var eqDmg=r.D_eq, liDmg=b.liDmg!=null?b.liDmg:(b.a*r.Dl), qDmg=b.eqDmg!=null?b.eqDmg:(b.b>0?quakeDmg(b.b,r.H,r.ql,r.wall):0);
     var total=eqDmg+liDmg+qDmg;
     var html='<div class="dm-result-headline dm-ok">';
     html+='<div class="dm-rh-label">摧毁所需最少法术空间</div>';
@@ -458,6 +570,7 @@
     if(!r.eqSolo){
       html+=minBreakdownTable(r, b, eqDmg, liDmg, qDmg, total);
     }
+    html+=toleranceHtml(total,r.H);
     if(r.immA){ html+='<div class="dm-warn">🛡 该建筑对所有法术免疫，仅英雄装备伤害生效。</div>'; }
     else if(r.immL){ html+='<div class="dm-warn">🛡 该建筑对雷电法术免疫（雷电伤害按 0 计），地震法术仍然有效。</div>'; }
     box.innerHTML=html; box.classList.add("show");
@@ -468,10 +581,11 @@
     var html='<div class="dm-breakdown"><table><thead><tr><th>伤害来源</th><th>数量 / 占法术空间</th><th>单次伤害</th><th style="text-align:right">小计</th></tr></thead><tbody>';
     if(eqDmg>0)html+='<tr><td>🛡️ 英雄装备（技能伤害累计）</td><td>—（不占法术空间）</td><td>—</td><td class="dm-num">'+fmt(eqDmg)+'</td></tr>';
     if(b.b>0){
-      html+='<tr><td>🌍 地震法术 Lv'+ql+'（'+fmtPct(quakePct(ql,r.wall))+' 全额，'+b.b+' 次累计系数 '+quakeSum(b.b).toFixed(4)+'）</td><td>'+b.b+' 格</td><td class="dm-num">按递减</td><td class="dm-num">'+fmt(qDmg)+'</td></tr>';
+      html+='<tr><td>🌍 地震法术 Lv'+ql+'（'+fmtPct(quakePct(ql))+' 全额'+(r.wall?'，城墙四震必毁':'，逐次递减')+'）</td><td>'+b.b+' 格</td><td class="dm-num">'+(r.wall&&b.b>=4?'第4瓶补足':'按递减')+'</td><td class="dm-num">'+fmt(qDmg)+'</td></tr>';
       for(var i=1;i<=b.b;i++){
-        var once=H*quakePct(ql,r.wall)*(1/(2*i-1));
-        html+='<tr><td style="padding-left:30px; color:var(--ink-faint);">└ 第 '+i+' 次（系数 1/'+(2*i-1)+'）</td><td>1 格</td><td class="dm-num">'+fmt(once)+'</td><td class="dm-num">'+fmt(once)+'</td></tr>';
+        var once=quakeHitDmg(i,H,ql,r.wall);
+        var note=r.wall&&i===4?'补足剩余生命值':(r.wall&&i>4?'目标已摧毁':'系数 1/'+(2*i-1));
+        html+='<tr><td style="padding-left:30px; color:var(--ink-faint);">└ 第 '+i+' 次（'+note+'）</td><td>1 格</td><td class="dm-num">'+fmt(once)+'</td><td class="dm-num">'+fmt(once)+'</td></tr>';
       }
     }
     if(b.a>0){
@@ -496,10 +610,23 @@
 
   /* ===== 持久化 ===== */
   function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(STATE)); }catch(e){} }
-  function load(){ try{ var s=localStorage.getItem(LS_KEY); if(s){ var o=JSON.parse(s); if(o&&o.eq)STATE=o; } }catch(e){} }
+  function load(){
+    try{
+      var s=localStorage.getItem(LS_KEY);
+      if(s){
+        var o=JSON.parse(s);
+        if(o&&o.eq){
+          STATE=o;
+          if(!STATE.eqOn)STATE.eqOn={};
+          if(!STATE.builders)STATE.builders={count:0,levels:[]};
+          if(!Array.isArray(STATE.builders.levels))STATE.builders.levels=[];
+        }
+      }
+    }catch(e){}
+  }
 
   function renderAll(){
-    renderSpellLevels(); renderTHLevels(); renderEquipGroups(); renderBuildGroups(); renderTargetOptions(); renderTargetInfo(); save();
+    renderSpellLevels(); renderTHLevels(); renderEquipGroups(); renderBuilders(); renderBuildGroups(); renderTargetOptions(); renderTargetInfo(); save();
   }
 
   function init(){
@@ -509,9 +636,10 @@
       /* 法术等级变化 */
       $("dmLightLvl").addEventListener("change", function(){ STATE.spell.l=intv(this.value); renderTargetInfo(); save(); });
       $("dmQuakeLvl").addEventListener("change", function(){ STATE.spell.q=intv(this.value); renderTargetInfo(); save(); });
-      /* 大本营 */
+      /* 大本营 / 参与回血的建筑工人小屋 */
       $("dmTHLvl").addEventListener("change", function(){ STATE.th=intv(this.value); save(); });
       $("dmFillTHBtn").addEventListener("click", fillTHLevels);
+      $("dmBuilderCount").addEventListener("change",function(){ STATE.builders.count=Math.max(0,Math.min(6,intv(this.value))); renderBuilders(); save(); });
       /* 目标建筑 */
       $("dmTargetBuild").addEventListener("change", function(){ STATE.target=this.value; renderTargetInfo(); save(); });
       /* 导入 */

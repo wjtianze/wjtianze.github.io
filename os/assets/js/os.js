@@ -9,7 +9,7 @@
 'use strict';
 
 /* 系统版本（每次发布更新必须同步递增，并更新 dev/os/version.json） */
-const OS_VERSION = '2.1.0';
+const OS_VERSION = '2.2.0';
 
 /* ===================== 存储层 ===================== */
 const Store = {
@@ -303,7 +303,8 @@ const WM = {
       title.append(icons, titleIcon, titleText, spacer);
     }
 
-    const body = el('div', 'win-body pad');
+    const bodyClass = app.id === 'ai-chat' || app.id === 'terminal' ? 'win-body pad app-shell-body' : 'win-body pad';
+    const body = el('div', bodyClass);
     const resizers = ['r-nw','r-n','r-ne','r-e','r-se','r-s','r-sw','r-w'];
     const resizerEls = resizers.map(r => { const e = el('div', 'win-resizer ' + r); e.dataset.dir = r; return e; });
 
@@ -1054,14 +1055,24 @@ const AI = {
   async request(c, body, onData, signal) {
     if (window.tzDesktop?.requestAI) {
       let text = '';
-      const response = await window.tzDesktop.requestAI({ url: c.url, key: c.key, body }, chunk => {
-        if (signal && signal.aborted) return;
-        text += chunk;
-        if (onData) onData(chunk);
-      });
-      if (signal && signal.aborted) { const err = new Error('已停止生成'); err.name = 'AbortError'; throw err; }
-      if (response.status < 200 || response.status >= 300) throw this.httpError(response.status, text);
-      return text;
+      const id = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : 'ai-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+      const abort = () => window.tzDesktop.abortAI && window.tzDesktop.abortAI(id);
+      if (signal) {
+        if (signal.aborted) { const err = new Error('已停止生成'); err.name = 'AbortError'; throw err; }
+        signal.addEventListener('abort', abort, { once: true });
+      }
+      try {
+        const response = await window.tzDesktop.requestAI({ id, url: c.url, key: c.key, body }, chunk => {
+          if (signal && signal.aborted) return;
+          text += chunk;
+          if (onData) onData(chunk);
+        });
+        if (signal && signal.aborted) { const err = new Error('已停止生成'); err.name = 'AbortError'; throw err; }
+        if (response.status < 200 || response.status >= 300) throw this.httpError(response.status, text);
+        return text;
+      } finally {
+        if (signal) signal.removeEventListener('abort', abort);
+      }
     }
     const res = await fetch(c.url, {
       method: 'POST',
@@ -1361,7 +1372,7 @@ const CLI = {
 '  uninstall 应用id            卸载 AI 软件\n' +
 '  rename 应用id|新名[|图标]    重命名软件\n' +
 '  sethtml 应用id|HTML          改写软件代码并热更新\n' +
-'  gethtml 应用id              查看软件代码概要\n' +
+'  gethtml 应用id              查看软件完整 HTML 代码\n' +
 '── AI ──\n' +
 '  aiconfig                    查看当前 AI 配置\n' +
 '  aiconfig url|key|model|maxtokens 值    修改配置\n' +
@@ -1450,7 +1461,13 @@ const CLI = {
       need(r, 'gethtml 应用id');
       const app = Store.getApps().find(a => a.id === r);
       if (!app) throw new Error('未找到已安装软件：' + r);
-      return '「' + app.name + '」代码共 ' + (app.html || '').length + ' 字符，开头片段：\n' + (app.html || '').slice(0, 400);
+      const html = app.html || '';
+      // 大段 HTML 单独一行作为"待展开"提示，正文通过 print 的自动折叠渲染，
+      // 避免一次性 inline 渲染数 MB 文本导致浏览器只渲染开头部分。
+      if (html.length > 5000) {
+        return '「' + app.name + '」完整 HTML 代码共 ' + html.length + ' 字符：\n' + html;
+      }
+      return '「' + app.name + '」完整 HTML 代码（' + html.length + ' 字符）：\n' + html;
     },
     aiconfig: (r) => {
       if (!r) {
@@ -1616,6 +1633,20 @@ function initTerminal() {
   if (!out || !inp) return;
   const print = (text, cls) => {
     if (text === '' || text == null) return;
+    // 超长文本（>5000 字符）改用 <details><pre> 自动折叠，避免一次性 inline 渲染
+    // 大量 < 与 > 也能在 pre 内被等宽字体整齐排版，且不会拖累 term-out 整体渲染（曾因大段 HTML
+    // 一次 append 到 div.textContent 导致浏览器只渲染了开头几百 KB，后续内容看似被截断）。
+    if (typeof text === 'string' && text.length > 5000) {
+      const wrap = el('details', 'tz-term-big');
+      const sum = el('summary', '', '已输出 ' + text.length + ' 字符（点击展开）');
+      const pre = el('pre', 'tz-term-pre');
+      pre.textContent = text;
+      wrap.appendChild(sum);
+      wrap.appendChild(pre);
+      if (cls) wrap.classList.add(cls);
+      out.appendChild(wrap);
+      return;
+    }
     const d = el('div', cls || '');
     d.textContent = text;
     out.appendChild(d);
@@ -2103,7 +2134,7 @@ function renderAiBody(text, cmdLog, ongoing) {
   if (cmdLog.length) {
     html += '<details class="cmd-card" open><summary>执行了 ' + cmdLog.length + ' 条系统命令</summary><div class="cmd-body">' +
       cmdLog.map(c => '<div class="cmd-line">' + escapeHtml(c.cmd) + '</div>' +
-        (c.out ? '<div class="cmd-res' + (c.ok ? '' : ' err') + '">' + escapeHtml(String(c.out).slice(0, 600)) + '</div>' : '<div class="cmd-res">(完成)</div>')
+        (c.out ? '<div class="cmd-res' + (c.ok ? '' : ' err') + '">' + escapeHtml(String(c.out)) + '</div>' : '<div class="cmd-res">(完成)</div>')
       ).join('') + '</div></details>';
   }
   if (!html && ongoing) html = '';
@@ -2178,6 +2209,8 @@ function renderMath(node) {
 }
 /* 当前生成的中止控制器（全局唯一，对话共享历史，同时只允许一路生成） */
 let chatCtl = null;
+/* 停止时被锁定的 bubble / body 引用，用于停止瞬间把"已停止"提示写上去（不依赖 await 链路） */
+let chatCtlTarget = null;
 
 function updateChatSendBtn() {
   const sendBtn = $('#chatSend');
@@ -2187,7 +2220,28 @@ function updateChatSendBtn() {
   sendBtn.title = busy ? '停止生成' : '发送';
   sendBtn.classList.toggle('stopping', busy);
 }
-function stopGeneration() { if (chatCtl) chatCtl.abort(); }
+function stopGeneration() {
+  if (!chatCtl) return;
+  // 1) 立刻把"⏹ 已停止生成"提示写进 bubble（不等 runGeneration 走完 catch/finally，避免用户看到残留内容"以为没停"）
+  try {
+    const t = chatCtlTarget;
+    if (t && t.bubble) {
+      const existing = t.stopped || t.bubble.querySelector('.tz-stopped-tip');
+      if (!existing) {
+        const tip = el('div', 'tz-stopped-tip', '⏹ 已停止生成');
+        tip.style.cssText = 'color:var(--ink-faint);font-size:12px;margin-top:6px';
+        t.bubble.appendChild(tip);
+        if (t.msgs) t.msgs.scrollTop = t.msgs.scrollHeight;
+      }
+    }
+  } catch (_) {}
+  // 2) 中断 AbortController（同步）；listener 链会立即 reject 渲染层 promise 并通知主进程
+  try { chatCtl.abort(); } catch (_) {}
+  // 3) 即时把按钮变回 ➤（catch/finally 还会再调用一次，但这里先给用户即时反馈）
+  chatCtl = null;
+  chatCtlTarget = null;
+  updateChatSendBtn();
+}
 
 // 编辑某条用户消息：内容填入输入框，发送时删除该消息及后续
 function startEditMessage(i) {
@@ -2249,10 +2303,16 @@ async function sendChat() {
 async function runGeneration(userText) {
   const msgs = $('#chatMsgs');
   if (!msgs) return;
-  const aiMsg = appendMsg('ai', '<span class="typing-dots"><span></span><span></span><span></span></span>', { raw: true });
+  // 进入生成时若已有 chatCtl 残留（异常态），先 abort 并清空，防止多个生成并行
+  if (chatCtl) { try { chatCtl.abort(); } catch (_) {} chatCtl = null; chatCtlTarget = null; }
+  // 当 reasoning 还没出来时，msg-bubble 不要显示独立的 typing-dots（避免和"思考过程（进行中…）"details 重复成"两个进度条"）。
+  // 用户看到的进度指示只有"🧠 思考过程（进行中…）"标题一处，简洁清晰。
+  // reasoning 完成后主体才开始 streaming，typing-dots 由初次 renderAiBody 内部统一处理。
+  const aiMsg = appendMsg('ai', '<span class="chat-streaming-placeholder">正在等待 AI 首字…</span>', { raw: true });
   const bubble = aiMsg.querySelector('.msg-bubble');
   const bodyEl = aiMsg.querySelector('.msg-body');
   chatCtl = new AbortController();
+  chatCtlTarget = { bubble, bodyEl, msgs, stopped: false };
   updateChatSendBtn();
   ensureKatex().catch(() => {});
   const agentOn = Store.getAgentMode();
@@ -2264,9 +2324,20 @@ async function runGeneration(userText) {
   let paintFrame = 0;
   const paint = () => {
     if (paintFrame) return;
+    if (chatCtl && chatCtl.signal && chatCtl.signal.aborted) return; // 已停止，不再 paint 新内容
     paintFrame = requestAnimationFrame(() => {
       paintFrame = 0;
-      bubble.innerHTML = reasoningHtml(reasoning, true) + renderAiBody(displayText, cmdLog, true);
+      if (chatCtl && chatCtl.signal && chatCtl.signal.aborted) return;
+      const reasoningPart = reasoningHtml(reasoning, !!reasoning && !chatCtl?.signal?.aborted);
+      // 主体区：reasoning 还在进行时显示"等待首字"占位，reasoning 完成或没开启深度思考时显示实际内容
+      let body;
+      if (deepOn && !reasoning) {
+        body = '<span class="chat-streaming-placeholder">正在等待 AI 思考…</span>';
+      } else {
+        body = renderAiBody(displayText, cmdLog, !chatCtl?.signal?.aborted);
+        if (!body && !chatCtl?.signal?.aborted) body = '<span class="chat-streaming-placeholder">正在等待 AI 首字…</span>';
+      }
+      bubble.innerHTML = reasoningPart + body;
       // 流式期间实时渲染 LaTeX（已渲染的 .katex 会被 auto-render 自动跳过）
       if (window.renderMathInElement) { try { window.renderMathInElement(bubble, KATEX_OPTS); } catch {} }
       msgs.scrollTop = msgs.scrollHeight;
@@ -2319,18 +2390,30 @@ async function runGeneration(userText) {
       extra.push({ role: 'user', content: '（系统回执）你请求执行的命令行命令已完成，结果如下：\n' + results.join('\n------\n').slice(0, 4000) + '\n请据此继续回答用户；如无需再执行命令，请直接给出最终回答，不要重复执行同一命令。' });
     }
   } catch (e) {
-    if (e.name === 'AbortError' || /已停止/.test(e.message || '')) stopped = true;
-    else bubble.innerHTML = `<span style="color:#fca5a5">⚠ ${escapeHtml(e.message)}</span>`;
+    if (e && (e.name === 'AbortError' || /已停止/.test(e.message || ''))) {
+      stopped = true;
+      if (chatCtlTarget) chatCtlTarget.stopped = true;
+    } else {
+      bubble.innerHTML = `<span style="color:#fca5a5">⚠ ${escapeHtml(e.message)}</span>`;
+    }
   } finally {
     if (paintFrame) { cancelAnimationFrame(paintFrame); paintFrame = 0; }
     chatCtl = null;
+    chatCtlTarget = null;
     updateChatSendBtn();
   }
   const full = displayText.trim();
-  if (!full && !reasoning) return; // 仅错误信息
+  if (!full && !reasoning) {
+    // 没有任何内容生成：把"等待中"占位移除，避免在错误或空响应下还显示进度文字
+    if (bubble) {
+      const ph = bubble.querySelector('.chat-streaming-placeholder');
+      if (ph) ph.remove();
+    }
+    return; // 仅错误信息
+  }
   // 完成（含手动停止的部分内容）：定稿渲染 + 入库
   bubble.innerHTML = reasoningHtml(reasoning, false) + renderAiBody(displayText, cmdLog, false) +
-    (stopped ? '<div style="color:var(--ink-faint);font-size:12px;margin-top:6px">⏹ 已停止生成</div>' : '');
+    (stopped ? '<div class="tz-stopped-tip" style="color:var(--ink-faint);font-size:12px;margin-top:6px">⏹ 已停止生成</div>' : '');
   if (window.renderMathInElement) { try { window.renderMathInElement(bubble, KATEX_OPTS); } catch {} }
   else renderMath(aiMsg);
   const history = Store.getChat();

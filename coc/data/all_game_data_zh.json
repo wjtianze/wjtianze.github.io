@@ -54282,6 +54282,7 @@
           "DefenceTroopCount": "1",
           "DefenceTroopCharacter": "Defending Builder",
           "DefenceTroopLevel": "1",
+          "BuilderRepairPerSecond": "50",
           "requiredTownHallLevel": "14"
         },
         {
@@ -54301,6 +54302,7 @@
           "DefenceTroopCount": "1",
           "DefenceTroopCharacter": "Defending Builder",
           "DefenceTroopLevel": "2",
+          "BuilderRepairPerSecond": "60",
           "requiredTownHallLevel": "14"
         },
         {
@@ -54320,6 +54322,7 @@
           "DefenceTroopCount": "1",
           "DefenceTroopCharacter": "Defending Builder",
           "DefenceTroopLevel": "3",
+          "BuilderRepairPerSecond": "70",
           "requiredTownHallLevel": "14"
         },
         {
@@ -54339,6 +54342,7 @@
           "DefenceTroopCount": "1",
           "DefenceTroopCharacter": "Defending Builder",
           "DefenceTroopLevel": "4",
+          "BuilderRepairPerSecond": "80",
           "requiredTownHallLevel": "15"
         },
         {
@@ -54358,6 +54362,7 @@
           "DefenceTroopCount": "1",
           "DefenceTroopCharacter": "Defending Builder",
           "DefenceTroopLevel": "5",
+          "BuilderRepairPerSecond": "85",
           "requiredTownHallLevel": "16"
         },
         {
@@ -54377,6 +54382,7 @@
           "DefenceTroopCount": "1",
           "DefenceTroopCharacter": "Defending Builder",
           "DefenceTroopLevel": "6",
+          "BuilderRepairPerSecond": "90",
           "requiredTownHallLevel": "17"
         },
         {
@@ -54396,6 +54402,7 @@
           "DefenceTroopCount": "1",
           "DefenceTroopCharacter": "Defending Builder",
           "DefenceTroopLevel": "7",
+          "BuilderRepairPerSecond": "95",
           "requiredTownHallLevel": "18"
         }
       ],

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>伤害计算器 · COC 专区 · 天择网</title>
-  <meta name="description" content="部落冲突家乡伤害计算器：基于雷电法术、地震法术与英雄装备数据，计算给定法术空间内的最高伤害、摧毁建筑所需最少法术，支持从村庄存档JSON一键导入等级。" />
+  <meta name="description" content="部落冲突家乡伤害计算器：基于雷电法术、地震法术与英雄装备数据，计算给定法术空间内的最高伤害、摧毁建筑所需最少法术；新增建筑工人小屋回血量与法术方案容错时间计算，支持从村庄存档JSON一键导入等级。城墙固定规则：3 震不毁、4 震必毁。" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
@@ -83,6 +83,17 @@
     .coc-tool.dmg-calc .dm-tab-pane.active { display: block; }
     .coc-tool.dmg-calc .dm-subhead { font-size: 13px; color: var(--ink-faint); margin: 6px 0 12px; }
     .coc-tool.dmg-calc .dm-eq-total { font-size: 12.5px; color: var(--coc-green); font-family: ui-monospace, Menlo, Consolas, monospace; margin-top: 10px; padding: 8px 12px; background: rgba(16,185,129,.07); border-radius: 8px; border: 1px solid rgba(16,185,129,.18); }
+    .coc-tool.dmg-calc .dm-builder-box { margin-top: 14px; padding: 14px 16px; background: rgba(4,9,27,.5); border: 1px solid var(--coc-stroke); border-radius: 12px; }
+    .coc-tool.dmg-calc .dm-builder-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+    .coc-tool.dmg-calc .dm-builder-head label { color: var(--ink-dim); font-size: 13px; }
+    .coc-tool.dmg-calc .dm-builder-head input { width: 74px; margin-left: 8px; background: rgba(15,23,42,.8); border: 1px solid var(--coc-stroke); border-radius: 8px; color: var(--ink); padding: 7px 9px; }
+    .coc-tool.dmg-calc .dm-builder-levels { display: grid; grid-template-columns: repeat(auto-fit,minmax(210px,1fr)); gap: 8px 14px; margin-top: 12px; }
+    .coc-tool.dmg-calc .dm-builder-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--ink-dim); font-size: 12.5px; }
+    .coc-tool.dmg-calc .dm-builder-empty { color: var(--ink-faint); font-size: 12.5px; }
+    .coc-tool.dmg-calc .dm-builder-total { margin-left: auto; color: var(--coc-green); font: 12.5px/1.4 ui-monospace,Menlo,Consolas,monospace; }
+    .coc-tool.dmg-calc .dm-tolerance { margin-top: 12px; padding: 11px 15px; border-radius: 10px; border: 1px solid rgba(56,189,248,.28); background: rgba(56,189,248,.08); color: var(--ink-dim); font-size: 13px; }
+    .coc-tool.dmg-calc .dm-tolerance strong { color: var(--coc-blue); }
+    @media (max-width: 620px) { .coc-tool.dmg-calc .dm-builder-total { width: 100%; margin-left: 0; } }
   </style>
 </head>
 <body class="coc-tool dmg-calc">
@@ -108,7 +119,7 @@
       </div>
       <div class="coc-kicker reveal in d1">Damage Calculator · Home Village Only</div>
       <h1 class="reveal in d1">法术伤害 <span class="grad">计算器</span></h1>
-      <p class="reveal in d2">基于雷电法术、地震法术各等级伤害数据与英雄装备数据，计算给定法术空间内对家乡目标建筑能造成的<b style="color:var(--ink);">最高伤害</b>，以及<b style="color:var(--ink);">摧毁指定建筑所需的最少法术</b>。支持从村庄存档分析一键导入等级、按大本营等级自动设定建筑等级。所有计算在浏览器本地完成。</p>
+      <p class="reveal in d2">基于雷电法术、地震法术各等级伤害数据与英雄装备数据，计算给定法术空间内对家乡目标建筑能造成的<b style="color:var(--ink);">最高伤害</b>，以及<b style="color:var(--ink);">摧毁指定建筑所需的最少法术</b>。<b style="color:var(--ink);">新增</b>：建筑工人小屋回血量与当前方案<b style="color:var(--ink);">回血容错时间</b>——溢出伤害除以小屋总回复速度。支持从村庄存档分析一键导入等级、按大本营等级自动设定建筑等级。所有计算在浏览器本地完成。</p>
     </section>
 
     <!-- 法术机制说明 -->
@@ -125,9 +136,9 @@
           </div>
           <div class="dm-mech-card">
             <h4>🌍 地震法术（百分比伤害）</h4>
-            <p>造成基于建筑<b style="color:var(--ink);">最大生命值</b>的百分比伤害，对同一建筑重复施放伤害递减。该百分比对所有建筑统一（不分城墙与否）。</p>
-            <div class="dm-formula">第 n 次伤害 = 全额 × 1/(2n−1)</div>
-            <p style="font-size:12px; color:var(--ink-faint); margin-top:8px;">第 2 次 = 1/3，第 3 次 = 1/5，第 4 次 = 1/7 ……参考：5 级地震全额为 29%，1 级为 14.5%。</p>
+            <p>普通建筑按最大生命值造成百分比伤害，对同一建筑重复施放时递减。<b style="color:var(--ink);">城墙遵守固定规则：3 瓶地震无论等级都不能单独摧毁，4 瓶无论城墙和地震等级都必定摧毁。</b></p>
+            <div class="dm-formula">普通建筑第 n 次 = 全额 × 1/(2n−1)；城墙第 4 瓶补足剩余 HP</div>
+            <p style="font-size:12px; color:var(--ink-faint); margin-top:8px;">普通建筑第 2 次 = 1/3，第 3 次 = 1/5……参考：5 级地震全额为 29%，1 级为 14.5%。</p>
           </div>
           <div class="dm-mech-card">
             <h4>🛡️ 英雄装备（技能伤害）</h4>
@@ -193,6 +204,18 @@
           <span class="dm-import-note">依据数据中各等级的 requiredTownHallLevel 字段</span>
         </div>
         <div id="dmBuildGroups"></div>
+
+        <div class="section-head" style="margin:26px 0 10px;">
+          <h3 style="font-size:15px; font-weight:700; color:var(--ink);">🔨 建筑工人小屋回血量计算</h3>
+        </div>
+        <p class="dm-subhead">设置实际参与修复目标建筑的小屋数量与各自等级。每座小屋按自身等级读取数据中的<b style="color:var(--ink);">每秒回复量</b>（BuilderRepairPerSecond），求和得到总回复速度。然后用当前法术方案（默认 11 格法术 + 选定目标建筑）相对目标生命值的<b style="color:var(--ink);">溢出伤害</b>除以总回复速度，得到<b style="color:var(--ink);">回血容错时间</b>（秒）—— 即溢出伤害能"白嫖"这些建筑工人小屋回复多少秒。从村庄存档分析一键导入时会自动填入实际的小屋数量与等级。</p>
+        <div class="dm-builder-box">
+          <div class="dm-builder-head">
+            <label for="dmBuilderCount">参与回血的小屋数量<input id="dmBuilderCount" type="number" min="0" max="6" value="0" /></label>
+            <div class="dm-builder-total" id="dmBuilderTotal">总回复量：0 生命值/秒</div>
+          </div>
+          <div class="dm-builder-levels" id="dmBuilderLevels"></div>
+        </div>
       </div>
     </section>
 
@@ -254,7 +277,7 @@
     </div>
   </footer>
 
-  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260718a"></script>
-  <script defer src="https://wjtianze.github.io/coc/dmg-calc/app.js?v=20260718a"></script>
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260719a"></script>
+  <script defer src="https://wjtianze.github.io/coc/dmg-calc/app.js?v=20260719a"></script>
 </body>
 </html>
