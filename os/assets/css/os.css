@@ -321,12 +321,21 @@ input, textarea { font-family: inherit; }
 }
 .win-title:hover .wctrl.uninst svg { opacity: 1; }
 .wctrl.uninst:hover { filter: brightness(1.15); }
+/* 置顶按钮：常态灰色图钉，激活后紫色高亮 */
+.wctrl.pin { background: rgba(255,255,255,0.15); color: var(--ink-dim); }
+.wctrl.pin.active { background: var(--c-violet); color: #fff; box-shadow: 0 0 0 1px rgba(139,92,246,0.5); }
+.wctrl.pin:hover { filter: brightness(1.15); }
+.win.pinned { border-color: rgba(139,92,246,0.55); box-shadow: var(--sh-lg), 0 0 0 1px rgba(139,92,246,0.35); }
 .win.mac-style .win-title-icons .wctrl { width: 12px; height: 12px; }
 .win.mac-style .win-title-icons .wctrl svg { opacity: 0; }
 .win.mac-style .win-title-icons:hover .wctrl svg { opacity: 1; }
 .win.mac-style .win-title-icons .wctrl.uninst { width: 12px; height: 12px; }
 .win.mac-style .win-title-icons .wctrl.uninst svg { opacity: 0; }
 .win.mac-style .win-title-icons:hover .wctrl.uninst svg { opacity: 1; }
+.win.mac-style .win-title-icons .wctrl.pin { width: 12px; height: 12px; }
+.win.mac-style .win-title-icons .wctrl.pin svg { opacity: 0; }
+.win.mac-style .win-title-icons:hover .wctrl.pin svg { opacity: 1; }
+.win.mac-style .wctrl.pin.active svg { opacity: 1; }
 
 .win-body { flex: 1; min-height: 0; overflow: auto; position: relative; background: rgba(8,12,28,0.4); }
 .win-body.no-pad { padding: 0; }
@@ -617,8 +626,10 @@ textarea.tz-dialog-input { resize: vertical; min-height: 70px; line-height: 1.5;
 .win:not(.mac-style) .wctrl:hover { background: rgba(128,128,128,0.18); filter: none; }
 .win:not(.mac-style) .wctrl.close:hover { background: #e81123; }
 .win:not(.mac-style) .wctrl.close:hover svg { stroke: #fff; }
-/* 顺序：刷新/卸载 → 最小化 → 最大化 → 关闭 */
-.win:not(.mac-style) .wctrl.reload, .win:not(.mac-style) .wctrl.uninst { order: -1; width: 34px; background: transparent; }
+/* 顺序：刷新/卸载/置顶 → 最小化 → 最大化 → 关闭 */
+.win:not(.mac-style) .wctrl.reload, .win:not(.mac-style) .wctrl.uninst, .win:not(.mac-style) .wctrl.pin { order: -1; width: 34px; background: transparent; }
+.win:not(.mac-style) .wctrl.pin.active { background: rgba(139,92,246,0.22); color: var(--c-violet); }
+.win:not(.mac-style) .wctrl.pin.active:hover { background: rgba(139,92,246,0.32); }
 .win:not(.mac-style) .wctrl.min { order: 1; }
 .win:not(.mac-style) .wctrl.max { order: 2; }
 .win:not(.mac-style) .wctrl.close { order: 3; }
@@ -914,6 +925,16 @@ body.tzos.light .doc-pane { background: rgba(255,255,255,0.5); }
 .doc-slide { background: var(--surface); border: 1px solid var(--glass-border); border-radius: 10px; padding: 14px 16px; margin: 12px 0; }
 .doc-slide-no { font-size: 11px; color: var(--c-violet); font-weight: 700; margin-bottom: 8px; }
 .doc-slide-line { font-size: 13.5px; color: var(--ink-dim); line-height: 1.7; padding: 1px 0; }
+
+/* ---------- 文档阅读器缩放工具栏 ---------- */
+.doc-zoombar { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 10px; border-bottom: 1px solid var(--glass-border); background: var(--surface); flex-shrink: 0; }
+.doc-zoombar[hidden] { display: none; }
+.dz-btn { width: 28px; height: 26px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--glass-border); color: var(--ink-dim); font-size: 15px; line-height: 1; display: flex; align-items: center; justify-content: center; transition: background 0.14s; }
+.dz-btn:hover { background: var(--hover); color: var(--ink); }
+.dz-value { position: relative; width: 84px; height: 26px; }
+.dz-value input { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0 22px 0 6px; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--surface-2); color: var(--ink); font-size: 12px; text-align: right; outline: none; }
+.dz-value input:focus { border-color: var(--c-blue); }
+.dz-value select { position: absolute; right: 2px; top: 2px; bottom: 2px; width: 18px; border: none; background: transparent; color: transparent; cursor: pointer; outline: none; }
 
 /* ---------- AI 配置左右分栏 ---------- */
 .app-config.cfg-split { max-width: 980px; display: grid; grid-template-columns: 1fr 1fr; gap: 26px; padding: 22px; }

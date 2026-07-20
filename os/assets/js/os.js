@@ -9,7 +9,7 @@
 'use strict';
 
 /* 系统版本（每次发布更新必须同步递增，并更新 dev/os/version.json） */
-const OS_VERSION = '2.5.0';
+const OS_VERSION = '2.6.0';
 
 /* ===================== 存储层 ===================== */
 const Store = {
@@ -260,6 +260,8 @@ function findApp(id) { return getAllApps().find(a => a.id === id); }
 const WM = {
   windows: [],
   zTop: 100,
+  pinTop: 0,      // 置顶窗口在 9000+ 的次级层级
+  PIN_Z_BASE: 9000,
   openCount: 0,
   // 同一种软件只允许开一个窗口；重复收到打开命令时聚焦已有窗口而不是再开一个。
   // 例外：AI 对话明确支持多开（app.multi）。
@@ -313,7 +315,10 @@ const WM = {
     if (reloadBtn) reloadBtn.title = '刷新（恢复初始状态）';
     const uninstBtn = app.type === 'installed' ? el('button', 'wctrl uninst', '<svg viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 2l4 4M6 2L2 6"/></svg>') : null;
     if (uninstBtn) { uninstBtn.title = '卸载此软件'; }
-    icons.append(closeBtn, minBtn, maxBtn, ...(reloadBtn ? [reloadBtn] : []), ...(uninstBtn ? [uninstBtn] : []));
+    // 置顶按钮（图钉）：所有窗口通用，固定在刷新/卸载之后、最小化之前
+    const pinBtn = el('button', 'wctrl pin', '<svg viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 1v5M2 1h4M3 6l1 1 1-1"/></svg>');
+    pinBtn.title = '置顶窗口';
+    icons.append(closeBtn, minBtn, maxBtn, ...(reloadBtn ? [reloadBtn] : []), ...(uninstBtn ? [uninstBtn] : []), pinBtn);
 
     const titleIcon = el('span', 'win-title-icon', app.icon || '📦');
     const titleText = el('span', 'win-title-text', escapeHtml(app.name || '应用'));
@@ -337,7 +342,7 @@ const WM = {
     winEl.append(title, body, ...resizerEls);
     $('#windows').appendChild(winEl);
 
-    const winObj = { id, appId: app.id, el: winEl, body, minimized: false, maximized: false, app, savedRect: null };
+    const winObj = { id, appId: app.id, el: winEl, body, minimized: false, maximized: false, pinned: false, app, savedRect: null };
     this.windows.push(winObj);
 
     // 渲染内容
@@ -349,6 +354,24 @@ const WM = {
     maxBtn.onclick = (e) => { e.stopPropagation(); this.toggleMax(id); };
     if (reloadBtn) reloadBtn.onclick = (e) => { e.stopPropagation(); this.reload(id); };
     if (uninstBtn) uninstBtn.onclick = (e) => { e.stopPropagation(); uninstallApp(app.id); };
+    pinBtn.onclick = (e) => { e.stopPropagation(); this.togglePin(id); };
+    title.oncontextmenu = (e) => {
+      if (e.target.closest('.wctrl')) return;
+      if (e.target.closest('.win-tabs')) return;
+      e.preventDefault(); e.stopPropagation();
+      const w = this.windows.find(x => x.id === id);
+      if (!w) return;
+      const items = [
+        w.pinned
+          ? { icon: '📌', label: '取消置顶', act: () => this.unpin(id) }
+          : { icon: '📌', label: '置顶窗口', act: () => this.pin(id) },
+        { icon: w.maximized ? '⧉' : '□', label: w.maximized ? '还原' : '最大化', act: () => this.toggleMax(id) },
+        { icon: '🗕', label: '最小化', act: () => this.minimize(id) },
+        { sep: true },
+        { icon: '✕', label: '关闭', act: () => this.close(id) }
+      ];
+      showCtxMenu(e.clientX, e.clientY, items);
+    };
     title.ondblclick = (e) => { if (e.target.closest('.wctrl')) return; if (!isMobile()) this.toggleMax(id); };
     this.bindDrag(winObj);
     this.bindResize(winObj);
@@ -391,7 +414,17 @@ const WM = {
   focus(id) {
     this.windows.forEach(w => { w.el.classList.toggle('focused', w.id === id); });
     const w = this.windows.find(x => x.id === id);
-    if (w) { w.el.style.zIndex = ++this.zTop; if (w.minimized) this.restore(id); }
+    if (w) {
+      // 置顶窗口拥有独立的高位层级，普通窗口永远不能超过
+      if (w.pinned) {
+        w.el.style.zIndex = this.PIN_Z_BASE + (++this.pinTop);
+      } else {
+        // 普通窗口限制在 100~PIN_Z_BASE-1 之间，避免超过置顶层
+        if (this.zTop >= this.PIN_Z_BASE - 1) this.zTop = 100;
+        w.el.style.zIndex = ++this.zTop;
+      }
+      if (w.minimized) this.restore(id);
+    }
     // 任意窗口被聚焦/操作后，退出"显示桌面"状态
     if (window.__tzDesktopShown) {
       window.__tzDesktopShown = false;
@@ -537,6 +570,33 @@ const WM = {
       });
     });
   },
+  pin(id) {
+    const w = this.windows.find(x => x.id === id);
+    if (!w || w.pinned) return;
+    w.pinned = true;
+    w.el.classList.add('pinned');
+    const btn = w.el.querySelector('.wctrl.pin');
+    if (btn) { btn.title = '取消置顶'; btn.classList.add('active'); }
+    this.focus(id);
+    toast('窗口已置顶：' + (w.app.name || '应用'));
+    Taskbar.render();
+  },
+  unpin(id) {
+    const w = this.windows.find(x => x.id === id);
+    if (!w || !w.pinned) return;
+    w.pinned = false;
+    w.el.classList.remove('pinned');
+    const btn = w.el.querySelector('.wctrl.pin');
+    if (btn) { btn.title = '置顶窗口'; btn.classList.remove('active'); }
+    this.focus(id);
+    toast('窗口已取消置顶');
+    Taskbar.render();
+  },
+  togglePin(id) {
+    const w = this.windows.find(x => x.id === id);
+    if (!w) return;
+    w.pinned ? this.unpin(id) : this.pin(id);
+  },
   closeAll() { [...this.windows].forEach(w => this.close(w.id)); }
 };
 
@@ -580,7 +640,12 @@ const Taskbar = {
       items.push(isPinned
         ? { icon: '📌', label: '从任务栏取消固定', act: () => { Store.togglePin(app.id); this.render(); } }
         : { icon: '📌', label: '固定到任务栏', act: () => { Store.togglePin(app.id); this.render(); } });
-      if (w) items.push({ icon: '✕', label: '关闭窗口', act: () => WM.close(w.id) });
+      if (w) {
+        items.push(w.pinned
+          ? { icon: '📍', label: '取消置顶窗口', act: () => { WM.unpin(w.id); this.render(); } }
+          : { icon: '📍', label: '置顶窗口', act: () => { WM.pin(w.id); this.render(); } });
+        items.push({ icon: '✕', label: '关闭窗口', act: () => WM.close(w.id) });
+      }
       showCtxMenu(e.clientX, e.clientY, items);
     };
     container.appendChild(t);
@@ -1423,6 +1488,9 @@ const CLI = {
 '  apps                        列出所有应用（含 id）\n' +
 '  open 应用id                 打开应用\n' +
 '  close 应用id                关闭应用窗口\n' +
+'  pin 应用id                  置顶窗口（也可用 top）\n' +
+'  unpin 应用id                取消置顶窗口\n' +
+'  pinned                      列出当前置顶窗口\n' +
 '  install 名称|图标|HTML       安装新软件（三段以 | 分隔）\n' +
 '  uninstall 应用id            卸载 AI 软件\n' +
 '  rename 应用id|新名[|图标]    重命名软件\n' +
@@ -1471,7 +1539,7 @@ const CLI = {
   aiPrompt() {
     return '\n\n【天择OS 命令行能力】你可以输出 tzcli 代码块让操作系统执行命令，格式（每行一条命令）：\n' +
 '```tzcli\nopen ai-config\nmem add 用户喜欢简洁的回答\n```\n' +
-'可用命令：apps 列出应用id | open/close 应用id | install 名称|图标|完整HTML | uninstall 应用id | rename 应用id|新名[|图标] | sethtml 应用id|完整HTML | gethtml 应用id | aiconfig [url|key|model|maxtokens 值] | price [hit|write|input|output 值] / price unit usd|cny | mem / mem add 内容 / mem del 编号 / mem on|off 编号 | theme dark|light | style win|mac|auto | deepthink on|off | clear chat | notify 文本 | openurl 网址 | bm / bm add 网址|标题 / bm del 编号 | clock | stopwatch [start|stop|reset] | timer 时长(如5m) | coc-data | words | cmd 应用id 指令 [参数] | js JavaScript代码 | version\n' +
+'可用命令：apps 列出应用id | open/close/pin/unpin 应用id | top 应用id 置顶 | pinned 列出置顶 | install 名称|图标|完整HTML | uninstall 应用id | rename 应用id|新名[|图标] | sethtml 应用id|完整HTML | gethtml 应用id | aiconfig [url|key|model|maxtokens 值] | price [hit|write|input|output 值] / price unit usd|cny | mem / mem add 内容 / mem del 编号 / mem on|off 编号 | theme dark|light | style win|mac|auto | deepthink on|off | clear chat | notify 文本 | openurl 网址 | bm / bm add 网址|标题 / bm del 编号 | clock | stopwatch [start|stop|reset] | timer 时长(如5m) | coc-data | words | cmd 应用id 指令 [参数] | js JavaScript代码 | version\n' +
 '规则：仅在确有必要时使用（普通问答不要用）；命令在你输出后立即执行，结果会以用户消息回传，你再据此继续回答；块内不要写注释和空行；一次不超过 5 条；写记忆、改配置、装改软件等操作优先用命令完成，不要只口头描述；你不能使用 ask 命令（那是给用户用的）。';
   },
   cmds: {
@@ -1480,6 +1548,13 @@ const CLI = {
     apps: () => getAllApps().map(a => a.id + '  ' + a.name + '  [' + a.type + ']').join('\n'),
     open: (r) => { need(r, 'open 应用id'); const app = findApp(r); if (!app) throw new Error('应用不存在：' + r); launchApp(r); return '已打开 ' + app.name; },
     close: (r) => { need(r, 'close 应用id'); const ws = WM.windows.filter(w => w.appId === r); if (!ws.length) return '没有该应用的窗口'; ws.forEach(w => WM.close(w.id)); return '已关闭 ' + ws.length + ' 个窗口'; },
+    pin: (r) => { need(r, 'pin 应用id'); const ws = WM.windows.filter(w => w.appId === r); if (!ws.length) throw new Error('没有该应用的窗口：' + r); ws.forEach(w => WM.pin(w.id)); return '已置顶 ' + ws.length + ' 个窗口'; },
+    unpin: (r) => { need(r, 'unpin 应用id'); const ws = WM.windows.filter(w => w.appId === r); if (!ws.length) throw new Error('没有该应用的窗口：' + r); ws.forEach(w => WM.unpin(w.id)); return '已取消置顶 ' + ws.length + ' 个窗口'; },
+    top: (r) => { need(r, 'top 应用id'); return CLI.cmds.pin(r); },
+    pinned: () => {
+      const ws = WM.windows.filter(w => w.pinned);
+      return ws.length ? ws.map(w => w.app.id + '  ' + w.app.name).join('\n') : '（暂无置顶窗口）';
+    },
     install: (r) => {
       const p = r.split('|').map(s => s.trim());
       if (p.length < 3) throw new Error('用法：install 名称 | 图标 | 完整HTML代码');
@@ -1966,6 +2041,26 @@ function renderDocReader() {
       <button class="doc-newtab" id="docNewTab" title="打开文档">＋ 打开文档</button>
       <input type="file" id="docFile" style="display:none" accept=".docx,.pptx,.xlsx,.pdf,.html,.htm,.txt,.md" />
     </div>
+    <div class="doc-zoombar" id="docZoomBar">
+      <button class="dz-btn" id="docZoomOut" title="缩小">－</button>
+      <div class="dz-value">
+        <input id="docZoomInput" value="100%" />
+        <select id="docZoomSelect">
+          <option value="fitWidth">页宽填充</option>
+          <option value="fitPage">整页填充</option>
+          <option value="25">25%</option>
+          <option value="50">50%</option>
+          <option value="75">75%</option>
+          <option value="100" selected>100%</option>
+          <option value="125">125%</option>
+          <option value="150">150%</option>
+          <option value="200">200%</option>
+          <option value="300">300%</option>
+          <option value="400">400%</option>
+        </select>
+      </div>
+      <button class="dz-btn" id="docZoomIn" title="放大">＋</button>
+    </div>
     <div class="doc-stage" id="docStage">
       <div class="doc-open" id="docOpen">
         <div class="doc-open-icon">📄</div>
@@ -1979,9 +2074,11 @@ function renderDocReader() {
 }
 function initDocReader() {
   const stage = $('#docStage'), tabsBar = $('#docTabs'), openEl = $('#docOpen');
+  const zoomBar = $('#docZoomBar'), zoomInput = $('#docZoomInput'), zoomSelect = $('#docZoomSelect');
+  const zoomOutBtn = $('#docZoomOut'), zoomInBtn = $('#docZoomIn');
   if (!stage) return;
   const fin = $('#docFile');
-  const docs = []; // {id,name,el,tab}
+  const docs = []; // {id,name,el,tab,zoom}
   let activeId = null, seq = 0;
   const pick = () => { if (fin) fin.click(); };
   const pickBtn = $('#docPickBtn'), newTab = $('#docNewTab');
@@ -1989,6 +2086,27 @@ function initDocReader() {
   if (newTab) newTab.onclick = pick;
   if (fin) fin.onchange = () => { [...fin.files].forEach(loadFile); fin.value = ''; };
 
+  // 缩放工具栏事件
+  if (zoomOutBtn) zoomOutBtn.onclick = () => { const d = activeDoc(); if (d) changeZoomBy(d, -10); };
+  if (zoomInBtn) zoomInBtn.onclick = () => { const d = activeDoc(); if (d) changeZoomBy(d, 10); };
+  if (zoomInput) {
+    zoomInput.onchange = () => {
+      const d = activeDoc(); if (!d) return;
+      const v = parseInt(zoomInput.value, 10);
+      if (v >= 10 && v <= 500) { d.zoom = { mode: 'percent', value: v }; applyZoom(d); updateZoomBar(); }
+      else { updateZoomBar(); }
+    };
+    zoomInput.onkeydown = (e) => { if (e.key === 'Enter') zoomInput.blur(); };
+  }
+  if (zoomSelect) {
+    zoomSelect.onchange = () => {
+      const d = activeDoc(); if (!d) return;
+      const v = zoomSelect.value;
+      if (v === 'fitWidth' || v === 'fitPage') { d.zoom.mode = v; applyZoom(d); updateZoomBar(); }
+      else { d.zoom = { mode: 'percent', value: parseInt(v, 10) }; applyZoom(d); updateZoomBar(); }
+    };
+  }
+  function activeDoc() { return docs.find(d => d.id === activeId); }
   function refreshTabs() {
     tabsBar.querySelectorAll('.doc-tab').forEach(t => t.remove());
     docs.forEach(d => {
@@ -1998,17 +2116,19 @@ function initDocReader() {
       tabsBar.insertBefore(tab, newTab);
     });
     if (openEl) openEl.style.display = docs.length ? 'none' : '';
+    if (zoomBar) zoomBar.style.display = docs.length ? '' : 'none';
   }
   function activate(id) {
     activeId = id;
     docs.forEach(d => { d.el.style.display = d.id === id ? '' : 'none'; });
     refreshTabs();
+    updateZoomBar();
   }
   function closeDoc(id) {
     const i = docs.findIndex(d => d.id === id);
     if (i < 0) return;
     docs[i].el.remove(); docs.splice(i, 1);
-    if (!docs.length) { activeId = null; refreshTabs(); return; }
+    if (!docs.length) { activeId = null; refreshTabs(); updateZoomBar(); return; }
     if (activeId === id) activate(docs[Math.min(i, docs.length - 1)].id); else refreshTabs();
   }
   function loadFile(file) {
@@ -2017,13 +2137,14 @@ function initDocReader() {
     const pane = el('div', 'doc-pane');
     pane.innerHTML = '<div class="app-loading"><div class="al-spin"></div><div>正在解析 ' + escapeHtml(file.name) + '…</div></div>';
     stage.appendChild(pane);
-    const d = { id: ++seq, name: file.name, el: pane };
+    const d = { id: ++seq, name: file.name, el: pane, zoom: { mode: 'fitWidth', value: 100 } };
     docs.push(d); activate(d.id);
+    const onReady = () => { applyZoom(d); updateZoomBar(); };
     const fail = (msg) => { pane.innerHTML = '<div class="app-error"><div class="ae-icon">⚠️</div>' + escapeHtml(msg || '解析失败') + '</div>'; };
-    const done = (html) => { pane.innerHTML = '<div class="doc-content">' + html + '</div>'; };
+    const done = (html) => { pane.innerHTML = '<div class="doc-content">' + html + '</div>'; onReady(); };
     const rd = new FileReader();
     if (ext === 'pdf') {
-      rd.onload = () => renderPdf(new Uint8Array(rd.result), pane, fail);
+      rd.onload = () => renderPdf(new Uint8Array(rd.result), pane, fail, () => onReady());
       rd.onerror = () => fail('读取文件失败'); rd.readAsArrayBuffer(file);
     } else if (ext === 'docx') {
       rd.onload = () => ensureLib('mammoth', DOC_CDN.mammoth).then(() =>
@@ -2041,7 +2162,7 @@ function initDocReader() {
       }).catch(e => fail('加载解析库失败：' + e.message));
       rd.onerror = () => fail('读取文件失败'); rd.readAsArrayBuffer(file);
     } else if (ext === 'pptx') {
-      rd.onload = () => renderPptx(rd.result, pane, fail);
+      rd.onload = () => renderPptx(rd.result, pane, fail, () => onReady());
       rd.onerror = () => fail('读取文件失败'); rd.readAsArrayBuffer(file);
     } else if (ext === 'html' || ext === 'htm') {
       // HTML 全功能运行：allow-scripts 让内联 JS 与交互可用（外部脚本受 CSP 限制）
@@ -2051,6 +2172,7 @@ function initDocReader() {
         f.className = 'doc-frame';
         f.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-modals allow-popups');
         f.srcdoc = rd.result;
+        f.onload = () => onReady();
         pane.appendChild(f);
       };
       rd.onerror = () => fail('读取文件失败'); rd.readAsText(file);
@@ -2061,6 +2183,68 @@ function initDocReader() {
       fail('暂不支持 .' + ext + ' 格式（支持 docx / pptx / xlsx / pdf / html / txt / md）');
     }
   }
+  function changeZoomBy(d, delta) {
+    const v = Math.max(10, Math.min(500, d.zoom.value + delta));
+    d.zoom = { mode: 'percent', value: v };
+    applyZoom(d);
+    updateZoomBar();
+  }
+  function computeZoom(d) {
+    const pane = d.el;
+    const content = pane.querySelector('.doc-content, .doc-pdf');
+    const iframe = pane.querySelector('.doc-frame');
+    let naturalW = 0, naturalH = 0;
+    if (content) {
+      // 先恢复 100% 以读取原始尺寸
+      content.style.zoom = '100%';
+      naturalW = content.scrollWidth || pane.clientWidth;
+      naturalH = content.scrollHeight || pane.clientHeight;
+    } else if (iframe) {
+      naturalW = iframe.clientWidth || pane.clientWidth;
+      naturalH = iframe.clientHeight || pane.clientHeight;
+    }
+    if (!naturalW) naturalW = pane.clientWidth;
+    if (!naturalH) naturalH = pane.clientHeight;
+    const padX = 24, padY = 24;
+    if (d.zoom.mode === 'fitWidth') {
+      return Math.max(25, Math.min(500, Math.round((pane.clientWidth - padX) / naturalW * 100)));
+    }
+    if (d.zoom.mode === 'fitPage') {
+      return Math.max(25, Math.min(500, Math.round(Math.min((pane.clientWidth - padX) / naturalW, (pane.clientHeight - padY) / naturalH) * 100)));
+    }
+    return d.zoom.value;
+  }
+  function applyZoom(d) {
+    if (!d || !d.el) return;
+    const s = computeZoom(d) / 100;
+    const content = d.el.querySelector('.doc-content, .doc-pdf');
+    const iframe = d.el.querySelector('.doc-frame');
+    if (content) content.style.zoom = (s * 100) + '%';
+    if (iframe) {
+      iframe.style.transform = 'scale(' + s + ')';
+      iframe.style.transformOrigin = 'top left';
+      iframe.style.width = (100 / s) + '%';
+      iframe.style.height = (100 / s) + '%';
+    }
+  }
+  function updateZoomBar() {
+    if (!zoomInput || !zoomSelect) return;
+    const d = activeDoc();
+    if (!d) { zoomInput.value = '100%'; zoomSelect.value = '100'; return; }
+    // 百分比模式直接显示；填充模式显示计算后的等效百分比
+    const effective = computeZoom(d);
+    zoomInput.value = effective + '%';
+    if (d.zoom.mode === 'fitWidth') zoomSelect.value = 'fitWidth';
+    else if (d.zoom.mode === 'fitPage') zoomSelect.value = 'fitPage';
+    else zoomSelect.value = String(effective);
+  }
+  // Ctrl+滚轮缩放（在当前文档区域）
+  stage.addEventListener('wheel', (e) => {
+    if (!e.ctrlKey) return;
+    const d = activeDoc(); if (!d) return;
+    e.preventDefault();
+    changeZoomBy(d, e.deltaY < 0 ? 10 : -10);
+  }, { passive: false });
   // 拖拽整个窗口
   const app = $('.doc-app');
   app.addEventListener('dragover', (e) => { e.preventDefault(); app.classList.add('drag'); });
@@ -2078,7 +2262,7 @@ function ensureLib(globalName, src) {
   return _libCache[globalName];
 }
 // PDF 渲染（pdf.js，每页一张 canvas）
-function renderPdf(data, body, fail) {
+function renderPdf(data, body, fail, onReady) {
   ensureLib('pdfjsLib', DOC_CDN.pdfjs).then(() => {
     window.pdfjsLib.GlobalWorkerOptions.workerSrc = DOC_CDN.pdfjsWorker;
     return window.pdfjsLib.getDocument({ data }).promise;
@@ -2095,10 +2279,11 @@ function renderPdf(data, body, fail) {
       wrap.appendChild(cv);
       await page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
     }
+    if (onReady) onReady();
   }).catch(e => fail('PDF 解析失败：' + (e.message || e)));
 }
 // PPTX 渲染（JSZip 解包读 slide XML 的文本，按页列出）
-function renderPptx(data, body, fail) {
+function renderPptx(data, body, fail, onReady) {
   ensureLib('JSZip', DOC_CDN.jszip).then(() => window.JSZip.loadAsync(data)).then(async (zip) => {
     const slides = Object.keys(zip.files).filter(n => /^ppt\/slides\/slide\d+\.xml$/.test(n))
       .sort((a, b) => parseInt(a.match(/\d+/)[0]) - parseInt(b.match(/\d+/)[0]));
@@ -2113,6 +2298,7 @@ function renderPptx(data, body, fail) {
         (texts.length ? texts.map(t => '<div class="doc-slide-line">' + escapeHtml(t) + '</div>').join('') : '<div class="doc-slide-line" style="opacity:.5">（无文字）</div>') + '</div>';
     }
     body.innerHTML = html + '</div>';
+    if (onReady) onReady();
   }).catch(e => fail('PPTX 解析失败：' + (e.message || e)));
 }
 
