@@ -99,31 +99,23 @@ window.__tzFloatMode = true;
     document.getElementById('floatCloseBtn').onclick = function() { window.close(); };
 
     // ===== 窗口拖拽（无边框 Electron 窗口）=====
+    // 桌面版：通过 IPC 把绝对屏幕坐标发给主进程，主进程直接设置窗口位置
     var titleBar = document.getElementById('floatTitleBar');
-    var isDragging = false, dragStartX, dragStartY;
+    var isDragging = false;
 
     titleBar.addEventListener('pointerdown', function(e) {
-      // 只有左键才拖拽，且不点在关闭按钮上
       if (e.button !== 0) return;
       if (e.target.closest('.fbtn')) return;
       isDragging = true;
-      dragStartX = e.screenX;
-      dragStartY = e.screenY;
       titleBar.setPointerCapture(e.pointerId);
-      // 桌面版：通知主进程开始拖拽
-      if (window.tzDesktop && window.tzDesktop.floatDragStart) {
-        window.tzDesktop.floatDragStart();
-      }
       e.preventDefault();
     });
 
     titleBar.addEventListener('pointermove', function(e) {
       if (!isDragging) return;
-      var dx = e.screenX - dragStartX;
-      var dy = e.screenY - dragStartY;
-      // 桌面版：通过 IPC 移动窗口
+      // 桌面版：发送鼠标绝对屏幕坐标，主进程直接 setPosition
       if (window.tzDesktop && window.tzDesktop.floatDragMove) {
-        window.tzDesktop.floatDragMove(dx, dy);
+        window.tzDesktop.floatDragMove(Math.round(e.screenX), Math.round(e.screenY));
       }
     });
 
