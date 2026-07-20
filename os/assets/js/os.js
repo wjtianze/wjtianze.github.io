@@ -356,6 +356,7 @@ const WM = {
 
     this.focus(id);
     Taskbar.render();
+    persistOpenWindows();
     return winObj;
   },
   renderContent(winObj, opts) {
@@ -410,6 +411,7 @@ const WM = {
     if (w.appId === 'browser') cleanupBrowserHooks();
     Taskbar.render();
     if (w.onClose) w.onClose();
+    persistOpenWindows();
   },
   minimize(id) {
     const w = this.windows.find(x => x.id === id);
@@ -982,6 +984,24 @@ function launchApp(id, opts = {}) {
     defaults.width = 560; defaults.height = 520;
   }
   return WM.create({ app, ...defaults, ...opts });
+}
+
+/* ---- 会话恢复：系统重启后自动重新打开上次未关闭的软件 ----
+ * 每次创建/关闭窗口时把当前打开的 appId 列表写入 Store；boot 时按列表重开。 */
+function persistOpenWindows() {
+  try {
+    const ids = WM.windows.map(w => w.appId);
+    Store.set('openSession', ids);
+  } catch (e) {}
+}
+function restoreOpenWindows() {
+  let ids = [];
+  try { ids = Store.get('openSession', []) || []; } catch (e) { return; }
+  if (!ids.length) return;
+  // 去重（单例应用只开一个）+ 过滤已不存在的应用
+  const seen = new Set();
+  ids.filter(id => { if (seen.has(id)) return false; seen.add(id); return !!findApp(id); })
+    .forEach((id, i) => setTimeout(() => { try { launchApp(id); } catch (e) {} }, 700 + i * 220));
 }
 
 async function uninstallApp(id) {
@@ -1942,92 +1962,110 @@ const DOC_CDN = {
 function renderDocReader() {
   return `
   <div class="doc-app">
-    <div class="doc-open" id="docOpen">
-      <div class="doc-open-icon">📄</div>
-      <div class="doc-open-title">文档阅读器</div>
-      <div class="doc-open-sub">支持 Word(docx) · PPT(pptx) · Excel(xlsx) · PDF · HTML</div>
-      <button class="btn" id="docPickBtn">📂 选择文件</button>
+    <div class="doc-tabs" id="docTabs">
+      <button class="doc-newtab" id="docNewTab" title="打开文档">＋ 打开文档</button>
       <input type="file" id="docFile" style="display:none" accept=".docx,.pptx,.xlsx,.pdf,.html,.htm,.txt,.md" />
-      <div class="doc-open-tip">也可把文件直接拖进此窗口</div>
     </div>
-    <div class="doc-view" id="docView" hidden>
-      <div class="doc-toolbar">
-        <span class="doc-name" id="docName"></span>
-        <span style="flex:1"></span>
-        <button class="btn sm ghost" id="docClose2">✕ 关闭文档</button>
+    <div class="doc-stage" id="docStage">
+      <div class="doc-open" id="docOpen">
+        <div class="doc-open-icon">📄</div>
+        <div class="doc-open-title">文档阅读器</div>
+        <div class="doc-open-sub">支持 Word(docx) · PPT(pptx) · Excel(xlsx) · PDF · HTML(含JS) · txt · md</div>
+        <button class="btn" id="docPickBtn">📂 选择文件</button>
+        <div class="doc-open-tip">也可把文件直接拖进此窗口；每个文档一个标签页，可同时打开多个</div>
       </div>
-      <div class="doc-body" id="docBody"></div>
     </div>
   </div>`;
 }
 function initDocReader() {
-  const openEl = $('#docOpen'), viewEl = $('#docView'), body = $('#docBody'), nameEl = $('#docName');
-  if (!openEl) return;
-  const loadFile = (file) => {
+  const stage = $('#docStage'), tabsBar = $('#docTabs'), openEl = $('#docOpen');
+  if (!stage) return;
+  const fin = $('#docFile');
+  const docs = []; // {id,name,el,tab}
+  let activeId = null, seq = 0;
+  const pick = () => { if (fin) fin.click(); };
+  const pickBtn = $('#docPickBtn'), newTab = $('#docNewTab');
+  if (pickBtn) pickBtn.onclick = pick;
+  if (newTab) newTab.onclick = pick;
+  if (fin) fin.onchange = () => { [...fin.files].forEach(loadFile); fin.value = ''; };
+
+  function refreshTabs() {
+    tabsBar.querySelectorAll('.doc-tab').forEach(t => t.remove());
+    docs.forEach(d => {
+      const tab = el('button', 'doc-tab' + (d.id === activeId ? ' active' : ''));
+      tab.innerHTML = `<span class="dt-label">${escapeHtml(d.name)}</span><span class="dt-x" title="关闭">✕</span>`;
+      tab.onclick = (e) => { if (e.target.classList.contains('dt-x')) closeDoc(d.id); else activate(d.id); };
+      tabsBar.insertBefore(tab, newTab);
+    });
+    if (openEl) openEl.style.display = docs.length ? 'none' : '';
+  }
+  function activate(id) {
+    activeId = id;
+    docs.forEach(d => { d.el.style.display = d.id === id ? '' : 'none'; });
+    refreshTabs();
+  }
+  function closeDoc(id) {
+    const i = docs.findIndex(d => d.id === id);
+    if (i < 0) return;
+    docs[i].el.remove(); docs.splice(i, 1);
+    if (!docs.length) { activeId = null; refreshTabs(); return; }
+    if (activeId === id) activate(docs[Math.min(i, docs.length - 1)].id); else refreshTabs();
+  }
+  function loadFile(file) {
     if (!file) return;
     const ext = (file.name.split('.').pop() || '').toLowerCase();
-    nameEl.textContent = file.name;
-    openEl.hidden = true; viewEl.hidden = false;
-    body.innerHTML = '<div class="app-loading"><div class="al-spin"></div><div>正在解析 ' + escapeHtml(file.name) + '…</div></div>';
-    const fail = (msg) => { body.innerHTML = '<div class="app-error"><div class="ae-icon">⚠️</div>' + escapeHtml(msg || '解析失败') + '</div>'; };
-    const done = (html) => { body.innerHTML = '<div class="doc-content">' + html + '</div>'; };
+    const pane = el('div', 'doc-pane');
+    pane.innerHTML = '<div class="app-loading"><div class="al-spin"></div><div>正在解析 ' + escapeHtml(file.name) + '…</div></div>';
+    stage.appendChild(pane);
+    const d = { id: ++seq, name: file.name, el: pane };
+    docs.push(d); activate(d.id);
+    const fail = (msg) => { pane.innerHTML = '<div class="app-error"><div class="ae-icon">⚠️</div>' + escapeHtml(msg || '解析失败') + '</div>'; };
+    const done = (html) => { pane.innerHTML = '<div class="doc-content">' + html + '</div>'; };
     const rd = new FileReader();
     if (ext === 'pdf') {
-      rd.onload = () => renderPdf(new Uint8Array(rd.result), body, fail);
-      rd.onerror = () => fail('读取文件失败');
-      rd.readAsArrayBuffer(file);
+      rd.onload = () => renderPdf(new Uint8Array(rd.result), pane, fail);
+      rd.onerror = () => fail('读取文件失败'); rd.readAsArrayBuffer(file);
     } else if (ext === 'docx') {
       rd.onload = () => ensureLib('mammoth', DOC_CDN.mammoth).then(() =>
         window.mammoth.convertToHtml({ arrayBuffer: rd.result }).then(r => done(r.value || '<p>（空文档）</p>')).catch(e => fail(e.message))
       ).catch(e => fail('加载解析库失败：' + e.message));
-      rd.onerror = () => fail('读取文件失败');
-      rd.readAsArrayBuffer(file);
+      rd.onerror = () => fail('读取文件失败'); rd.readAsArrayBuffer(file);
     } else if (ext === 'xlsx') {
       rd.onload = () => ensureLib('XLSX', DOC_CDN.xlsx).then(() => {
         try {
           const wb = window.XLSX.read(rd.result, { type: 'array' });
           let html = '';
-          wb.SheetNames.forEach(sn => {
-            html += '<h3 style="margin:14px 0 6px">📑 ' + escapeHtml(sn) + '</h3>' +
-              window.XLSX.utils.sheet_to_html(wb.Sheets[sn], { header: '', footer: '' });
-          });
+          wb.SheetNames.forEach(sn => { html += '<h3 style="margin:14px 0 6px">📑 ' + escapeHtml(sn) + '</h3>' + window.XLSX.utils.sheet_to_html(wb.Sheets[sn], { header: '', footer: '' }); });
           done(html || '<p>（空表格）</p>');
         } catch (e) { fail(e.message); }
       }).catch(e => fail('加载解析库失败：' + e.message));
-      rd.onerror = () => fail('读取文件失败');
-      rd.readAsArrayBuffer(file);
+      rd.onerror = () => fail('读取文件失败'); rd.readAsArrayBuffer(file);
     } else if (ext === 'pptx') {
-      rd.onload = () => renderPptx(rd.result, body, fail);
-      rd.onerror = () => fail('读取文件失败');
-      rd.readAsArrayBuffer(file);
+      rd.onload = () => renderPptx(rd.result, pane, fail);
+      rd.onerror = () => fail('读取文件失败'); rd.readAsArrayBuffer(file);
     } else if (ext === 'html' || ext === 'htm') {
+      // HTML 全功能运行：allow-scripts 让内联 JS 与交互可用（外部脚本受 CSP 限制）
       rd.onload = () => {
-        body.innerHTML = '';
+        pane.innerHTML = '';
         const f = document.createElement('iframe');
         f.className = 'doc-frame';
-        f.sandbox = 'allow-same-origin';
+        f.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-modals allow-popups');
         f.srcdoc = rd.result;
-        body.appendChild(f);
+        pane.appendChild(f);
       };
-      rd.onerror = () => fail('读取文件失败');
-      rd.readAsText(file);
+      rd.onerror = () => fail('读取文件失败'); rd.readAsText(file);
     } else if (ext === 'txt' || ext === 'md') {
       rd.onload = () => { done('<pre style="white-space:pre-wrap;word-break:break-word;font:13px/1.7 inherit">' + escapeHtml(rd.result) + '</pre>'); };
-      rd.onerror = () => fail('读取文件失败');
-      rd.readAsText(file);
+      rd.onerror = () => fail('读取文件失败'); rd.readAsText(file);
     } else {
       fail('暂不支持 .' + ext + ' 格式（支持 docx / pptx / xlsx / pdf / html / txt / md）');
     }
-  };
-  const pick = $('#docPickBtn'), fin = $('#docFile');
-  if (pick && fin) { pick.onclick = () => fin.click(); fin.onchange = () => { loadFile(fin.files[0]); fin.value = ''; }; }
-  const close2 = $('#docClose2');
-  if (close2) close2.onclick = () => { viewEl.hidden = true; openEl.hidden = false; body.innerHTML = ''; };
-  // 拖拽
+  }
+  // 拖拽整个窗口
   const app = $('.doc-app');
   app.addEventListener('dragover', (e) => { e.preventDefault(); app.classList.add('drag'); });
   app.addEventListener('dragleave', () => app.classList.remove('drag'));
-  app.addEventListener('drop', (e) => { e.preventDefault(); app.classList.remove('drag'); const f = e.dataTransfer.files && e.dataTransfer.files[0]; if (f) loadFile(f); });
+  app.addEventListener('drop', (e) => { e.preventDefault(); app.classList.remove('drag'); [...(e.dataTransfer.files || [])].forEach(loadFile); });
 }
 // 动态加载外部库（带缓存）
 const _libCache = {};
@@ -4348,6 +4386,11 @@ function startClock() {
   startStatusIndicators();
 }
 /* ---- 右下角状态：联网情况 + 电量 ---- */
+// 把系统主音量/静音应用到当前所有音视频元素，并挂钩之后新建的元素
+function applySysVolume() {
+  const v = Store.get('sysMuted', false) ? 0 : (Store.get('sysVolume', 1) ?? 1);
+  document.querySelectorAll('audio,video').forEach(m => { try { m.volume = v; m.muted = Store.get('sysMuted', false); } catch (e) {} });
+}
 function startStatusIndicators() {
   // 联网状态
   const net = $('#tbNet');
@@ -4361,6 +4404,35 @@ function startStatusIndicators() {
   paintNet();
   window.addEventListener('online', paintNet);
   window.addEventListener('offline', paintNet);
+  // 音量：维护一个全局主音量（0~1）与静音态，作用于系统内新建的音视频元素
+  const vol = $('#tbVol');
+  if (vol) {
+    const paintVol = () => {
+      const v = Store.get('sysVolume', 1);
+      const muted = Store.get('sysMuted', false) || v === 0;
+      vol.textContent = muted ? '🔇' : v < 0.5 ? '🔉' : '🔊';
+      vol.title = muted ? '已静音（点击取消）' : '音量 ' + Math.round(v * 100) + '%（点击静音）';
+    };
+    paintVol();
+    vol.onclick = () => {
+      const muted = Store.get('sysMuted', false);
+      if (muted) { Store.set('sysMuted', false); if ((Store.get('sysVolume', 1) || 0) === 0) Store.set('sysVolume', 0.5); }
+      else Store.set('sysMuted', true);
+      paintVol();
+      applySysVolume();
+      toast(Store.get('sysMuted', false) ? '🔇 已静音' : '🔊 已取消静音');
+    };
+    // 滚轮微调音量
+    vol.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      let v = Store.get('sysVolume', 1);
+      v = Math.min(1, Math.max(0, v + (e.deltaY < 0 ? 0.1 : -0.1)));
+      Store.set('sysVolume', Math.round(v * 100) / 100);
+      Store.set('sysMuted', v === 0);
+      paintVol();
+      applySysVolume();
+    }, { passive: false });
+  }
   // 电量（Battery Status API，不支持的浏览器隐藏图标）
   const bat = $('#tbBattery');
   if (bat) {
@@ -4406,7 +4478,7 @@ async function boot() {
 
   const boot = $('#bootScreen');
   boot.classList.add('gone');
-  setTimeout(() => { boot.style.display = 'none'; $('#desktop').hidden = false; }, 600);
+  setTimeout(() => { boot.style.display = 'none'; $('#desktop').hidden = false; restoreOpenWindows(); }, 600);
 
   Store.addNotif({ title: '欢迎使用天择OS', body: '所有天择网功能已预装为应用。点击「🔑 AI 配置」开始使用 AI 功能。' });
   Store.addNotif({ title: '软件商城已就绪', body: '输入一句话，让 AI 为你生成专属软件。' });

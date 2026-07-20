@@ -882,20 +882,25 @@ body.tzos.light .term-input-row input { color: #1e293b; }
 .clock-laps { font-size: 12px; color: var(--ink-muted); max-height: 90px; overflow-y: auto; }
 .clock-quick { display: flex; gap: 6px; }
 
-/* ---------- 文档阅读器 ---------- */
+/* ---------- 文档阅读器（标签页多文档全屏） ---------- */
 .doc-app { display: flex; flex-direction: column; height: 100%; }
-.doc-app.drag .doc-open { outline: 2px dashed var(--c-blue); outline-offset: -8px; }
-.doc-open { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 30px; text-align: center; }
+.doc-app.drag .doc-stage { outline: 2px dashed var(--c-blue); outline-offset: -6px; }
+.doc-tabs { display: flex; align-items: center; gap: 4px; padding: 6px 8px; border-bottom: 1px solid var(--glass-border); background: var(--surface); overflow-x: auto; flex-shrink: 0; }
+.doc-tab { display: flex; align-items: center; gap: 6px; padding: 5px 8px 5px 12px; border-radius: 8px; font-size: 12px; color: var(--ink-dim); background: var(--surface-2); border: 1px solid var(--glass-border); white-space: nowrap; transition: background 0.15s; max-width: 180px; }
+.doc-tab .dt-label { overflow: hidden; text-overflow: ellipsis; }
+.doc-tab.active { background: var(--grad-main); color: #fff; border-color: transparent; }
+.doc-tab .dt-x { opacity: 0.6; padding: 0 3px; border-radius: 4px; }
+.doc-tab .dt-x:hover { opacity: 1; background: rgba(239,68,68,0.3); }
+.doc-newtab { flex-shrink: 0; padding: 5px 12px; border-radius: 8px; font-size: 12px; color: var(--c-blue); background: rgba(59,130,246,0.1); border: 1px dashed rgba(59,130,246,0.4); white-space: nowrap; transition: background 0.15s; }
+.doc-newtab:hover { background: rgba(59,130,246,0.2); }
+.doc-stage { flex: 1; min-height: 0; position: relative; overflow: hidden; }
+.doc-open { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 30px; text-align: center; }
 .doc-open-icon { font-size: 52px; opacity: 0.6; }
 .doc-open-title { font-size: 19px; color: var(--ink); font-weight: 600; }
 .doc-open-sub { font-size: 13px; color: var(--ink-faint); }
 .doc-open-tip { font-size: 11.5px; color: var(--ink-muted); }
-.doc-view { flex: 1; display: flex; flex-direction: column; min-height: 0; }
-.doc-view[hidden] { display: none; }
-.doc-toolbar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--glass-border); background: var(--surface); }
-.doc-name { font-size: 13px; color: var(--ink-dim); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.doc-body { flex: 1; min-height: 0; overflow: auto; background: rgba(8,12,28,0.3); }
-body.tzos.light .doc-body { background: rgba(255,255,255,0.5); }
+.doc-pane { position: absolute; inset: 0; overflow: auto; background: rgba(8,12,28,0.3); }
+body.tzos.light .doc-pane { background: rgba(255,255,255,0.5); }
 .doc-content { padding: 22px 26px; font-size: 14px; line-height: 1.75; color: var(--ink-dim); max-width: 860px; margin: 0 auto; }
 .doc-content h1, .doc-content h2, .doc-content h3 { color: var(--ink); margin: 16px 0 8px; }
 .doc-content p { margin: 8px 0; }
@@ -921,6 +926,8 @@ body.tzos.light .doc-body { background: rgba(255,255,255,0.5); }
 .tb-status { font-size: 12px; color: var(--ink-dim); padding: 0 4px; cursor: default; display: flex; align-items: center; white-space: nowrap; }
 .tb-status.off { color: #fca5a5; }
 .tb-status.low { color: #fbbf24; }
+.tb-vol { cursor: pointer; border-radius: 6px; padding: 3px 5px; transition: background 0.15s; user-select: none; }
+.tb-vol:hover { background: var(--hover); }
 
 /* ---------- 消息进入更丝滑 ---------- */
 .msg { animation: msgIn 0.3s var(--ease); }
