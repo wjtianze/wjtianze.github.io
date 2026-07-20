@@ -260,8 +260,9 @@ function findApp(id) { return getAllApps().find(a => a.id === id); }
 const WM = {
   windows: [],
   zTop: 100,
-  pinTop: 0,      // 置顶窗口在 9000+ 的次级层级
-  PIN_Z_BASE: 9000,
+  pinTop: 0,      // 置顶窗口在 4000+ 的次级层级（v2.6：低于快捷面板 4600、任务栏 5000、开始菜单 5100、右键菜单 6000）
+  PIN_Z_BASE: 4000,
+  PIN_Z_MAX: 4499, // 置顶窗口层级上限：始终低于快捷面板/任务栏/开始菜单
   openCount: 0,
   // 同一种软件只允许开一个窗口；重复收到打开命令时聚焦已有窗口而不是再开一个。
   // 例外：AI 对话明确支持多开（app.multi）。
@@ -417,6 +418,9 @@ const WM = {
     if (w) {
       // 置顶窗口拥有独立的高位层级，普通窗口永远不能超过
       if (w.pinned) {
+        // v2.6：置顶窗口层级限制在 PIN_Z_BASE~PIN_Z_MAX，确保始终低于
+        // 快捷面板(4600)、任务栏(5000)、开始菜单(5100)、右键菜单(6000)
+        if (this.pinTop >= this.PIN_Z_MAX - this.PIN_Z_BASE) this.pinTop = 0;
         w.el.style.zIndex = this.PIN_Z_BASE + (++this.pinTop);
       } else {
         // 普通窗口限制在 100~PIN_Z_BASE-1 之间，避免超过置顶层
@@ -1457,10 +1461,633 @@ ${cur.length ? cur.map((m, i) => (i + 1) + '. ' + m.text).join('\n') : '（空�
   }
 };
 
+/* ===================== 自有软件命令包（每个软件一个顶层命令，help 直接可见） =====================
+ * 设计原则：
+ *   1) 每个 builtin/preset 软件对应一个顶层命令（命令名 = 软件短名，如 coc-data/words/chat）
+ *   2) 命令带子命令时，无参数显示用法；用空格分隔子命令与参数
+ *   3) 异步命令（fetch/IndexedDB）返回 Promise，CLI.exec 自动处理
+ *   4) 不与系统命令（open/close/pin/theme/aiconfig…）重名
+ * 用户安装的 AI 软件仍用 `cmd 应用id 指令` 调用（AppCommands 注册表）。
+ * 教程见 APP_STORE_TUTORIAL。 */
+const _appCmdCache = { coc: null, words: null, wordsTs: 0 };
+
+// 异步获取 COC 中文数据 JSON（带缓存）
+async function fetchCocData() {
+  if (_appCmdCache.coc) return _appCmdCache.coc;
+  const res = await fetch(TZNET_BASE + 'coc/data/all_game_data_zh.json');
+  if (!res.ok) throw new Error('COC 数据加载失败（HTTP ' + res.status + '）');
+  const data = await res.json();
+  _appCmdCache.coc = data;
+  return data;
+}
+
+// 异步获取单词本：优先 IndexedDB（网页版同源），失败回退到示例词库
+async function readWordsVocab() {
+  // 1) 尝试同源 IndexedDB（背单词应用在同一 origin 时有效）
+  try {
+    const db = await new Promise((res, rej) => {
+      const r = indexedDB.open('tzwords');
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    });
+    if (db.objectStoreNames && db.objectStoreNames.contains('vocab')) {
+      const tx = db.transaction('vocab', 'readonly');
+      const all = await new Promise((res, rej) => {
+        const r = tx.objectStore('vocab').getAll();
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => rej(r.error);
+      });
+      if (all && all.length) return { words: all, source: 'indexeddb' };
+    }
+  } catch (e) { /* 跨域或不存在，静默回退 */ }
+  // 2) 回退：fetch 示例词库（跨域/桌面版场景）
+  const res = await fetch(TZNET_BASE + 'english/words/sample-vocab.json');
+  if (!res.ok) throw new Error('单词本加载失败（HTTP ' + res.status + '）');
+  const list = await res.json();
+  return { words: list, source: 'sample' };
+}
+
+// 写入单词本到 IndexedDB（仅同源时有效；跨域返回 false）
+async function writeWordsVocab(list) {
+  try {
+    const db = await new Promise((res, rej) => {
+      const r = indexedDB.open('tzwords');
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    });
+    if (!db.objectStoreNames || !db.objectStoreNames.contains('vocab')) return false;
+    const tx = db.transaction('vocab', 'readwrite');
+    await new Promise((res, rej) => {
+      const r = tx.objectStore('vocab').clear();
+      r.onsuccess = () => res();
+      r.onerror = () => rej(r.error);
+      list.forEach((w, i) => {
+        const key = w.id || (w.word + ':' + i);
+        tx.objectStore('vocab').put(w, key);
+      });
+    });
+    _appCmdCache.words = null;
+    return true;
+  } catch (e) { return false; }
+}
+
+// 子命令解析：把 "search 野蛮人" 拆成 { sub: 'search', args: '野蛮人' }
+function splitSub(r) {
+  const sp = r.indexOf(' ');
+  return {
+    sub: (sp < 0 ? r : r.slice(0, sp)).toLowerCase(),
+    args: sp < 0 ? '' : r.slice(sp + 1).trim()
+  };
+}
+
+const BUILTIN_APP_CMDS = {
+  /* ===== COC 数据查询（tz-coc-data）===== */
+  // coc-data：输出 COC 中文数据摘要（非 JSON）；带子命令时执行查询
+  'coc-data': (r) => {
+    if (!r) return cocDataOverview();
+    const { sub, args } = splitSub(r);
+    if (sub === 'search') return cocDataSearch(args);
+    if (sub === 'th' || sub === 'townhall') return cocDataByTH(args);
+    if (sub === 'count' || sub === 'stats') return cocDataCount();
+    if (sub === 'cat' || sub === 'category') return cocDataByCategory(args);
+    if (sub === 'help' || sub === '?') {
+      return 'coc-data 用法：\n' +
+        '  coc-data                  概览（版本/总数/分类统计+前若干单位）\n' +
+        '  coc-data search 名字      按中文或英文名搜索单位详情\n' +
+        '  coc-data th 大本等级      列出某大本营等级可解锁的单位\n' +
+        '  coc-data cat 类别名       列出某类别（圣水兵/暗黑兵/法术/英雄/建筑/陷阱等）下单位\n' +
+        '  coc-data count            分类统计\n' +
+        '  coc-json                  输出原始 JSON';
+    }
+    throw new Error('未知子命令：' + sub + '（coc-data help 查看用法）');
+  },
+  // coc-json：输出 COC 原始 JSON（完整，约 2MB，终端会自动折叠）
+  'coc-json': async () => {
+    const data = await fetchCocData();
+    return JSON.stringify(data, null, 2);
+  },
+
+  /* ===== 背单词（tz-words）===== */
+  // words：默认输出单词本 JSON；带子命令时执行单词本操作
+  words: (r) => {
+    if (!r) return wordsExport();
+    const { sub, args } = splitSub(r);
+    if (sub === 'add') return wordsAdd(args);
+    if (sub === 'list') return wordsList(args);
+    if (sub === 'count') return wordsCount();
+    if (sub === 'find' || sub === 'search') return wordsFind(args);
+    if (sub === 'del' || sub === 'rm') return wordsDel(args);
+    if (sub === 'help' || sub === '?') {
+      return 'words 用法：\n' +
+        '  words                     输出当前单词本 JSON\n' +
+        '  words add word|词性|释义  添加单词，如 words add hypothesis|n.|假设\n' +
+        '  words list [N]            列出前 N 个单词（默认 20）\n' +
+        '  words count               统计单词总数\n' +
+        '  words find 关键词         按单词或释义查找\n' +
+        '  words del 编号            删除指定编号的单词（编号见 words list）';
+    }
+    throw new Error('未知子命令：' + sub + '（words help 查看用法）');
+  },
+
+  /* ===== AI 对话（ai-chat）===== */
+  chat: (r) => {
+    if (!r) return 'chat 用法：\n  chat clear  清空对话（保留 AI 最后一次回复）\n  chat history  查看对话历史摘要\n  chat last  查看 AI 最后一次回复\n  ask 问题  让 AI 回答（与顶层 ask 等价）';
+    const { sub, args } = splitSub(r);
+    if (sub === 'clear') { Store.setChat([]); refreshOpenApp('ai-chat'); return 'AI 对话历史已清空'; }
+    if (sub === 'history') {
+      const h = Store.getChat();
+      if (!h.length) return '（暂无对话历史）';
+      return h.map((m, i) => (i + 1) + '. [' + (m.role === 'ai' ? 'AI' : '用户') + '] ' + (String(m.content || '').slice(0, 60).replace(/\n/g, ' ') || '(空)')).join('\n');
+    }
+    if (sub === 'last') {
+      const h = Store.getChat();
+      const last = [...h].reverse().find(m => m.role === 'ai');
+      return last ? (String(last.content || '').slice(0, 2000) + (String(last.content || '').length > 2000 ? '\n…（仅显示前 2000 字，完整内容请打开 AI 对话）' : '')) : '（暂无 AI 回复）';
+    }
+    throw new Error('未知子命令：' + sub + '（chat help 查看用法）');
+  },
+
+  /* ===== 软件商城（app-store）===== */
+  store: (r) => {
+    if (!r) return 'store 用法：\n  store open  打开软件商城\n  store tutorial  获取软件生成教程（与 installhelp 等价）\n  store idea  获取软件创意建议';
+    const { sub } = splitSub(r);
+    if (sub === 'open') { launchApp('app-store'); return '已打开软件商城'; }
+    if (sub === 'tutorial') return APP_STORE_TUTORIAL;
+    if (sub === 'idea') return '软件创意建议：\n1. 番茄钟（25 分钟工作 + 5 分钟休息循环，统计今日专注时长）\n2. 待办清单（按优先级分组，支持截止日期与提醒）\n3. markdown 笔记（左侧目录树 + 右侧编辑/预览，IndexedDB 存储）\n4. 单位换算（长度/重量/温度/压力等，支持科学计数法）\n5. 密码生成器（自定义长度/字符集，避免易混字符）\n6. 倒计时日历（距离重要日期还有多少天，桌面图标徽章）\n7. 调色板（HSL 滑块 + HEX/RGB 互转，保存历史颜色）\n8. 二维码生成（输入文本/网址，下载 PNG）\n\n打开软件商城用自然语言描述即可生成。';
+    throw new Error('未知子命令：' + sub);
+  },
+
+  /* ===== 系统设置（settings）===== */
+  settings: (r) => {
+    if (!r) return 'settings 用法：\n  settings info  系统信息摘要\n  settings storage  存储 usage\n  settings reset  重置桌面布局（与 resetlayout 等价）';
+    const { sub } = splitSub(r);
+    if (sub === 'info') {
+      const c = Store.getAIConfig();
+      return '系统：天择OS v' + OS_VERSION + '（' + (isMobile() ? '移动端' : '桌面端') + '）\n' +
+        '主题：' + (Store.getTheme() || 'dark') + ' · 风格：' + (Store.getStyle() || 'auto') + '\n' +
+        'AI 模型：' + (c.model || '（未配置）') + '\n' +
+        '已安装软件：' + Store.getApps().length + ' 个 · 已开窗口：' + WM.windows.length + ' 个\n' +
+        '记忆条数：' + Mem.list().length + ' 条';
+    }
+    if (sub === 'storage') {
+      let ls = 0;
+      for (let i = 0; i < localStorage.length; i++) { try { ls += (localStorage.getItem(localStorage.key(i)) || '').length; } catch (e) {} }
+      return 'localStorage：约 ' + (ls / 1024).toFixed(1) + ' KB（' + localStorage.length + ' 个键）\n' +
+        '已安装软件数：' + Store.getApps().length + '\n' +
+        '提示：浏览器 localStorage 通常有 5-10 MB 上限；词库与文档等大块数据存 IndexedDB，不占 localStorage。';
+    }
+    if (sub === 'reset') { Store.clearIconPositions(); Desktop.render(); return '桌面图标布局已重置'; }
+    throw new Error('未知子命令：' + sub);
+  },
+
+  /* ===== 关于（about）===== */
+  about: (r) => {
+    if (!r) return 'about 用法：\n  about info  系统详细信息\n  about changelog  查看更新日志\n  about credits  致谢';
+    const { sub } = splitSub(r);
+    if (sub === 'info') return '天择OS v' + OS_VERSION + '\n发布日期：2026-07-20\n作者：天择网\n构建：浏览器内操作系统（Web + Electron 桌面版）\nAI：OpenAI 兼容接口（DeepSeek/OpenAI/GLM/MiMo 等）\n开源：https://wjtianze.github.io/open/';
+    if (sub === 'changelog') return 'v2.6（2026-07-20）：窗口置顶、文档缩放、命令行扩展\nv2.5（2026-07-20）：联网搜索、文件上传、命令行全面开放\nv2.2（2026-07-19）：桌面版四大痛点修复\nv2.1（2026-07-18）：命令行终端与 AI Agent\nv2.0（2026-07-18）：AI 全链路升级\nv1.0（2026-07-14）：首个版本发布';
+    if (sub === 'credits') return '天择OS 致谢：\n· DeepSeek / OpenAI / GLM / MiMo 等 AI 服务商\n· Electron 跨平台桌面框架\n· 所有开源项目（marked/highlight.js/pdf.js 等）\n· 天择网用户的支持与反馈';
+    throw new Error('未知子命令：' + sub);
+  },
+
+  /* ===== 我的软件（file-manager）===== */
+  files: (r) => {
+    if (!r) return 'files 用法：\n  files list  列出已安装软件\n  files export 应用id  导出某软件 HTML 代码\n  files size  各软件 HTML 大小';
+    const { sub, args } = splitSub(r);
+    const apps = Store.getApps();
+    if (sub === 'list') {
+      if (!apps.length) return '（暂无已安装软件，可用 store open 打开软件商城生成）';
+      return apps.map((a, i) => (i + 1) + '. ' + a.id + '  ' + a.name + '  ' + (a.icon || '📦') + '  ' + (a.html ? a.html.length + ' 字符' : '')).join('\n');
+    }
+    if (sub === 'export') {
+      need(args, 'files export 应用id');
+      const a = apps.find(x => x.id === args);
+      if (!a) throw new Error('未找到已安装软件：' + args);
+      return '「' + a.name + '」HTML 代码（' + (a.html || '').length + ' 字符）：\n' + (a.html || '');
+    }
+    if (sub === 'size') {
+      if (!apps.length) return '（暂无已安装软件）';
+      const sorted = apps.map(a => ({ id: a.id, name: a.name, size: (a.html || '').length })).sort((a, b) => b.size - a.size);
+      const total = sorted.reduce((s, x) => s + x.size, 0);
+      return sorted.map(x => x.name + '：' + (x.size / 1024).toFixed(1) + ' KB').join('\n') + '\n合计：' + (total / 1024).toFixed(1) + ' KB';
+    }
+    throw new Error('未知子命令：' + sub);
+  },
+
+  /* ===== 浏览器（browser）===== */
+  browser: (r) => {
+    if (!r) return 'browser 用法：\n  browser tabs  列出当前标签页\n  browser closeall  关闭所有标签页\n  browser home  打开天择网主页\n  openurl 网址  打开任意网址（顶层命令）';
+    const { sub } = splitSub(r);
+    if (sub === 'tabs') {
+      const w = WM.findWindow('browser');
+      if (!w) return '（浏览器未打开）';
+      const frames = w.el.querySelectorAll('iframe');
+      if (!frames.length) return '（无标签页）';
+      let out = ''; let i = 0;
+      frames.forEach((f, idx) => {
+        let href = f.src || '';
+        try { if (f.contentWindow) href = f.contentWindow.location.href; } catch (e) {}
+        out += (idx + 1) + '. ' + href.slice(0, 80) + '\n';
+      });
+      return out.trim() || '（无标签页）';
+    }
+    if (sub === 'closeall') {
+      const w = WM.findWindow('browser');
+      if (!w) return '（浏览器未打开）';
+      const frames = w.el.querySelectorAll('iframe');
+      if (!frames.length) return '（无标签页可关闭）';
+      // 通过触发 browser 应用的关闭全部标签函数（如暴露了的话）
+      try { if (window.__tzBrCloseAll) { window.__tzBrCloseAll(); return '已关闭全部 ' + frames.length + ' 个标签页'; } } catch (e) {}
+      return '已尝试关闭标签页（如未生效，请在浏览器内手动关闭）';
+    }
+    if (sub === 'home') { openInOsBrowser(TZNET_BASE + 'index.html'); return '已打开天择网主页'; }
+    throw new Error('未知子命令：' + sub);
+  },
+
+  /* ===== 玩机技巧（tips）===== */
+  tips: (r) => {
+    const all = [
+      { t: '窗口置顶', d: '标题栏图钉、右键菜单、任务栏右键、命令行 pin/top 均可置顶窗口。置顶窗口始终在最上层（但低于任务栏与开始菜单）。' },
+      { t: 'AI 命令行模式', d: '系统设置中开启 Agent 模式后，AI 会自动写 tzcli 代码块执行系统命令，如安装软件、写记忆、改配置。' },
+      { t: '深度思考', d: 'AI 对话工具栏灯泡按钮开启深度思考，AI 会先展示推理过程再给答案；适合数学、编程、推理题。' },
+      { t: '自动截图', d: 'AI 配置中开启图片输入后，对话工具栏可开启自动截图，AI 能看到你的屏幕内容（需视觉模型）。' },
+      { t: '软件命令包', d: '用户安装的 AI 软件可注册命令包，用 cmd 应用id 指令 调用；自有软件直接用顶层命令（如 coc-data、words）。' },
+      { t: '全屏切换', d: 'Ctrl+Q 切换浏览器全屏模式，适合沉浸式使用天择OS。' },
+      { t: '开始菜单', d: 'Ctrl+空格 快速打开/关闭开始菜单；左下角开始按钮也可。' },
+      { t: '历史命令', d: '终端中按 ↑/↓ 翻阅历史命令，Enter 执行。' },
+      { t: '多开 AI 对话', d: 'AI 对话支持多开，可同时进行多个独立对话；其他应用默认单例。' },
+      { t: '存档导出', d: '命令行输入 export 导出全量存档（含软件、记忆、配置）；可在另一台设备导入恢复。' }
+    ];
+    if (!r) return '玩机技巧（输入 tips 编号 查看详情）：\n' + all.map((x, i) => (i + 1) + '. ' + x.t).join('\n');
+    const n = parseInt(r, 10);
+    if (n >= 1 && n <= all.length) return all[n - 1].t + '\n' + all[n - 1].d;
+    throw new Error('编号无效（1-' + all.length + '）');
+  },
+
+  /* ===== 天择导航（tz-tree）===== */
+  tree: (r) => {
+    const cats = {
+      'tznet': '天择网（首页/新闻/博客/数据开源/AI/COC/游戏/英语）',
+      'system': '系统（AI 配置/对话/软件商城/设置/关于/我的软件/浏览器/命令行/时钟/文档阅读器/玩机技巧/导航）',
+      'ai': 'AI（AI 配置、AI 对话）',
+      'game': '游戏（绩点战争）',
+      'emu': '模拟器（Windows 11/Windows 10/安卓）'
+    };
+    if (!r) return '天择导航分类：\n' + Object.entries(cats).map(([k, v]) => '  ' + k + ' → ' + v).join('\n') + '\n\n输入 tree 分类名 查看该分类下应用';
+    const c = r.toLowerCase();
+    if (!cats[c]) throw new Error('未知分类：' + c + '（' + Object.keys(cats).join('/') + '）');
+    const apps = getAllApps().filter(a => (a.category || 'tool') === c);
+    if (!apps.length) return '（该分类下无应用）';
+    return '「' + c + '」分类下应用：\n' + apps.map(a => '  ' + a.id + '  ' + a.name + '  ' + a.desc).join('\n');
+  },
+
+  /* ===== 文档阅读器（doc-reader）===== */
+  docs: (r) => {
+    if (!r) return 'docs 用法：\n  docs open URL  在文档阅读器中打开在线文档（pdf/docx/pptx/xlsx/html/md）\n  docs recent  列出最近打开记录';
+    const { sub, args } = splitSub(r);
+    if (sub === 'open') {
+      need(args, 'docs open URL');
+      const w = launchApp('doc-reader');
+      setTimeout(() => { try { if (window.__tzDocOpenUrl) window.__tzDocOpenUrl(args); } catch (e) {} }, 200);
+      return '正在文档阅读器中打开：' + args;
+    }
+    if (sub === 'recent') {
+      let recent = [];
+      try { recent = JSON.parse(localStorage.getItem('tz_doc_recent') || '[]'); } catch (e) {}
+      if (!recent.length) return '（暂无最近打开记录）';
+      return recent.slice(0, 10).map((x, i) => (i + 1) + '. ' + (x.name || x.url || String(x))).join('\n');
+    }
+    throw new Error('未知子命令：' + sub);
+  },
+
+  /* ===== 天择网主页（tz-home）===== */
+  home: (r) => {
+    if (!r) return 'home 用法：\n  home sections  主页板块列表\n  home open 板块名  打开某板块（如 news/blog/coc/game/english/os）';
+    const { sub, args } = splitSub(r);
+    if (sub === 'sections') return '天择网主页板块：\n  news 新闻\n  blog 博客\n  open 数据开源\n  ai AI 专区\n  coc COC 专区\n  game 游戏专区\n  english 英语专区\n  os 天择OS';
+    if (sub === 'open') {
+      need(args, 'home open 板块名');
+      const map = { news: 'news/index.html', blog: 'blog/index.html', open: 'open/index.html', ai: 'ai/index.html', coc: 'coc/index.html', game: 'game/index.html', english: 'english/index.html', os: 'os/index.html' };
+      const path = map[args.toLowerCase()];
+      if (!path) throw new Error('未知板块：' + args + '（home sections 查看全部）');
+      openInOsBrowser(TZNET_BASE + path);
+      return '已打开：' + args;
+    }
+    throw new Error('未知子命令：' + sub);
+  },
+
+  /* ===== 新闻（tz-news）===== */
+  news: async (r) => {
+    if (!r) {
+      try {
+        const res = await fetch(TZNET_BASE + 'news/index.html');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const html = await res.text();
+        // 简单提取新闻列表（h3 标题）
+        const titles = [];
+        const re = /<h3>([^<]+)<\/h3>/g; let m;
+        while ((m = re.exec(html)) && titles.length < 12) titles.push(m[1].trim());
+        if (!titles.length) return '（未能解析新闻列表，请直接打开新闻页查看）';
+        return '最新新闻（输入 news 编号 打开）：\n' + titles.map((t, i) => (i + 1) + '. ' + t).join('\n');
+      } catch (e) { return '新闻加载失败：' + (e.message || e) + '\n（可直接 open tz-news 打开新闻应用）'; }
+    }
+    const n = parseInt(r, 10);
+    if (n >= 1 && n <= 20) {
+      openInOsBrowser(TZNET_BASE + 'news/' + n + '/index.html');
+      return '已打开第 ' + n + ' 条新闻';
+    }
+    throw new Error('编号无效（1-20）');
+  },
+
+  /* ===== 博客（tz-blog）===== */
+  blog: async (r) => {
+    if (!r) {
+      try {
+        const res = await fetch(TZNET_BASE + 'blog/index.html');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const html = await res.text();
+        const titles = [];
+        const re = /<h3[^>]*>([^<]+)<\/h3>/g; let m;
+        while ((m = re.exec(html)) && titles.length < 12) titles.push(m[1].trim());
+        if (!titles.length) return '（未能解析博客列表，请直接打开博客页查看）';
+        return '最新博客（输入 blog 编号 打开）：\n' + titles.map((t, i) => (i + 1) + '. ' + t).join('\n');
+      } catch (e) { return '博客加载失败：' + (e.message || e); }
+    }
+    const n = parseInt(r, 10);
+    if (n >= 1) {
+      openInOsBrowser(TZNET_BASE + 'blog/' + n + '/index.html');
+      return '已打开第 ' + n + ' 篇博客';
+    }
+    throw new Error('编号无效');
+  },
+
+  /* ===== 数据开源（tz-open）===== */
+  'open-data': (r) => {
+    if (!r) return 'open-data 用法：\n  open-data list  列出开源数据集\n  open-data open  打开数据开源主页';
+    const { sub } = splitSub(r);
+    if (sub === 'list') return '天择网开源数据集：\n  · COC 完整游戏数据（v18.400.9，272 个单位，coc-json 输出）\n  · COC 单位中文介绍与等级数据\n  · 单词本示例（sample-vocab.json）\n  · GRE 词汇表（gre-vocab.json）\n  · 天择OS 源代码\n\n输入 open-data open 打开主页查看全部';
+    if (sub === 'open') { openInOsBrowser(TZNET_BASE + 'open/index.html'); return '已打开数据开源主页'; }
+    throw new Error('未知子命令：' + sub);
+  },
+
+  /* ===== AI 专区（tz-ai）===== */
+  'ai-zone': (r) => {
+    if (!r) return 'ai-zone 用法：\n  ai-zone list  列出 AI 工具\n  ai-zone open  打开 AI 专区主页';
+    const { sub } = splitSub(r);
+    if (sub === 'list') return '天择网 AI 工具：\n  · AI 对话（天择OS 内置）\n  · 软件商城（自然语言生成软件）\n  · AI 命令行模式（Agent）\n  · 相对论演示（relativity-demo）\n  · AI 记忆系统\n\n输入 ai-zone open 打开 AI 专区';
+    if (sub === 'open') { openInOsBrowser(TZNET_BASE + 'ai/index.html'); return '已打开 AI 专区'; }
+    throw new Error('未知子命令：' + sub);
+  },
+
+  /* ===== COC 专区（tz-coc）===== */
+  coc: (r) => {
+    if (!r) return 'coc 用法：\n  coc list  COC 专区板块列表\n  coc open  打开 COC 专区主页';
+    const { sub } = splitSub(r);
+    if (sub === 'list') return 'COC 专区板块：\n  · tz-coc-data 数据查询（命令 coc-data）\n  · tz-coc-village 村庄分析（命令 village）\n  · tz-coc-planner 升级规划（命令 planner）\n  · tz-coc-dmg 伤害计算（命令 dmg）';
+    if (sub === 'open') { openInOsBrowser(TZNET_BASE + 'coc/index.html'); return '已打开 COC 专区'; }
+    throw new Error('未知子命令：' + sub);
+  },
+
+  /* ===== 村庄分析（tz-coc-village）===== */
+  village: (r) => {
+    if (!r) return 'village 用法：\n  village info  功能介绍\n  village open  打开村庄分析';
+    const { sub } = splitSub(r);
+    if (sub === 'info') return '村庄分析：导入村庄存档 JSON，自动分析建筑分布、防御覆盖、升级优先级。支持从 COC 游戏导出存档后上传。';
+    if (sub === 'open') { openInOsBrowser(TZNET_BASE + 'coc/village/index.html'); return '已打开村庄分析'; }
+    throw new Error('未知子命令：' + sub);
+  },
+
+  /* ===== 升级规划（tz-coc-planner）===== */
+  planner: (r) => {
+    if (!r) return 'planner 用法：\n  planner info  功能介绍\n  planner open  打开升级规划';
+    const { sub } = splitSub(r);
+    if (sub === 'info') return '升级规划器：输入当前大本营等级与目标，自动列出最优升级顺序（按时间/资源/战力增益排序）。支持多建筑并行规划。';
+    if (sub === 'open') { openInOsBrowser(TZNET_BASE + 'coc/planner/index.html'); return '已打开升级规划'; }
+    throw new Error('未知子命令：' + sub);
+  },
+
+  /* ===== 伤害计算（tz-coc-dmg）===== */
+  dmg: (r) => {
+    if (!r) return 'dmg 用法：\n  dmg info  功能介绍\n  dmg quake 城墙HP [地震等级]  计算地震法术对城墙的伤害\n  dmg open  打开伤害计算器';
+    const { sub, args } = splitSub(r);
+    if (sub === 'info') return '伤害计算器：基于雷电、地震法术与英雄装备技能伤害数据，计算给定法术空间内的最高伤害、摧毁建筑所需最少法术。支持从村庄存档一键导入等级。';
+    if (sub === 'open') { openInOsBrowser(TZNET_BASE + 'coc/dmg-calc/index.html'); return '已打开伤害计算器'; }
+    if (sub === 'quake') {
+      // 城墙规则（见 MEMORY）：3 瓶地震不毁任意 HP 城墙，4 瓶必毁
+      const p = args.split(/\s+/).map(s => s.trim()).filter(Boolean);
+      if (!p.length) throw new Error('用法：dmg quake 城墙HP [地震等级]');
+      const hp = parseInt(p[0], 10); if (!(hp > 0)) throw new Error('城墙 HP 必须是正整数');
+      const lvl = p[1] ? parseInt(p[1], 10) : 4; if (!(lvl >= 1 && lvl <= 5)) throw new Error('地震等级 1-5');
+      // 地震法术对城墙有特殊倍率（约 14x），单瓶伤害 = 0.14 * HP 大致（实际公式较复杂）
+      // 简化：直接套用城墙规则
+      return '城墙 HP=' + hp + '，地震法术等级=' + lvl + '\n' +
+        '· 1 瓶地震：城墙受损但不会摧毁\n' +
+        '· 3 瓶地震：城墙剩余 HP > 0，依然存活（v18 规则：3 瓶不毁任意 HP 城墙）\n' +
+        '· 4 瓶地震：城墙必毁（v18 规则：4 瓶必毁任意 HP 城墙）\n' +
+        '结论：摧毁该城墙需要 4 瓶地震法术。\n' +
+        '（详细单瓶伤害与建筑工人小屋回血容错请用 dmg open 打开计算器）';
+    }
+    throw new Error('未知子命令：' + sub);
+  },
+
+  /* ===== 游戏专区（tz-game）===== */
+  game: (r) => {
+    if (!r) return 'game 用法：\n  game list  列出游戏\n  game open  打开游戏专区';
+    const { sub } = splitSub(r);
+    if (sub === 'list') return '天择网游戏：\n  · tz-gpa 绩点战争（卡牌对战）\n\n输入 game open 打开游戏专区';
+    if (sub === 'open') { openInOsBrowser(TZNET_BASE + 'game/index.html'); return '已打开游戏专区'; }
+    throw new Error('未知子命令：' + sub);
+  },
+
+  /* ===== 绩点战争（tz-gpa）===== */
+  gpa: (r) => {
+    if (!r) return 'gpa 用法：\n  gpa info  游戏介绍\n  gpa open  打开游戏\n  gpa rules  查看规则要点';
+    const { sub } = splitSub(r);
+    if (sub === 'info') return '绩点战争：天择网原创卡牌对战游戏。玩家用学科卡牌（高数/线代/物理等）对战，每张卡有攻击/防御/技能属性，目标是把对手血量打到 0。';
+    if (sub === 'open') { openInOsBrowser(TZNET_BASE + 'game/gpa-card/index.html'); return '已打开绩点战争'; }
+    if (sub === 'rules') return '绩点战争规则要点：\n· 双方各 30 HP，从手牌出卡\n· 每回合获得法力值，法力值随回合递增\n· 卡牌分攻击/法术/装备三类\n· 攻击卡直接造成伤害，可被对方防御卡抵挡\n· 法术卡触发特殊效果（抽牌/治疗/减费等）\n· 装备卡持续生效直到被破坏\n\n详细规则与卡牌数据请打开游戏查看。';
+    throw new Error('未知子命令：' + sub);
+  },
+
+  /* ===== 英语专区（tz-en）===== */
+  english: (r) => {
+    if (!r) return 'english 用法：\n  english list  列出英语工具\n  english open  打开英语专区';
+    const { sub } = splitSub(r);
+    if (sub === 'list') return '英语学习工具：\n  · tz-words 背单词（命令 words）\n\n输入 english open 打开英语专区';
+    if (sub === 'open') { openInOsBrowser(TZNET_BASE + 'english/index.html'); return '已打开英语专区'; }
+    throw new Error('未知子命令：' + sub);
+  },
+
+  /* ===== 模拟器 ===== */
+  'emu-win': (r) => {
+    if (!r) return 'emu-win 用法：\n  emu-win info  介绍\n  emu-win open  打开 Windows 11 模拟器';
+    const { sub } = splitSub(r);
+    if (sub === 'info') return 'Windows 11 模拟器（Win11React 开源项目）：浏览器内的高仿真 Windows 11 桌面，包含开始菜单、设置、Edge 浏览器、商店等。仅界面模拟，非真实系统。';
+    if (sub === 'open') { launchApp('emu-win'); return '已打开 Windows 11 模拟器'; }
+    throw new Error('未知子命令：' + sub);
+  },
+  'emu-win10': (r) => {
+    if (!r) return 'emu-win10 用法：\n  emu-win10 info  介绍\n  emu-win10 open  打开 Windows 10 模拟器';
+    const { sub } = splitSub(r);
+    if (sub === 'info') return 'Windows 10 模拟器（daedalOS 开源项目）：浏览器内的 Win10 风格功能桌面，包含文件管理、终端、编辑器等。仅界面模拟。';
+    if (sub === 'open') { launchApp('emu-win10'); return '已打开 Windows 10 模拟器'; }
+    throw new Error('未知子命令：' + sub);
+  },
+  'emu-android': (r) => {
+    if (!r) return 'emu-android 用法：\n  emu-android info  介绍\n  emu-android open  打开安卓模拟器';
+    const { sub } = splitSub(r);
+    if (sub === 'info') return '安卓模拟器（MobileGym，中科院开源）：浏览器内的现代安卓仿真环境，预装 28 个应用，含通知栏/设置/相册等。仅界面模拟。';
+    if (sub === 'open') { launchApp('emu-android'); return '已打开安卓模拟器'; }
+    throw new Error('未知子命令：' + sub);
+  },
+
+  /* ===== 时钟（clock）扩展子命令 ===== */
+  // 顶层已有 clock/stopwatch/timer；clock-now 是补充
+  'clock-now': () => {
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    return '当前时间：' + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()) + '（' + ['周日','周一','周二','周三','周四','周五','周六'][d.getDay()] + '）';
+  }
+};
+
+/* ===== COC 数据命令实现 ===== */
+async function cocDataOverview() {
+  const data = await fetchCocData();
+  const meta = data.meta || {};
+  const units = data.units || [];
+  // 类别统计
+  const catCount = {};
+  units.forEach(u => { const c = u.category || '其他'; catCount[c] = (catCount[c] || 0) + 1; });
+  const catStr = Object.entries(catCount).map(([k, v]) => k + '：' + v).join(' · ');
+  // 前 15 个单位
+  const sample = units.slice(0, 15).map((u, i) => (i + 1) + '. ' + u.chineseName + '（' + u.englishName + '）' + u.category + ' · ' + (u.levels ? u.levels.length : (u.levelRows ? u.levelRows.length : '?')) + ' 级').join('\n');
+  return '天择 COC 完整数据 · 版本 ' + (meta.version || '?') + '\n' +
+    '总单位数：' + (meta.totalUnits || units.length) + ' · 类别：' + catStr + '\n\n' +
+    '单位列表（前 15 个，完整列表用 coc-data cat 类别名）：\n' + sample + '\n\n' +
+    '提示：coc-data search 名字 查看单位详情；coc-data th 等级 列出某大本营可解锁单位；coc-json 输出原始 JSON。';
+}
+async function cocDataSearch(q) {
+  need(q, 'coc-data search 名字');
+  const data = await fetchCocData();
+  const units = data.units || [];
+  const ql = q.toLowerCase();
+  const hits = units.filter(u => (u.chineseName || '').includes(q) || (u.englishName || '').toLowerCase().includes(ql));
+  if (!hits.length) return '未找到匹配「' + q + '」的单位';
+  if (hits.length > 5) return '匹配 ' + hits.length + ' 个单位，请缩小范围（前 5 个）：\n' + hits.slice(0, 5).map(u => u.chineseName + '（' + u.englishName + '）').join('\n');
+  // 详细输出（前 5 个）
+  return hits.map(u => {
+    const lv = u.levels || u.levelRows || [];
+    let s = '━━━ ' + u.chineseName + '（' + u.englishName + '）━━━\n';
+    s += '类别：' + (u.category || '?') + ' · 等级数：' + lv.length + '\n';
+    if (u.description) s += '介绍：' + u.description + '\n';
+    if (lv.length) {
+      const l1 = lv[0]; const lN = lv[lv.length - 1];
+      const stat = (l) => {
+        const dps = l.DPS || l.dps || l.damagePerSecond;
+        const hp = l.Hitpoints || l.hitpoints || l.hp;
+        if (dps) return dps + ' DPS';
+        if (hp) return hp + ' HP';
+        return '?';
+      };
+      s += '1 级：' + stat(l1);
+      if (l1.UpgradeCost) s += ' · 升级花费 ' + l1.UpgradeCost;
+      if (l1.requiredTownHallLevel) s += ' · 需大本 ' + l1.requiredTownHallLevel;
+      s += '\n';
+      if (lv.length > 1) {
+        s += (lv.length) + ' 级：' + stat(lN);
+        if (lN.UpgradeCost) s += ' · 升级花费 ' + lN.UpgradeCost;
+        if (lN.requiredTownHallLevel) s += ' · 需大本 ' + lN.requiredTownHallLevel;
+        s += '\n';
+      }
+    }
+    return s.trim();
+  }).join('\n\n');
+}
+async function cocDataByTH(th) {
+  need(th, 'coc-data th 大本等级');
+  const n = parseInt(th, 10);
+  if (!(n >= 1 && n <= 16)) throw new Error('大本等级 1-16');
+  const data = await fetchCocData();
+  const units = data.units || [];
+  const hits = units.filter(u => {
+    const lv = u.levels || u.levelRows || [];
+    return lv.some(l => (l.requiredTownHallLevel || l.th) === n);
+  });
+  if (!hits.length) return '（大本 ' + n + ' 级没有可解锁单位）';
+  return '大本营 ' + n + ' 级可解锁单位（共 ' + hits.length + ' 个）：\n' + hits.map(u => '  ' + u.chineseName + '（' + u.englishName + '）' + u.category).join('\n');
+}
+async function cocDataByCategory(cat) {
+  need(cat, 'coc-data cat 类别名');
+  const data = await fetchCocData();
+  const units = data.units || [];
+  const hits = units.filter(u => (u.category || '').includes(cat));
+  if (!hits.length) return '未找到类别「' + cat + '」（可用：圣水兵/暗黑兵/法术/英雄/建筑/陷阱等）';
+  return '类别「' + cat + '」（' + hits.length + ' 个单位）：\n' + hits.map((u, i) => (i + 1) + '. ' + u.chineseName + '（' + u.englishName + '）').join('\n');
+}
+async function cocDataCount() {
+  const data = await fetchCocData();
+  const units = data.units || [];
+  const catCount = {};
+  units.forEach(u => { const c = u.category || '其他'; catCount[c] = (catCount[c] || 0) + 1; });
+  return 'COC 数据统计：\n  总单位数：' + units.length + '\n' + Object.entries(catCount).map(([k, v]) => '  ' + k + '：' + v).join('\n');
+}
+
+/* ===== 单词本命令实现 ===== */
+async function wordsExport() {
+  const { words, source } = await readWordsVocab();
+  const json = JSON.stringify(words, null, 2);
+  return json + (source === 'sample' ? '\n\n（注：当前为示例词库。在网页版天择OS 中会输出你的真实词库；桌面版因跨域限制只能读取示例。）' : '');
+}
+async function wordsList(r) {
+  const n = r ? parseInt(r, 10) : 20;
+  const { words, source } = await readWordsVocab();
+  if (!words.length) return '（单词本为空）';
+  const list = words.slice(0, n > 0 ? n : 20);
+  return '单词本（共 ' + words.length + ' 个' + (source === 'sample' ? '，示例词库' : '') + '，显示前 ' + list.length + ' 个）：\n' +
+    list.map((w, i) => (i + 1) + '. ' + (w.word || '?') + ' ' + (w.phonetic || '') + ' ' + (w.pos || '') + ' ' + (Array.isArray(w.meaning) ? w.meaning.join('；') : (w.meaning || ''))).join('\n');
+}
+async function wordsCount() {
+  const { words } = await readWordsVocab();
+  return '单词本共 ' + words.length + ' 个单词';
+}
+async function wordsFind(q) {
+  need(q, 'words find 关键词');
+  const { words } = await readWordsVocab();
+  const ql = q.toLowerCase();
+  const hits = words.filter(w => (w.word || '').toLowerCase().includes(ql) || (Array.isArray(w.meaning) ? w.meaning.join(' ') : (w.meaning || '')).includes(q));
+  if (!hits.length) return '未找到匹配「' + q + '」的单词';
+  return '匹配 ' + hits.length + ' 个：\n' + hits.map(w => '  ' + (w.word || '?') + ' ' + (w.phonetic || '') + ' ' + (w.pos || '') + ' ' + (Array.isArray(w.meaning) ? w.meaning.join('；') : (w.meaning || ''))).join('\n');
+}
+async function wordsAdd(r) {
+  need(r, 'words add word|词性|释义');
+  const p = r.split('|').map(s => s.trim());
+  if (p.length < 2) throw new Error('用法：words add word|词性|释义（释义可多个用 / 分隔）');
+  const word = p[0]; const pos = p[1] || ''; const meanings = (p[2] || '').split('/').map(s => s.trim()).filter(Boolean);
+  const { words } = await readWordsVocab();
+  if (words.some(w => (w.word || '').toLowerCase() === word.toLowerCase())) return '「' + word + '」已在单词本中';
+  const item = { word, pos, meaning: meanings.length ? meanings : [p[2] || ''] };
+  if (pos) item.pos = pos;
+  words.push(item);
+  const ok = await writeWordsVocab(words);
+  if (ok) return '已添加单词：' + word + '（' + item.meaning.join('；') + '）';
+  return '⚠ 添加仅在内存生效（桌面版跨域无法写入 IndexedDB）。请在背单词应用内手动添加：\n  ' + word + ' ' + pos + ' ' + item.meaning.join('；');
+}
+async function wordsDel(r) {
+  need(r, 'words del 编号');
+  const n = parseInt(r, 10);
+  const { words } = await readWordsVocab();
+  if (!(n >= 1 && n <= words.length)) throw new Error('编号无效（1-' + words.length + '）');
+  const removed = words.splice(n - 1, 1)[0];
+  const ok = await writeWordsVocab(words);
+  if (ok) return '已删除：' + (removed.word || '?');
+  return '⚠ 删除仅在内存生效（桌面版跨域无法写入 IndexedDB）。请在背单词应用内手动删除。';
+}
+
 /* ===================== 命令行引擎（供终端应用与 AI Agent 调用） ===================== */
 const CLI = {
   history: [],
-  // 执行一行命令，返回 { ok, out }；out 为文本输出。opts.byAI=true 表示由 AI 命令行模式触发
+  // 执行一行命令，返回 { ok, out } 或 Promise<{ok,out}>（当命令函数返回 Promise 时）
+  // opts.byAI=true 表示由 AI 命令行模式触发
   exec(line, opts) {
     line = String(line || '').trim();
     if (!line) return { ok: true, out: '' };
@@ -1471,7 +2098,15 @@ const CLI = {
     if (opts && opts.byAI && cmd === 'ask') return { ok: false, out: 'ask 命令仅限用户使用，AI 不能调用' };
     const fn = this.cmds[cmd];
     if (!fn) return { ok: false, out: '未知命令：' + cmd + '（输入 help 查看全部命令）' };
-    try { return { ok: true, out: String(fn(rest) ?? '') }; }
+    try {
+      const ret = fn(rest);
+      // 异步命令（fetch / IndexedDB 等）：返回 Promise
+      if (ret && typeof ret.then === 'function') {
+        return ret.then(v => ({ ok: true, out: String(v ?? '') }))
+                  .catch(e => ({ ok: false, out: '执行出错：' + (e.message || e) }));
+      }
+      return { ok: true, out: String(ret ?? '') };
+    }
     catch (e) { return { ok: false, out: '执行出错：' + (e.message || e) }; }
   },
   // 完整教程（终端 help 用）
@@ -1484,6 +2119,8 @@ const CLI = {
 '  widget open|close           打开/关闭快捷面板\n' +
 '  resetlayout                 重置桌面图标布局\n' +
 '  export                      导出全量存档\n' +
+'  settings info|storage|reset 系统信息/存储/重置布局\n' +
+'  about info|changelog|credits 关于/更新日志/致谢\n' +
 '── 应用 ──\n' +
 '  apps                        列出所有应用（含 id）\n' +
 '  open 应用id                 打开应用\n' +
@@ -1496,6 +2133,7 @@ const CLI = {
 '  rename 应用id|新名[|图标]    重命名软件\n' +
 '  sethtml 应用id|HTML          改写软件代码并热更新\n' +
 '  gethtml 应用id              查看软件完整 HTML 代码\n' +
+'  files list|export|size      已安装软件列表/导出/大小\n' +
 '── AI ──\n' +
 '  aiconfig                    查看当前 AI 配置\n' +
 '  aiconfig url|key|model|maxtokens 值    修改配置\n' +
@@ -1504,6 +2142,8 @@ const CLI = {
 '  price unit usd|cny          设置货币单位\n' +
 '  deepthink on|off            深度思考开关\n' +
 '  agent on|off                AI 命令行模式开关\n' +
+'  chat clear|history|last     清空/查看历史/AI最后回复\n' +
+'  store open|tutorial|idea    软件商城/教程/创意\n' +
 '── 记忆 ──\n' +
 '  mem                         列出全部记忆（带编号）\n' +
 '  mem add 内容                写入一条记忆\n' +
@@ -1516,18 +2156,48 @@ const CLI = {
 '  notify 文本                 发送一条系统通知\n' +
 '── 浏览器与网页 ──\n' +
 '  openurl 网址或搜索词         在内置浏览器打开网页（go 亦可）\n' +
+'  browser tabs|closeall|home  浏览器标签页/全关/打开主页\n' +
+'  home sections|open 板块     天择网板块列表/打开板块\n' +
+'  news [编号]                 最新新闻列表/打开某条\n' +
+'  blog [编号]                 最新博客列表/打开某篇\n' +
 '  bm                          列出收藏夹\n' +
 '  bm add 网址 [| 标题]         收藏网址\n' +
 '  bm del 编号                 删除收藏\n' +
 '── 时钟（时钟/秒表/倒计时）──\n' +
 '  clock                       打开时钟应用\n' +
+'  clock-now                   查看当前时间\n' +
 '  stopwatch [start|stop|reset] 秒表：开/停/归零（默认打开）\n' +
 '  timer 时长                  倒计时，如 timer 5m / timer 90s / timer 1h30m\n' +
-'── 软件直达与回调 ──\n' +
-'  coc-data                    返回我的 COC 数据查询\n' +
-'  words                       返回我的单词库（背单词）\n' +
+'── 天择网专区直达 ──\n' +
+'  coc list|open               COC 专区板块/打开专区\n' +
+'  coc-data [子命令]           COC 中文数据（非 JSON）；子命令：\n' +
+'    search 名字 | th 等级 | cat 类别 | count | help\n' +
+'  coc-json                    输出 COC 原始 JSON（约 2MB）\n' +
+'  village info|open           村庄分析介绍/打开\n' +
+'  planner info|open           升级规划介绍/打开\n' +
+'  dmg info|quake HP [等级]|open 伤害计算/地震规则/打开\n' +
+'  game list|open              游戏列表/打开专区\n' +
+'  gpa info|open|rules         绩点战争介绍/打开/规则\n' +
+'  english list|open           英语工具/打开专区\n' +
+'  ai-zone list|open           AI 工具/打开专区\n' +
+'  open-data list|open         开源数据集/打开主页\n' +
+'  tree [分类]                 天择导航分类/分类下应用\n' +
+'── 单词本（背单词）──\n' +
+'  words                       输出当前单词本 JSON\n' +
+'  words add word|词性|释义    添加单词，如 words add hypothesis|n.|假设\n' +
+'  words list [N]              列出前 N 个单词（默认 20）\n' +
+'  words count                 统计单词总数\n' +
+'  words find 关键词           按单词或释义查找\n' +
+'  words del 编号              删除指定编号的单词\n' +
+'── 文档与其他 ──\n' +
+'  docs open URL|recent        文档阅读器打开/最近记录\n' +
+'  tips [编号]                 玩机技巧列表/详情\n' +
+'  emu-win info|open           Windows 11 模拟器\n' +
+'  emu-win10 info|open         Windows 10 模拟器\n' +
+'  emu-android info|open       安卓模拟器\n' +
+'── 软件命令包与 AI 提问 ──\n' +
 '  ask 问题                    让 AI 对话回答这个问题（AI 自身不能调用）\n' +
-'  cmd 应用id 指令 [参数]       调用某软件注册的命令包（cmd list 查看）\n' +
+'  cmd 应用id 指令 [参数]       调用 AI 软件注册的命令包（cmd list 查看）\n' +
 '  installhelp                 获取安装软件教程（返回 AI 软件商城提示词）\n' +
 '── 其他 ──\n' +
 '  js 代码                     执行任意 JavaScript（万能兜底，慎用）\n' +
@@ -1539,8 +2209,20 @@ const CLI = {
   aiPrompt() {
     return '\n\n【天择OS 命令行能力】你可以输出 tzcli 代码块让操作系统执行命令，格式（每行一条命令）：\n' +
 '```tzcli\nopen ai-config\nmem add 用户喜欢简洁的回答\n```\n' +
-'可用命令：apps 列出应用id | open/close/pin/unpin 应用id | top 应用id 置顶 | pinned 列出置顶 | install 名称|图标|完整HTML | uninstall 应用id | rename 应用id|新名[|图标] | sethtml 应用id|完整HTML | gethtml 应用id | aiconfig [url|key|model|maxtokens 值] | price [hit|write|input|output 值] / price unit usd|cny | mem / mem add 内容 / mem del 编号 / mem on|off 编号 | theme dark|light | style win|mac|auto | deepthink on|off | clear chat | notify 文本 | openurl 网址 | bm / bm add 网址|标题 / bm del 编号 | clock | stopwatch [start|stop|reset] | timer 时长(如5m) | coc-data | words | cmd 应用id 指令 [参数] | js JavaScript代码 | version\n' +
-'规则：仅在确有必要时使用（普通问答不要用）；命令在你输出后立即执行，结果会以用户消息回传，你再据此继续回答；块内不要写注释和空行；一次不超过 5 条；写记忆、改配置、装改软件等操作优先用命令完成，不要只口头描述；你不能使用 ask 命令（那是给用户用的）。';
+'可用命令（自有软件命令均为顶层命令，无需 cmd 前缀）：\n' +
+'· 系统：version | theme dark|light | style win|mac|auto | settings info|storage|reset | about info|changelog|credits\n' +
+'· 应用：apps | open 应用id | close 应用id | pin/top 应用id | unpin 应用id | pinned | install 名称|图标|完整HTML | uninstall 应用id | rename 应用id|新名[|图标] | sethtml 应用id|完整HTML | gethtml 应用id | files list|export 应用id|size\n' +
+'· AI：aiconfig [url|key|model|maxtokens 值] | price [hit|write|input|output 值] / price unit usd|cny | deepthink on|off | chat clear|history|last | store open|tutorial|idea\n' +
+'· 记忆：mem | mem add 内容 | mem del 编号 | mem on|off 编号\n' +
+'· 通知/对话：clear chat | notify 文本\n' +
+'· 浏览器：openurl 网址 | browser tabs|closeall|home | home sections|open 板块 | news [编号] | blog [编号] | bm / bm add 网址|标题 / bm del 编号\n' +
+'· 时钟：clock | clock-now | stopwatch [start|stop|reset] | timer 时长(如5m)\n' +
+'· 天择网专区：coc list|open | coc-data [search 名字|th 等级|cat 类别|count] | coc-json | village info|open | planner info|open | dmg info|quake HP|open | game list|open | gpa info|open|rules | english list|open | ai-zone list|open | open-data list|open | tree [分类]\n' +
+'· 单词本：words | words add word|词性|释义 | words list [N] | words count | words find 关键词 | words del 编号\n' +
+'· 文档/技巧：docs open URL|recent | tips [编号] | emu-win/emu-win10/emu-android info|open\n' +
+'· 用户安装的 AI 软件：cmd 应用id 指令 [参数]（cmd list 查看注册的命令）\n' +
+'· 其他：js JavaScript代码 | resetlayout | export | ask 问题(仅用户可用，你不能调用)\n' +
+'规则：仅在确有必要时使用（普通问答不要用）；命令在你输出后立即执行，结果会以用户消息回传；异步命令（fetch/IndexedDB）会自动等待；块内不要写注释和空行；一次不超过 5 条；写记忆、改配置、装改软件、查 COC/单词数据等操作优先用命令完成，不要只口头描述。';
   },
   cmds: {
     help: () => CLI.manual(),
@@ -1733,9 +2415,7 @@ const CLI = {
       setTimeout(() => { try { if (w && w.body) startCountdownInApp(w.body, sec); } catch (e) {} }, 120);
       return '倒计时 ' + sec + ' 秒已开始';
     },
-    // 软件直达
-    'coc-data': () => { launchApp('tz-coc-data'); return '已返回你的 COC 数据查询'; },
-    words: () => { launchApp('tz-words'); return '已返回你的单词库'; },
+    // 软件直达（coc-data 与 words 已升级为数据输出命令，见 BUILTIN_APP_CMDS）
     // 问 AI：仅用户可调用（AI 命令行模式禁止调用，见 exec 守卫）
     ask: (r) => {
       need(r, 'ask 问题');
@@ -1764,7 +2444,9 @@ const CLI = {
       const s = typeof ret === 'object' ? JSON.stringify(ret) : String(ret);
       return String(s).slice(0, 2000);
     },
-    echo: (r) => r
+    echo: (r) => r,
+    // ===== 自有软件命令（每个软件一个顶层命令，help 直接可见）=====
+    ...BUILTIN_APP_CMDS
   }
 };
 function need(v, usage) { if (!v) throw new Error('用法：' + usage); }
@@ -2360,11 +3042,19 @@ function initTerminal() {
       if (!line) return;
       print('天择OS > ' + line, 't-cmd');
       CLI.history.push(line); hIdx = CLI.history.length;
+      const handleResult = (r) => {
+        if (r.out === '__CLEAR__') { out.innerHTML = ''; return; }
+        print(r.out || '(完成)', r.ok ? '' : 't-err');
+        print(' ');
+        scroll();
+      };
       const r = CLI.exec(line);
-      if (r.out === '__CLEAR__') { out.innerHTML = ''; return; }
-      print(r.out || '(完成)', r.ok ? '' : 't-err');
-      print(' ');
-      scroll();
+      if (r && typeof r.then === 'function') {
+        print('（执行中…）', 't-dim'); scroll();
+        r.then(handleResult);
+      } else {
+        handleResult(r);
+      }
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       if (hIdx > 0) { hIdx--; inp.value = CLI.history[hIdx] || ''; setTimeout(() => inp.setSelectionRange(inp.value.length, inp.value.length)); }
@@ -3319,8 +4009,10 @@ async function runGeneration(userText) {
       const results = [];
       for (const c of cmds) {
         const res = CLI.exec(c, { byAI: true });
-        cmdLog.push({ cmd: c, ok: res.ok, out: res.out });
-        results.push('$ ' + c + '\n' + (res.out || '(完成)'));
+        // 异步命令（fetch / IndexedDB 等）：await 之
+        const r = (res && typeof res.then === 'function') ? await res : res;
+        cmdLog.push({ cmd: c, ok: r.ok, out: r.out });
+        results.push('$ ' + c + '\n' + (r.out || '(完成)'));
         paint();
       }
       toast('⌨️ AI 执行了 ' + cmds.length + ' 条系统命令', 2400);
