@@ -2137,7 +2137,7 @@ function initDocReader() {
     const pane = el('div', 'doc-pane');
     pane.innerHTML = '<div class="app-loading"><div class="al-spin"></div><div>正在解析 ' + escapeHtml(file.name) + '…</div></div>';
     stage.appendChild(pane);
-    const d = { id: ++seq, name: file.name, el: pane, zoom: { mode: 'fitWidth', value: 100 } };
+    const d = { id: ++seq, name: file.name, el: pane, zoom: { mode: 'percent', value: 100 } };
     docs.push(d); activate(d.id);
     const onReady = () => { applyZoom(d); updateZoomBar(); };
     const fail = (msg) => { pane.innerHTML = '<div class="app-error"><div class="ae-icon">⚠️</div>' + escapeHtml(msg || '解析失败') + '</div>'; };
@@ -2195,17 +2195,22 @@ function initDocReader() {
     const iframe = pane.querySelector('.doc-frame');
     let naturalW = 0, naturalH = 0;
     if (content) {
-      // 先恢复 100% 以读取原始尺寸
+      // 先恢复 100% 并移除 max-width 限制，以读取真实自然尺寸
+      const oldZoom = content.style.zoom;
+      const oldMaxWidth = content.style.maxWidth;
       content.style.zoom = '100%';
+      content.style.maxWidth = 'none';
       naturalW = content.scrollWidth || pane.clientWidth;
       naturalH = content.scrollHeight || pane.clientHeight;
+      content.style.maxWidth = oldMaxWidth;
+      content.style.zoom = oldZoom;
     } else if (iframe) {
       naturalW = iframe.clientWidth || pane.clientWidth;
       naturalH = iframe.clientHeight || pane.clientHeight;
     }
     if (!naturalW) naturalW = pane.clientWidth;
     if (!naturalH) naturalH = pane.clientHeight;
-    const padX = 24, padY = 24;
+    const padX = 28, padY = 28;
     if (d.zoom.mode === 'fitWidth') {
       return Math.max(25, Math.min(500, Math.round((pane.clientWidth - padX) / naturalW * 100)));
     }
@@ -2219,7 +2224,17 @@ function initDocReader() {
     const s = computeZoom(d) / 100;
     const content = d.el.querySelector('.doc-content, .doc-pdf');
     const iframe = d.el.querySelector('.doc-frame');
-    if (content) content.style.zoom = (s * 100) + '%';
+    if (content) {
+      // 先读取自然尺寸，再应用 zoom 并同步容器宽高，确保滚动条跟随
+      content.style.zoom = '100%';
+      content.style.maxWidth = 'none';
+      const w = content.scrollWidth || 1;
+      const h = content.scrollHeight || 1;
+      content.style.zoom = (s * 100) + '%';
+      content.style.width = Math.round(w * s) + 'px';
+      content.style.minHeight = Math.round(h * s) + 'px';
+      content.style.maxWidth = '';
+    }
     if (iframe) {
       iframe.style.transform = 'scale(' + s + ')';
       iframe.style.transformOrigin = 'top left';
