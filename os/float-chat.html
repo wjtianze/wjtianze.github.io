@@ -4,340 +4,72 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI 悬浮窗 · 天择OS</title>
+<link rel="stylesheet" href="https://wjtianze.github.io/os/assets/css/os.css">
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-  font-family: "Segoe UI", -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
-  color: #f5f7ff; background: #0c1230;
-  display: flex; flex-direction: column; height: 100vh; overflow: hidden;
-}
-/* 标题栏 */ 
-.title-bar {
-  height: 34px; flex-shrink: 0; display: flex; align-items: center;
-  padding: 0 10px; gap: 8px; -webkit-app-region: drag;
-  background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(59,130,246,0.12));
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-}
-.title-bar .icon { font-size: 14px; }
-.title-bar .text { font-size: 12px; color: #a78bfa; flex: 1; }
-.title-bar .btn {
-  width: 22px; height: 22px; border-radius: 50%; border: none; cursor: pointer;
-  font-size: 12px; display: flex; align-items: center; justify-content: center;
-  -webkit-app-region: no-drag;
-}
-.title-bar .btn.close { background: #ff5f57; color: #5b0700; }
-.title-bar .btn.clear { background: rgba(255,255,255,0.1); color: #c3c8e4; font-size: 14px; }
-/* 工具栏 */ 
-.toolbar {
-  display: flex; gap: 4px; padding: 4px 8px;
-  border-bottom: 1px solid rgba(255,255,255,0.08); align-items: center; flex-shrink: 0;
-}
-.toolbar .spacer { flex: 1; }
-.btn-sm {
-  display: inline-flex; align-items: center; gap: 3px;
-  padding: 3px 7px; border-radius: 5px; font-size: 11px; border: none; cursor: pointer;
-  color: #c3c8e4; background: rgba(255,255,255,0.06);
-}
-.btn-sm:hover { background: rgba(255,255,255,0.12); color: #f5f7ff; }
-.btn-sm.active { background: rgba(139,92,246,0.25); color: #a78bfa; }
-.chip { font-size: 10px; padding: 2px 6px; border-radius: 8px; background: rgba(139,92,246,0.2); color: #a78bfa; }
-/* 消息区 */ 
-.messages { flex: 1; overflow-y: auto; padding: 10px; min-height: 0; }
-.empty-state {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  height: 100%; gap: 8px; color: #8b94b8; text-align: center; padding: 20px;
-}
-.empty-state .eicon { font-size: 36px; }
-.empty-state .etitle { font-size: 14px; color: #c3c8e4; }
-.empty-state .ehint { font-size: 11px; max-width: 280px; line-height: 1.5; }
-.msg { margin-bottom: 10px; animation: fadeIn .2s ease; }
-.msg .role { font-size: 11px; color: #8b94b8; margin-bottom: 3px; }
-.msg .bubble { font-size: 12px; line-height: 1.6; padding: 8px 10px; border-radius: 8px; background: rgba(255,255,255,0.05); white-space: pre-wrap; word-break: break-word; overflow-x: auto; }
-.msg.user .bubble { background: rgba(139,92,246,0.12); }
-.msg-reasoning { margin-bottom: 4px; }
-.msg-reasoning summary { font-size: 11px; color: #8b94b8; cursor: pointer; }
-.msg-reasoning div { font-size: 11px; color: #8b94b8; line-height: 1.5; padding: 4px 6px; background: rgba(255,255,255,0.04); border-radius: 4px; margin-top: 2px; white-space: pre-wrap; }
-.stopped-tip { font-size: 11px; color: #a78bfa; margin-top: 4px; }
-.streaming-placeholder { color: #8b94b8; font-style: italic; }
-/* 输入区 */ 
-.input-bar {
-  display: flex; gap: 6px; padding: 6px 8px;
-  border-top: 1px solid rgba(255,255,255,0.08); align-items: flex-end; flex-shrink: 0;
-}
-.textarea {
-  flex: 1; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 8px; padding: 6px 8px; font-size: 12px; color: #f5f7ff;
-  resize: none; outline: none; font-family: inherit; min-height: 32px; max-height: 80px;
-}
-.textarea:focus { border-color: rgba(139,92,246,0.5); }
-.send-btn {
-  width: 30px; height: 30px; border-radius: 50%; border: none;
-  background: linear-gradient(135deg, #7c3aed, #3b82f6); color: #fff;
-  cursor: pointer; font-size: 14px; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center; transition: filter .14s;
-}
-.send-btn:hover { filter: brightness(1.15); }
-.send-btn:active { transform: scale(0.94); }
-.send-btn.stopping { background: #ef4444; }
-/* 通用 */ 
-@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
-pre { background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px; font-size: 11px; overflow-x: auto; margin: 4px 0; }
-code { font-family: "Consolas", "Courier New", monospace; }
-:not(pre) > code { background: rgba(255,255,255,0.08); padding: 1px 4px; border-radius: 3px; font-size: 11px; }
-b, strong { color: #e2e8ff; }
-a { color: #a78bfa; }
+/* 悬浮窗专用：隐藏 OS 桌面元素，让 AI 对话占满整个窗口 */
+body.tzos { position: relative; height: 100vh; overflow: hidden; background: #0c1230; }
+#bootScreen { display: none !important; }
+#desktop, #taskbar, #mobileDock, #homeBar, #notifCenter, #ctxMenu, #startMenu, #floatingWidget, #fwReopen { display: none !important; }
+#floatRoot { position: absolute; inset: 0; display: flex; flex-direction: column; }
+#floatRoot .app-chat { flex: 1; min-height: 0; border: none; border-radius: 0; }
+#floatRoot .chat-toolbar { padding-left: 12px; }
 </style>
 </head>
-<body>
-<div class="title-bar">
-  <span class="icon">💬</span>
-  <span class="text">AI 悬浮窗</span>
-  <button class="btn close" id="btnClose" title="关闭 (Esc)">✕</button>
-</div>
-<div class="toolbar" id="toolbar">
-  <button class="btn-sm" id="btnDeep" title="深度思考">🧠 深度思考</button>
-  <span class="spacer"></span>
-  <button class="btn-sm" id="btnClear" title="清空对话">🗑 清空</button>
-</div>
-<div class="messages" id="chatMsgs"></div>
-<div class="input-bar">
-  <textarea class="textarea" id="chatInput" placeholder="输入消息，Enter 发送，Shift+Enter 换行…" rows="1"></textarea>
-  <button class="send-btn" id="chatSend" title="发送 (Enter)">➤</button>
-</div>
+<body class="tzos">
+<!-- 占位元素：os.js 需要这些 DOM 节点才能正常初始化 -->
+<div id="bootScreen" class="boot-screen" hidden></div>
+<div id="desktop" hidden></div>
+<div id="taskbar" hidden></div>
+<div id="mobileDock" hidden></div>
+<div id="homeBar" hidden></div>
+<div id="notifCenter" hidden></div>
+<div id="ctxMenu" hidden></div>
+<div id="startMenu" hidden></div>
+<div id="floatingWidget" hidden></div>
+<button id="fwReopen" hidden></button>
 
+<!-- 悬浮窗主体：完整的 AI 对话 -->
+<div id="floatRoot"></div>
+
+<script>
+// 标记为悬浮窗模式，os.js 的 boot() 会走轻量路径
+window.__tzFloatMode = true;
+</script>
+<script src="https://wjtianze.github.io/os/assets/js/os.js"></script>
 <script>
 (function() {
   'use strict';
-
-  var KEY = 'tzos_state_v1';
-  function load(n, d) {
-    try { var s = JSON.parse(localStorage.getItem(KEY) || '{}'); return s[n] !== undefined ? s[n] : d; }
-    catch (e) { return d; }
-  }
-  function saveState(patch) {
-    try {
-      var s = JSON.parse(localStorage.getItem(KEY) || '{}');
-      Object.keys(patch).forEach(function(k) { s[k] = patch[k]; });
-      localStorage.setItem(KEY, JSON.stringify(s));
-    } catch (e) {}
+  function waitForTZOS(cb, attempts) {
+    attempts = attempts || 0;
+    if (window.TZOS && window.TZOS.initChat && window.TZOS.renderAIChat) { cb(); return; }
+    if (attempts > 400) { document.getElementById('floatRoot').innerHTML = '<div style="padding:40px;text-align:center;color:#8b94b8;font-size:13px">加载超时，请重启天择OS</div>'; return; }
+    setTimeout(function() { waitForTZOS(cb, attempts + 1); }, 25);
   }
 
-  var cfg = load('aiConfig', { url: 'https://api.deepseek.com/v1/chat/completions', key: '', model: 'deepseek-chat' });
-  var deep = load('deepThink', true);
-  var caps = load('aiCaps', { image: true, file: true, webSearch: false, contextLength: 0 });
-  var hist = load('chatHistory', []);
-  var abortCtl = null;
-
-  function esc(s) {
-    return String(s).replace(/[&<>"']/g, function(c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-    });
-  }
-
-  function md(s) {
-    s = String(s);
-    // code blocks
-    s = s.replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
-    // inline code
-    s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
-    // bold
-    s = s.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
-    // italic
-    s = s.replace(/\*([^*]+)\*/g, '<i>$1</i>');
-    // links
-    s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="https://wjtianze.github.io/os/$2" target="_blank" rel="noopener">$1</a>');
-    // line breaks
-    s = s.replace(/\n/g, '<br>');
-    return s;
-  }
-
-  var msgs = document.getElementById('chatMsgs');
-  var input = document.getElementById('chatInput');
-  var sendBtn = document.getElementById('chatSend');
-  var btnDeep = document.getElementById('btnDeep');
-  var btnClear = document.getElementById('btnClear');
-  var btnClose = document.getElementById('btnClose');
-
-  function render() {
-    msgs.innerHTML = '';
-    if (!hist.length) {
-      var ready = !!cfg.key;
-      msgs.innerHTML = '<div class="empty-state">' +
-        '<div class="eicon">' + (ready ? '💬' : '🔑') + '</div>' +
-        '<div class="etitle">' + (ready ? 'AI 悬浮窗' : '未配置 AI') + '</div>' +
-        '<div class="ehint">' + (ready ? (deep ? '深度思考已开启，会显示思考过程。' : '问我任何问题，输入后按 Enter 发送。') : '请在天择OS的「AI 配置」中设置 API Key。悬浮窗与主系统共享同一份 AI 配置。') + '</div>' +
-        '</div>';
-      return;
+  waitForTZOS(function() {
+    var root = document.getElementById('floatRoot');
+    var winId = 'float-chat-win';
+    // 复用完整的 renderAIChat（含工具栏、消息区、附件、输入框），floatMode 隐藏命令行指示器
+    root.innerHTML = window.TZOS.renderAIChat({ floatMode: true });
+    // 初始化事件绑定，disableAgent=true 禁用 tzcli
+    window.TZOS.initChat(winId, true);
+    // 在工具栏右侧追加关闭按钮
+    var toolbar = root.querySelector('.chat-toolbar');
+    if (toolbar) {
+      var spacer = toolbar.querySelector('span[style*="flex:1"]');
+      var closeBtn = document.createElement('button');
+      closeBtn.className = 'btn sm ghost';
+      closeBtn.title = '关闭悬浮窗 (Esc)';
+      closeBtn.textContent = '✕';
+      closeBtn.onclick = function() { window.close(); };
+      if (spacer) toolbar.insertBefore(closeBtn, spacer.nextSibling);
+      else toolbar.appendChild(closeBtn);
     }
-    hist.forEach(function(m) {
-      addMsg(m.role, m.content, m.reasoning);
+    // Esc 关闭
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') window.close();
     });
-  }
-
-  function addMsg(role, text, reasoning) {
-    var d = document.createElement('div');
-    d.className = 'msg ' + (role === 'user' ? 'user' : 'ai');
-    var html = '';
-    if (role === 'user') html += '<div class="role">👤 你</div>';
-    if (reasoning) html += '<details class="msg-reasoning"><summary>🧠 思考过程</summary><div>' + esc(reasoning) + '</div></details>';
-    html += '<div class="bubble">' + (role === 'ai' ? md(text) : esc(text)) + '</div>';
-    d.innerHTML = html;
-    msgs.appendChild(d);
-    msgs.scrollTop = msgs.scrollHeight;
-  }
-
-  function updateDeepBtn() {
-    btnDeep.classList.toggle('active', deep);
-    btnDeep.textContent = '🧠 深度思考' + (deep ? '·开' : '·关');
-  }
-  updateDeepBtn();
-
-  function updateSendBtn() {
-    sendBtn.classList.toggle('stopping', !!abortCtl);
-    sendBtn.textContent = abortCtl ? '⏹' : '➤';
-    sendBtn.title = abortCtl ? '停止生成' : '发送 (Enter)';
-  }
-
-  async function send() {
-    if (abortCtl) {
-      abortCtl.abort();
-      abortCtl = null;
-      updateSendBtn();
-      return;
-    }
-    var t = input.value.trim();
-    if (!t) return;
-    if (!cfg.key) { input.value = ''; return; }
-    input.value = ''; input.style.height = 'auto';
-    hist.push({ role: 'user', content: t });
-    addMsg('user', t);
-    saveState({ chatHistory: hist.slice(-100) });
-
-    var aiDiv = document.createElement('div');
-    aiDiv.className = 'msg ai';
-    aiDiv.innerHTML = '<div class="bubble"><span class="streaming-placeholder">思考中…</span></div>';
-    msgs.appendChild(aiDiv);
-    var bubble = aiDiv.querySelector('.bubble');
-
-    var sysMsg = '你是天择 AI 助手，运行在天择OS悬浮窗中。回答简洁有用，使用中文。数学公式用 LaTeX：行内 $...$，块级 $$...$$。悬浮窗不支持命令行模式。';
-    var chatMsgs = [{ role: 'system', content: sysMsg }];
-    hist.slice(-12).forEach(function(m) {
-      chatMsgs.push({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content });
-    });
-
-    var model = cfg.model;
-    if (deep && model === 'deepseek-chat') model = 'deepseek-reasoner';
-    else if (deep && model === 'doubao-1-5-pro-32k-250115') model = 'doubao-1-5-thinking-pro-250428';
-
-    var body = {
-      model: model,
-      messages: chatMsgs,
-      stream: true,
-      temperature: 0.7
-    };
-    if (caps.contextLength > 0) body.max_tokens = caps.contextLength;
-    if (caps.webSearch) body.tools = [{ type: 'web_search', max_keyword: 3, limit: 5, user_location: { type: 'approximate', country: 'China', city: '合肥' } }];
-
-    try {
-      abortCtl = new AbortController();
-      updateSendBtn();
-      var resp = await fetch(cfg.url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.key },
-        body: JSON.stringify(body),
-        signal: abortCtl.signal
-      });
-      if (!resp.ok) {
-        var errText = '';
-        try { errText = await resp.text(); } catch (_) {}
-        throw new Error('API ' + resp.status + ': ' + (errText || '').slice(0, 120));
-      }
-
-      var reader = resp.body.getReader();
-      var decoder = new TextDecoder();
-      var full = '', reasoning = '', buf = '';
-
-      while (true) {
-        var r = await reader.read();
-        if (r.done) break;
-        buf += decoder.decode(r.value, { stream: true });
-        var lines = buf.split('\n');
-        buf = lines.pop();
-        for (var i = 0; i < lines.length; i++) {
-          var line = lines[i].trim();
-          if (!line || !line.startsWith('data:')) continue;
-          var data = line.slice(5).trim();
-          if (data === '[DONE]') continue;
-          try {
-            var j = JSON.parse(data);
-            var choice = j.choices && j.choices[0];
-            if (!choice) continue;
-            var delta = choice.delta;
-            if (!delta) continue;
-            if (delta.reasoning_content) reasoning += delta.reasoning_content;
-            if (delta.content) full += delta.content;
-            var rp = '';
-            if (reasoning) rp = '<details class="msg-reasoning" open><summary>🧠 思考过程（进行中…）</summary><div>' + esc(reasoning) + '</div></details>';
-            bubble.innerHTML = rp + (full ? md(full) : '<span class="streaming-placeholder">等待 AI 首字…</span>');
-            msgs.scrollTop = msgs.scrollHeight;
-          } catch (e) {}
-        }
-      }
-
-      if (full || reasoning) {
-        hist.push({ role: 'ai', content: full, reasoning: reasoning });
-        saveState({ chatHistory: hist.slice(-100) });
-        var rp2 = reasoning ? '<details class="msg-reasoning"><summary>🧠 思考过程</summary><div>' + esc(reasoning) + '</div></details>' : '';
-        bubble.innerHTML = rp2 + md(full || '(空)');
-      } else {
-        bubble.textContent = '(空响应)';
-      }
-    } catch (e) {
-      if (e && e.name === 'AbortError') {
-        bubble.innerHTML += '<div class="stopped-tip">⏹ 已停止生成</div>';
-        if (full) {
-          hist.push({ role: 'ai', content: full, reasoning: reasoning });
-          saveState({ chatHistory: hist.slice(-100) });
-        }
-      } else {
-        bubble.textContent = '⚠ ' + (e && e.message ? e.message : String(e));
-      }
-    } finally {
-      abortCtl = null;
-      updateSendBtn();
-    }
-  }
-
-  input.onkeydown = function(e) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
-  };
-  input.oninput = function() {
-    input.style.height = 'auto';
-    input.style.height = Math.min(80, input.scrollHeight) + 'px';
-  };
-  sendBtn.onclick = send;
-  btnDeep.onclick = function() {
-    deep = !deep;
-    saveState({ deepThink: deep });
-    updateDeepBtn();
-  };
-  btnClear.onclick = function() {
-    hist = [];
-    saveState({ chatHistory: [] });
-    render();
-  };
-  btnClose.onclick = function() {
-    window.close();
-  };
-
-  // Esc 关闭
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') window.close();
   });
-
-  render();
 })();
 </script>
 </body>

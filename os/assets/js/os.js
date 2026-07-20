@@ -5352,6 +5352,18 @@ function startStatusIndicators() {
 
 /* ===================== 开机流程 ===================== */
 async function boot() {
+  // v3.0 悬浮窗模式：float-chat.html 加载 os.js 时走轻量启动
+  if (window.__tzFloatMode) {
+    const tipEl = $('#bootTip');
+    if (tipEl) tipEl.textContent = '悬浮窗加载中…';
+    applyTheme();
+    // 不执行 Desktop.render / FloatingWidget.init / startClock / bindGlobalEvents
+    // 不需要任务栏/开始菜单/更新检查/通知
+    await new Promise(r => setTimeout(r, 300));
+    const boot = $('#bootScreen');
+    if (boot) { boot.classList.add('gone'); setTimeout(() => { boot.style.display = 'none'; }, 300); }
+    return;
+  }
   const tips = ['正在唤醒系统…', '加载桌面环境…', '注册应用…', '连接存储…', '准备就绪…'];
   const tipEl = $('#bootTip');
   let i = 0;
@@ -5538,6 +5550,56 @@ function toggleStyle() {
   Desktop.render();
   toast('切换为 ' + (next === 'mac' ? 'macOS' : 'Windows') + ' 风格');
 }
+
+/* v3.0 悬浮窗桥接：float-chat.html 通过 window.opener.TZOS 复用完整 AI 对话功能 */
+window.TZOS.renderAIChat = function (opts) { return renderAIChat(opts || {}); };
+window.TZOS.initChat = function (winId, disableAgent) { initChat(winId, disableAgent); };
+window.TZOS.ChatSessions = ChatSessions;
+window.TZOS.escapeHtml = escapeHtml;
+window.TZOS.el = el;
+window.TZOS.$ = $;
+window.TZOS.$$ = $$;
+window.TZOS.toast = toast;
+window.TZOS.AI = AI;
+window.TZOS.Store = Store;
+window.TZOS.Mem = Mem;
+window.TZOS.Shot = Shot;
+window.TZOS.confirmDialog = confirmDialog;
+window.TZOS.launchApp = launchApp;
+window.TZOS.appendMsg = appendMsg;
+window.TZOS.renderPendingChips = renderPendingChips;
+window.TZOS.updateChatSendBtn = updateChatSendBtn;
+window.TZOS.bindChatScroll = bindChatScroll;
+window.TZOS.scrollChatToBottom = scrollChatToBottom;
+window.TZOS.updateContextBar = updateContextBar;
+window.TZOS.usageText = usageText;
+window.TZOS.mergeUsage = mergeUsage;
+window.TZOS.syncDeepBtns = syncDeepBtns;
+window.TZOS.KATEX_OPTS = KATEX_OPTS;
+window.TZOS.ensureKatex = ensureKatex;
+window.TZOS.renderMath = renderMath;
+window.TZOS.refreshOpenApp = refreshOpenApp;
+window.TZOS.initAppHooks = initAppHooks;
+window.TZOS.copyText = copyText;
+window.TZOS.regenerateMessage = regenerateMessage;
+window.TZOS.stopGeneration = stopGeneration;
+window.TZOS.isMobile = isMobile;
+window.TZOS.getWorkArea = getWorkArea;
+window.TZOS.toggleFullscreen = toggleFullscreen;
+window.TZOS.toggleStyle = toggleStyle;
+window.TZOS.toggleNotifCenter = toggleNotifCenter;
+window.TZOS.toggleFloatingChat = toggleFloatingChat;
+window.TZOS.uninstallApp = uninstallApp;
+window.TZOS.persistOpenWindows = persistOpenWindows;
+window.TZOS.restoreOpenWindows = restoreOpenWindows;
+window.TZOS.getAllApps = getAllApps;
+window.TZOS.findApp = findApp;
+window.TZOS.cleanupBrowserHooks = cleanupBrowserHooks;
+window.TZOS.initAppHooks = initAppHooks;
+window.TZOS.openDialog = openDialog;
+window.TZOS.promptDialog = promptDialog;
+window.TZOS.confirmDialog = confirmDialog;
+window.TZOS.tzOpenInBrowser = tzOpenInBrowser;
 
 /* ===================== 通知中心 ===================== */
 function toggleNotifCenter() {
