@@ -3466,6 +3466,7 @@ function initSettings() {
   if (st) st.onclick = async () => {
     const next = !Store.getScreenshotMode();
     if (next) {
+      if (Store.getAICaps().image === false) { toast('「支持图片输入」已在 AI 配置中关闭，无法开启截图', 3200); return; }
       if (!Shot.supported()) { toast('当前环境不支持屏幕截取'); return; }
       toast('请在弹窗中选择「此标签页」共享天择OS画面', 3600);
       if (!(await Shot.ensure())) { toast('未获得屏幕共享授权，功能未开启', 3000); return; }
