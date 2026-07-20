@@ -3138,6 +3138,9 @@ async function runGeneration(userText) {
     acts.querySelector('[data-act="regen"]').onclick = () => regenerateMessage(idx);
     bodyEl.appendChild(acts);
     scrollChatToBottom(msgs, sess);
+  } else {
+    // 窗口在生成期间被关闭后又重开：新窗口渲染的是旧历史，这里把已入库的最新对话刷新进去
+    refreshOpenApp('ai-chat');
   }
   updateContextBar(sess, [{ role: 'system', content: sysContent }, ...baseHistory], usage);
   if (!stopped && full && !agentOn) Mem.autoLearn(userText, full);
