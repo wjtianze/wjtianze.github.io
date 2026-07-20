@@ -239,7 +239,7 @@
         e.preventDefault();
         try { window.parent.postMessage({ type: "tz_hotkey", key: "ctrl+q" }, "*"); } catch (e) {}
       }
-      // v3.0 Ctrl+1 悬浮窗快捷键转发
+      // v3.0 Ctrl+1 悬浮窗快捷键
       if (e.ctrlKey && (e.key === "1" || e.key === "!")) {
         e.preventDefault();
         try { window.parent.postMessage({ type: "tz_hotkey", key: "ctrl+1" }, "*"); } catch (e) {}

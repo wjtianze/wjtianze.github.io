@@ -353,34 +353,8 @@ input, textarea { font-family: inherit; }
 .win-resizer.r-sw { bottom: 0; left: 0; width: 12px; height: 12px; cursor: sw-resize; }
 .win-resizer.r-nw { top: 0; left: 0; width: 12px; height: 12px; cursor: nw-resize; }
 
-/* ============ v3.0 悬浮窗 ============ */
-.win-float {
-  border: 2px solid rgba(139,92,246,0.45);
-  box-shadow: 0 8px 40px rgba(139,92,246,0.25), var(--sh-lg);
-  min-width: 320px; min-height: 320px;
-}
-.win-float.focused {
-  box-shadow: 0 0 0 2px rgba(139,92,246,0.5), 0 12px 48px rgba(139,92,246,0.35), var(--sh-lg);
-}
-.win-float .win-title {
-  height: 34px; background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(59,130,246,0.1));
-}
-.win-float .win-title-text {
-  font-size: 12px; color: var(--c-violet);
-}
-.win-float .wctrl { width: 12px; height: 12px; }
-.win-float .wctrl svg { width: 7px; height: 7px; }
-.win-float .wctrl.pin { background: var(--c-violet); color: #fff; }
-.win-float .wctrl.pin svg { opacity: 1; }
-.win-float.minimized { animation: floatMin 0.22s var(--ease) forwards; }
-@keyframes floatMin { to { opacity: 0; transform: translateY(30px) scale(0.92); } }
-.win-float .app-chat { height: 100%; display: flex; flex-direction: column; }
-/* 悬浮窗工具栏更紧凑 */
-.win-float .chat-toolbar { padding: 4px 8px; gap: 4px; }
-.win-float .chat-toolbar .btn.sm { padding: 4px 8px; font-size: 11px; }
-.win-float .chat-input-bar { padding: 6px 8px; gap: 6px; }
-.win-float .chat-input-bar .textarea { font-size: 12px; padding: 6px 8px; }
-.win-float .chat-send { width: 30px; height: 30px; }
+/* ============ v3.0 AI 悬浮窗（独立覆盖层动画）============ */
+@keyframes tzFloatIn { from { opacity: 0; transform: scale(0.92) translateY(12px); } to { opacity: 1; transform: none; } }
 
 /* ============ 右键菜单 ============ */
 .ctx-menu {

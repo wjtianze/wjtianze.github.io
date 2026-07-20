@@ -4,7 +4,7 @@
          | Desktop(自由摆放+分类) | Taskbar | StartMenu
          | ContextMenu | FloatingWidget | AIEngine
          | 内置应用（配置/对话/商城/设置/关于）
-         | FloatChat（v3.0 悬浮窗 AI 对话）
+         | FloatChat（v3.0 独立悬浮窗 Ctrl+1）
    ============================================================ */
 (function () {
 'use strict';
@@ -163,7 +163,7 @@ const BUILTIN_APPS = {
   'ai-chat': {
     name: 'AI 对话', icon: '💬', grad: true, category: 'ai',
     desc: '与 AI 助手对话（可多开）',
-    render: (opts) => renderAIChat(opts || {}),
+    render: () => renderAIChat(),
     multi: true // 允许多开；除此之外所有应用一律单例
   },
   'app-store': {
@@ -216,12 +216,6 @@ const BUILTIN_APPS = {
     name: '文档阅读器', icon: '📄', grad: true, category: 'system',
     desc: '阅读 docx / pptx / xlsx / pdf / html',
     render: () => renderDocReader()
-  },
-  'float-chat': {
-    name: 'AI 悬浮窗', icon: '💬', grad: true, category: 'ai',
-    desc: '常驻桌面的 AI 对话悬浮窗（Ctrl+1 快速调出，不可调用命令行）',
-    render: (opts) => renderAIChat({ ...opts, floatMode: true }),
-    multi: true // 悬浮窗可与普通 AI 对话窗口并存
   }
 };
 
@@ -270,10 +264,6 @@ const WM = {
   pinTop: 0,      // 置顶窗口在 4000+ 的次级层级（v2.6：低于快捷面板 4600、任务栏 5000、开始菜单 5100、右键菜单 6000）
   PIN_Z_BASE: 4000,
   PIN_Z_MAX: 4499, // 置顶窗口层级上限：始终低于快捷面板/任务栏/开始菜单
-  floatTop: 0,    // 悬浮窗层级（v3.0）
-  FLOAT_Z_BASE: 4700, // 悬浮窗始终在所有普通/置顶窗口之上
-  FLOAT_Z_MAX: 4999,  // 悬浮窗上限，低于任务栏/开始菜单/右键菜单
-  floatWindows: [],
   openCount: 0,
   // 同一种软件只允许开一个窗口；重复收到打开命令时聚焦已有窗口而不是再开一个。
   // 例外：AI 对话明确支持多开（app.multi）。
@@ -427,17 +417,14 @@ const WM = {
     this.windows.forEach(w => { w.el.classList.toggle('focused', w.id === id); });
     const w = this.windows.find(x => x.id === id);
     if (w) {
-      // v3.0 悬浮窗使用独立高层级
-      if (w.isFloat) {
-        if (this.floatTop >= this.FLOAT_Z_MAX - this.FLOAT_Z_BASE) this.floatTop = 0;
-        w.el.style.zIndex = this.FLOAT_Z_BASE + (++this.floatTop);
-      } else if (w.pinned) {
+      // 置顶窗口拥有独立的高位层级，普通窗口永远不能超过
+      if (w.pinned) {
         // v2.6：置顶窗口层级限制在 PIN_Z_BASE~PIN_Z_MAX，确保始终低于
         // 快捷面板(4600)、任务栏(5000)、开始菜单(5100)、右键菜单(6000)
         if (this.pinTop >= this.PIN_Z_MAX - this.PIN_Z_BASE) this.pinTop = 0;
         w.el.style.zIndex = this.PIN_Z_BASE + (++this.pinTop);
       } else {
-        // 普通窗口限制在 100~PIN_Z_BASE-1 之间，避免超过置顶层和悬浮层
+        // 普通窗口限制在 100~PIN_Z_BASE-1 之间，避免超过置顶层
         if (this.zTop >= this.PIN_Z_BASE - 1) this.zTop = 100;
         w.el.style.zIndex = ++this.zTop;
       }
@@ -455,18 +442,10 @@ const WM = {
     const idx = this.windows.findIndex(w => w.id === id);
     if (idx < 0) return;
     const w = this.windows[idx];
-    const wasFloat = w.isFloat;
     w.el.classList.add('closing');
     w.el.style.pointerEvents = 'none';
     setTimeout(() => { w.el.remove(); }, 180);
     this.windows.splice(idx, 1);
-    if (wasFloat) {
-      this.floatWindows = this.floatWindows.filter(fw => fw.id !== id);
-      // 桌面版：通知主进程关闭 alwaysOnTop
-      if (window.tzDesktop && window.tzDesktop.floatChatClose && !this.floatWindows.length) {
-        window.tzDesktop.floatChatClose();
-      }
-    }
     if (w.appId === 'browser') cleanupBrowserHooks();
     Taskbar.render();
     if (w.onClose) w.onClose();
@@ -623,144 +602,7 @@ const WM = {
     if (!w) return;
     w.pinned ? this.unpin(id) : this.pin(id);
   },
-  closeAll() { [...this.windows].forEach(w => this.close(w.id)); },
-
-  /* ===== v3.0 悬浮窗 ===== */
-  // 创建/显示 AI 悬浮窗（始终在最前，不可被普通窗口遮盖）
-  createFloating(opts) {
-    const app = opts.app || findApp('float-chat');
-    // 悬浮窗仿普通窗口创建，但使用独立的层级与视觉风格
-    const mobile = isMobile();
-    const id = 'float-' + (++this.openCount);
-    const winEl = el('div', 'win win-float' + (mobile ? ' mobile-fullscreen' : ''));
-    winEl.id = id;
-    winEl.dataset.appId = app.id;
-
-    // 悬浮窗默认尺寸：比普通 AI 对话窗口更紧凑，但仍然可调
-    const vw = window.innerWidth, vh = window.innerHeight;
-    const w = opts.width || 420;
-    const h = opts.height || 520;
-    const left = opts.left ?? Math.max(8, vw - w - 24);
-    const top = opts.top ?? Math.max(60, Math.round((vh - h) / 2));
-    winEl.style.width = w + 'px';
-    winEl.style.height = h + 'px';
-    winEl.style.left = left + 'px';
-    winEl.style.top = (mobile ? 0 : top) + 'px';
-
-    // 精简标题栏：只保留图标、标题、关闭和最小化按钮
-    const title = el('div', 'win-title');
-    const icons = el('div', 'win-title-icons');
-    const closeBtn = el('button', 'wctrl close', '<svg viewBox="0 0 8 8" fill="none" stroke="#5b0700" stroke-width="1.5"><path d="M1 1l6 6M7 1L1 7"/></svg>');
-    closeBtn.title = '关闭悬浮窗';
-    const minBtn = el('button', 'wctrl min', '<svg viewBox="0 0 8 8" fill="none" stroke="#5b3a00" stroke-width="1.5"><path d="M1 4h6"/></svg>');
-    minBtn.title = '最小化';
-    const pinBtn = el('button', 'wctrl pin active', '<svg viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 1v5M2 1h4M3 6l1 1 1-1"/></svg>');
-    pinBtn.title = '悬浮窗始终置顶';
-    icons.append(closeBtn, minBtn, pinBtn);
-
-    const titleIcon = el('span', 'win-title-icon', app.icon || '💬');
-    const titleText = el('span', 'win-title-text', 'AI 悬浮窗');
-    const spacer = el('div', 'win-title-spacer');
-    title.append(icons, titleIcon, titleText, spacer);
-
-    const body = el('div', 'win-body pad app-shell-body');
-    // 悬浮窗可四角调整大小
-    const resizers = ['r-nw','r-n','r-ne','r-e','r-se','r-s','r-sw','r-w'];
-    const resizerEls = resizers.map(r => { const e = el('div', 'win-resizer ' + r); e.dataset.dir = r; return e; });
-
-    winEl.append(title, body, ...resizerEls);
-    $('#windows').appendChild(winEl);
-
-    const winObj = { id, appId: app.id, el: winEl, body, minimized: false, maximized: false, pinned: true, app, savedRect: null, isFloat: true };
-    // 同时加入 windows 和 floatWindows
-    this.windows.push(winObj);
-    this.floatWindows.push(winObj);
-
-    // 渲染 AI 聊天内容（复用 renderAIChat）
-    body.innerHTML = app.render(opts);
-
-    // 事件
-    closeBtn.onclick = (e) => { e.stopPropagation(); this.closeFloat(id); };
-    minBtn.onclick = (e) => { e.stopPropagation(); this.minimize(id); };
-    pinBtn.onclick = (e) => { e.stopPropagation(); /* 悬浮窗始终置顶，点击不取消 */ toast('悬浮窗始终置顶，不受普通窗口遮盖'); };
-    title.ondblclick = (e) => { if (e.target.closest('.wctrl')) return; if (!isMobile()) this.toggleMax(id); };
-    title.oncontextmenu = (e) => {
-      if (e.target.closest('.wctrl')) return;
-      e.preventDefault(); e.stopPropagation();
-      showCtxMenu(e.clientX, e.clientY, [
-        { icon: '💬', label: '打开普通 AI 对话', act: () => launchApp('ai-chat') },
-        { icon: '🔑', label: 'AI 配置', act: () => launchApp('ai-config') },
-        { sep: true },
-        { icon: '✕', label: '关闭悬浮窗', act: () => this.closeFloat(id) }
-      ]);
-    };
-    this.bindDrag(winObj);
-    this.bindResize(winObj);
-    winEl.addEventListener('pointerdown', () => this.focusFloat(id), { passive: true });
-
-    this.focusFloat(id);
-    Taskbar.render();
-    persistOpenWindows();
-
-    // 初始化聊天功能（禁用命令行模式）
-    setTimeout(() => initChat(id, true), 100);
-
-    // 桌面版：通知主进程开启 alwaysOnTop
-    if (window.tzDesktop && window.tzDesktop.floatChatOpen) {
-      window.tzDesktop.floatChatOpen();
-    }
-
-    return winObj;
-  },
-
-  // 悬浮窗聚焦：使用独立高层级
-  focusFloat(id) {
-    this.windows.forEach(w => { w.el.classList.toggle('focused', w.id === id); });
-    const w = this.windows.find(x => x.id === id);
-    if (w) {
-      if (this.floatTop >= this.FLOAT_Z_MAX - this.FLOAT_Z_BASE) this.floatTop = 0;
-      const z = this.FLOAT_Z_BASE + (++this.floatTop);
-      w.el.style.zIndex = z;
-      if (w.minimized) this.restore(id);
-    }
-    if (window.__tzDesktopShown) {
-      window.__tzDesktopShown = false;
-      const sd = document.getElementById('btnShowDesktop');
-      if (sd) sd.classList.remove('active');
-    }
-    Taskbar.render();
-  },
-
-  // 关闭悬浮窗
-  closeFloat(id) {
-    const idx = this.windows.findIndex(w => w.id === id);
-    if (idx < 0) return;
-    const w = this.windows[idx];
-    w.el.classList.add('closing');
-    w.el.style.pointerEvents = 'none';
-    setTimeout(() => { w.el.remove(); }, 180);
-    this.windows.splice(idx, 1);
-    this.floatWindows = this.floatWindows.filter(fw => fw.id !== id);
-    Taskbar.render();
-    if (w.onClose) w.onClose();
-    persistOpenWindows();
-    // 桌面版：通知主进程关闭 alwaysOnTop
-    if (window.tzDesktop && window.tzDesktop.floatChatClose) {
-      window.tzDesktop.floatChatClose();
-    }
-  },
-
-  // 切换悬浮窗：没开就创建，开了就聚焦，最小化就恢复
-  toggleFloatingChat() {
-    if (this.floatWindows.length > 0) {
-      const fw = this.floatWindows[0];
-      if (fw.minimized) { this.restore(fw.id); }
-      else if (fw.el.classList.contains('focused')) { this.minimize(fw.id); }
-      else { this.focusFloat(fw.id); }
-    } else {
-      this.createFloating({ app: findApp('float-chat') });
-    }
-  }
+  closeAll() { [...this.windows].forEach(w => this.close(w.id)); }
 };
 
 /* ===================== 任务栏 ===================== */
@@ -1193,8 +1035,6 @@ const FloatingWidget = {
 function launchApp(id, opts = {}) {
   const app = findApp(id);
   if (!app) { toast('应用不存在：' + id); return; }
-  // v3.0 悬浮窗：不走普通窗口创建，直接调 toggleFloatingChat
-  if (id === 'float-chat') { return WM.toggleFloatingChat(); }
   const defaults = { width: 820, height: 560 };
   if (app.type === 'preset') {
     defaults.width = 980; defaults.height = 680;
@@ -1220,8 +1060,7 @@ function launchApp(id, opts = {}) {
  * 每次创建/关闭窗口时把当前打开的 appId 列表写入 Store；boot 时按列表重开。 */
 function persistOpenWindows() {
   try {
-    // v3.0 悬浮窗不参与会话恢复（由快捷键独立控制）
-    const ids = WM.windows.filter(w => !w.isFloat).map(w => w.appId);
+    const ids = WM.windows.map(w => w.appId);
     Store.set('openSession', ids);
   } catch (e) {}
 }
@@ -1229,9 +1068,9 @@ function restoreOpenWindows() {
   let ids = [];
   try { ids = Store.get('openSession', []) || []; } catch (e) { return; }
   if (!ids.length) return;
-  // 去重（单例应用只开一个）+ 过滤已不存在的应用 + 跳过悬浮窗
+  // 去重（单例应用只开一个）+ 过滤已不存在的应用
   const seen = new Set();
-  ids.filter(id => { if (seen.has(id)) return false; seen.add(id); return !!findApp(id) && id !== 'float-chat'; })
+  ids.filter(id => { if (seen.has(id)) return false; seen.add(id); return !!findApp(id); })
     .forEach((id, i) => setTimeout(() => { try { launchApp(id); } catch (e) {} }, 700 + i * 220));
 }
 
@@ -3465,8 +3304,7 @@ window.TZOS.testConfig = async function() {
 };
 
 /* ===================== 内置应用：AI 对话 ===================== */
-function renderAIChat(opts) {
-  const floatMode = !!(opts && opts.floatMode);
+function renderAIChat() {
   const provider = Store.getProvider();
   // 豆包AI：doubao.com 网页版嵌入（非 API Key 方式）
   if (provider === 'doubao') {
@@ -3499,7 +3337,7 @@ function renderAIChat(opts) {
       <button class="btn sm ${deep?'':'ghost'} js-deep-btn" id="chatDeep" title="深度思考（显示思考过程）">🧠 深度思考${deep?'·开':'·关'}</button>
       ${webOn ? '<span class="chat-flag" title="联网搜索已开启（AI 配置中可关）">🌐 联网</span>' : ''}
       ${caps.image !== false ? `<button class="btn sm ${shotOn?'':'ghost'}" id="chatShot" title="发送消息时自动截取当前屏幕（需视觉模型）">📷 截图${shotOn?'·开':'·关'}</button>` : ''}
-      ${(!floatMode && Store.getAgentMode()) ? '<span class="chat-flag violet" title="AI 可在对话中直接执行命令行命令">⌨️ 命令行模式</span>' : ''}
+      ${Store.getAgentMode() ? '<span class="chat-flag violet" title="AI 可在对话中直接执行命令行命令">⌨️ 命令行模式</span>' : ''}
       <span style="flex:1"></span>
       <span class="chat-ctx" id="chatCtx"></span>
       <button class="btn sm ghost" id="chatClear" title="清空当前对话">🗑</button>
@@ -3559,16 +3397,13 @@ function reasoningHtml(reasoning, ongoing) {
   const tag = ongoing ? '（进行中…）' : '';
   return `<details class="msg-reasoning"${ongoing?' open':''} style="margin-bottom:6px"><summary style="cursor:pointer;color:var(--ink-faint);font-size:12px">🧠 思考过程${tag}</summary><div style="font-size:12px;color:var(--ink-faint);line-height:1.6;padding:6px 8px;background:var(--surface);border-radius:6px;margin-top:4px;white-space:pre-wrap">${escapeHtml(reasoning)}</div></details>`;
 }
-function initChat(winId, disableAgent) {
-  // v3.0：限定选择器作用于当前窗口 DOM，避免多窗口冲突
-  const root = document.getElementById(winId);
-  const $w = (s) => root ? $(s, root) : $(s);
+function initChat(winId) {
   // 豆包网页嵌入模式：只绑定切换按钮 + iframe 加载隐藏提示
   if (Store.getProvider() === 'doubao') {
-    const provBtn = $w('#chatProvider');
+    const provBtn = $('#chatProvider');
     if (provBtn) provBtn.onclick = () => { Store.setProvider('custom'); toast('已切换为 ⚙️ 自定义AI'); refreshOpenApp('ai-chat'); };
-    const f = $w('#doubaoFrame');
-    const hint = $w('#doubaoHint');
+    const f = $('#doubaoFrame');
+    const hint = $('#doubaoHint');
     if (f && hint) {
       let loaded = false;
       const hide = () => { loaded = true; hint.style.display = 'none'; };
@@ -3583,15 +3418,13 @@ function initChat(winId, disableAgent) {
   }
   // 建立/恢复本窗口的会话（窗口重开时会话仍在，进行中的生成不中断）
   const sess = ChatSessions.get(winId || 'chat-main');
-  sess.disableAgent = !!disableAgent; // v3.0 悬浮窗：禁用命令行模式
   chatSess = sess;
-  const msgs = $w('#chatMsgs');
-  const input = $w('#chatInput');
-  const sendBtn = $w('#chatSend');
+  const msgs = $('#chatMsgs');
+  const input = $('#chatInput');
+  const sendBtn = $('#chatSend');
   sess.msgs = msgs;
-  sess.inputEl = input;
-  sess.ctxEl = $w('#chatCtx');
-  sess.attachEl = $w('#chatAttach');
+  sess.ctxEl = $('#chatCtx');
+  sess.attachEl = $('#chatAttach');
   sess.pending = sess.pending || [];
   sess.scroll = null;
 
@@ -3622,7 +3455,7 @@ function initChat(winId, disableAgent) {
     msgs.scrollTop = msgs.scrollHeight;
   }
   updateChatSendBtn();
-  input.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); chatSess = sess; sendChat(); } };
+  input.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } };
   input.oninput = () => { input.style.height = 'auto'; input.style.height = Math.min(120, input.scrollHeight) + 'px'; };
   // 粘贴图片/文件自动上传
   input.addEventListener('paste', (e) => {
@@ -3631,9 +3464,9 @@ function initChat(winId, disableAgent) {
     for (const it of items) { if (it.kind === 'file') { const f = it.getAsFile(); if (f) files.push(f); } }
     if (files.length) { e.preventDefault(); files.forEach(f => addPendingFile(sess, f)); }
   });
-  sendBtn.onclick = () => { chatSess = sess; sendChat(); };
+  sendBtn.onclick = sendChat;
   // 附件上传按钮
-  const attachBtn = $w('#chatAttachBtn'), fileInput = $w('#chatFileInput');
+  const attachBtn = $('#chatAttachBtn'), fileInput = $('#chatFileInput');
   if (attachBtn && fileInput) {
     const caps = Store.getAICaps();
     const accept = [];
@@ -3644,24 +3477,24 @@ function initChat(winId, disableAgent) {
     fileInput.onchange = () => { [...fileInput.files].forEach(f => addPendingFile(sess, f)); fileInput.value = ''; };
   }
   // 工具栏
-  const provBtn = $w('#chatProvider');
+  const provBtn = $('#chatProvider');
   if (provBtn) provBtn.onclick = () => {
     const next = Store.getProvider()==='doubao' ? 'custom' : 'doubao';
     Store.setProvider(next);
     toast('已切换为 ' + (next==='doubao'?'🫘 豆包AI':'⚙️ 自定义AI'));
     refreshOpenApp('ai-chat');
   };
-  const deepBtn = $w('#chatDeep');
+  const deepBtn = $('#chatDeep');
   if (deepBtn) deepBtn.onclick = () => {
     Store.setDeepThink(!Store.getDeepThink());
     const d = Store.getDeepThink();
     syncDeepBtns();
-    const eh = $w('#chatEmptyHint');
+    const eh = $('#chatEmptyHint');
     if (eh && AI.isReady()) eh.textContent = d ? '深度思考已开启，会显示思考过程。' : '问我任何问题，或试试下面的建议';
     toast('深度思考已' + (d ? '开启' : '关闭') + '（仅影响后续回复）');
   };
   // 自动截图开关（需视觉模型 + 图片输入能力开启）
-  const shotBtn = $w('#chatShot');
+  const shotBtn = $('#chatShot');
   if (shotBtn) shotBtn.onclick = async () => {
     const next = !Store.getScreenshotMode();
     if (next) {
@@ -3677,7 +3510,7 @@ function initChat(winId, disableAgent) {
     shotBtn.textContent = '📷 截图' + (next ? '·开' : '·关');
     toast('自动截图已' + (next ? '开启（请确认模型支持视觉）' : '关闭'));
   };
-  const clrBtn = $w('#chatClear');
+  const clrBtn = $('#chatClear');
   if (clrBtn) clrBtn.onclick = async () => {
     const ok = await confirmDialog({ title: '清空对话', message: '清空当前对话历史？', confirmText: '清空', danger: true });
     if (!ok) return;
@@ -4027,9 +3860,7 @@ async function regenerateMessage(i) {
 }
 
 async function sendChat() {
-  const sess = chatSess;
-  const input = (sess && sess.inputEl) || $('#chatInput');
-  if (!input) return;
+  const input = $('#chatInput');
   if (_sessCtl()) { stopGeneration(); return; } // 生成中点击 = 停止
   const text = input.value.trim();
   if (!text) return;
@@ -4098,7 +3929,7 @@ async function runGeneration(userText) {
   const sig = ctl.signal;
   updateChatSendBtn();
   ensureKatex().catch(() => {});
-  const agentOn = Store.getAgentMode() && !sess.disableAgent;
+  const agentOn = Store.getAgentMode();
   const deepOn = Store.getDeepThink();
   const caps = Store.getAICaps();
   let reasoning = '', usage = null, stopped = false;
@@ -4246,17 +4077,7 @@ async function runGeneration(userText) {
   updateContextBar(sess, [{ role: 'system', content: sysContent }, ...baseHistory], usage);
   if (!stopped && full && !agentOn) Mem.autoLearn(userText, full);
 }
-window.TZOS.chatSuggest = function(t) {
-  // v3.0: 优先在当前聚焦窗口或悬浮窗中查找输入框
-  const focused = document.querySelector('.win.focused #chatInput') || document.querySelector('.win-float #chatInput') || $('#chatInput');
-  if (focused) {
-    // 找到所属窗口，设置正确的 chatSess
-    const win = focused.closest('.win');
-    if (win) { chatSess = ChatSessions.get(win.id); }
-    focused.value = t;
-    sendChat();
-  }
-};
+window.TZOS.chatSuggest = function(t) { const i = $('#chatInput'); if (i) { i.value = t; sendChat(); } };
 window.TZOS.openConfig = function() { launchApp('ai-config'); };
 window.TZOS.openDoubaoExternal = function() { window.open('https://www.doubao.com/chat/', '_blank'); };
 
@@ -5357,9 +5178,7 @@ function initBrowser() {
 function refreshOpenApp(appId) {
   WM.windows.filter(x => x.appId === appId).forEach(w => {
     w.body.innerHTML = '';
-    // v3.0: 悬浮窗需要传入 floatMode
-    const renderOpts = w.isFloat ? { floatMode: true } : {};
-    if (w.app.type === 'builtin') w.body.innerHTML = w.app.render(renderOpts);
+    if (w.app.type === 'builtin') w.body.innerHTML = w.app.render();
     initAppHooks(appId, w);
   });
 }
@@ -5375,7 +5194,6 @@ window.TZOS.checkUpdate = async function() {
 };
 function initAppHooks(appId, winObj) {
   if (appId === 'ai-chat') initChat(winObj && winObj.id);
-  if (appId === 'float-chat') initChat(winObj && winObj.id, true); // v3.0 悬浮窗：禁用命令行
   if (appId === 'app-store') initAppStore();
   if (appId === 'settings') initSettings();
   if (appId === 'ai-config') initAIConfig();
@@ -5667,10 +5485,11 @@ function bindGlobalEvents() {
       if (ctxEl) { hideCtxMenu(); return; }
       const nc = $('#notifCenter'); if (nc && !nc.hidden) { nc.hidden = true; return; }
     }
-    // Ctrl+1 切换 AI 悬浮窗（v3.0）
+    // Ctrl+1 切换 AI 悬浮窗（v3.0：独立于 OS 窗口的浮动对话）
     if (e.ctrlKey && (e.key === '1' || e.key === '!')) {
       e.preventDefault();
-      WM.toggleFloatingChat();
+      toggleFloatingChat();
+      return;
     }
     // Ctrl+Q 切换浏览器全屏（覆盖浏览器默认快捷键）
     if (e.ctrlKey && (e.key === 'q' || e.key === 'Q')) {
@@ -5692,7 +5511,7 @@ function bindGlobalEvents() {
     if (w) WM.focus(w.id);
     if (d.type === 'tz_hotkey') {
       if (d.key === 'ctrl+q') toggleFullscreen();
-      else if (d.key === 'ctrl+1') WM.toggleFloatingChat();
+      else if (d.key === 'ctrl+1') toggleFloatingChat();
     }
   });
   // 跨域外部网站无法桥接：顶层 blur + activeElement 检测兜底聚焦（点击 iframe 后窗口自动置顶）
@@ -5732,13 +5551,213 @@ function toggleNotifCenter() {
   } else { nc.hidden = true; }
 }
 
+/* ===================== v3.0 AI 悬浮窗 ===================== */
+// 独立于 OS 窗口系统之外的浮动 AI 对话
+// 桌面版：创建单独的 Electron 窗口（alwaysOnTop）
+// 网页版：创建固定定位的覆盖层
+let _floatOverlay = null;
+let _floatWinId = null;
+
+function toggleFloatingChat() {
+  // 桌面版：通过 IPC 在主进程创建/关闭独立窗口
+  if (window.tzDesktop && window.tzDesktop.floatChatToggle) {
+    window.tzDesktop.floatChatToggle();
+    return;
+  }
+  // 网页版：创建/移除固定覆盖层
+  if (_floatOverlay && _floatOverlay.parentNode) {
+    _floatOverlay.remove();
+    _floatOverlay = null;
+    return;
+  }
+  createFloatOverlay();
+}
+
+function createFloatOverlay() {
+  // 复用当前页面的 AI 配置和历史
+  const aiCfg = Store.getAIConfig();
+  _floatOverlay = el('div', 'tz-float-overlay');
+  _floatOverlay.id = 'tzFloatOverlay';
+  Object.assign(_floatOverlay.style, {
+    position: 'fixed', zIndex: '2147483640',
+    width: '420px', height: '520px', minWidth: '320px', minHeight: '320px',
+    right: '20px', top: '80px',
+    background: 'var(--glass-strong)', backdropFilter: 'blur(28px) saturate(170%)',
+    border: '2px solid rgba(139,92,246,0.45)', borderRadius: '12px',
+    boxShadow: '0 8px 40px rgba(139,92,246,0.25), 0 12px 48px rgba(0,0,0,0.5)',
+    display: 'flex', flexDirection: 'column', overflow: 'hidden',
+    resize: 'both', fontFamily: 'inherit', color: 'var(--ink)',
+    animation: 'tzFloatIn 0.22s cubic-bezier(0.16,1,0.3,1)'
+  });
+
+  // 标题栏
+  const titleBar = el('div', '');
+  Object.assign(titleBar.style, {
+    height: '34px', flexShrink: '0', display: 'flex', alignItems: 'center',
+    padding: '0 10px', gap: '8px', cursor: 'move',
+    background: 'linear-gradient(135deg, rgba(139,92,246,0.2), rgba(59,130,246,0.12))',
+    borderBottom: '1px solid rgba(255,255,255,0.08)'
+  });
+  const titleIcon = el('span', '', '💬');
+  titleIcon.style.cssText = 'font-size:14px;pointer-events:none';
+  const titleText = el('span', '', 'AI 悬浮窗');
+  titleText.style.cssText = 'font-size:12px;color:#a78bfa;flex:1';
+  const closeBtn = el('button', '', '✕');
+  closeBtn.style.cssText = 'width:22px;height:22px;border-radius:50%;border:none;background:#ff5f57;color:#5b0700;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center';
+  closeBtn.onclick = () => { _floatOverlay.remove(); _floatOverlay = null; };
+  titleBar.append(titleIcon, titleText, closeBtn);
+
+  // 拖拽
+  let dragging = false, sx, sy, sl, st;
+  titleBar.addEventListener('pointerdown', (e) => {
+    if (e.target === closeBtn) return;
+    dragging = true;
+    sx = e.clientX; sy = e.clientY;
+    sl = _floatOverlay.offsetLeft; st = _floatOverlay.offsetTop;
+    _floatOverlay.style.transition = 'none';
+    titleBar.setPointerCapture(e.pointerId);
+  });
+  titleBar.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    _floatOverlay.style.left = Math.max(0, sl + (e.clientX - sx)) + 'px';
+    _floatOverlay.style.top = Math.max(0, st + (e.clientY - sy)) + 'px';
+    _floatOverlay.style.right = 'auto';
+  });
+  titleBar.addEventListener('pointerup', () => { dragging = false; _floatOverlay.style.transition = ''; });
+
+  // 聊天内容区：内嵌 iframe 加载独立对话页
+  const chatFrame = el('iframe', '');
+  chatFrame.style.cssText = 'flex:1;min-height:0;border:none;background:rgba(8,12,28,0.4)';
+  // 使用 srcdoc 构建精简对话 UI
+  chatFrame.srcdoc = buildFloatChatHTML();
+  _floatOverlay.append(titleBar, chatFrame);
+  document.body.appendChild(_floatOverlay);
+
+  // 加载 KaTeX
+  const katexCss = document.createElement('link');
+  katexCss.rel = 'stylesheet';
+  katexCss.href = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css';
+  document.head.appendChild(katexCss);
+}
+
+// 构建悬浮窗内的独立对话页面 HTML（精简自 renderAIChat + AI 引擎）
+function buildFloatChatHTML() {
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' +
+  '*{margin:0;padding:0;box-sizing:border-box}' +
+  'body{font-family:"Segoe UI",-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;' +
+  'color:#f5f7ff;background:rgba(8,12,28,0.4);display:flex;flex-direction:column;height:100%;overflow:hidden}' +
+  '.chat-toolbar{display:flex;gap:4px;padding:4px 8px;border-bottom:1px solid rgba(255,255,255,0.08);align-items:center;flex-shrink:0}' +
+  '.btn{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:6px;font-size:11px;border:none;cursor:pointer;color:#c3c8e4;background:rgba(255,255,255,0.06)}' +
+  '.btn:hover{background:rgba(255,255,255,0.12);color:#f5f7ff}' +
+  '.chat-messages{flex:1;overflow-y:auto;padding:10px;min-height:0}' +
+  '.chat-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:#8b94b8}' +
+  '.chat-input-bar{display:flex;gap:6px;padding:6px 8px;border-top:1px solid rgba(255,255,255,0.08);align-items:flex-end;flex-shrink:0}' +
+  '.textarea{flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:6px 8px;font-size:12px;color:#f5f7ff;resize:none;outline:none;font-family:inherit;min-height:32px;max-height:80px}' +
+  '.textarea:focus{border-color:rgba(139,92,246,0.5)}' +
+  '.chat-send{width:30px;height:30px;border-radius:50%;border:none;background:linear-gradient(135deg,#7c3aed,#3b82f6);color:#fff;cursor:pointer;font-size:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center}' +
+  '.msg{margin-bottom:10px;animation:fadeIn .2s ease}' +
+  '.msg .role{font-size:11px;color:#8b94b8;margin-bottom:3px}' +
+  '.msg .bubble{font-size:12px;line-height:1.6;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,0.05);white-space:pre-wrap;word-break:break-word}' +
+  '.msg.user .bubble{background:rgba(139,92,246,0.15)}' +
+  '.msg-reasoning{margin-bottom:6px}' +
+  '.msg-reasoning summary{font-size:11px;color:#8b94b8;cursor:pointer}' +
+  '.msg-reasoning div{font-size:11px;color:#8b94b8;line-height:1.5;padding:4px 6px;background:rgba(255,255,255,0.04);border-radius:4px;margin-top:2px;white-space:pre-wrap}' +
+  '.stopped-tip{font-size:11px;color:#a78bfa;margin-top:4px}' +
+  '@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}' +
+  '::-webkit-scrollbar{width:6px}' +
+  '::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:3px}' +
+  '</style></head><body>' +
+  '<div class="chat-toolbar">' +
+  '<span style="font-size:12px;color:#a78bfa;flex:1">💬 AI 悬浮对话</span>' +
+  '<button class="btn" id="btnClear" title="清空对话">🗑</button>' +
+  '</div>' +
+  '<div class="chat-messages" id="chatMsgs"></div>' +
+  '<div class="chat-input-bar">' +
+  '<textarea class="textarea" id="chatInput" placeholder="输入消息，Enter 发送…" rows="1"></textarea>' +
+  '<button class="chat-send" id="chatSend">➤</button>' +
+  '</div>' +
+  '<script>' +
+  '(()=>{' +
+  // 读取父页面的 AI 配置和历史（同源 localStorage）
+  'var KEY="tzos_state_v1";' +
+  'function load(n,d){try{var s=JSON.parse(localStorage.getItem(KEY)||"{}");return s[n]!==undefined?s[n]:d}catch(e){return d}}' +
+  'function saveHist(h){var s=JSON.parse(localStorage.getItem(KEY)||"{}");s.chatHistory=h.slice(-100);localStorage.setItem(KEY,JSON.stringify(s))}' +
+  'var cfg=load("aiConfig",{url:"https://api.deepseek.com/v1/chat/completions",key:"",model:"deepseek-chat"});' +
+  'var deep=load("deepThink",true);' +
+  'var caps=load("aiCaps",{image:true,file:true,webSearch:false,contextLength:0});' +
+  'var hist=load("chatHistory",[]);' +
+  'var msgs=document.getElementById("chatMsgs");' +
+  'var input=document.getElementById("chatInput");' +
+  'var abortCtl=null;' +
+  // 渲染历史
+  'function render(){msgs.innerHTML="";if(!hist.length){msgs.innerHTML=cfg.key?\'' +
+  '<div class="chat-empty"><div style="font-size:32px">💬</div><div>AI 悬浮窗</div><div style="font-size:11px">' +
+  (deep?"深度思考已开启":'问我任何问题') +
+  '</div></div>\':' +
+  '<div class="chat-empty"><div style="font-size:32px">🔑</div><div>未配置 AI</div><div style="font-size:11px">请在天择OS的 AI 配置中设置 API Key</div></div>\';return}' +
+  'hist.forEach(function(m){addMsg(m.role,m.content,m.reasoning)})}' +
+  'function addMsg(role,text,reasoning){var d=document.createElement("div");d.className="msg "+(role==="user"?"user":"ai");' +
+  'd.innerHTML=(role==="user"?"<div class=\\"role\\">👤 你</div>":"")+' +
+  '(reasoning?\'<details class="msg-reasoning"><summary>🧠 思考过程</summary><div>\'+esc(reasoning)+\'</div></details>\':"")+' +
+  '\'<div class="bubble">\'+(role==="ai"?md(text):esc(text))+\'</div>\';' +
+  'msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight}' +
+  'function esc(s){return String(s).replace(/[&<>"\']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","\'":"&#39;"}[c]})}' +
+  'function md(s){return String(s).replace(/```(\\w*)\\n?([\\s\\S]*?)```/g,\'<pre style="background:rgba(255,255,255,0.05);padding:8px;border-radius:6px;font-size:11px;overflow-x:auto;margin:4px 0"><code>$2</code></pre>\')' +
+  '.replace(/`([^`]+)`/g,\'<code style="background:rgba(255,255,255,0.08);padding:1px 4px;border-radius:3px;font-size:11px">$1</code>\')' +
+  '.replace(/\\*\\*([^*]+)\\*\\*/g,\'<b>$1</b>\').replace(/\\*([^*]+)\\*/g,\'<i>$1</i>\')' +
+  '.replace(/\\n/g,\'<br>\')}' +
+  // 发送消息
+  'async function send(){if(abortCtl){abortCtl.abort();abortCtl=null;return}var t=input.value.trim();if(!t)return;if(!cfg.key){input.value="";return}' +
+  'input.value="";input.style.height="auto";hist.push({role:"user",content:t});addMsg("user",t);' +
+  'var aiDiv=document.createElement("div");aiDiv.className="msg ai";' +
+  'aiDiv.innerHTML=\'<div class="bubble"><span class="chat-streaming-placeholder">思考中…</span></div>\';msgs.appendChild(aiDiv);' +
+  'var bubble=aiDiv.querySelector(".bubble");' +
+  'var sys="你是天择 AI 助手，运行在天择OS悬浮窗中。回答简洁有用，使用中文。数学公式用 LaTeX：行内 $...$，块级 $$...$$。悬浮窗不支持命令行模式。";' +
+  'var msgs_arr=[{role:"system",content:sys}];' +
+  'hist.slice(-12).forEach(function(m){msgs_arr.push({role:m.role==="ai"?"assistant":"user",content:m.content})});' +
+  'var body={model:cfg.model+(deep&&cfg.model==="deepseek-chat"?"-reasoner":""),messages:msgs_arr,stream:true,temperature:0.7};' +
+  'if(caps.contextLength>0)body.max_tokens=caps.contextLength;' +
+  'if(caps.webSearch)body.tools=[{type:"web_search",max_keyword:3,limit:5,user_location:{type:"approximate",country:"China",city:"合肥"}}];' +
+  'try{abortCtl=new AbortController();' +
+  'var resp=await fetch(cfg.url,{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+cfg.key},body:JSON.stringify(body),signal:abortCtl.signal});' +
+  'if(!resp.ok){var err=await resp.text().catch(function(){return""});throw new Error("API "+resp.status+": "+err.slice(0,100))}' +
+  'var reader=resp.body.getReader(),decoder=new TextDecoder(),full="",reasoning="";' +
+  'while(true){var r=await reader.read();if(r.done)break;' +
+  'var text=decoder.decode(r.value,{stream:true});' +
+  'var lines=text.split("\\n");' +
+  'for(var i=0;i<lines.length;i++){var line=lines[i].trim();if(!line||!line.startsWith("data:"))continue;' +
+  'var data=line.slice(5).trim();if(data==="[DONE]")continue;' +
+  'try{var j=JSON.parse(data);var choice=j.choices&&j.choices[0];if(!choice)continue;' +
+  'var delta=choice.delta;if(!delta)continue;' +
+  'if(delta.reasoning_content)reasoning+=delta.reasoning_content;' +
+  'if(delta.content)full+=delta.content;' +
+  'var rp=reasoning?\'<details class="msg-reasoning" open><summary>🧠 思考过程（进行中…）</summary><div>\'+esc(reasoning)+\'</div></details>\':"";' +
+  'bubble.innerHTML=rp+md(full);' +
+  'msgs.scrollTop=msgs.scrollHeight;' +
+  '}catch(e){}}' +
+  '}' +
+  'if(full||reasoning){hist.push({role:"ai",content:full,reasoning:reasoning});saveHist(hist);' +
+  'bubble.innerHTML=(reasoning?\'<details class="msg-reasoning"><summary>🧠 思考过程</summary><div>\'+esc(reasoning)+\'</div></details>\':"")+md(full)}' +
+  'else{bubble.textContent="(空响应)"}' +
+  '}catch(e){if(e.name==="AbortError"){bubble.innerHTML+=\'<div class="stopped-tip">⏹ 已停止生成</div>\'}else{bubble.textContent="⚠ "+e.message}}' +
+  'abortCtl=null}' +
+  'input.onkeydown=function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}};' +
+  'input.oninput=function(){input.style.height="auto";input.style.height=Math.min(80,input.scrollHeight)+"px"};' +
+  'document.getElementById("chatSend").onclick=send;' +
+  'document.getElementById("btnClear").onclick=function(){hist=[];saveHist(hist);render()};' +
+  'render();' +
+  '})()' +
+  '<\\/script>' +
+  '</body></html>';
+}
+
 /* ===================== 启动 ===================== */
 window.addEventListener('DOMContentLoaded', boot);
 
 // 暴露给 onclick 使用的全局接口
 Object.assign(window.TZOS, {
   launchApp, uninstallApp, Store, AI, WM, Desktop, StartMenu, refreshOpenApp, toast,
-  toggleFloatingChat: () => WM.toggleFloatingChat(),
+  toggleFloatingChat: () => toggleFloatingChat(),
   goHome: () => {
     // 桌面版：在 OS 内置浏览器打开天择网首页（不跳出应用）；网页版：返回天择OS 入口页
     if (window.tzDesktop) { tzOpenInBrowser('https://wjtianze.github.io/'); }
