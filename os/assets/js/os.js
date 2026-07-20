@@ -9,7 +9,7 @@
 'use strict';
 
 /* 系统版本（每次发布更新必须同步递增，并更新 dev/os/version.json） */
-const OS_VERSION = '2.2.0';
+const OS_VERSION = '2.5.0';
 
 /* ===================== 存储层 ===================== */
 const Store = {
@@ -88,7 +88,12 @@ const Store = {
   setAgentMode(b) { this.set('agentMode', !!b); },
   // 对话自动截图开关（需视觉模型）
   getScreenshotMode() { return this.get('chatScreenshot', false); },
-  setScreenshotMode(b) { this.set('chatScreenshot', !!b); }
+  setScreenshotMode(b) { this.set('chatScreenshot', !!b); },
+  // AI 能力设置：图片输入（关闭则截图功能禁用）、文件输入、联网搜索（开启则对话默认带 web_search）、上下文长度
+  getAICaps() {
+    return this.get('aiCaps', { image: true, file: true, webSearch: false, contextLength: 0 });
+  },
+  setAICaps(caps) { this.set('aiCaps', { ...this.getAICaps(), ...caps }); }
 };
 
 /* ===================== 工具函数 ===================== */
@@ -157,7 +162,8 @@ const BUILTIN_APPS = {
   'ai-chat': {
     name: 'AI 对话', icon: '💬', grad: true, category: 'ai',
     desc: '与 AI 助手对话（可多开）',
-    render: () => renderAIChat()
+    render: () => renderAIChat(),
+    multi: true // 允许多开；除此之外所有应用一律单例
   },
   'app-store': {
     name: '软件商城', icon: '🛒', grad: true, category: 'system',
@@ -199,6 +205,16 @@ const BUILTIN_APPS = {
     name: '命令行', icon: '⌨️', grad: true, category: 'system',
     desc: '用命令操作天择OS（也供 AI Agent 调用）',
     render: () => renderTerminal()
+  },
+  'clock': {
+    name: '时钟', icon: '🕐', grad: true, category: 'system',
+    desc: '时钟 / 秒表 / 倒计时',
+    render: () => renderClockApp()
+  },
+  'doc-reader': {
+    name: '文档阅读器', icon: '📄', grad: true, category: 'system',
+    desc: '阅读 docx / pptx / xlsx / pdf / html',
+    render: () => renderDocReader()
   }
 };
 
@@ -245,10 +261,20 @@ const WM = {
   windows: [],
   zTop: 100,
   openCount: 0,
+  // 同一种软件只允许开一个窗口；重复收到打开命令时聚焦已有窗口而不是再开一个。
+  // 例外：AI 对话明确支持多开（app.multi）。
+  isSingleton(app) { return !!(app && !app.multi); },
+  findWindow(appId) { return this.windows.find(w => w.appId === appId) || null; },
+  focusApp(appId) {
+    const w = this.findWindow(appId);
+    if (!w) return null;
+    if (w.minimized) this.restore(w.id); else this.focus(w.id);
+    return w;
+  },
   create(opts) {
     const app = opts.app;
-    // 单例
-    if (app.singleton) {
+    // 单例（v2.5 起所有应用默认单例，AI 对话除外）
+    if (this.isSingleton(app)) {
       const exist = this.windows.find(w => w.appId === app.id);
       if (exist) { this.focus(exist.id); if (exist.minimized) this.restore(exist.id); return exist; }
     }
@@ -1123,6 +1149,9 @@ const AI = {
     if (!this.isReady()) throw new Error('AI 未配置，请先在「AI 配置」中设置 URL、Key 和模型。');
     let buf = '', full = '', reasoning = '', finished = false, usage = null, finishReason = null;
     const onReasoning = opts.onReasoning;
+    const reqBody = { model: c.model, messages, temperature: opts.temperature ?? 0.7, max_tokens: opts.max_tokens ?? this.maxTokens(c), stream: true, stream_options: { include_usage: true } };
+    // 联网搜索工具（MiMo 等 OpenAI 兼容服务），不支持的服务端会忽略或报错（由调用方降级）
+    if (opts.tools && opts.tools.length) { reqBody.tools = opts.tools; reqBody.tool_choice = 'auto'; }
     const consume = (flush = false) => {
       const lines = buf.split(/\r?\n/);
       buf = flush ? '' : lines.pop();
@@ -1142,7 +1171,7 @@ const AI = {
         } catch {}
       }
     };
-    await this.request(c, { model: c.model, messages, temperature: opts.temperature ?? 0.7, max_tokens: opts.max_tokens ?? this.maxTokens(c), stream: true, stream_options: { include_usage: true } }, chunk => {
+    await this.request(c, reqBody, chunk => {
       if (finished) return;
       buf += chunk;
       consume(false);
@@ -1198,7 +1227,11 @@ function load(){ try { return JSON.parse(localStorage.getItem(KEY)) || 默认值
 C. AI 功能（仅当用户需求明确需要 AI 时实现）：
 ${aiCfgText}
 
-【CDN 使用许可】仅允许引入 KaTeX、marked 这两个库（用上面的 jsdelivr 地址，失败可换 https://cdn.staticfile.org/ 对应路径）；除这两个库与第 C 条的 AI 接口外，不要任何其它外部资源或网络请求（图片用 SVG 或 emoji）。`;
+【CDN 使用许可】仅允许引入 KaTeX、marked 这两个库（用上面的 jsdelivr 地址，失败可换 https://cdn.staticfile.org/ 对应路径）；除这两个库与第 C 条的 AI 接口外，不要任何其它外部资源或网络请求（图片用 SVG 或 emoji）。
+
+【可选：让软件能被天择OS命令行操控】若软件适合用命令操作（如笔记、待办、记账类），在代码里注册命令包：
+localStorage.setItem('tz_app_cmds_' + APP_ID, JSON.stringify([{ cmd: '指令名', desc: '说明', js: '执行代码字符串，可用 args/appId/api/app 变量，return 的字符串回显到命令行' }]));
+其中 APP_ID 用安装时分配的应用 id（可在代码里写死为用户可见的常量并提示用户）。注册后用户可在命令行用「cmd 应用id 指令 参数」操控软件，例如笔记软件注册 note 指令后，命令行「cmd xxx note 一段文字」即把文字记入笔记。不需要命令操控的软件可跳过。`;
   },
 
   // 输出被 token 上限截断时自动续写：从截断点继续，不重复已输出内容
@@ -1342,13 +1375,15 @@ ${cur.length ? cur.map((m, i) => (i + 1) + '. ' + m.text).join('\n') : '（空�
 /* ===================== 命令行引擎（供终端应用与 AI Agent 调用） ===================== */
 const CLI = {
   history: [],
-  // 执行一行命令，返回 { ok, out }；out 为文本输出
-  exec(line) {
+  // 执行一行命令，返回 { ok, out }；out 为文本输出。opts.byAI=true 表示由 AI 命令行模式触发
+  exec(line, opts) {
     line = String(line || '').trim();
     if (!line) return { ok: true, out: '' };
     const sp = line.indexOf(' ');
     const cmd = (sp < 0 ? line : line.slice(0, sp)).toLowerCase();
     const rest = sp < 0 ? '' : line.slice(sp + 1).trim();
+    // ask 只给用户用：AI 不能借 ask 再向自己提问（会造成套娃与上下文污染）
+    if (opts && opts.byAI && cmd === 'ask') return { ok: false, out: 'ask 命令仅限用户使用，AI 不能调用' };
     const fn = this.cmds[cmd];
     if (!fn) return { ok: false, out: '未知命令：' + cmd + '（输入 help 查看全部命令）' };
     try { return { ok: true, out: String(fn(rest) ?? '') }; }
@@ -1387,14 +1422,25 @@ const CLI = {
 '  mem del 编号                删除记忆\n' +
 '  mem on|off 编号             启用/停用某条记忆\n' +
 '── 对话与通知 ──\n' +
-'  clear chat                  清空 AI 对话历史\n' +
+'  clear chat                  清空 AI 对话历史（保留 AI 最后一次回复）\n' +
 '  clear notifs                清空通知\n' +
 '  clear                       清空本终端屏幕\n' +
 '  notify 文本                 发送一条系统通知\n' +
-'── 浏览器 ──\n' +
+'── 浏览器与网页 ──\n' +
+'  openurl 网址或搜索词         在内置浏览器打开网页（go 亦可）\n' +
 '  bm                          列出收藏夹\n' +
 '  bm add 网址 [| 标题]         收藏网址\n' +
 '  bm del 编号                 删除收藏\n' +
+'── 时钟（时钟/秒表/倒计时）──\n' +
+'  clock                       打开时钟应用\n' +
+'  stopwatch [start|stop|reset] 秒表：开/停/归零（默认打开）\n' +
+'  timer 时长                  倒计时，如 timer 5m / timer 90s / timer 1h30m\n' +
+'── 软件直达与回调 ──\n' +
+'  coc-data                    返回我的 COC 数据查询\n' +
+'  words                       返回我的单词库（背单词）\n' +
+'  ask 问题                    让 AI 对话回答这个问题（AI 自身不能调用）\n' +
+'  cmd 应用id 指令 [参数]       调用某软件注册的命令包（cmd list 查看）\n' +
+'  installhelp                 获取安装软件教程（返回 AI 软件商城提示词）\n' +
 '── 其他 ──\n' +
 '  js 代码                     执行任意 JavaScript（万能兜底，慎用）\n' +
 '  echo 文本                   原样输出\n' +
@@ -1405,8 +1451,8 @@ const CLI = {
   aiPrompt() {
     return '\n\n【天择OS 命令行能力】你可以输出 tzcli 代码块让操作系统执行命令，格式（每行一条命令）：\n' +
 '```tzcli\nopen ai-config\nmem add 用户喜欢简洁的回答\n```\n' +
-'可用命令：apps 列出应用id | open/close 应用id | install 名称|图标|完整HTML | uninstall 应用id | rename 应用id|新名[|图标] | sethtml 应用id|完整HTML | gethtml 应用id | aiconfig [url|key|model|maxtokens 值] | price [hit|write|input|output 值] / price unit usd|cny | mem / mem add 内容 / mem del 编号 / mem on|off 编号 | theme dark|light | style win|mac|auto | deepthink on|off | clear chat | notify 文本 | bm / bm add 网址|标题 / bm del 编号 | js JavaScript代码 | version\n' +
-'规则：仅在确有必要时使用（普通问答不要用）；命令在你输出后立即执行，结果会以用户消息回传，你再据此继续回答；块内不要写注释和空行；一次不超过 5 条；写记忆、改配置、装改软件等操作优先用命令完成，不要只口头描述。';
+'可用命令：apps 列出应用id | open/close 应用id | install 名称|图标|完整HTML | uninstall 应用id | rename 应用id|新名[|图标] | sethtml 应用id|完整HTML | gethtml 应用id | aiconfig [url|key|model|maxtokens 值] | price [hit|write|input|output 值] / price unit usd|cny | mem / mem add 内容 / mem del 编号 / mem on|off 编号 | theme dark|light | style win|mac|auto | deepthink on|off | clear chat | notify 文本 | openurl 网址 | bm / bm add 网址|标题 / bm del 编号 | clock | stopwatch [start|stop|reset] | timer 时长(如5m) | coc-data | words | cmd 应用id 指令 [参数] | js JavaScript代码 | version\n' +
+'规则：仅在确有必要时使用（普通问答不要用）；命令在你输出后立即执行，结果会以用户消息回传，你再据此继续回答；块内不要写注释和空行；一次不超过 5 条；写记忆、改配置、装改软件等操作优先用命令完成，不要只口头描述；你不能使用 ask 命令（那是给用户用的）。';
   },
   cmds: {
     help: () => CLI.manual(),
@@ -1528,7 +1574,14 @@ const CLI = {
     deepthink: (r) => { const on = parseOnOff(r); Store.setDeepThink(on); syncDeepBtns(); return '深度思考已' + (on ? '开启' : '关闭'); },
     agent: (r) => { const on = parseOnOff(r); Store.setAgentMode(on); refreshOpenApp('settings'); return 'AI 命令行模式已' + (on ? '开启（自动写入记忆已关闭）' : '关闭'); },
     clear: (r) => {
-      if (r === 'chat') { Store.setChat([]); refreshOpenApp('ai-chat'); return 'AI 对话历史已清空'; }
+      if (r === 'chat') {
+        // 修复：清空后 AI 的最后一次回复应保留在屏幕上——清空历史但保留最后一条 AI 消息作为上下文
+        const h = Store.getChat();
+        const lastAi = [...h].reverse().find(m => m.role === 'ai');
+        Store.setChat(lastAi ? [lastAi] : []);
+        refreshOpenApp('ai-chat');
+        return lastAi ? 'AI 对话历史已清空（保留了 AI 最后一次回复）' : 'AI 对话历史已清空';
+      }
       if (r === 'notifs') { Store.clearNotifs(); return '通知已清空'; }
       if (!r) return '__CLEAR__';
       throw new Error('用法：clear [chat|notifs]');
@@ -1556,6 +1609,57 @@ const CLI = {
       if (r === 'close') { FloatingWidget.close(); return '快捷面板已收起为悬浮球'; }
       throw new Error('用法：widget open|close');
     },
+    // 打开特定网页：在内置浏览器新标签页打开（支持搜索词）
+    openurl: (r) => {
+      need(r, 'openurl 网址或搜索词');
+      openInOsBrowser(r);
+      return '已在浏览器打开：' + r;
+    },
+    go: (r) => { need(r, 'go 网址'); openInOsBrowser(r); return '已在浏览器打开：' + r; },
+    // 时钟 / 秒表 / 倒计时
+    clock: () => { launchApp('clock'); return '已打开时钟（含秒表与倒计时）'; },
+    stopwatch: (r) => {
+      const w = launchApp('clock');
+      const act = (r || '').toLowerCase();
+      const call = (m) => { try { if (w && w.body) { const b = w.body.querySelector('[data-sw="' + m + '"]'); if (b) b.click(); } } catch (e) {} };
+      setTimeout(() => {
+        if (act === 'start' || act === 'on') call('start');
+        else if (act === 'stop') call('stop');
+        else if (act === 'reset') call('reset');
+        else call('tab'); // 无参数仅切到秒表页
+      }, 120);
+      return '秒表' + ({ start: '已开始', stop: '已停止', reset: '已归零' }[act] || '已就绪');
+    },
+    timer: (r) => {
+      need(r, 'timer 时长（如 5m / 90s / 1h30m / 300）');
+      const sec = parseDuration(r);
+      if (!(sec > 0)) throw new Error('无法识别时长：' + r);
+      const w = launchApp('clock');
+      setTimeout(() => { try { if (w && w.body) startCountdownInApp(w.body, sec); } catch (e) {} }, 120);
+      return '倒计时 ' + sec + ' 秒已开始';
+    },
+    // 软件直达
+    'coc-data': () => { launchApp('tz-coc-data'); return '已返回你的 COC 数据查询'; },
+    words: () => { launchApp('tz-words'); return '已返回你的单词库'; },
+    // 问 AI：仅用户可调用（AI 命令行模式禁止调用，见 exec 守卫）
+    ask: (r) => {
+      need(r, 'ask 问题');
+      if (!AI.isReady()) throw new Error('AI 未配置，请先在「AI 配置」中设置');
+      launchApp('ai-chat');
+      setTimeout(() => { const i = $('#chatInput'); if (i) { i.value = r; sendChat(); } }, 250);
+      return '已向 AI 提问：' + r.slice(0, 40);
+    },
+    // 调用软件命令包
+    cmd: (r) => {
+      need(r, 'cmd 应用id 指令 [参数]（cmd list 查看全部）');
+      if (r === 'list') return AppCommands.listText();
+      const sp = r.indexOf(' ');
+      const appId = sp < 0 ? r : r.slice(0, sp).trim();
+      const rest = sp < 0 ? '' : r.slice(sp + 1).trim();
+      return AppCommands.exec(appId, rest);
+    },
+    // 获取安装软件教程：返回 AI 软件商城的完整提示词（含命令包接入教程）
+    installhelp: () => APP_STORE_TUTORIAL,
     resetlayout: () => { Store.clearIconPositions(); Desktop.render(); return '桌面图标布局已重置'; },
     export: () => { window.TZOS.exportArchive(); return '正在导出存档…'; },
     js: (r) => {
@@ -1576,6 +1680,108 @@ function parseOnOff(r) {
   throw new Error('参数只能是 on 或 off');
 }
 function maskKey(k) { if (!k) return '（未设置）'; if (k.length <= 8) return '****'; return k.slice(0, 4) + '…' + k.slice(-4); }
+
+/* ---- 在内置浏览器打开网页（供 openurl/go/tzOpenInBrowser 复用；网页版与桌面版通用） ---- */
+function openInOsBrowser(urlOrQuery) {
+  let u = String(urlOrQuery || '').trim();
+  if (!u) return;
+  if (!/^https?:\/\//i.test(u)) {
+    if (/^[\w-]+(\.[\w-]+)+/.test(u)) u = 'https://' + u;
+    else u = 'https://www.bing.com/search?q=' + encodeURIComponent(u);
+  }
+  const exist = WM.focusApp('browser');
+  if (!exist) launchApp('browser');
+  let n = 0;
+  (function wait() { if (window.__tzBrNewTab) { window.__tzBrNewTab(u); } else if (++n < 120) { setTimeout(wait, 30); } })();
+}
+
+/* ---- 解析时长文本为秒：支持 300 / 90s / 5m / 1h30m / 1:30 ---- */
+function parseDuration(s) {
+  s = String(s || '').trim().toLowerCase();
+  if (!s) return 0;
+  if (/^\d+$/.test(s)) return parseInt(s, 10); // 纯数字按秒
+  const colon = s.match(/^(?:(\d+):)?(\d{1,2}):(\d{2})$/);
+  if (colon) return (parseInt(colon[1] || 0, 10) * 3600) + parseInt(colon[2], 10) * 60 + parseInt(colon[3], 10);
+  let sec = 0, m;
+  const re = /(\d+(?:\.\d+)?)\s*(h|hr|小时|m|min|分|s|sec|秒)/g;
+  while ((m = re.exec(s))) {
+    const v = parseFloat(m[1]); const u = m[2];
+    if (u === 'h' || u === 'hr' || u === '小时') sec += v * 3600;
+    else if (u === 'm' || u === 'min' || u === '分') sec += v * 60;
+    else sec += v;
+  }
+  return Math.round(sec);
+}
+
+/* ===================== 软件命令包注册表 =====================
+ * 已安装软件（含自定义软件）可注册自己的命令，用 cmd 应用id 指令 调用。
+ * 注册方式：localStorage 键 tz_app_cmds_<应用id> = [{cmd, desc, js}]
+ *   js 为该指令要执行的代码，沙箱内可用 args（参数字符串）、appId、api(TZOS)。
+ * 教程见 APP_STORE_TUTORIAL（installhelp 命令 / 软件商城提示词内置）。 */
+const AppCommands = {
+  key: (appId) => 'tz_app_cmds_' + appId,
+  load(appId) {
+    try { const v = JSON.parse(localStorage.getItem(this.key(appId)) || '[]'); return Array.isArray(v) ? v : []; }
+    catch (e) { return []; }
+  },
+  save(appId, list) { localStorage.setItem(this.key(appId), JSON.stringify(list || [])); },
+  all() {
+    const out = [];
+    getAllApps().forEach(a => {
+      this.load(a.id).forEach(c => out.push({ appId: a.id, appName: a.name, cmd: c.cmd, desc: c.desc || '' }));
+    });
+    return out;
+  },
+  listText() {
+    const all = this.all();
+    if (!all.length) return '（暂无软件注册命令包。自定义软件可通过 localStorage 键 tz_app_cmds_<应用id> 注册，教程见 installhelp）';
+    return all.map(c => c.appId + ' :: ' + c.cmd + (c.desc ? ' — ' + c.desc : '') + '（' + c.appName + '）').join('\n');
+  },
+  exec(appId, rest) {
+    const app = findApp(appId);
+    if (!app) throw new Error('应用不存在：' + appId);
+    const sp = rest.indexOf(' ');
+    const cmd = (sp < 0 ? rest : rest.slice(0, sp)).trim();
+    const args = sp < 0 ? '' : rest.slice(sp + 1).trim();
+    if (!cmd) {
+      const list = this.load(appId);
+      return list.length ? ('「' + app.name + '」可用指令：\n' + list.map(c => '  ' + c.cmd + (c.desc ? '  — ' + c.desc : '')).join('\n')) : '「' + app.name + '」未注册任何命令';
+    }
+    const def = this.load(appId).find(c => c.cmd === cmd);
+    if (!def) throw new Error('「' + app.name + '」没有指令「' + cmd + '」（用 cmd ' + appId + ' 查看）');
+    try {
+      const fn = new Function('args', 'appId', 'api', 'app', def.js);
+      const ret = fn(args, appId, window.TZOS, app);
+      return (ret === undefined) ? '（已执行）' : String(ret);
+    } catch (e) { throw new Error('指令执行出错：' + (e.message || e)); }
+  }
+};
+
+/* ===================== AI 软件商城提示词（installhelp 返回 + 注入生成提示词） ===================== */
+const APP_STORE_TUTORIAL = `【天择OS 软件命令包接入教程】
+你的软件可以被天择OS命令行直接操控。方法：在软件代码里向 localStorage 写入自己注册的命令列表。
+
+1) 注册（软件启动时执行一次）：
+const APP_ID = '你的应用id'; // 与安装时一致，可用 location 推断或让用户在软件里填
+const cmds = [
+  { cmd: 'add',  desc: '新增一条记录', js: "window.appAdd && window.appAdd(args); return '已新增：'+args;" },
+  { cmd: 'list', desc: '列出全部记录', js: "return (window.appList ? window.appList() : '无数据');" }
+];
+localStorage.setItem('tz_app_cmds_' + APP_ID, JSON.stringify(cmds));
+
+2) 每条命令的 js 字符串在沙箱中执行，可用变量：
+   - args：命令行传入的参数字符串（如 cmd myapp add 买牛奶 里 args='买牛奶'）
+   - appId：本软件 id；api：TZOS 全局对象；app：本软件元数据
+   - js 里调用你软件内暴露的全局函数（如 window.appAdd）完成实际操作，return 的字符串会回显到命令行
+
+3) 用户即可这样操控你的软件：
+   cmd 你的应用id add 买牛奶      → 新增一条
+   cmd 你的应用id list            → 列出全部
+
+示例：一个 markdown 笔记软件注册 {cmd:'note', js:"window.saveNote&&window.saveNote(args);return '已记入笔记';"}
+之后命令行输入：cmd 笔记应用id note 今天学了量子力学 → 即把这句话记入笔记。`;
+
+
 
 /* ===================== 屏幕截图（对话自动附图，需视觉模型） ===================== */
 const Shot = {
@@ -1619,6 +1825,258 @@ const Shot = {
     this.stream = null; this.video = null;
   }
 };
+
+/* ===================== 内置应用：时钟（时钟/秒表/倒计时） ===================== */
+function renderClockApp() {
+  return `
+  <div class="clock-app">
+    <div class="clock-tabs">
+      <button class="clock-tab active" data-tab="clock">🕐 时钟</button>
+      <button class="clock-tab" data-tab="sw">⏱ 秒表</button>
+      <button class="clock-tab" data-tab="cd">⏳ 倒计时</button>
+    </div>
+    <div class="clock-pane" data-pane="clock">
+      <div class="clock-big" id="clockBig">--:--:--</div>
+      <div class="clock-date" id="clockDate"></div>
+    </div>
+    <div class="clock-pane" data-pane="sw" hidden>
+      <div class="clock-big" id="swBig">00:00.0</div>
+      <div class="clock-btns">
+        <button class="btn sm" data-sw="start" id="swStart">开始</button>
+        <button class="btn sm ghost" data-sw="stop" id="swStop">停止</button>
+        <button class="btn sm ghost" data-sw="reset" id="swReset">归零</button>
+      </div>
+      <div id="swLaps" class="clock-laps"></div>
+    </div>
+    <div class="clock-pane" data-pane="cd" hidden>
+      <div class="clock-big" id="cdBig">00:00</div>
+      <div class="clock-btns" style="flex-wrap:wrap;justify-content:center">
+        <input class="input" id="cdInput" placeholder="如 5m / 90s / 1:30" style="width:150px" />
+        <button class="btn sm" id="cdStartBtn">开始</button>
+        <button class="btn sm ghost" id="cdStopBtn">停止</button>
+      </div>
+      <div class="clock-quick">
+        ${[['1m',60],['5m',300],['10m',600],['25m',1500]].map(x=>`<button class="preset-chip" data-cd="${x[1]}">${x[0]}</button>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+function fmtSW(ms) {
+  const t = Math.max(0, ms);
+  const m = Math.floor(t / 60000), s = Math.floor(t % 60000 / 1000), d = Math.floor(t % 1000 / 100);
+  return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0') + '.' + d;
+}
+function fmtCD(sec) {
+  sec = Math.max(0, Math.round(sec));
+  const h = Math.floor(sec/3600), m = Math.floor(sec%3600/60), s = sec%60;
+  return (h ? String(h).padStart(2,'0')+':' : '') + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+function initClockApp() {
+  const root = $('.clock-app'); if (!root) return;
+  // 标签切换
+  root.querySelectorAll('.clock-tab').forEach(t => t.onclick = () => {
+    root.querySelectorAll('.clock-tab').forEach(x => x.classList.toggle('active', x === t));
+    root.querySelectorAll('.clock-pane').forEach(p => p.hidden = p.dataset.pane !== t.dataset.tab);
+  });
+  // 时钟
+  const tick = () => {
+    const d = new Date();
+    const b = $('#clockBig'); if (b) b.textContent = d.toLocaleTimeString('zh-CN', { hour12: false });
+    const dd = $('#clockDate'); if (dd) dd.textContent = fmtDate(d) + ' 星期' + '日一二三四五六'[d.getDay()];
+  };
+  tick(); const clockTimer = setInterval(tick, 1000);
+  root.addEventListener('DOMNodeRemoved', () => clearInterval(clockTimer), { once: true });
+  // 秒表
+  let swT0 = 0, swAcc = 0, swRun = false, swRaf = 0;
+  const swBig = $('#swBig');
+  const swPaint = () => { if (swBig) swBig.textContent = fmtSW(swAcc + (swRun ? Date.now() - swT0 : 0)); if (swRun) swRaf = requestAnimationFrame(swPaint); };
+  const swStart = $('#swStart'), swStop = $('#swStop'), swReset = $('#swReset');
+  if (swStart) swStart.onclick = () => { if (swRun) return; swRun = true; swT0 = Date.now(); swPaint(); };
+  if (swStop) swStop.onclick = () => { if (!swRun) return; swRun = false; swAcc += Date.now() - swT0; cancelAnimationFrame(swRaf); swPaint(); };
+  if (swReset) swReset.onclick = () => { swRun = false; swAcc = 0; cancelAnimationFrame(swRaf); swPaint(); const l = $('#swLaps'); if (l) l.innerHTML = ''; };
+  // 倒计时
+  let cdEnd = 0, cdTimer = 0;
+  const cdBig = $('#cdBig');
+  const cdPaint = () => {
+    const left = (cdEnd - Date.now()) / 1000;
+    if (left <= 0) {
+      clearInterval(cdTimer); cdTimer = 0;
+      if (cdBig) cdBig.textContent = '00:00';
+      Store.addNotif({ title: '⏳ 倒计时结束', body: '设定的倒计时时间到了' });
+      toast('⏳ 倒计时结束！', 4000);
+      return;
+    }
+    if (cdBig) cdBig.textContent = fmtCD(left);
+  };
+  const cdStart = (sec) => {
+    if (!(sec > 0)) { toast('请输入有效时长'); return; }
+    cdEnd = Date.now() + sec * 1000;
+    if (cdTimer) clearInterval(cdTimer);
+    cdTimer = setInterval(cdPaint, 200);
+    cdPaint();
+    // 切到倒计时页
+    const tab = root.querySelector('.clock-tab[data-tab="cd"]'); if (tab) tab.click();
+  };
+  window.__tzCdStart = cdStart; // 供命令行 timer 调用
+  const cdStartBtn = $('#cdStartBtn'), cdStopBtn = $('#cdStopBtn'), cdInput = $('#cdInput');
+  if (cdStartBtn) cdStartBtn.onclick = () => cdStart(parseDuration(cdInput.value));
+  if (cdInput) cdInput.onkeydown = (e) => { if (e.key === 'Enter') cdStart(parseDuration(cdInput.value)); };
+  if (cdStopBtn) cdStopBtn.onclick = () => { if (cdTimer) clearInterval(cdTimer); cdTimer = 0; if (cdBig) cdBig.textContent = '00:00'; };
+  root.querySelectorAll('[data-cd]').forEach(b => b.onclick = () => { if (cdInput) cdInput.value = ''; cdStart(parseInt(b.dataset.cd, 10)); });
+}
+// 供命令行 timer 在已打开的时钟窗口里启动倒计时
+function startCountdownInApp(body, sec) {
+  const tab = body.querySelector('.clock-tab[data-tab="cd"]'); if (tab) tab.click();
+  if (window.__tzCdStart) window.__tzCdStart(sec);
+}
+
+/* ===================== 内置应用：文档阅读器 =====================
+ * 支持 docx / pptx / xlsx / pdf / html（pdf/html 用内置预览，Office 用 CDN 库转 HTML） */
+const DOC_CDN = {
+  pdfjs: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js',
+  pdfjsWorker: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js',
+  mammoth: 'https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js',
+  xlsx: 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
+  jszip: 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js'
+};
+function renderDocReader() {
+  return `
+  <div class="doc-app">
+    <div class="doc-open" id="docOpen">
+      <div class="doc-open-icon">📄</div>
+      <div class="doc-open-title">文档阅读器</div>
+      <div class="doc-open-sub">支持 Word(docx) · PPT(pptx) · Excel(xlsx) · PDF · HTML</div>
+      <button class="btn" id="docPickBtn">📂 选择文件</button>
+      <input type="file" id="docFile" style="display:none" accept=".docx,.pptx,.xlsx,.pdf,.html,.htm,.txt,.md" />
+      <div class="doc-open-tip">也可把文件直接拖进此窗口</div>
+    </div>
+    <div class="doc-view" id="docView" hidden>
+      <div class="doc-toolbar">
+        <span class="doc-name" id="docName"></span>
+        <span style="flex:1"></span>
+        <button class="btn sm ghost" id="docClose2">✕ 关闭文档</button>
+      </div>
+      <div class="doc-body" id="docBody"></div>
+    </div>
+  </div>`;
+}
+function initDocReader() {
+  const openEl = $('#docOpen'), viewEl = $('#docView'), body = $('#docBody'), nameEl = $('#docName');
+  if (!openEl) return;
+  const loadFile = (file) => {
+    if (!file) return;
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    nameEl.textContent = file.name;
+    openEl.hidden = true; viewEl.hidden = false;
+    body.innerHTML = '<div class="app-loading"><div class="al-spin"></div><div>正在解析 ' + escapeHtml(file.name) + '…</div></div>';
+    const fail = (msg) => { body.innerHTML = '<div class="app-error"><div class="ae-icon">⚠️</div>' + escapeHtml(msg || '解析失败') + '</div>'; };
+    const done = (html) => { body.innerHTML = '<div class="doc-content">' + html + '</div>'; };
+    const rd = new FileReader();
+    if (ext === 'pdf') {
+      rd.onload = () => renderPdf(new Uint8Array(rd.result), body, fail);
+      rd.onerror = () => fail('读取文件失败');
+      rd.readAsArrayBuffer(file);
+    } else if (ext === 'docx') {
+      rd.onload = () => ensureLib('mammoth', DOC_CDN.mammoth).then(() =>
+        window.mammoth.convertToHtml({ arrayBuffer: rd.result }).then(r => done(r.value || '<p>（空文档）</p>')).catch(e => fail(e.message))
+      ).catch(e => fail('加载解析库失败：' + e.message));
+      rd.onerror = () => fail('读取文件失败');
+      rd.readAsArrayBuffer(file);
+    } else if (ext === 'xlsx') {
+      rd.onload = () => ensureLib('XLSX', DOC_CDN.xlsx).then(() => {
+        try {
+          const wb = window.XLSX.read(rd.result, { type: 'array' });
+          let html = '';
+          wb.SheetNames.forEach(sn => {
+            html += '<h3 style="margin:14px 0 6px">📑 ' + escapeHtml(sn) + '</h3>' +
+              window.XLSX.utils.sheet_to_html(wb.Sheets[sn], { header: '', footer: '' });
+          });
+          done(html || '<p>（空表格）</p>');
+        } catch (e) { fail(e.message); }
+      }).catch(e => fail('加载解析库失败：' + e.message));
+      rd.onerror = () => fail('读取文件失败');
+      rd.readAsArrayBuffer(file);
+    } else if (ext === 'pptx') {
+      rd.onload = () => renderPptx(rd.result, body, fail);
+      rd.onerror = () => fail('读取文件失败');
+      rd.readAsArrayBuffer(file);
+    } else if (ext === 'html' || ext === 'htm') {
+      rd.onload = () => {
+        body.innerHTML = '';
+        const f = document.createElement('iframe');
+        f.className = 'doc-frame';
+        f.sandbox = 'allow-same-origin';
+        f.srcdoc = rd.result;
+        body.appendChild(f);
+      };
+      rd.onerror = () => fail('读取文件失败');
+      rd.readAsText(file);
+    } else if (ext === 'txt' || ext === 'md') {
+      rd.onload = () => { done('<pre style="white-space:pre-wrap;word-break:break-word;font:13px/1.7 inherit">' + escapeHtml(rd.result) + '</pre>'); };
+      rd.onerror = () => fail('读取文件失败');
+      rd.readAsText(file);
+    } else {
+      fail('暂不支持 .' + ext + ' 格式（支持 docx / pptx / xlsx / pdf / html / txt / md）');
+    }
+  };
+  const pick = $('#docPickBtn'), fin = $('#docFile');
+  if (pick && fin) { pick.onclick = () => fin.click(); fin.onchange = () => { loadFile(fin.files[0]); fin.value = ''; }; }
+  const close2 = $('#docClose2');
+  if (close2) close2.onclick = () => { viewEl.hidden = true; openEl.hidden = false; body.innerHTML = ''; };
+  // 拖拽
+  const app = $('.doc-app');
+  app.addEventListener('dragover', (e) => { e.preventDefault(); app.classList.add('drag'); });
+  app.addEventListener('dragleave', () => app.classList.remove('drag'));
+  app.addEventListener('drop', (e) => { e.preventDefault(); app.classList.remove('drag'); const f = e.dataTransfer.files && e.dataTransfer.files[0]; if (f) loadFile(f); });
+}
+// 动态加载外部库（带缓存）
+const _libCache = {};
+function ensureLib(globalName, src) {
+  if (window[globalName]) return Promise.resolve();
+  if (_libCache[globalName]) return _libCache[globalName];
+  _libCache[globalName] = new Promise((res, rej) => {
+    const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('库加载失败')); document.head.appendChild(s);
+  });
+  return _libCache[globalName];
+}
+// PDF 渲染（pdf.js，每页一张 canvas）
+function renderPdf(data, body, fail) {
+  ensureLib('pdfjsLib', DOC_CDN.pdfjs).then(() => {
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = DOC_CDN.pdfjsWorker;
+    return window.pdfjsLib.getDocument({ data }).promise;
+  }).then(async (pdf) => {
+    body.innerHTML = '';
+    const wrap = document.createElement('div'); wrap.className = 'doc-content doc-pdf';
+    body.appendChild(wrap);
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const vp = page.getViewport({ scale: 1.4 });
+      const cv = document.createElement('canvas');
+      cv.className = 'doc-pdf-page';
+      cv.width = vp.width; cv.height = vp.height;
+      wrap.appendChild(cv);
+      await page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
+    }
+  }).catch(e => fail('PDF 解析失败：' + (e.message || e)));
+}
+// PPTX 渲染（JSZip 解包读 slide XML 的文本，按页列出）
+function renderPptx(data, body, fail) {
+  ensureLib('JSZip', DOC_CDN.jszip).then(() => window.JSZip.loadAsync(data)).then(async (zip) => {
+    const slides = Object.keys(zip.files).filter(n => /^ppt\/slides\/slide\d+\.xml$/.test(n))
+      .sort((a, b) => parseInt(a.match(/\d+/)[0]) - parseInt(b.match(/\d+/)[0]));
+    if (!slides.length) { fail('未在 PPT 中找到幻灯片'); return; }
+    let html = '<div class="doc-content">';
+    for (const n of slides) {
+      const xml = await zip.file(n).async('text');
+      const doc = new DOMParser().parseFromString(xml, 'application/xml');
+      const texts = [...doc.getElementsByTagName('a:t')].map(t => t.textContent);
+      const num = n.match(/\d+/)[0];
+      html += '<div class="doc-slide"><div class="doc-slide-no">第 ' + num + ' 页</div>' +
+        (texts.length ? texts.map(t => '<div class="doc-slide-line">' + escapeHtml(t) + '</div>').join('') : '<div class="doc-slide-line" style="opacity:.5">（无文字）</div>') + '</div>';
+    }
+    body.innerHTML = html + '</div>';
+  }).catch(e => fail('PPTX 解析失败：' + (e.message || e)));
+}
 
 /* ===================== 内置应用：命令行终端 ===================== */
 function renderTerminal() {
@@ -1682,88 +2140,116 @@ function initTerminal() {
 /* ===================== 内置应用：AI 配置 ===================== */
 function renderAIConfig() {
   const c = Store.getAIConfig();
+  const caps = Store.getAICaps();
   const ready = AI.isReady();
+  // 左右分栏：左=接口与能力设置，右=价格 / 记忆 / 豆包
   return `
-  <div class="app-config">
-    <h2>🔑 AI 配置</h2>
-    <p class="sub">配置 OpenAI 兼容的 AI 接口，用于「AI 对话」与「软件商城」</p>
-    <div class="config-status ${ready?'ok':'warn'}">
-      <span>${ready?'✓':'⚠'}</span><span>${ready?'已就绪：'+escapeHtml(c.model):'尚未配置 API Key'}</span>
-    </div>
-    <div class="config-presets">
-      <div class="preset-chip" data-url="https://api.deepseek.com/v1/chat/completions" data-model="deepseek-chat">DeepSeek</div>
-      <div class="preset-chip" data-url="https://api.deepseek.com/v1/chat/completions" data-model="deepseek-reasoner">DeepSeek-R1</div>
-      <div class="preset-chip" data-url="https://api.openai.com/v1/chat/completions" data-model="gpt-4o-mini">OpenAI</div>
-      <div class="preset-chip" data-url="https://api.siliconflow.cn/v1/chat/completions" data-model="deepseek-ai/DeepSeek-V3">硅基流动</div>
-      <div class="preset-chip" data-url="https://open.bigmodel.cn/api/paas/v4/chat/completions" data-model="glm-4-flash">智谱GLM</div>
-    </div>
-    <div class="field">
-      <label>API 接口地址 (URL)</label>
-      <input class="input" id="cfgUrl" value="${escapeHtml(c.url)}" placeholder="https://api.deepseek.com/v1/chat/completions" />
-    </div>
-    <div class="field">
-      <label>API Key</label>
-      <input class="input" id="cfgKey" type="password" value="${escapeHtml(c.key)}" placeholder="sk-..." />
-    </div>
-    <div class="field">
-      <label>模型名称 (Model)</label>
-      <input class="input" id="cfgModel" value="${escapeHtml(c.model)}" placeholder="deepseek-chat" />
-    </div>
-    <div class="field">
-      <label>最大输出 Token（留空默认 8192；生成软件时代码较长，可适当调大，如 16384）</label>
-      <input class="input" id="cfgMaxTokens" type="number" min="1024" max="131072" value="${escapeHtml(String(c.maxTokens || ''))}" placeholder="8192" />
-    </div>
-    <hr style="margin:18px 0;border:none;border-top:1px solid var(--glass-border)" />
-    <h3 style="font-size:15px;margin-bottom:4px">💰 Token 单价（选填）</h3>
-    <p class="sub" style="margin-bottom:12px">每百万 tokens 的价格，填后每条 AI 消息下的用量统计会自动估算费用；留空则不显示费用。价格以你的服务商页面为准。</p>
-    <div class="field">
-      <label>货币单位</label>
-      <div class="style-pick">
-        <button id="priceUnitCny" class="${(c.prices && c.prices.unit === 'usd') ? '' : 'active'}">¥ 人民币</button>
-        <button id="priceUnitUsd" class="${(c.prices && c.prices.unit === 'usd') ? 'active' : ''}">$ 美元</button>
+  <div class="app-config cfg-split">
+    <div class="cfg-col">
+      <h2>🔑 AI 配置</h2>
+      <p class="sub">配置 OpenAI 兼容的 AI 接口，用于「AI 对话」与「软件商城」</p>
+      <div class="config-status ${ready?'ok':'warn'}">
+        <span>${ready?'✓':'⚠'}</span><span>${ready?'已就绪：'+escapeHtml(c.model):'尚未配置 API Key'}</span>
+      </div>
+      <div class="config-presets">
+        <div class="preset-chip" data-url="https://api.deepseek.com/v1/chat/completions" data-model="deepseek-chat">DeepSeek</div>
+        <div class="preset-chip" data-url="https://api.deepseek.com/v1/chat/completions" data-model="deepseek-reasoner">DeepSeek-R1</div>
+        <div class="preset-chip" data-url="https://api.openai.com/v1/chat/completions" data-model="gpt-4o-mini">OpenAI</div>
+        <div class="preset-chip" data-url="https://api.siliconflow.cn/v1/chat/completions" data-model="deepseek-ai/DeepSeek-V3">硅基流动</div>
+        <div class="preset-chip" data-url="https://open.bigmodel.cn/api/paas/v4/chat/completions" data-model="glm-4-flash">智谱GLM</div>
+        <div class="preset-chip" data-url="https://api.xiaomimimo.com/v1/chat/completions" data-model="mimo-v2.5-pro">小米MiMo</div>
+      </div>
+      <div class="field">
+        <label>API 接口地址 (URL)</label>
+        <input class="input" id="cfgUrl" value="${escapeHtml(c.url)}" placeholder="https://api.deepseek.com/v1/chat/completions" />
+      </div>
+      <div class="field">
+        <label>API Key</label>
+        <input class="input" id="cfgKey" type="password" value="${escapeHtml(c.key)}" placeholder="sk-..." />
+      </div>
+      <div class="field">
+        <label>模型名称 (Model)　<button class="btn sm ghost" id="cfgFetchModels" type="button" title="用当前 URL 与 Key 调用 /models 拉取接口支持的模型列表">📥 获取模型列表</button></label>
+        <input class="input" id="cfgModel" value="${escapeHtml(c.model)}" placeholder="可手填，或点上方按钮拉取后从下拉选择" list="cfgModelList" />
+        <datalist id="cfgModelList"></datalist>
+      </div>
+      <div class="field">
+        <label>最大输出 Token（留空默认 8192；生成软件时代码较长，可适当调大，如 16384）</label>
+        <input class="input" id="cfgMaxTokens" type="number" min="1024" max="131072" value="${escapeHtml(String(c.maxTokens || ''))}" placeholder="8192" />
+      </div>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <button class="btn" onclick="TZOS.saveConfig()">💾 保存配置</button>
+        <button class="btn ghost" onclick="TZOS.testConfig()">🧪 测试连接</button>
+      </div>
+      <p style="margin-top:14px;font-size:11px;color:var(--ink-muted);line-height:1.6">
+        你的 Key 只保存在本机 localStorage，不会上传到任何服务器。建议使用 DeepSeek、小米MiMo 等国产 API，便宜且快。
+      </p>
+
+      <hr class="cfg-hr" />
+      <h3 class="cfg-h3">🧩 能力设置</h3>
+      <p class="sub" style="margin-bottom:10px">按你的模型与服务商能力开启对应功能；不支持的功能保持关闭可避免报错与浪费 token。</p>
+      <div class="setting-row" style="border:none;padding:7px 0">
+        <div><div class="sr-label" style="font-size:13px">支持图片输入</div><div class="sr-desc">视觉模型（GPT-4o、GLM-4V 等）才开；关闭后「自动截图」与图片上传不可用</div></div>
+        <div class="toggle ${caps.image!==false?'on':''}" id="capImageTg"></div>
+      </div>
+      <div class="setting-row" style="border:none;padding:7px 0">
+        <div><div class="sr-label" style="font-size:13px">支持文件输入</div><div class="sr-desc">允许在对话中上传/粘贴文件（以 base64 随消息发送，仅建议给小文件）</div></div>
+        <div class="toggle ${caps.file!==false?'on':''}" id="capFileTg"></div>
+      </div>
+      <div class="setting-row" style="border:none;padding:7px 0">
+        <div><div class="sr-label" style="font-size:13px">支持联网搜索</div><div class="sr-desc">服务商支持 web_search 工具（如小米MiMo）才开；开启后对话默认带联网搜索</div></div>
+        <div class="toggle ${caps.webSearch?'on':''}" id="capWebTg"></div>
+      </div>
+      <div class="field" style="margin-top:12px">
+        <label>上下文长度（token，选填。填入后对话工具栏会显示已用/总量百分比）</label>
+        <input class="input" id="cfgCtxLen" type="number" min="0" max="2000000" value="${escapeHtml(String(caps.contextLength || ''))}" placeholder="如 64000 / 128000" />
       </div>
     </div>
-    <div class="price-grid">
-      <div class="field"><label>缓存命中</label><input class="input" id="cfgPriceHit" type="number" min="0" step="0.0001" value="${escapeHtml(String((c.prices && c.prices.hit) || ''))}" placeholder="如 0.5" /></div>
-      <div class="field"><label>缓存写入</label><input class="input" id="cfgPriceWrite" type="number" min="0" step="0.0001" value="${escapeHtml(String((c.prices && c.prices.write) || ''))}" placeholder="如 1" /></div>
-      <div class="field"><label>输入（未命中缓存）</label><input class="input" id="cfgPriceInput" type="number" min="0" step="0.0001" value="${escapeHtml(String((c.prices && c.prices.input) || ''))}" placeholder="如 2" /></div>
-      <div class="field"><label>输出</label><input class="input" id="cfgPriceOutput" type="number" min="0" step="0.0001" value="${escapeHtml(String((c.prices && c.prices.output) || ''))}" placeholder="如 8" /></div>
-    </div>
-    <div style="display:flex;gap:8px;margin-top:18px">
-      <button class="btn" onclick="TZOS.saveConfig()">💾 保存配置</button>
-      <button class="btn ghost" onclick="TZOS.testConfig()">🧪 测试连接</button>
-    </div>
-    <p style="margin-top:18px;font-size:11px;color:var(--ink-muted);line-height:1.6">
-      你的 Key 只保存在本机 localStorage，不会上传到任何服务器。建议使用 DeepSeek 等国产 API，便宜且快。
-    </p>
 
-    <hr style="margin:22px 0;border:none;border-top:1px solid var(--glass-border)" />
-    <h3 style="font-size:15px;margin-bottom:8px">🧠 AI 记忆</h3>
-    <p class="sub" style="margin-bottom:12px">AI 会记住关于你的事实（如"用户是大学生"），并在对话与生成时参考。可手动增删改，也可让 AI 在回答后自动写入。</p>
-    <div class="setting-row" style="border:none;padding:6px 0">
-      <div><div class="sr-label" style="font-size:13px">生成后自动写入记忆</div><div class="sr-desc">AI 回答后自动判断有无值得记忆的内容</div></div>
-      <div class="toggle ${Store.getMemAuto()?'on':''}" id="memAutoTg"></div>
-    </div>
-    <div class="setting-row" style="border:none;padding:6px 0">
-      <div><div class="sr-label" style="font-size:13px">将记忆注入提示词</div><div class="sr-desc">关闭后所有记忆都不会发给 AI</div></div>
-      <div class="toggle ${Store.getMemInject()?'on':''}" id="memInjectTg"></div>
-    </div>
-    <div id="memList" style="margin-top:8px"></div>
-    <div style="display:flex;gap:8px;margin-top:10px">
-      <input class="input" id="memNewInput" placeholder="新增一条记忆，如：用户是大学生" style="flex:1" />
-      <button class="btn sm" onclick="TZOS.memAdd()">＋ 添加</button>
-    </div>
-    <div style="display:flex;gap:8px;margin-top:8px">
-      <button class="btn sm ghost" onclick="TZOS.memAll(true)">全选</button>
-      <button class="btn sm ghost" onclick="TZOS.memAll(false)">全不选</button>
-      <span style="flex:1"></span>
-      <span style="font-size:11px;color:var(--ink-muted);align-self:center">勾选 = 该条记忆会注入提示词</span>
-    </div>
+    <div class="cfg-col">
+      <h3 class="cfg-h3" style="margin-top:2px">💰 Token 单价（选填）</h3>
+      <p class="sub" style="margin-bottom:12px">每百万 tokens 的价格，填后每条 AI 消息下的用量统计会自动估算费用；留空则不显示费用。价格以你的服务商页面为准。</p>
+      <div class="field">
+        <label>货币单位</label>
+        <div class="style-pick">
+          <button id="priceUnitCny" class="${(c.prices && c.prices.unit === 'usd') ? '' : 'active'}">¥ 人民币</button>
+          <button id="priceUnitUsd" class="${(c.prices && c.prices.unit === 'usd') ? 'active' : ''}">$ 美元</button>
+        </div>
+      </div>
+      <div class="price-grid">
+        <div class="field"><label>缓存命中</label><input class="input" id="cfgPriceHit" type="number" min="0" step="0.0001" value="${escapeHtml(String((c.prices && c.prices.hit) || ''))}" placeholder="如 0.5" /></div>
+        <div class="field"><label>缓存写入</label><input class="input" id="cfgPriceWrite" type="number" min="0" step="0.0001" value="${escapeHtml(String((c.prices && c.prices.write) || ''))}" placeholder="如 1" /></div>
+        <div class="field"><label>输入（未命中缓存）</label><input class="input" id="cfgPriceInput" type="number" min="0" step="0.0001" value="${escapeHtml(String((c.prices && c.prices.input) || ''))}" placeholder="如 2" /></div>
+        <div class="field"><label>输出</label><input class="input" id="cfgPriceOutput" type="number" min="0" step="0.0001" value="${escapeHtml(String((c.prices && c.prices.output) || ''))}" placeholder="如 8" /></div>
+      </div>
 
-    <hr style="margin:22px 0;border:none;border-top:1px solid var(--glass-border)" />
-    <h3 style="font-size:15px;margin-bottom:4px">🫘 豆包 AI（doubao.com 网页版）</h3>
-    <p class="sub" style="margin-bottom:10px">豆包AI 采用 <strong>网页嵌入</strong> 方式接入（非 API Key）。在「AI 对话」顶部点「⚙️ 自定义AI」可一键切换为「🫘 豆包AI」，将在窗口内嵌入 doubao.com 网页版。</p>
-    <div class="config-status warn"><span>ℹ</span><span>豆包仅为对话界面的网页嵌入模式；AI 对话 API、软件商城等所有 AI 功能始终使用上方通用配置，与豆包模式互不影响。</span></div>
+      <hr class="cfg-hr" />
+      <h3 class="cfg-h3">🧠 AI 记忆</h3>
+      <p class="sub" style="margin-bottom:10px">AI 会记住关于你的事实，并在对话与生成时参考。</p>
+      <div class="setting-row" style="border:none;padding:6px 0">
+        <div><div class="sr-label" style="font-size:13px">生成后自动写入记忆</div><div class="sr-desc">AI 回答后自动判断有无值得记忆的内容</div></div>
+        <div class="toggle ${Store.getMemAuto()?'on':''}" id="memAutoTg"></div>
+      </div>
+      <div class="setting-row" style="border:none;padding:6px 0">
+        <div><div class="sr-label" style="font-size:13px">将记忆注入提示词</div><div class="sr-desc">关闭后所有记忆都不会发给 AI</div></div>
+        <div class="toggle ${Store.getMemInject()?'on':''}" id="memInjectTg"></div>
+      </div>
+      <div id="memList" style="margin-top:8px"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <input class="input" id="memNewInput" placeholder="新增一条记忆，如：用户是大学生" style="flex:1" />
+        <button class="btn sm" onclick="TZOS.memAdd()">＋ 添加</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn sm ghost" onclick="TZOS.memAll(true)">全选</button>
+        <button class="btn sm ghost" onclick="TZOS.memAll(false)">全不选</button>
+        <span style="flex:1"></span>
+        <span style="font-size:11px;color:var(--ink-muted);align-self:center">勾选 = 注入提示词</span>
+      </div>
+
+      <hr class="cfg-hr" />
+      <h3 class="cfg-h3">🫘 豆包 AI（doubao.com 网页版）</h3>
+      <p class="sub" style="margin-bottom:10px">豆包AI 采用 <strong>网页嵌入</strong> 方式接入（非 API Key）。在「AI 对话」顶部点「⚙️ 自定义AI」可一键切换为「🫘 豆包AI」。</p>
+      <div class="config-status warn"><span>ℹ</span><span>豆包仅为对话界面的网页嵌入模式；所有 API 功能始终使用左侧通用配置。</span></div>
+    </div>
   </div>`;
 }
 // AI 记忆条目渲染（配置页内）
@@ -1832,10 +2318,51 @@ function readConfigForm() {
     }
   };
 }
+// 读取能力设置表单（图片/文件/联网/上下文长度）
+function readCapsForm() {
+  const g = (id) => { const e = document.getElementById(id); return e ? e.classList.contains('on') : true; };
+  const ctxEl = document.getElementById('cfgCtxLen');
+  return {
+    image: g('capImageTg'), file: g('capFileTg'), webSearch: g('capWebTg'),
+    contextLength: parseInt(ctxEl && ctxEl.value, 10) || 0
+  };
+}
 window.TZOS.saveConfig = function() {
   Store.setAIConfig(readConfigForm());
+  Store.setAICaps(readCapsForm());
+  // 图片输入被关闭时，自动关掉截图模式并停掉屏幕共享
+  if (Store.getAICaps().image === false && Store.getScreenshotMode()) { Store.setScreenshotMode(false); Shot.stop(); }
   toast('配置已保存');
   refreshOpenApp('ai-config');
+  refreshOpenApp('ai-chat');
+};
+// 用当前 URL + Key 调 /models 拉取接口支持的模型列表，填入 datalist 供选择（仍可自定义手填）
+window.TZOS.fetchModels = async function() {
+  const url = ($('#cfgUrl').value || '').trim();
+  const key = ($('#cfgKey').value || '').trim();
+  if (!url || !key) { toast('请先填写接口地址与 API Key'); return; }
+  // 由 chat/completions 推 models 端点：去掉尾部 /chat/completions 换 /models
+  const murl = url.replace(/\/chat\/completions\/?$/i, '') + '/models';
+  const btn = $('#cfgFetchModels');
+  if (btn) { btn.disabled = true; btn.textContent = '拉取中…'; }
+  try {
+    // 直接 GET /models（网页版可跨域；桌面版 file:// 若被 CORS 拦截会进 catch 提示手填）
+    const res = await fetch(murl, { headers: { 'Authorization': 'Bearer ' + key, 'Accept': 'application/json' } });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const list = (data && data.data) || [];
+    const dl = $('#cfgModelList');
+    if (!dl) return;
+    dl.innerHTML = '';
+    if (!list.length) { toast('该接口未返回模型列表，可继续手填'); return; }
+    list.forEach(m => { const o = document.createElement('option'); o.value = m.id; dl.appendChild(o); });
+    toast('✓ 已拉取 ' + list.length + ' 个模型，点模型输入框右侧下拉选择', 3600);
+    $('#cfgModel').focus();
+  } catch (e) {
+    toast('拉取失败：' + (e.message || e).toString().slice(0, 60) + '（可继续手填）', 4200);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '📥 获取模型列表'; }
+  }
 };
 window.TZOS.testConfig = async function() {
   Store.setAIConfig(readConfigForm());
@@ -1870,30 +2397,77 @@ function renderAIChat() {
     </div>`;
   }
   const deep = Store.getDeepThink();
-  const shotOn = Store.getScreenshotMode();
+  const caps = Store.getAICaps();
+  const shotOn = caps.image !== false && Store.getScreenshotMode();
+  const webOn = !!caps.webSearch;
   return `
   <div class="app-chat" id="chatApp">
-    <div class="chat-toolbar" style="display:flex;gap:6px;padding:6px 10px;border-bottom:1px solid var(--glass-border);background:var(--surface);align-items:center">
+    <div class="chat-toolbar">
       <button class="btn sm ghost" id="chatProvider" title="切换 AI 提供方">⚙️ 自定义AI</button>
       <button class="btn sm ${deep?'':'ghost'} js-deep-btn" id="chatDeep" title="深度思考（显示思考过程）">🧠 深度思考${deep?'·开':'·关'}</button>
-      <button class="btn sm ${shotOn?'':'ghost'}" id="chatShot" title="发送消息时自动截取当前屏幕（需视觉模型）">📷 截图${shotOn?'·开':'·关'}</button>
-      ${Store.getAgentMode() ? '<span style="font-size:11px;color:var(--c-violet);padding:3px 8px;border:1px dashed var(--c-violet);border-radius:999px;flex-shrink:0" title="AI 可在对话中直接执行命令行命令">⌨️ 命令行模式</span>' : ''}
+      ${webOn ? '<span class="chat-flag" title="联网搜索已开启（AI 配置中可关）">🌐 联网</span>' : ''}
+      ${caps.image !== false ? `<button class="btn sm ${shotOn?'':'ghost'}" id="chatShot" title="发送消息时自动截取当前屏幕（需视觉模型）">📷 截图${shotOn?'·开':'·关'}</button>` : ''}
+      ${Store.getAgentMode() ? '<span class="chat-flag violet" title="AI 可在对话中直接执行命令行命令">⌨️ 命令行模式</span>' : ''}
       <span style="flex:1"></span>
+      <span class="chat-ctx" id="chatCtx"></span>
       <button class="btn sm ghost" id="chatClear" title="清空当前对话">🗑</button>
     </div>
     <div class="chat-messages" id="chatMsgs"></div>
+    <div class="chat-attach" id="chatAttach" hidden></div>
     <div class="chat-input-bar">
-      <textarea class="textarea" id="chatInput" placeholder="输入消息，Enter 发送，Shift+Enter 换行…" rows="1"></textarea>
+      ${(caps.image !== false || caps.file !== false) ? '<button class="chat-attach-btn" id="chatAttachBtn" title="上传图片或文件（也可直接粘贴到这里）">📎</button><input type="file" id="chatFileInput" style="display:none" multiple />' : ''}
+      <textarea class="textarea" id="chatInput" placeholder="输入消息，Enter 发送，Shift+Enter 换行${caps.image !== false ? '，可粘贴图片/文件' : ''}…" rows="1"></textarea>
       <button class="chat-send" id="chatSend" title="发送">➤</button>
     </div>
   </div>`;
+}
+// 待发送附件 chips（图片/文件）渲染
+function renderPendingChips(sess) {
+  const box = sess && sess.attachEl;
+  if (!box || !box.isConnected) return;
+  const list = sess.pending || [];
+  if (!list.length) { box.hidden = true; box.innerHTML = ''; return; }
+  box.hidden = false;
+  box.innerHTML = '';
+  list.forEach((p, i) => {
+    const chip = el('div', 'attach-chip');
+    if (p.kind === 'image') {
+      const img = el('img', 'attach-thumb');
+      img.src = p.dataUrl; img.alt = p.name;
+      chip.appendChild(img);
+    } else {
+      chip.appendChild(el('span', 'attach-ficon', '📄'));
+    }
+    chip.appendChild(el('span', 'attach-name', escapeHtml(p.name)));
+    const x = el('button', 'attach-x', '✕');
+    x.title = '移除';
+    x.onclick = () => { sess.pending.splice(i, 1); renderPendingChips(sess); };
+    chip.appendChild(x);
+    box.appendChild(chip);
+  });
+}
+// 把 File 读成 dataURL 并加入待发送列表（受能力开关约束）
+function addPendingFile(sess, file) {
+  if (!file) return;
+  const caps = Store.getAICaps();
+  const isImg = /^image\//i.test(file.type || '');
+  if (isImg && caps.image === false) { toast('当前已在 AI 配置中关闭「图片输入」'); return; }
+  if (!isImg && caps.file === false) { toast('当前已在 AI 配置中关闭「文件输入」'); return; }
+  if (file.size > 8 * 1024 * 1024) { toast('「' + file.name + '」超过 8MB，已跳过'); return; }
+  const rd = new FileReader();
+  rd.onload = () => {
+    sess.pending.push({ kind: isImg ? 'image' : 'file', name: file.name || (isImg ? '粘贴图片.png' : '未命名文件'), mime: file.type || '', dataUrl: rd.result });
+    renderPendingChips(sess);
+  };
+  rd.onerror = () => toast('读取「' + file.name + '」失败');
+  rd.readAsDataURL(file);
 }
 function reasoningHtml(reasoning, ongoing) {
   if (!reasoning) return '';
   const tag = ongoing ? '（进行中…）' : '';
   return `<details class="msg-reasoning"${ongoing?' open':''} style="margin-bottom:6px"><summary style="cursor:pointer;color:var(--ink-faint);font-size:12px">🧠 思考过程${tag}</summary><div style="font-size:12px;color:var(--ink-faint);line-height:1.6;padding:6px 8px;background:var(--surface);border-radius:6px;margin-top:4px;white-space:pre-wrap">${escapeHtml(reasoning)}</div></details>`;
 }
-function initChat() {
+function initChat(winId) {
   // 豆包网页嵌入模式：只绑定切换按钮 + iframe 加载隐藏提示
   if (Store.getProvider() === 'doubao') {
     const provBtn = $('#chatProvider');
@@ -1901,13 +2475,9 @@ function initChat() {
     const f = $('#doubaoFrame');
     const hint = $('#doubaoHint');
     if (f && hint) {
-      // iframe 加载成功即隐藏提示（load 事件对跨源 iframe 同样会触发）
       let loaded = false;
       const hide = () => { loaded = true; hint.style.display = 'none'; };
       f.addEventListener('load', hide);
-      // 兜底：6 秒后若仍未加载完成，说明豆包可能禁止被嵌入，更新文案引导用户外部打开
-      // （不强制重显已隐藏的提示——之前用 contentWindow.length===0 判断"空白"是错的：
-      //  正常加载的豆包页面也没有子框架，length 就是 0，会把已隐藏的提示重新显示出来）
       setTimeout(() => {
         if (loaded || !hint.parentNode) return;
         const sub = hint.querySelector('div[style*="14px"]');
@@ -1916,9 +2486,18 @@ function initChat() {
     }
     return;
   }
+  // 建立/恢复本窗口的会话（窗口重开时会话仍在，进行中的生成不中断）
+  const sess = ChatSessions.get(winId || 'chat-main');
+  chatSess = sess;
   const msgs = $('#chatMsgs');
   const input = $('#chatInput');
   const sendBtn = $('#chatSend');
+  sess.msgs = msgs;
+  sess.ctxEl = $('#chatCtx');
+  sess.attachEl = $('#chatAttach');
+  sess.pending = sess.pending || [];
+  sess.scroll = null;
+
   const history = Store.getChat();
   if (!history.length) {
     const ready = AI.isReady();
@@ -1933,10 +2512,40 @@ function initChat() {
   } else {
     history.forEach((m, i) => appendMsg(m.role, m.content, { reasoning: m.reasoning, usage: m.usage, actions: true, index: i }));
   }
+  // 智能滚动：用户上滑阅读时不吸底
+  bindChatScroll(msgs, sess);
+  msgs.scrollTop = msgs.scrollHeight;
+  // 初始上下文用量（按历史估算）
+  updateContextBar(sess, [{ role: 'system', content: '' }, ...history.map(m => ({ role: 'user', content: m.content }))], null);
+  renderPendingChips(sess);
+  // 若本会话有进行中的生成（窗口被关后重开），提示并恢复按钮态
+  if (sess.ctl) {
+    const tip = el('div', 'chat-resume-tip', '⏳ 上次关闭窗口时的回答仍在生成中，完成后会自动出现在上方…');
+    msgs.appendChild(tip);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
   updateChatSendBtn();
   input.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } };
   input.oninput = () => { input.style.height = 'auto'; input.style.height = Math.min(120, input.scrollHeight) + 'px'; };
+  // 粘贴图片/文件自动上传
+  input.addEventListener('paste', (e) => {
+    const items = (e.clipboardData && e.clipboardData.items) || [];
+    const files = [];
+    for (const it of items) { if (it.kind === 'file') { const f = it.getAsFile(); if (f) files.push(f); } }
+    if (files.length) { e.preventDefault(); files.forEach(f => addPendingFile(sess, f)); }
+  });
   sendBtn.onclick = sendChat;
+  // 附件上传按钮
+  const attachBtn = $('#chatAttachBtn'), fileInput = $('#chatFileInput');
+  if (attachBtn && fileInput) {
+    const caps = Store.getAICaps();
+    const accept = [];
+    if (caps.image !== false) accept.push('image/*');
+    if (caps.file !== false) accept.push('*/*');
+    fileInput.accept = accept.join(',') || '*/*';
+    attachBtn.onclick = () => fileInput.click();
+    fileInput.onchange = () => { [...fileInput.files].forEach(f => addPendingFile(sess, f)); fileInput.value = ''; };
+  }
   // 工具栏
   const provBtn = $('#chatProvider');
   if (provBtn) provBtn.onclick = () => {
@@ -1949,17 +2558,17 @@ function initChat() {
   if (deepBtn) deepBtn.onclick = () => {
     Store.setDeepThink(!Store.getDeepThink());
     const d = Store.getDeepThink();
-    // 全局同步所有窗口的深度思考按钮（修复多窗口状态不一致导致的"关不掉"）
     syncDeepBtns();
     const eh = $('#chatEmptyHint');
     if (eh && AI.isReady()) eh.textContent = d ? '深度思考已开启，会显示思考过程。' : '问我任何问题，或试试下面的建议';
     toast('深度思考已' + (d ? '开启' : '关闭') + '（仅影响后续回复）');
   };
-  // 自动截图开关（需视觉模型；首次开启需授权屏幕共享，选择「此标签页」）
+  // 自动截图开关（需视觉模型 + 图片输入能力开启）
   const shotBtn = $('#chatShot');
   if (shotBtn) shotBtn.onclick = async () => {
     const next = !Store.getScreenshotMode();
     if (next) {
+      if (Store.getAICaps().image === false) { toast('「支持图片输入」已在 AI 配置中关闭，无法使用截图'); return; }
       if (!Shot.supported()) { toast('当前环境不支持屏幕截取'); return; }
       toast('请在弹窗中选择「此标签页」共享天择OS画面', 3600);
       if (!(await Shot.ensure())) { toast('未获得屏幕共享授权，功能未开启', 3000); return; }
@@ -2030,7 +2639,7 @@ function appendMsg(role, content, opts = {}) {
       };
     });
   }
-  msgs.scrollTop = msgs.scrollHeight;
+  scrollChatToBottom(msgs, chatSess);
   return m;
 }
 function renderMd(text) {
@@ -2045,12 +2654,23 @@ function renderMd(text) {
   // 3) 抽取行内代码
   const ics = [];
   work = work.replace(/`([^`\n]+)`/g, (m, c) => { ics.push(c); return '\u0000I' + (ics.length - 1) + '\u0000'; });
-  // 4) 转义后按行做块级解析
+  // 4) 抽取链接与图片（转义前提取，避免 URL 中的 & 与括号被转义破坏；拦截 javascript: 伪协议）
+  const links = [];
+  work = work.replace(/!?\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g, (m, t, u, ti) => {
+    const isImg = m.charAt(0) === '!';
+    const safe = /^(https?:|data:image\/|mailto:)/i.test(u) ? u : '#';
+    links.push({ isImg, t, u: safe, ti: ti || '' });
+    return '￼L' + (links.length - 1) + '￼';
+  });
+  // 5) 转义后按行做块级解析
   const lines = escapeHtml(work).split('\n');
+  // 行内格式：先加粗（**/__）后斜体（*/_），避免 ** 被斜体规则吃掉导致加粗失效
   const inlineFmt = (s) => s
-    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-    .replace(/(?<!\w)\*([^*\n]+)\*(?!\w)/g, '<em>$1</em>')
-    .replace(/~~([^~]+)~~/g, '<s>$1</s>');
+    .replace(/\*\*([\s\S]+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/__([\s\S]+?)__/g, '<strong>$1</strong>')
+    .replace(/(?<![\w*])\*([^*\n]+?)\*(?![\w*])/g, '<em>$1</em>')
+    .replace(/(?<![\w_])_([^_\n]+?)_(?![\w_])/g, '<em>$1</em>')
+    .replace(/~~([^~]+?)~~/g, '<s>$1</s>');
   const out = [];
   let i = 0, para = [];
   const flushPara = () => { if (para.length) { out.push('<p>' + para.map(inlineFmt).join('<br>') + '</p>'); para = []; } };
@@ -2115,6 +2735,12 @@ function renderMd(text) {
     const x = maths[+n]; if (!x) return '';
     const delim = x.d ? '$$' : '$';
     return '<span class="tz-math">' + escapeHtml(delim + x.c + delim) + '</span>';
+  });
+  // 还原链接与图片（占位符为 ￼L…￼）
+  html = html.replace(/￼L(\d+)￼/g, (m, n) => {
+    const x = links[+n]; if (!x) return '';
+    if (x.isImg) return '<img class="md-img" src="' + escapeHtml(x.u) + '" alt="' + escapeHtml(x.t) + '" loading="lazy">';
+    return '<a class="md-link" href="' + escapeHtml(x.u) + '" target="_blank" rel="noopener" title="' + escapeHtml(x.ti || x.u) + '">' + (x.t ? inlineFmt(escapeHtml(x.t)) : escapeHtml(x.u)) + '</a>';
   });
   return html;
 }
@@ -2207,45 +2833,73 @@ function renderMath(node) {
     try { window.renderMathInElement(node, KATEX_OPTS); } catch {}
   }).catch(() => {});
 }
-/* 当前生成的中止控制器（全局唯一，对话共享历史，同时只允许一路生成） */
-let chatCtl = null;
-/* 停止时被锁定的 bubble / body 引用，用于停止瞬间把"已停止"提示写上去（不依赖 await 链路） */
-let chatCtlTarget = null;
+/* ===================== 聊天会话注册表 =====================
+ * 每个 AI 对话窗口一个会话，独立 AbortController，互不干扰。
+ * 会话脱离具体窗口 DOM 存活：窗口关闭后再打开，生成中的会话会重新绑定到新窗口，
+ * 因此"关闭对话窗口不会中断正在进行的 AI 请求"。 */
+const ChatSessions = {
+  map: {},
+  get(winId) {
+    if (!this.map[winId]) this.map[winId] = { winId, ctl: null, target: null, scroll: null };
+    return this.map[winId];
+  }
+};
+// 当前窗口上下文（initChat 内赋值，其闭包内的函数都操作这个会话）
+let chatSess = null;
+// 兼容旧引用：chatCtl/chatCtlTarget 转发到当前会话（外部代码只读判断 busy）
+function _sessCtl() { return chatSess ? chatSess.ctl : null; }
 
 function updateChatSendBtn() {
   const sendBtn = $('#chatSend');
-  if (!sendBtn) return;
-  const busy = !!chatCtl;
+  if (!sendBtn || !chatSess) return;
+  const busy = !!chatSess.ctl;
   sendBtn.innerHTML = busy ? '⏹' : '➤';
   sendBtn.title = busy ? '停止生成' : '发送';
   sendBtn.classList.toggle('stopping', busy);
 }
 function stopGeneration() {
-  if (!chatCtl) return;
+  const sess = chatSess;
+  if (!sess || !sess.ctl) return;
   // 1) 立刻把"⏹ 已停止生成"提示写进 bubble（不等 runGeneration 走完 catch/finally，避免用户看到残留内容"以为没停"）
   try {
-    const t = chatCtlTarget;
-    if (t && t.bubble) {
+    const t = sess.target;
+    if (t && t.bubble && t.bubble.isConnected) {
       const existing = t.stopped || t.bubble.querySelector('.tz-stopped-tip');
       if (!existing) {
         const tip = el('div', 'tz-stopped-tip', '⏹ 已停止生成');
-        tip.style.cssText = 'color:var(--ink-faint);font-size:12px;margin-top:6px';
         t.bubble.appendChild(tip);
-        if (t.msgs) t.msgs.scrollTop = t.msgs.scrollHeight;
+        if (t.msgs && t.msgs.isConnected) scrollChatToBottom(t.msgs, sess);
       }
     }
   } catch (_) {}
   // 2) 中断 AbortController（同步）；listener 链会立即 reject 渲染层 promise 并通知主进程
-  try { chatCtl.abort(); } catch (_) {}
+  try { sess.ctl.abort(); } catch (_) {}
   // 3) 即时把按钮变回 ➤（catch/finally 还会再调用一次，但这里先给用户即时反馈）
-  chatCtl = null;
-  chatCtlTarget = null;
+  sess.ctl = null;
+  sess.target = null;
   updateChatSendBtn();
+}
+
+/* ---- 智能滚动：生成期间仅当用户本来就在底部附近时才吸底；用户上滑阅读时不打扰 ---- */
+function bindChatScroll(msgs, sess) {
+  // 初始视为贴底（历史回填后滚到底部）
+  sess.scroll = { stick: true, bound: true };
+  msgs.addEventListener('scroll', () => {
+    if (!sess.scroll) return;
+    const gap = msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight;
+    // 只有用户主动离开底部区域才取消吸底；回到距底 48px 内恢复吸底
+    sess.scroll.stick = gap < 48;
+  }, { passive: true });
+}
+function scrollChatToBottom(msgs, sess) {
+  if (!msgs || !msgs.isConnected) return;
+  // 无会话（如历史回填）直接滚到底；生成中遵循用户阅读位置
+  if (!sess || !sess.scroll || sess.scroll.stick) msgs.scrollTop = msgs.scrollHeight;
 }
 
 // 编辑某条用户消息：内容填入输入框，发送时删除该消息及后续
 function startEditMessage(i) {
-  if (chatCtl) { toast('正在生成中，请先停止'); return; }
+  if (_sessCtl()) { toast('正在生成中，请先停止'); return; }
   const history = Store.getChat();
   const msg = history[i];
   if (!msg || msg.role !== 'user') return;
@@ -2262,7 +2916,7 @@ function startEditMessage(i) {
 
 // 重新生成某条 AI 消息：删除该条及后续，以其前最近的用户消息重新生成
 async function regenerateMessage(i) {
-  if (chatCtl) { toast('正在生成中，请先停止'); return; }
+  if (_sessCtl()) { toast('正在生成中，请先停止'); return; }
   const history = Store.getChat();
   if (!history[i] || history[i].role !== 'ai') return;
   let ui = i - 1;
@@ -2277,7 +2931,7 @@ async function regenerateMessage(i) {
 
 async function sendChat() {
   const input = $('#chatInput');
-  if (chatCtl) { stopGeneration(); return; } // 生成中点击 = 停止
+  if (_sessCtl()) { stopGeneration(); return; } // 生成中点击 = 停止
   const text = input.value.trim();
   if (!text) return;
   if (!AI.isReady()) { toast('请先配置 AI'); launchApp('ai-config'); return; }
@@ -2299,24 +2953,55 @@ async function sendChat() {
   await runGeneration(text);
 }
 
-// 核心生成流程：流式 + 实时公式渲染 + 思考过程 + token 统计 + 命令行 Agent 轮次 + 自动截图 + 记忆
+// 估算单条消息大致 token 数（用于上下文用量条，非精确值）
+function estTokens(m) {
+  let s = '';
+  if (typeof m.content === 'string') s = m.content;
+  else if (Array.isArray(m.content)) s = m.content.map(p => p.text || '').join('');
+  return Math.ceil(String(s).length / 2.5) + 4;
+}
+// 更新上下文用量条（对话工具栏右侧）
+function updateContextBar(sess, messages, usage) {
+  const bar = sess && sess.ctxEl;
+  if (!bar || !bar.isConnected) return;
+  const caps = Store.getAICaps();
+  const limit = parseInt(caps.contextLength, 10) || 0;
+  let used = 0;
+  if (usage && (usage.prompt_tokens || usage.total_tokens)) used = usage.prompt_tokens || usage.total_tokens;
+  else used = messages.reduce((a, m) => a + estTokens(m), 0);
+  if (limit > 0) {
+    const pct = Math.min(100, Math.round(used / limit * 100));
+    bar.innerHTML = '📏 上下文 ' + used + ' / ' + limit + '（' + pct + '%）';
+    bar.style.color = pct >= 90 ? '#fca5a5' : pct >= 70 ? '#fbbf24' : '';
+    bar.title = '本轮对话约占用的上下文 token；达到上限后请开启新对话或在 AI 配置中调大上下文长度';
+  } else {
+    bar.innerHTML = '📏 上下文 ≈' + used;
+    bar.style.color = '';
+    bar.title = '本轮对话估算的上下文 token；在「AI 配置 → 能力设置」填入上下文长度后显示百分比';
+  }
+}
+
+// 核心生成流程：流式 + 实时公式渲染 + 思考过程 + token 统计 + 命令行 Agent 轮次 + 自动截图/附件 + 联网搜索 + 记忆
+// sess 为窗口会话；窗口被关闭后会话仍继续，重新打开窗口时可用 resumeGeneration 重新绑定显示。
 async function runGeneration(userText) {
-  const msgs = $('#chatMsgs');
-  if (!msgs) return;
-  // 进入生成时若已有 chatCtl 残留（异常态），先 abort 并清空，防止多个生成并行
-  if (chatCtl) { try { chatCtl.abort(); } catch (_) {} chatCtl = null; chatCtlTarget = null; }
+  const sess = chatSess;
+  const msgs = sess ? sess.msgs : $('#chatMsgs');
+  if (!msgs || !sess) return;
+  // 进入生成时若已有生成残留（异常态），先 abort 并清空，防止多路并行
+  if (sess.ctl) { try { sess.ctl.abort(); } catch (_) {} sess.ctl = null; sess.target = null; }
   // 当 reasoning 还没出来时，msg-bubble 不要显示独立的 typing-dots（避免和"思考过程（进行中…）"details 重复成"两个进度条"）。
-  // 用户看到的进度指示只有"🧠 思考过程（进行中…）"标题一处，简洁清晰。
-  // reasoning 完成后主体才开始 streaming，typing-dots 由初次 renderAiBody 内部统一处理。
   const aiMsg = appendMsg('ai', '<span class="chat-streaming-placeholder">正在等待 AI 首字…</span>', { raw: true });
   const bubble = aiMsg.querySelector('.msg-bubble');
   const bodyEl = aiMsg.querySelector('.msg-body');
-  chatCtl = new AbortController();
-  chatCtlTarget = { bubble, bodyEl, msgs, stopped: false };
+  const ctl = new AbortController();
+  sess.ctl = ctl;
+  sess.target = { bubble, bodyEl, msgs, stopped: false };
+  const sig = ctl.signal;
   updateChatSendBtn();
   ensureKatex().catch(() => {});
   const agentOn = Store.getAgentMode();
   const deepOn = Store.getDeepThink();
+  const caps = Store.getAICaps();
   let reasoning = '', usage = null, stopped = false;
   const roundTexts = [];
   const cmdLog = [];
@@ -2324,42 +3009,56 @@ async function runGeneration(userText) {
   let paintFrame = 0;
   const paint = () => {
     if (paintFrame) return;
-    if (chatCtl && chatCtl.signal && chatCtl.signal.aborted) return; // 已停止，不再 paint 新内容
+    if (sig.aborted) return; // 已停止，不再 paint 新内容
     paintFrame = requestAnimationFrame(() => {
       paintFrame = 0;
-      if (chatCtl && chatCtl.signal && chatCtl.signal.aborted) return;
-      const reasoningPart = reasoningHtml(reasoning, !!reasoning && !chatCtl?.signal?.aborted);
-      // 主体区：reasoning 还在进行时显示"等待首字"占位，reasoning 完成或没开启深度思考时显示实际内容
+      if (sig.aborted) return;
+      // 窗口已被关闭（bubble 脱离 DOM）：不再触碰界面，只让请求跑完入库
+      if (!bubble.isConnected) return;
+      const reasoningPart = reasoningHtml(reasoning, !!reasoning && !sig.aborted);
       let body;
       if (deepOn && !reasoning) {
         body = '<span class="chat-streaming-placeholder">正在等待 AI 思考…</span>';
       } else {
-        body = renderAiBody(displayText, cmdLog, !chatCtl?.signal?.aborted);
-        if (!body && !chatCtl?.signal?.aborted) body = '<span class="chat-streaming-placeholder">正在等待 AI 首字…</span>';
+        body = renderAiBody(displayText, cmdLog, !sig.aborted);
+        if (!body && !sig.aborted) body = '<span class="chat-streaming-placeholder">正在等待 AI 首字…</span>';
       }
       bubble.innerHTML = reasoningPart + body;
       // 流式期间实时渲染 LaTeX（已渲染的 .katex 会被 auto-render 自动跳过）
       if (window.renderMathInElement) { try { window.renderMathInElement(bubble, KATEX_OPTS); } catch {} }
-      msgs.scrollTop = msgs.scrollHeight;
+      scrollChatToBottom(msgs, sess);
     });
   };
-  // 自动截图（需视觉模型；失败则降级为纯文本）
+  // 自动截图（需视觉模型 + 已开启"支持图片输入"；失败则降级为纯文本）
   let shot = null;
-  if (Store.getScreenshotMode() && Shot.supported()) {
+  if (caps.image !== false && Store.getScreenshotMode() && Shot.supported()) {
     if (await Shot.ensure()) {
       await new Promise(r => setTimeout(r, 150));
       shot = Shot.capture();
     }
     if (!shot) toast('📷 截图失败，本条按纯文本发送', 2800);
   }
+  // 待发送附件（输入框上传/粘贴的图片与文件）
+  const pend = (sess.pending || []).slice();
+  sess.pending = [];
+  renderPendingChips(sess);
+  const imgParts = pend.filter(p => p.kind === 'image').map(p => ({ type: 'image_url', image_url: { url: p.dataUrl } }));
+  const fileNotes = pend.filter(p => p.kind === 'file').map(p => '📎 附件「' + p.name + '」（' + (p.mime || '未知类型') + '，base64 数据如下）：\n' + (p.dataUrl.length > 120000 ? p.dataUrl.slice(0, 120000) + '\n…（附件过长已截断）' : p.dataUrl));
   const sysContent = '你是天择 AI 助手，运行在天择OS中。回答简洁有用，使用中文。可写代码（markdown代码块）。数学公式用 LaTeX：行内 $...$，块级 $$...$$。' + Mem.promptSnippet() + (agentOn ? CLI.aiPrompt() : '') +
-    (shot ? '\n\n用户开启了屏幕共享，本条消息附带一张当前屏幕截图，请结合截图内容回答。' : '');
+    (shot ? '\n\n用户开启了屏幕共享，本条消息附带一张当前屏幕截图，请结合截图内容回答。' : '') +
+    (caps.webSearch ? '\n\n本轮对话已开启联网搜索：需要实时信息时系统会提供搜索结果，请结合搜索结果回答并注明来源。' : '');
   const baseHistory = Store.getChat().slice(-12).map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content }));
-  if (shot && baseHistory.length && baseHistory[baseHistory.length - 1].role === 'user') {
+  // 最后一条用户消息注入截图与附件（图片走 image_url，文件走文本 base64）
+  if (baseHistory.length && baseHistory[baseHistory.length - 1].role === 'user') {
     const last = baseHistory[baseHistory.length - 1];
-    baseHistory[baseHistory.length - 1] = { role: 'user', content: [{ type: 'text', text: last.content }, { type: 'image_url', image_url: { url: shot } }] };
+    const parts = [{ type: 'text', text: last.content + (fileNotes.length ? '\n\n' + fileNotes.join('\n\n') : '') }];
+    if (shot) parts.push({ type: 'image_url', image_url: { url: shot } });
+    imgParts.forEach(p => parts.push(p));
+    if (parts.length > 1) baseHistory[baseHistory.length - 1] = { role: 'user', content: parts };
   }
   const extra = [];
+  // 联网搜索工具声明（MiMo / 博查等 OpenAI 兼容服务格式；不支持的服务端会忽略或报错降级）
+  const tools = caps.webSearch ? [{ type: 'web_search', max_keyword: 3, limit: 5, user_location: { type: 'approximate', country: 'China', city: '合肥' } }] : null;
   try {
     let round = 0;
     while (true) {
@@ -2367,7 +3066,7 @@ async function runGeneration(userText) {
       const r = await AI.chatStream(
         [{ role: 'system', content: sysContent }, ...baseHistory, ...extra],
         (delta, all) => { roundText = all; displayText = roundTexts.concat([roundText]).join('\n'); paint(); },
-        deepOn ? { onReasoning: (d, allR) => { reasoning = allR; paint(); }, signal: chatCtl.signal } : { signal: chatCtl.signal }
+        deepOn ? { onReasoning: (d, allR) => { reasoning = allR; paint(); }, signal: sig, tools } : { signal: sig, tools }
       );
       roundText = r.content || roundText;
       if (deepOn && r.reasoning) reasoning = r.reasoning;
@@ -2380,7 +3079,7 @@ async function runGeneration(userText) {
       round++;
       const results = [];
       for (const c of cmds) {
-        const res = CLI.exec(c);
+        const res = CLI.exec(c, { byAI: true });
         cmdLog.push({ cmd: c, ok: res.ok, out: res.out });
         results.push('$ ' + c + '\n' + (res.out || '(完成)'));
         paint();
@@ -2392,41 +3091,55 @@ async function runGeneration(userText) {
   } catch (e) {
     if (e && (e.name === 'AbortError' || /已停止/.test(e.message || ''))) {
       stopped = true;
-      if (chatCtlTarget) chatCtlTarget.stopped = true;
+      if (sess.target) sess.target.stopped = true;
+    } else if (sig.aborted) {
+      stopped = true;
     } else {
-      bubble.innerHTML = `<span style="color:#fca5a5">⚠ ${escapeHtml(e.message)}</span>`;
+      // 联网搜索不支持时自动降级：关闭开关重试一次纯对话
+      if (tools && /tool|web_search|联网|search/i.test(String(e && e.message || ''))) {
+        Store.setAICaps({ webSearch: false });
+        if (bubble.isConnected) bubble.innerHTML = '<span class="chat-streaming-placeholder">当前接口不支持联网搜索，已自动关闭并重试…</span>';
+        toast('当前 AI 接口不支持联网搜索，已自动关闭（可在 AI 配置重开）', 3600);
+        sess.ctl = null; sess.target = null;
+        updateChatSendBtn();
+        return runGeneration(userText);
+      }
+      if (bubble.isConnected) bubble.innerHTML = `<span style="color:#fca5a5">⚠ ${escapeHtml(e.message)}</span>`;
     }
   } finally {
     if (paintFrame) { cancelAnimationFrame(paintFrame); paintFrame = 0; }
-    chatCtl = null;
-    chatCtlTarget = null;
+    sess.ctl = null;
+    sess.target = null;
     updateChatSendBtn();
   }
   const full = displayText.trim();
   if (!full && !reasoning) {
     // 没有任何内容生成：把"等待中"占位移除，避免在错误或空响应下还显示进度文字
-    if (bubble) {
+    if (bubble.isConnected) {
       const ph = bubble.querySelector('.chat-streaming-placeholder');
       if (ph) ph.remove();
     }
     return; // 仅错误信息
   }
-  // 完成（含手动停止的部分内容）：定稿渲染 + 入库
-  bubble.innerHTML = reasoningHtml(reasoning, false) + renderAiBody(displayText, cmdLog, false) +
-    (stopped ? '<div class="tz-stopped-tip" style="color:var(--ink-faint);font-size:12px;margin-top:6px">⏹ 已停止生成</div>' : '');
-  if (window.renderMathInElement) { try { window.renderMathInElement(bubble, KATEX_OPTS); } catch {} }
-  else renderMath(aiMsg);
+  // 完成（含手动停止的部分内容）：入库（无论窗口是否还开着，回复都会被保留）
   const history = Store.getChat();
   history.push({ role: 'ai', content: full, reasoning, usage });
   Store.setChat(history);
-  if (usage) bodyEl.appendChild(el('div', 'msg-usage', escapeHtml(usageText(usage))));
-  const acts = el('div', 'msg-actions');
-  const idx = history.length - 1;
-  acts.innerHTML = '<button class="msg-act" data-act="copy" title="复制这条内容">📋 复制</button><button class="msg-act" data-act="regen" title="重新生成回答（此条及后续消息将删除）">⟳ 重新生成</button>';
-  acts.querySelector('[data-act="copy"]').onclick = () => copyText(full);
-  acts.querySelector('[data-act="regen"]').onclick = () => regenerateMessage(idx);
-  bodyEl.appendChild(acts);
-  msgs.scrollTop = msgs.scrollHeight;
+  if (bubble.isConnected) {
+    bubble.innerHTML = reasoningHtml(reasoning, false) + renderAiBody(displayText, cmdLog, false) +
+      (stopped ? '<div class="tz-stopped-tip">⏹ 已停止生成</div>' : '');
+    if (window.renderMathInElement) { try { window.renderMathInElement(bubble, KATEX_OPTS); } catch {} }
+    else renderMath(aiMsg);
+    if (usage) bodyEl.appendChild(el('div', 'msg-usage', escapeHtml(usageText(usage))));
+    const acts = el('div', 'msg-actions');
+    const idx = history.length - 1;
+    acts.innerHTML = '<button class="msg-act" data-act="copy" title="复制这条内容">📋 复制</button><button class="msg-act" data-act="regen" title="重新生成回答（此条及后续消息将删除）">⟳ 重新生成</button>';
+    acts.querySelector('[data-act="copy"]').onclick = () => copyText(full);
+    acts.querySelector('[data-act="regen"]').onclick = () => regenerateMessage(idx);
+    bodyEl.appendChild(acts);
+    scrollChatToBottom(msgs, sess);
+  }
+  updateContextBar(sess, [{ role: 'system', content: sysContent }, ...baseHistory], usage);
   if (!stopped && full && !agentOn) Mem.autoLearn(userText, full);
 }
 window.TZOS.chatSuggest = function(t) { const i = $('#chatInput'); if (i) { i.value = t; sendChat(); } };
@@ -3242,7 +3955,11 @@ function initBrowser() {
     // sandbox：允许脚本/表单/同源（保证同源点击委托可工作、天择网页面功能正常），
     // 但【不】给 allow-popups / allow-top-navigation —— 这样跨域网站的 target=_blank/_top 链接
     // 无法跳出天择OS 到外部浏览器；同源页面则由下方点击委托接管，改到 OS 内新标签页打开。
-    frame.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin allow-modals allow-downloads allow-presentation');
+    // sandbox：允许脚本/表单/同源，保证同源点击委托与天择网页面功能正常；
+    // 补 allow-popups：让跨域站点的 target=_blank / window.open 能冒泡（网页版由同源
+    // window.open 桥接接管到 OS 新标签页，桌面版由主进程 setWindowOpenHandler 接管），
+    // 修复"点击 B 站搜索等链接无反应"——此前弹窗被沙箱静默吞掉。
+    frame.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin allow-modals allow-downloads allow-presentation allow-popups');
     frame.src = 'about:blank';
     frame.referrerPolicy = 'no-referrer';
     frame.addEventListener('load', () => {
@@ -3264,10 +3981,23 @@ function initBrowser() {
             }
             // 否则放行：同站同窗口链接由 iframe 自身导航，下方会同步地址栏
           });
-          // window.open 在沙箱内会被静默拦截 → 同源页面挂钩到 OS 内新标签页
+          // window.open 挂钩到 OS 内新标签页（覆盖站内脚本里 window.open 的跳转，如 B 站搜索结果页）
           try {
             frame.contentWindow.open = (u) => { if (u) newTab(new URL(u, frame.contentWindow.location.href).href); return null; };
           } catch (e2) {}
+          // SPA 站点的"伪链接"（role=link / data-href / 带 cursor:pointer 的可点元素）：
+          // 点击时若没有 <a>，尝试读取 data-href / onclick 里的 URL 并在本标签页导航
+          doc.addEventListener('click', (ev) => {
+            if (ev.defaultPrevented) return;
+            if (ev.target.closest && ev.target.closest('a')) return; // <a> 已由上方委托处理
+            const t = ev.target.closest('[data-href],[role="link"]');
+            if (!t) return;
+            const raw = t.getAttribute('data-href') || t.getAttribute('data-url') || '';
+            if (raw && /^https?:\/\//i.test(raw)) {
+              ev.preventDefault();
+              try { frame.contentWindow.location.href = new URL(raw, frame.contentWindow.location.href).href; } catch (e3) {}
+            }
+          }, true);
         }
       } catch (e) { /* 跨域无法注入委托；sandbox 已阻止跳出系统 */ }
       // 同步地址栏与 tab 信息：同源读精确当前 URL（含自导航），跨域回退到 frame.src
@@ -3510,8 +4240,11 @@ function initBrowser() {
 
 /* ===================== 刷新已打开的应用窗口 ===================== */
 function refreshOpenApp(appId) {
-  const w = WM.windows.find(x => x.appId === appId);
-  if (w) { w.body.innerHTML = ''; if (w.app.type === 'builtin') w.body.innerHTML = w.app.render(); initAppHooks(appId); }
+  WM.windows.filter(x => x.appId === appId).forEach(w => {
+    w.body.innerHTML = '';
+    if (w.app.type === 'builtin') w.body.innerHTML = w.app.render();
+    initAppHooks(appId, w);
+  });
 }
 window.TZOS.checkUpdate = async function() {
   const remote = await Updater.check(true);
@@ -3523,13 +4256,15 @@ window.TZOS.checkUpdate = async function() {
       : (remote ? '当前已是最新版本' : '');
   }
 };
-function initAppHooks(appId) {
-  if (appId === 'ai-chat') initChat();
+function initAppHooks(appId, winObj) {
+  if (appId === 'ai-chat') initChat(winObj && winObj.id);
   if (appId === 'app-store') initAppStore();
   if (appId === 'settings') initSettings();
   if (appId === 'ai-config') initAIConfig();
   if (appId === 'browser') initBrowser();
   if (appId === 'terminal') initTerminal();
+  if (appId === 'clock') initClockApp();
+  if (appId === 'doc-reader') initDocReader();
   if (appId === 'tips') initTips();
   if (appId === 'tz-tree') initTzTree();
   if (appId === 'about') {
@@ -3565,6 +4300,12 @@ function initAIConfig() {
   };
   bindTg('#memAutoTg', Store.getMemAuto.bind(Store), Store.setMemAuto.bind(Store));
   bindTg('#memInjectTg', Store.getMemInject.bind(Store), Store.setMemInject.bind(Store));
+  // 能力设置开关：只切换选中态，实际保存走 saveConfig（读取 readCapsForm）
+  const capToggle = (id) => { const e = $(id); if (e) e.onclick = () => e.classList.toggle('on'); };
+  capToggle('#capImageTg'); capToggle('#capFileTg'); capToggle('#capWebTg');
+  // 模型列表拉取按钮
+  const fm = $('#cfgFetchModels');
+  if (fm) fm.onclick = () => window.TZOS.fetchModels();
   // AI 命令行模式开启期间：自动写入记忆被接管（由 AI 通过 mem 命令写），开关禁用并提示
   if (Store.getAgentMode()) {
     const tg = $('#memAutoTg');
@@ -3584,7 +4325,7 @@ function initAIConfig() {
 const origRender = WM.renderContent.bind(WM);
 WM.renderContent = function(winObj, opts) {
   origRender(winObj, opts);
-  setTimeout(() => initAppHooks(winObj.appId), 0);
+  setTimeout(() => initAppHooks(winObj.appId, winObj), 0);
 };
 
 /* ===================== 时钟 ===================== */
@@ -3600,6 +4341,43 @@ function startClock() {
     window.__tzClockTimer = setTimeout(() => { tick(); schedule(); }, delay);
   };
   schedule();
+  startStatusIndicators();
+}
+/* ---- 右下角状态：联网情况 + 电量 ---- */
+function startStatusIndicators() {
+  // 联网状态
+  const net = $('#tbNet');
+  const paintNet = () => {
+    if (!net) return;
+    const on = navigator.onLine;
+    net.textContent = on ? '📶' : '📵';
+    net.title = on ? '已联网' : '已断网';
+    net.classList.toggle('off', !on);
+  };
+  paintNet();
+  window.addEventListener('online', paintNet);
+  window.addEventListener('offline', paintNet);
+  // 电量（Battery Status API，不支持的浏览器隐藏图标）
+  const bat = $('#tbBattery');
+  if (bat) {
+    if (navigator.getBattery) {
+      navigator.getBattery().then(b => {
+        const paintBat = () => {
+          const pct = Math.round(b.level * 100);
+          const chg = b.charging;
+          bat.textContent = chg ? '⚡' : (pct >= 80 ? '🔋' : pct >= 40 ? '🔋' : pct >= 20 ? '🪫' : '🪫');
+          bat.textContent += pct + '%';
+          bat.title = (chg ? '充电中 · ' : '') + '电量 ' + pct + '%';
+          bat.classList.toggle('low', !chg && pct < 20);
+        };
+        paintBat();
+        b.addEventListener('levelchange', paintBat);
+        b.addEventListener('chargingchange', paintBat);
+      }).catch(() => { bat.style.display = 'none'; });
+    } else {
+      bat.style.display = 'none';
+    }
+  }
 }
 
 /* ===================== 开机流程 ===================== */
