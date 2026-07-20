@@ -1,6 +1,6 @@
 {
-  "version": "2.6.0",
+  "version": "3.0.0",
   "name": "天择OS",
   "releasedAt": "2026-07-20",
-  "notes": "新增窗口置顶：标题栏图钉按钮/右键菜单/任务栏右键/命令行 pin/top/unpin/pinned；新增文档阅读器缩放：±按钮、Ctrl+滚轮、自定义百分比、页宽填充、整页填充；命令行全面扩展：每个自有软件均有顶层命令（coc-data/words/chat/store/files/tips/tree/dmg/village/planner/gpa/news/blog/home/browser 等），coc-data 输出 COC 中文数据、coc-json 输出原始 JSON、words 输出单词本 JSON；修复置顶窗口层级过高遮挡任务栏与快捷面板的问题"
+  "notes": "v3.0 重磅更新：新增 AI 悬浮窗（Ctrl+1 调出/关闭），可自由调整大小，始终置顶于所有窗口之上；悬浮窗功能与天择 AI 助手完全同步，新增内容自动联动；桌面版悬浮窗打开时自动置顶于所有电脑应用之上；悬浮窗禁用命令行模式，专注纯对话体验"
 }

@@ -4,12 +4,13 @@
          | Desktop(自由摆放+分类) | Taskbar | StartMenu
          | ContextMenu | FloatingWidget | AIEngine
          | 内置应用（配置/对话/商城/设置/关于）
+         | FloatChat（v3.0 悬浮窗 AI 对话）
    ============================================================ */
 (function () {
 'use strict';
 
 /* 系统版本（每次发布更新必须同步递增，并更新 dev/os/version.json） */
-const OS_VERSION = '2.6.0';
+const OS_VERSION = '3.0.0';
 
 /* ===================== 存储层 ===================== */
 const Store = {
@@ -162,7 +163,7 @@ const BUILTIN_APPS = {
   'ai-chat': {
     name: 'AI 对话', icon: '💬', grad: true, category: 'ai',
     desc: '与 AI 助手对话（可多开）',
-    render: () => renderAIChat(),
+    render: (opts) => renderAIChat(opts || {}),
     multi: true // 允许多开；除此之外所有应用一律单例
   },
   'app-store': {
@@ -215,6 +216,12 @@ const BUILTIN_APPS = {
     name: '文档阅读器', icon: '📄', grad: true, category: 'system',
     desc: '阅读 docx / pptx / xlsx / pdf / html',
     render: () => renderDocReader()
+  },
+  'float-chat': {
+    name: 'AI 悬浮窗', icon: '💬', grad: true, category: 'ai',
+    desc: '常驻桌面的 AI 对话悬浮窗（Ctrl+1 快速调出，不可调用命令行）',
+    render: (opts) => renderAIChat({ ...opts, floatMode: true }),
+    multi: true // 悬浮窗可与普通 AI 对话窗口并存
   }
 };
 
@@ -263,6 +270,10 @@ const WM = {
   pinTop: 0,      // 置顶窗口在 4000+ 的次级层级（v2.6：低于快捷面板 4600、任务栏 5000、开始菜单 5100、右键菜单 6000）
   PIN_Z_BASE: 4000,
   PIN_Z_MAX: 4499, // 置顶窗口层级上限：始终低于快捷面板/任务栏/开始菜单
+  floatTop: 0,    // 悬浮窗层级（v3.0）
+  FLOAT_Z_BASE: 4700, // 悬浮窗始终在所有普通/置顶窗口之上
+  FLOAT_Z_MAX: 4999,  // 悬浮窗上限，低于任务栏/开始菜单/右键菜单
+  floatWindows: [],
   openCount: 0,
   // 同一种软件只允许开一个窗口；重复收到打开命令时聚焦已有窗口而不是再开一个。
   // 例外：AI 对话明确支持多开（app.multi）。
@@ -416,14 +427,17 @@ const WM = {
     this.windows.forEach(w => { w.el.classList.toggle('focused', w.id === id); });
     const w = this.windows.find(x => x.id === id);
     if (w) {
-      // 置顶窗口拥有独立的高位层级，普通窗口永远不能超过
-      if (w.pinned) {
+      // v3.0 悬浮窗使用独立高层级
+      if (w.isFloat) {
+        if (this.floatTop >= this.FLOAT_Z_MAX - this.FLOAT_Z_BASE) this.floatTop = 0;
+        w.el.style.zIndex = this.FLOAT_Z_BASE + (++this.floatTop);
+      } else if (w.pinned) {
         // v2.6：置顶窗口层级限制在 PIN_Z_BASE~PIN_Z_MAX，确保始终低于
         // 快捷面板(4600)、任务栏(5000)、开始菜单(5100)、右键菜单(6000)
         if (this.pinTop >= this.PIN_Z_MAX - this.PIN_Z_BASE) this.pinTop = 0;
         w.el.style.zIndex = this.PIN_Z_BASE + (++this.pinTop);
       } else {
-        // 普通窗口限制在 100~PIN_Z_BASE-1 之间，避免超过置顶层
+        // 普通窗口限制在 100~PIN_Z_BASE-1 之间，避免超过置顶层和悬浮层
         if (this.zTop >= this.PIN_Z_BASE - 1) this.zTop = 100;
         w.el.style.zIndex = ++this.zTop;
       }
@@ -441,10 +455,18 @@ const WM = {
     const idx = this.windows.findIndex(w => w.id === id);
     if (idx < 0) return;
     const w = this.windows[idx];
+    const wasFloat = w.isFloat;
     w.el.classList.add('closing');
     w.el.style.pointerEvents = 'none';
     setTimeout(() => { w.el.remove(); }, 180);
     this.windows.splice(idx, 1);
+    if (wasFloat) {
+      this.floatWindows = this.floatWindows.filter(fw => fw.id !== id);
+      // 桌面版：通知主进程关闭 alwaysOnTop
+      if (window.tzDesktop && window.tzDesktop.floatChatClose && !this.floatWindows.length) {
+        window.tzDesktop.floatChatClose();
+      }
+    }
     if (w.appId === 'browser') cleanupBrowserHooks();
     Taskbar.render();
     if (w.onClose) w.onClose();
@@ -601,7 +623,144 @@ const WM = {
     if (!w) return;
     w.pinned ? this.unpin(id) : this.pin(id);
   },
-  closeAll() { [...this.windows].forEach(w => this.close(w.id)); }
+  closeAll() { [...this.windows].forEach(w => this.close(w.id)); },
+
+  /* ===== v3.0 悬浮窗 ===== */
+  // 创建/显示 AI 悬浮窗（始终在最前，不可被普通窗口遮盖）
+  createFloating(opts) {
+    const app = opts.app || findApp('float-chat');
+    // 悬浮窗仿普通窗口创建，但使用独立的层级与视觉风格
+    const mobile = isMobile();
+    const id = 'float-' + (++this.openCount);
+    const winEl = el('div', 'win win-float' + (mobile ? ' mobile-fullscreen' : ''));
+    winEl.id = id;
+    winEl.dataset.appId = app.id;
+
+    // 悬浮窗默认尺寸：比普通 AI 对话窗口更紧凑，但仍然可调
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const w = opts.width || 420;
+    const h = opts.height || 520;
+    const left = opts.left ?? Math.max(8, vw - w - 24);
+    const top = opts.top ?? Math.max(60, Math.round((vh - h) / 2));
+    winEl.style.width = w + 'px';
+    winEl.style.height = h + 'px';
+    winEl.style.left = left + 'px';
+    winEl.style.top = (mobile ? 0 : top) + 'px';
+
+    // 精简标题栏：只保留图标、标题、关闭和最小化按钮
+    const title = el('div', 'win-title');
+    const icons = el('div', 'win-title-icons');
+    const closeBtn = el('button', 'wctrl close', '<svg viewBox="0 0 8 8" fill="none" stroke="#5b0700" stroke-width="1.5"><path d="M1 1l6 6M7 1L1 7"/></svg>');
+    closeBtn.title = '关闭悬浮窗';
+    const minBtn = el('button', 'wctrl min', '<svg viewBox="0 0 8 8" fill="none" stroke="#5b3a00" stroke-width="1.5"><path d="M1 4h6"/></svg>');
+    minBtn.title = '最小化';
+    const pinBtn = el('button', 'wctrl pin active', '<svg viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 1v5M2 1h4M3 6l1 1 1-1"/></svg>');
+    pinBtn.title = '悬浮窗始终置顶';
+    icons.append(closeBtn, minBtn, pinBtn);
+
+    const titleIcon = el('span', 'win-title-icon', app.icon || '💬');
+    const titleText = el('span', 'win-title-text', 'AI 悬浮窗');
+    const spacer = el('div', 'win-title-spacer');
+    title.append(icons, titleIcon, titleText, spacer);
+
+    const body = el('div', 'win-body pad app-shell-body');
+    // 悬浮窗可四角调整大小
+    const resizers = ['r-nw','r-n','r-ne','r-e','r-se','r-s','r-sw','r-w'];
+    const resizerEls = resizers.map(r => { const e = el('div', 'win-resizer ' + r); e.dataset.dir = r; return e; });
+
+    winEl.append(title, body, ...resizerEls);
+    $('#windows').appendChild(winEl);
+
+    const winObj = { id, appId: app.id, el: winEl, body, minimized: false, maximized: false, pinned: true, app, savedRect: null, isFloat: true };
+    // 同时加入 windows 和 floatWindows
+    this.windows.push(winObj);
+    this.floatWindows.push(winObj);
+
+    // 渲染 AI 聊天内容（复用 renderAIChat）
+    body.innerHTML = app.render(opts);
+
+    // 事件
+    closeBtn.onclick = (e) => { e.stopPropagation(); this.closeFloat(id); };
+    minBtn.onclick = (e) => { e.stopPropagation(); this.minimize(id); };
+    pinBtn.onclick = (e) => { e.stopPropagation(); /* 悬浮窗始终置顶，点击不取消 */ toast('悬浮窗始终置顶，不受普通窗口遮盖'); };
+    title.ondblclick = (e) => { if (e.target.closest('.wctrl')) return; if (!isMobile()) this.toggleMax(id); };
+    title.oncontextmenu = (e) => {
+      if (e.target.closest('.wctrl')) return;
+      e.preventDefault(); e.stopPropagation();
+      showCtxMenu(e.clientX, e.clientY, [
+        { icon: '💬', label: '打开普通 AI 对话', act: () => launchApp('ai-chat') },
+        { icon: '🔑', label: 'AI 配置', act: () => launchApp('ai-config') },
+        { sep: true },
+        { icon: '✕', label: '关闭悬浮窗', act: () => this.closeFloat(id) }
+      ]);
+    };
+    this.bindDrag(winObj);
+    this.bindResize(winObj);
+    winEl.addEventListener('pointerdown', () => this.focusFloat(id), { passive: true });
+
+    this.focusFloat(id);
+    Taskbar.render();
+    persistOpenWindows();
+
+    // 初始化聊天功能（禁用命令行模式）
+    setTimeout(() => initChat(id, true), 100);
+
+    // 桌面版：通知主进程开启 alwaysOnTop
+    if (window.tzDesktop && window.tzDesktop.floatChatOpen) {
+      window.tzDesktop.floatChatOpen();
+    }
+
+    return winObj;
+  },
+
+  // 悬浮窗聚焦：使用独立高层级
+  focusFloat(id) {
+    this.windows.forEach(w => { w.el.classList.toggle('focused', w.id === id); });
+    const w = this.windows.find(x => x.id === id);
+    if (w) {
+      if (this.floatTop >= this.FLOAT_Z_MAX - this.FLOAT_Z_BASE) this.floatTop = 0;
+      const z = this.FLOAT_Z_BASE + (++this.floatTop);
+      w.el.style.zIndex = z;
+      if (w.minimized) this.restore(id);
+    }
+    if (window.__tzDesktopShown) {
+      window.__tzDesktopShown = false;
+      const sd = document.getElementById('btnShowDesktop');
+      if (sd) sd.classList.remove('active');
+    }
+    Taskbar.render();
+  },
+
+  // 关闭悬浮窗
+  closeFloat(id) {
+    const idx = this.windows.findIndex(w => w.id === id);
+    if (idx < 0) return;
+    const w = this.windows[idx];
+    w.el.classList.add('closing');
+    w.el.style.pointerEvents = 'none';
+    setTimeout(() => { w.el.remove(); }, 180);
+    this.windows.splice(idx, 1);
+    this.floatWindows = this.floatWindows.filter(fw => fw.id !== id);
+    Taskbar.render();
+    if (w.onClose) w.onClose();
+    persistOpenWindows();
+    // 桌面版：通知主进程关闭 alwaysOnTop
+    if (window.tzDesktop && window.tzDesktop.floatChatClose) {
+      window.tzDesktop.floatChatClose();
+    }
+  },
+
+  // 切换悬浮窗：没开就创建，开了就聚焦，最小化就恢复
+  toggleFloatingChat() {
+    if (this.floatWindows.length > 0) {
+      const fw = this.floatWindows[0];
+      if (fw.minimized) { this.restore(fw.id); }
+      else if (fw.el.classList.contains('focused')) { this.minimize(fw.id); }
+      else { this.focusFloat(fw.id); }
+    } else {
+      this.createFloating({ app: findApp('float-chat') });
+    }
+  }
 };
 
 /* ===================== 任务栏 ===================== */
@@ -1034,6 +1193,8 @@ const FloatingWidget = {
 function launchApp(id, opts = {}) {
   const app = findApp(id);
   if (!app) { toast('应用不存在：' + id); return; }
+  // v3.0 悬浮窗：不走普通窗口创建，直接调 toggleFloatingChat
+  if (id === 'float-chat') { return WM.toggleFloatingChat(); }
   const defaults = { width: 820, height: 560 };
   if (app.type === 'preset') {
     defaults.width = 980; defaults.height = 680;
@@ -1059,7 +1220,8 @@ function launchApp(id, opts = {}) {
  * 每次创建/关闭窗口时把当前打开的 appId 列表写入 Store；boot 时按列表重开。 */
 function persistOpenWindows() {
   try {
-    const ids = WM.windows.map(w => w.appId);
+    // v3.0 悬浮窗不参与会话恢复（由快捷键独立控制）
+    const ids = WM.windows.filter(w => !w.isFloat).map(w => w.appId);
     Store.set('openSession', ids);
   } catch (e) {}
 }
@@ -1067,9 +1229,9 @@ function restoreOpenWindows() {
   let ids = [];
   try { ids = Store.get('openSession', []) || []; } catch (e) { return; }
   if (!ids.length) return;
-  // 去重（单例应用只开一个）+ 过滤已不存在的应用
+  // 去重（单例应用只开一个）+ 过滤已不存在的应用 + 跳过悬浮窗
   const seen = new Set();
-  ids.filter(id => { if (seen.has(id)) return false; seen.add(id); return !!findApp(id); })
+  ids.filter(id => { if (seen.has(id)) return false; seen.add(id); return !!findApp(id) && id !== 'float-chat'; })
     .forEach((id, i) => setTimeout(() => { try { launchApp(id); } catch (e) {} }, 700 + i * 220));
 }
 
@@ -3303,7 +3465,8 @@ window.TZOS.testConfig = async function() {
 };
 
 /* ===================== 内置应用：AI 对话 ===================== */
-function renderAIChat() {
+function renderAIChat(opts) {
+  const floatMode = !!(opts && opts.floatMode);
   const provider = Store.getProvider();
   // 豆包AI：doubao.com 网页版嵌入（非 API Key 方式）
   if (provider === 'doubao') {
@@ -3336,7 +3499,7 @@ function renderAIChat() {
       <button class="btn sm ${deep?'':'ghost'} js-deep-btn" id="chatDeep" title="深度思考（显示思考过程）">🧠 深度思考${deep?'·开':'·关'}</button>
       ${webOn ? '<span class="chat-flag" title="联网搜索已开启（AI 配置中可关）">🌐 联网</span>' : ''}
       ${caps.image !== false ? `<button class="btn sm ${shotOn?'':'ghost'}" id="chatShot" title="发送消息时自动截取当前屏幕（需视觉模型）">📷 截图${shotOn?'·开':'·关'}</button>` : ''}
-      ${Store.getAgentMode() ? '<span class="chat-flag violet" title="AI 可在对话中直接执行命令行命令">⌨️ 命令行模式</span>' : ''}
+      ${(!floatMode && Store.getAgentMode()) ? '<span class="chat-flag violet" title="AI 可在对话中直接执行命令行命令">⌨️ 命令行模式</span>' : ''}
       <span style="flex:1"></span>
       <span class="chat-ctx" id="chatCtx"></span>
       <button class="btn sm ghost" id="chatClear" title="清空当前对话">🗑</button>
@@ -3396,13 +3559,16 @@ function reasoningHtml(reasoning, ongoing) {
   const tag = ongoing ? '（进行中…）' : '';
   return `<details class="msg-reasoning"${ongoing?' open':''} style="margin-bottom:6px"><summary style="cursor:pointer;color:var(--ink-faint);font-size:12px">🧠 思考过程${tag}</summary><div style="font-size:12px;color:var(--ink-faint);line-height:1.6;padding:6px 8px;background:var(--surface);border-radius:6px;margin-top:4px;white-space:pre-wrap">${escapeHtml(reasoning)}</div></details>`;
 }
-function initChat(winId) {
+function initChat(winId, disableAgent) {
+  // v3.0：限定选择器作用于当前窗口 DOM，避免多窗口冲突
+  const root = document.getElementById(winId);
+  const $w = (s) => root ? $(s, root) : $(s);
   // 豆包网页嵌入模式：只绑定切换按钮 + iframe 加载隐藏提示
   if (Store.getProvider() === 'doubao') {
-    const provBtn = $('#chatProvider');
+    const provBtn = $w('#chatProvider');
     if (provBtn) provBtn.onclick = () => { Store.setProvider('custom'); toast('已切换为 ⚙️ 自定义AI'); refreshOpenApp('ai-chat'); };
-    const f = $('#doubaoFrame');
-    const hint = $('#doubaoHint');
+    const f = $w('#doubaoFrame');
+    const hint = $w('#doubaoHint');
     if (f && hint) {
       let loaded = false;
       const hide = () => { loaded = true; hint.style.display = 'none'; };
@@ -3417,13 +3583,15 @@ function initChat(winId) {
   }
   // 建立/恢复本窗口的会话（窗口重开时会话仍在，进行中的生成不中断）
   const sess = ChatSessions.get(winId || 'chat-main');
+  sess.disableAgent = !!disableAgent; // v3.0 悬浮窗：禁用命令行模式
   chatSess = sess;
-  const msgs = $('#chatMsgs');
-  const input = $('#chatInput');
-  const sendBtn = $('#chatSend');
+  const msgs = $w('#chatMsgs');
+  const input = $w('#chatInput');
+  const sendBtn = $w('#chatSend');
   sess.msgs = msgs;
-  sess.ctxEl = $('#chatCtx');
-  sess.attachEl = $('#chatAttach');
+  sess.inputEl = input;
+  sess.ctxEl = $w('#chatCtx');
+  sess.attachEl = $w('#chatAttach');
   sess.pending = sess.pending || [];
   sess.scroll = null;
 
@@ -3454,7 +3622,7 @@ function initChat(winId) {
     msgs.scrollTop = msgs.scrollHeight;
   }
   updateChatSendBtn();
-  input.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } };
+  input.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); chatSess = sess; sendChat(); } };
   input.oninput = () => { input.style.height = 'auto'; input.style.height = Math.min(120, input.scrollHeight) + 'px'; };
   // 粘贴图片/文件自动上传
   input.addEventListener('paste', (e) => {
@@ -3463,9 +3631,9 @@ function initChat(winId) {
     for (const it of items) { if (it.kind === 'file') { const f = it.getAsFile(); if (f) files.push(f); } }
     if (files.length) { e.preventDefault(); files.forEach(f => addPendingFile(sess, f)); }
   });
-  sendBtn.onclick = sendChat;
+  sendBtn.onclick = () => { chatSess = sess; sendChat(); };
   // 附件上传按钮
-  const attachBtn = $('#chatAttachBtn'), fileInput = $('#chatFileInput');
+  const attachBtn = $w('#chatAttachBtn'), fileInput = $w('#chatFileInput');
   if (attachBtn && fileInput) {
     const caps = Store.getAICaps();
     const accept = [];
@@ -3476,24 +3644,24 @@ function initChat(winId) {
     fileInput.onchange = () => { [...fileInput.files].forEach(f => addPendingFile(sess, f)); fileInput.value = ''; };
   }
   // 工具栏
-  const provBtn = $('#chatProvider');
+  const provBtn = $w('#chatProvider');
   if (provBtn) provBtn.onclick = () => {
     const next = Store.getProvider()==='doubao' ? 'custom' : 'doubao';
     Store.setProvider(next);
     toast('已切换为 ' + (next==='doubao'?'🫘 豆包AI':'⚙️ 自定义AI'));
     refreshOpenApp('ai-chat');
   };
-  const deepBtn = $('#chatDeep');
+  const deepBtn = $w('#chatDeep');
   if (deepBtn) deepBtn.onclick = () => {
     Store.setDeepThink(!Store.getDeepThink());
     const d = Store.getDeepThink();
     syncDeepBtns();
-    const eh = $('#chatEmptyHint');
+    const eh = $w('#chatEmptyHint');
     if (eh && AI.isReady()) eh.textContent = d ? '深度思考已开启，会显示思考过程。' : '问我任何问题，或试试下面的建议';
     toast('深度思考已' + (d ? '开启' : '关闭') + '（仅影响后续回复）');
   };
   // 自动截图开关（需视觉模型 + 图片输入能力开启）
-  const shotBtn = $('#chatShot');
+  const shotBtn = $w('#chatShot');
   if (shotBtn) shotBtn.onclick = async () => {
     const next = !Store.getScreenshotMode();
     if (next) {
@@ -3509,7 +3677,7 @@ function initChat(winId) {
     shotBtn.textContent = '📷 截图' + (next ? '·开' : '·关');
     toast('自动截图已' + (next ? '开启（请确认模型支持视觉）' : '关闭'));
   };
-  const clrBtn = $('#chatClear');
+  const clrBtn = $w('#chatClear');
   if (clrBtn) clrBtn.onclick = async () => {
     const ok = await confirmDialog({ title: '清空对话', message: '清空当前对话历史？', confirmText: '清空', danger: true });
     if (!ok) return;
@@ -3859,7 +4027,9 @@ async function regenerateMessage(i) {
 }
 
 async function sendChat() {
-  const input = $('#chatInput');
+  const sess = chatSess;
+  const input = (sess && sess.inputEl) || $('#chatInput');
+  if (!input) return;
   if (_sessCtl()) { stopGeneration(); return; } // 生成中点击 = 停止
   const text = input.value.trim();
   if (!text) return;
@@ -3928,7 +4098,7 @@ async function runGeneration(userText) {
   const sig = ctl.signal;
   updateChatSendBtn();
   ensureKatex().catch(() => {});
-  const agentOn = Store.getAgentMode();
+  const agentOn = Store.getAgentMode() && !sess.disableAgent;
   const deepOn = Store.getDeepThink();
   const caps = Store.getAICaps();
   let reasoning = '', usage = null, stopped = false;
@@ -4076,7 +4246,17 @@ async function runGeneration(userText) {
   updateContextBar(sess, [{ role: 'system', content: sysContent }, ...baseHistory], usage);
   if (!stopped && full && !agentOn) Mem.autoLearn(userText, full);
 }
-window.TZOS.chatSuggest = function(t) { const i = $('#chatInput'); if (i) { i.value = t; sendChat(); } };
+window.TZOS.chatSuggest = function(t) {
+  // v3.0: 优先在当前聚焦窗口或悬浮窗中查找输入框
+  const focused = document.querySelector('.win.focused #chatInput') || document.querySelector('.win-float #chatInput') || $('#chatInput');
+  if (focused) {
+    // 找到所属窗口，设置正确的 chatSess
+    const win = focused.closest('.win');
+    if (win) { chatSess = ChatSessions.get(win.id); }
+    focused.value = t;
+    sendChat();
+  }
+};
 window.TZOS.openConfig = function() { launchApp('ai-config'); };
 window.TZOS.openDoubaoExternal = function() { window.open('https://www.doubao.com/chat/', '_blank'); };
 
@@ -5177,7 +5357,9 @@ function initBrowser() {
 function refreshOpenApp(appId) {
   WM.windows.filter(x => x.appId === appId).forEach(w => {
     w.body.innerHTML = '';
-    if (w.app.type === 'builtin') w.body.innerHTML = w.app.render();
+    // v3.0: 悬浮窗需要传入 floatMode
+    const renderOpts = w.isFloat ? { floatMode: true } : {};
+    if (w.app.type === 'builtin') w.body.innerHTML = w.app.render(renderOpts);
     initAppHooks(appId, w);
   });
 }
@@ -5193,6 +5375,7 @@ window.TZOS.checkUpdate = async function() {
 };
 function initAppHooks(appId, winObj) {
   if (appId === 'ai-chat') initChat(winObj && winObj.id);
+  if (appId === 'float-chat') initChat(winObj && winObj.id, true); // v3.0 悬浮窗：禁用命令行
   if (appId === 'app-store') initAppStore();
   if (appId === 'settings') initSettings();
   if (appId === 'ai-config') initAIConfig();
@@ -5484,6 +5667,11 @@ function bindGlobalEvents() {
       if (ctxEl) { hideCtxMenu(); return; }
       const nc = $('#notifCenter'); if (nc && !nc.hidden) { nc.hidden = true; return; }
     }
+    // Ctrl+1 切换 AI 悬浮窗（v3.0）
+    if (e.ctrlKey && (e.key === '1' || e.key === '!')) {
+      e.preventDefault();
+      WM.toggleFloatingChat();
+    }
     // Ctrl+Q 切换浏览器全屏（覆盖浏览器默认快捷键）
     if (e.ctrlKey && (e.key === 'q' || e.key === 'Q')) {
       e.preventDefault();
@@ -5502,7 +5690,10 @@ function bindGlobalEvents() {
       return false;
     });
     if (w) WM.focus(w.id);
-    if (d.type === 'tz_hotkey' && d.key === 'ctrl+q') toggleFullscreen();
+    if (d.type === 'tz_hotkey') {
+      if (d.key === 'ctrl+q') toggleFullscreen();
+      else if (d.key === 'ctrl+1') WM.toggleFloatingChat();
+    }
   });
   // 跨域外部网站无法桥接：顶层 blur + activeElement 检测兜底聚焦（点击 iframe 后窗口自动置顶）
   window.addEventListener('blur', () => {
@@ -5547,6 +5738,7 @@ window.addEventListener('DOMContentLoaded', boot);
 // 暴露给 onclick 使用的全局接口
 Object.assign(window.TZOS, {
   launchApp, uninstallApp, Store, AI, WM, Desktop, StartMenu, refreshOpenApp, toast,
+  toggleFloatingChat: () => WM.toggleFloatingChat(),
   goHome: () => {
     // 桌面版：在 OS 内置浏览器打开天择网首页（不跳出应用）；网页版：返回天择OS 入口页
     if (window.tzDesktop) { tzOpenInBrowser('https://wjtianze.github.io/'); }
