@@ -68,7 +68,7 @@
     <section class="section wrap" style="padding-top:48px;">
       <div style="text-align:center;max-width:680px;margin:0 auto 36px;">
         <div class="reveal in" style="width:72px;height:72px;margin:0 auto 18px;border-radius:18px;background:var(--grad-main);display:flex;align-items:center;justify-content:center;font-size:38px">🖥️</div>
-        <h1 class="reveal in d1" style="font-size:34px;"><span class="grad">天择OS</span> <span style="font-size:15px;vertical-align:middle;color:var(--ink-faint);font-weight:500;">v2.6</span></h1>
+        <h1 class="reveal in d1" style="font-size:34px;"><span class="grad">天择OS</span> <span style="font-size:15px;vertical-align:middle;color:var(--ink-faint);font-weight:500;">v3.0</span></h1>
         <p class="reveal in d2" style="color:var(--ink-dim);font-size:16px;margin-top:8px;">浏览器里的全屏操作系统 · 选择适合你的版本</p>
       </div>
 
@@ -83,8 +83,8 @@
             <li>AI 接口免跨域，调用更稳定</li>
             <li>桌面快捷方式、开机自启一应俱全</li>
           </ul>
-          <a class="btn" href="https://wjtianze.github.io/os/downloads/tianze-os-setup-2.6.0.exe" download>
-            <span>下载 Windows 安装包（v2.6）</span><span>↓</span>
+          <a class="btn" href="https://wjtianze.github.io/os/downloads/tianze-os-setup-3.0.0.exe" download>
+            <span>下载 Windows 安装包（v3.0）</span><span>↓</span>
           </a>
         </div>
         <div class="card os-card w reveal d2">
@@ -112,7 +112,17 @@
           <p class="op-sub">天择OS 自 1.0 至今的全部版本演进</p>
           <div class="changelog">
             <div class="cl-item">
-              <div class="cl-ver">v2.6 <span class="cl-badge">最新</span></div>
+              <div class="cl-ver">v3.0 <span class="cl-badge">最新</span></div>
+              <div class="cl-date">2026-07-21</div>
+              <ul>
+                <li>新增 AI 悬浮窗：Ctrl+1 一键召唤，独立于 OS 主窗口之外。桌面版为独立始终置顶 Electron 窗口（无边框、可拖拽可缩放），网页版为页面固定覆盖层</li>
+                <li>悬浮窗复用完整 AI 对话功能（联网搜索 / 文件上传 / 深度思考 / 记忆 / LaTeX 渲染），共享同一份配置与对话历史；专注纯对话，不启用命令行模式</li>
+                <li>桌面版 Ctrl+1 注册为系统全局快捷键，即使天择OS 主窗口最小化也能召唤悬浮窗</li>
+                <li>悬浮窗拖拽采用 Electron 原生 -webkit-app-region: drag，由引擎直接接管，丝滑无跳跃、不脱手；窗口禁用最大化防止双击标题栏撑满屏幕</li>
+              </ul>
+            </div>
+            <div class="cl-item">
+              <div class="cl-ver">v2.6</div>
               <div class="cl-date">2026-07-20</div>
               <ul>
                 <li>新增窗口置顶：标题栏图钉按钮、标题栏右键菜单、任务栏右键菜单、命令行 pin/top/unpin/pinned 四种方式</li>
@@ -181,7 +191,11 @@
           <p class="op-sub">桌面版安装包（网页版始终为最新）</p>
           <div class="dl-list">
             <div class="dl-item cur">
-              <div class="di-info"><div class="di-ver">v2.6.0</div><div class="di-tag">2026-07-20 · 当前版本</div></div>
+              <div class="di-info"><div class="di-ver">v3.0.0</div><div class="di-tag">2026-07-21 · 当前版本</div></div>
+              <a class="di-btn" href="https://wjtianze.github.io/os/downloads/tianze-os-setup-3.0.0.exe" download>下载</a>
+            </div>
+            <div class="dl-item">
+              <div class="di-info"><div class="di-ver">v2.6.0</div><div class="di-tag">2026-07-20</div></div>
               <a class="di-btn" href="https://wjtianze.github.io/os/downloads/tianze-os-setup-2.6.0.exe" download>下载</a>
             </div>
             <div class="dl-item">
@@ -218,6 +232,6 @@
     </div>
   </footer>
 
-  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260720a"></script>
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260721a"></script>
 </body>
 </html>
