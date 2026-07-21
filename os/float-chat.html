@@ -14,13 +14,16 @@ body.tzos { position: relative; height: 100vh; overflow: hidden; background: #0c
 #floatRoot .app-chat { flex: 1; min-height: 0; border: none; border-radius: 0; }
 #floatRoot .chat-toolbar { padding-left: 12px; }
 
-/* 自定义拖拽标题栏（无边框窗口必须提供） */
+/* 自定义拖拽标题栏（无边框窗口必须提供）
+ * 拖拽采用 Electron 官方推荐方式 -webkit-app-region: drag
+ * 由 Chromium 原生接管，无需 JS pointer 事件 + IPC，丝滑且无"跳跃" */
 #floatTitleBar {
   position: absolute; top: 0; left: 0; right: 0; height: 32px;
   display: flex; align-items: center; padding: 0 10px; gap: 8px;
   background: linear-gradient(135deg, rgba(139,92,246,0.25), rgba(59,130,246,0.15));
   border-bottom: 1px solid rgba(255,255,255,0.08);
   cursor: move; user-select: none; z-index: 10;
+  -webkit-app-region: drag;
 }
 #floatTitleBar .ficon { font-size: 14px; pointer-events: none; }
 #floatTitleBar .ftext { font-size: 12px; color: #a78bfa; flex: 1; pointer-events: none; }
@@ -28,6 +31,7 @@ body.tzos { position: relative; height: 100vh; overflow: hidden; background: #0c
   width: 22px; height: 22px; border-radius: 50%; border: none; cursor: pointer;
   font-size: 12px; display: flex; align-items: center; justify-content: center;
   transition: filter .14s;
+  -webkit-app-region: no-drag;
 }
 #floatTitleBar .fbtn:hover { filter: brightness(1.2); }
 #floatTitleBar .fbtn.close { background: #ff5f57; color: #5b0700; }
@@ -98,31 +102,10 @@ window.__tzFloatMode = true;
     // 标题栏关闭按钮
     document.getElementById('floatCloseBtn').onclick = function() { window.close(); };
 
-    // ===== 窗口拖拽（无边框 Electron 窗口）=====
-    // 桌面版：通过 IPC 把绝对屏幕坐标发给主进程，主进程直接设置窗口位置
-    var titleBar = document.getElementById('floatTitleBar');
-    var isDragging = false;
-
-    titleBar.addEventListener('pointerdown', function(e) {
-      if (e.button !== 0) return;
-      if (e.target.closest('.fbtn')) return;
-      isDragging = true;
-      titleBar.setPointerCapture(e.pointerId);
-      e.preventDefault();
-    });
-
-    titleBar.addEventListener('pointermove', function(e) {
-      if (!isDragging) return;
-      // 桌面版：发送鼠标绝对屏幕坐标，主进程直接 setPosition
-      if (window.tzDesktop && window.tzDesktop.floatDragMove) {
-        window.tzDesktop.floatDragMove(Math.round(e.screenX), Math.round(e.screenY));
-      }
-    });
-
-    titleBar.addEventListener('pointerup', function(e) {
-      isDragging = false;
-      try { titleBar.releasePointerCapture(e.pointerId); } catch (_) {}
-    });
+    // ===== 窗口拖拽 =====
+    // 已改用 CSS -webkit-app-region: drag（见 <style>），由 Chromium 原生接管。
+    // 无需 JS pointer 事件 + IPC setPosition，避免"窗口跳到鼠标中心"和
+    // "鼠标脱离 32px 标题栏后拖拽中断"两个问题。关闭按钮已标 no-drag，点击不受影响。
   });
 })();
 </script>
