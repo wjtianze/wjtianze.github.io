@@ -8,7 +8,7 @@
 
   var STORE = null;
   try { STORE = JSON.parse(localStorage.getItem("tz_coc_village")); } catch(e){}
-  var STATE = { mode:"steady", gobWorker:STORE?STORE.gobWorker:0, gobLab:STORE?STORE.gobLab:0, zoom:{home:1,bb:1} };
+  var STATE = { mode:"steady", gobWorker:num(STORE&&STORE.gobWorker), gobLab:num(STORE&&STORE.gobLab), zoom:{home:1,bb:1} };
   var G=null, IDMAP={};
   var T0 = (STORE&&STORE.village&&STORE.village.timestamp) ? STORE.village.timestamp : Math.floor(Date.now()/1000);
   var TH = STORE?STORE.th:0, BH = STORE?STORE.bh:0;
@@ -33,7 +33,7 @@
   function maxLevelForTH(unit,th){ if(!unit||!unit.levels||!unit.levels.length)return 0; var m=0; unit.levels.forEach(function(r){ if(thOf(r)<=th&&num(r.level)>m)m=num(r.level); }); return m; }
   function laneKey(t){ var c=t.cat; if(/兵|法术|攻城机器/.test(c)) return t.world==="bb"?"bb_lab":"home_lab"; if(/战宠/.test(c)) return "home_pet"; return t.world==="bb"?"bb_builder":"home_builder"; }
   function isBuilderKey(k){ return k.indexOf("_builder")>0; }
-  function workerCounts(){ var b=STORE.baseWC||{}; return { home_builder:(b.home_builder||5)+STATE.gobWorker, home_lab:1+STATE.gobLab, home_pet:b.home_pet||0, bb_builder:b.bb_builder||5, bb_lab:1 }; }
+  function workerCounts(){ var b=(STORE&&STORE.baseWC)||{}; return { home_builder:(num(b.home_builder)||5)+STATE.gobWorker, home_lab:1+STATE.gobLab, home_pet:num(b.home_pet), bb_builder:(num(b.bb_builder)||5), bb_lab:1 }; }
   function currentBuildingLvl(gid,world){ var arr=world==="bb"?(STORE.village.buildings2||[]):(STORE.village.buildings||[]); var l=0; arr.forEach(function(b){ if(String(b.data)===gid)l=Math.max(l,b.lvl); }); return l; }
   function isRushExcluded(cat,name){ if(/防御建筑/.test(cat))return true; if(/陷阱/.test(cat))return true; if(/英雄/.test(cat))return true; if(/金矿|圣水收集器|暗黑重油钻井/.test(name))return true; if(/建筑工人小屋/.test(name))return true; return false; }
 

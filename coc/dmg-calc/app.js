@@ -332,16 +332,16 @@
 
   function findBuild(gid){ for(var i=0;i<buildList.length;i++){ if(buildList[i].gid===gid)return buildList[i]; } return null; }
 
-  /* ===== 从村庄存档分析导入等级（读取 localStorage，由 village/app.js 写入） ===== */
+  /* ===== 从村庄存档分析导入等级（读取 localStorage，由 COC 专区首页解析时写入） ===== */
   function importVillage(){
     clearImportError();
     var raw=null;
     try{ raw=localStorage.getItem("tz_coc_village"); }catch(e){}
-    if(!raw){ showImportError("未找到村庄存档数据。请先前往「村庄存档分析」页粘贴并解析村庄 JSON，再回到此处点击导入。"); return; }
+    if(!raw){ showImportError("未找到村庄存档数据。请先前往「COC 专区首页」粘贴并解析村庄 JSON，再回到此处点击导入。"); return; }
     var parsed;
     try{ parsed=JSON.parse(raw); }catch(e){ showImportError("村庄存档数据解析失败："+e.message); return; }
     var V=parsed.village;
-    if(!V){ showImportError("村庄存档数据格式异常（无 village 字段）。请重新到村庄存档分析页解析。"); return; }
+    if(!V){ showImportError("村庄存档数据格式异常（无 village 字段）。请重新到 COC 专区首页解析。"); return; }
     var eqCnt=0, spCnt=0, bCnt=0;
     var importedHuts=[];
     /* 装备 */
@@ -355,12 +355,12 @@
       if(gid===LIGHT_GID){ STATE.spell.l=intv(s.lvl); spCnt++; }
       else if(gid===QUAKE_GID){ STATE.spell.q=intv(s.lvl); spCnt++; }
     });
-    /* 建筑：同 data 取最高 lvl */
+    /* 建筑：同 data 取最高 lvl；建筑工人小屋按 cnt 展开为独立座数 */
     var bmax={};
     (V.buildings||[]).forEach(function(b){
       var gid=String(b.data);
       var lv=intv(b.lvl);
-      if(gid==="1000015")importedHuts.push(lv);
+      if(gid==="1000015"){ var hcnt=Math.max(1,intv(b.cnt)||1); for(var hci=0;hci<hcnt;hci++)importedHuts.push(lv); }
       if(bmax[gid]==null||lv>bmax[gid])bmax[gid]=lv;
     });
     Object.keys(bmax).forEach(function(gid){
@@ -379,7 +379,7 @@
       STATE.builders.levels=importedHuts.slice(0,STATE.builders.count);
     }
     renderAll();
-    var msg="已从村庄存档分析导入：装备 "+eqCnt+" 件、法术 "+spCnt+" 项（雷电/地震）、建筑 "+bCnt+" 类";
+    var msg="已从村庄存档导入：装备 "+eqCnt+" 件、法术 "+spCnt+" 项（雷电/地震）、建筑 "+bCnt+" 类";
     if(importedHuts.length)msg+="、建筑工人小屋 "+Math.min(6,importedHuts.length)+" 座";
     if(th)msg+="，大本营 "+th+" 本";
     flashImportOk(msg);

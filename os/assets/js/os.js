@@ -97,6 +97,19 @@ const Store = {
   setAICaps(caps) { this.set('aiCaps', { ...this.getAICaps(), ...caps }); }
 };
 
+/* ===================== 悬浮窗独立设置 =====================
+ * OS 对话窗口与 AI 悬浮窗共享 API 配置（aiConfig / doubaoConfig / aiCaps / 记忆），
+ * 但「深度思考、自定义/豆包选择、自动截图」三项各自独立：
+ * 悬浮窗读 float_ 前缀键（缺省时跟随主设置），主窗口读全局键。
+ * 悬浮窗是独立文档（desktop float-chat.html），window.__tzFloatMode 为 true。 */
+function _isFloatCtx() { return !!window.__tzFloatMode; }
+function getDeepThinkCtx() { return _isFloatCtx() ? Store.get('float_deepThink', Store.getDeepThink()) : Store.getDeepThink(); }
+function setDeepThinkCtx(b) { if (_isFloatCtx()) Store.set('float_deepThink', !!b); else Store.setDeepThink(b); }
+function getProviderCtx() { return _isFloatCtx() ? Store.get('float_provider', Store.getProvider()) : Store.getProvider(); }
+function setProviderCtx(p) { if (_isFloatCtx()) Store.set('float_provider', p); else Store.setProvider(p); }
+function getScreenshotCtx() { return _isFloatCtx() ? Store.get('float_chatScreenshot', Store.getScreenshotMode()) : Store.getScreenshotMode(); }
+function setScreenshotCtx(b) { if (_isFloatCtx()) Store.set('float_chatScreenshot', !!b); else Store.setScreenshotMode(b); }
+
 /* ===================== 工具函数 ===================== */
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -231,12 +244,14 @@ const TZNET_BASE = (() => {
 const PRESET_APPS = [
   // 天择网系列（精简为 天择网主页 + 天择导航；其余板块通过天择导航树或天择网主页访问）
   { id: 'tz-home', name: '天择网', icon: '🌐', grad: true, category: 'tznet', url: TZNET_BASE + 'index.html', desc: '天择网主页' },
-  // 实用工具：COC 专区及子工具 + 背单词（均直接读写本地保存的玩家数据与词库）
-  { id: 'tz-coc', name: 'COC 专区', icon: '🛡️', grad: false, category: 'tool', url: TZNET_BASE + 'coc/index.html', desc: '部落冲突数据与工具' },
-  { id: 'tz-coc-village', name: '村庄分析', icon: '🏘️', grad: false, category: 'tool', url: TZNET_BASE + 'coc/village/index.html', desc: '村庄存档分析' },
-  { id: 'tz-coc-planner', name: '升级规划', icon: '📅', grad: false, category: 'tool', url: TZNET_BASE + 'coc/planner/index.html', desc: '升级规划器' },
-  { id: 'tz-coc-dmg', name: '伤害计算', icon: '💥', grad: false, category: 'tool', url: TZNET_BASE + 'coc/dmg-calc/index.html', desc: '法术伤害计算器' },
-  { id: 'tz-words', name: '背单词', icon: '📚', grad: true, category: 'tool', url: TZNET_BASE + 'english/words/index.html', desc: '四阶段背单词' },
+  // 实用工具：本地页面（与 OS 同源，相对路径加载，不实时连接天择网）——
+  // 浏览器 localStorage 与 IndexedDB 同源共享，存档直接读写：
+  //   · COC 专区首页（含村庄存档分析）读写 localStorage["tz_coc_village"]
+  //   · 背单词读写 IndexedDB tzwords 词库
+  { id: 'tz-coc', name: 'COC 专区', icon: '🛡️', grad: false, category: 'tool', url: '../coc/index.html', desc: '部落冲突数据、村庄存档分析' },
+  { id: 'tz-coc-planner', name: '升级规划', icon: '📅', grad: false, category: 'tool', url: '../coc/planner/index.html', desc: '升级规划器' },
+  { id: 'tz-coc-dmg', name: '伤害计算', icon: '💥', grad: false, category: 'tool', url: '../coc/dmg-calc/index.html', desc: '法术伤害计算器' },
+  { id: 'tz-words', name: '背单词', icon: '📚', grad: true, category: 'tool', url: '../english/words/index.html', desc: '四阶段背单词' },
   // 游戏
   { id: 'tz-gpa', name: '绩点战争', icon: '⚔️', grad: true, category: 'game', url: TZNET_BASE + 'game/gpa-card/index.html', desc: '卡牌对战游戏' },
   // 系统模拟器（现代系统的网页高仿真版，均可被 iframe 嵌入；均为界面级模拟，非真实虚拟机）
@@ -387,8 +402,8 @@ const WM = {
       const loading = el('div', 'app-loading', '<div class="al-spin"></div><div>正在加载 ' + escapeHtml(app.name) + '…</div>');
       loading.style.position = 'absolute'; loading.style.inset = '0'; loading.style.zIndex = '2';
       const iframe = el('iframe', 'app-iframe');
-      // 非天择网首页的应用加 nochrome=1 隐藏页眉页脚
-      iframe.src = (app.id !== 'tz-home' && app.category === 'tznet') ? app.url + (app.url.includes('?') ? '&' : '?') + 'nochrome=1' : app.url;
+      // 非天择网首页的天择网系应用（tznet）与实用工具（tool）加 nochrome=1 隐藏页眉页脚
+      iframe.src = (app.id !== 'tz-home' && (app.category === 'tznet' || app.category === 'tool')) ? app.url + (app.url.includes('?') ? '&' : '?') + 'nochrome=1' : app.url;
       iframe.loading = 'lazy';
       // 关键修复：先把 iframe 插入 DOM，浏览器才会真正加载，onload 才会触发
       body.appendChild(iframe);
@@ -495,8 +510,8 @@ const WM = {
     w.body.innerHTML = '';
     if (app.type === 'preset') {
       const iframe = el('iframe', 'app-iframe');
-      // 非天择网首页的应用加 nochrome=1 隐藏页眉页脚
-      iframe.src = (app.id !== 'tz-home' && app.category === 'tznet') ? app.url + (app.url.includes('?') ? '&' : '?') + 'nochrome=1' : app.url;
+      // 非天择网首页的天择网系应用（tznet）与实用工具（tool）加 nochrome=1 隐藏页眉页脚
+      iframe.src = (app.id !== 'tz-home' && (app.category === 'tznet' || app.category === 'tool')) ? app.url + (app.url.includes('?') ? '&' : '?') + 'nochrome=1' : app.url;
       iframe.loading = 'lazy';
       const loading = el('div', 'app-loading', '<div class="al-spin"></div><div>正在重新加载…</div>');
       loading.style.cssText = 'position:absolute;inset:0;z-index:2';
@@ -1155,8 +1170,8 @@ const AI = {
   config() {
     let c = { ...Store.getAIConfig() };
     if (/deepseek\.com/i.test(c.url)) {
-      if (Store.getDeepThink() && /deepseek-chat/i.test(c.model)) c.model = 'deepseek-reasoner';
-      else if (!Store.getDeepThink() && /deepseek-reasoner/i.test(c.model)) c.model = 'deepseek-chat';
+      if (getDeepThinkCtx() && /deepseek-chat/i.test(c.model)) c.model = 'deepseek-reasoner';
+      else if (!getDeepThinkCtx() && /deepseek-reasoner/i.test(c.model)) c.model = 'deepseek-chat';
     }
     return c;
   },
@@ -1468,10 +1483,10 @@ ${cur.length ? cur.map((m, i) => (i + 1) + '. ' + m.text).join('\n') : '（空�
  * 教程见 APP_STORE_TUTORIAL。 */
 const _appCmdCache = { coc: null, words: null, wordsTs: 0 };
 
-// 异步获取 COC 中文数据 JSON（带缓存）
+// 异步获取 COC 中文数据 JSON（带缓存；本地相对路径，网页版/桌面版同源均可用）
 async function fetchCocData() {
   if (_appCmdCache.coc) return _appCmdCache.coc;
-  const res = await fetch(TZNET_BASE + 'coc/data/all_game_data_zh.json');
+  const res = await fetch('../coc/data/all_game_data_zh.json');
   if (!res.ok) throw new Error('COC 数据加载失败（HTTP ' + res.status + '）');
   const data = await res.json();
   _appCmdCache.coc = data;
@@ -1487,50 +1502,48 @@ function loadVillageSave() {
   } catch (e) { return null; }
 }
 
-// 异步获取单词本：优先 IndexedDB（网页版同源），失败回退到示例词库
+// 打开背单词词库（与背单词应用完全一致的库结构：tzwords 库 kv 表，词库数组存于 key='vocab'）
+function openWordsDB() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open('tzwords', 1);
+    r.onupgradeneeded = () => { const d = r.result; if (!d.objectStoreNames.contains('kv')) d.createObjectStore('kv', { keyPath: 'k' }); };
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+
+// 异步获取单词本：优先 IndexedDB（同源），失败回退到示例词库
 async function readWordsVocab() {
-  // 1) 尝试同源 IndexedDB（背单词应用在同一 origin 时有效）
+  // 1) 尝试同源 IndexedDB（tzwords/kv['vocab']，与背单词应用同库同键）
   try {
-    const db = await new Promise((res, rej) => {
-      const r = indexedDB.open('tzwords');
-      r.onsuccess = () => res(r.result);
-      r.onerror = () => rej(r.error);
-    });
-    if (db.objectStoreNames && db.objectStoreNames.contains('vocab')) {
-      const tx = db.transaction('vocab', 'readonly');
-      const all = await new Promise((res, rej) => {
-        const r = tx.objectStore('vocab').getAll();
+    const db = await openWordsDB();
+    if (db.objectStoreNames && db.objectStoreNames.contains('kv')) {
+      const rec = await new Promise((res, rej) => {
+        const r = db.transaction('kv', 'readonly').objectStore('kv').get('vocab');
         r.onsuccess = () => res(r.result);
         r.onerror = () => rej(r.error);
       });
-      if (all && all.length) return { words: all, source: 'indexeddb' };
+      if (rec && Array.isArray(rec.v)) return { words: rec.v, source: 'indexeddb' };
     }
-  } catch (e) { /* 跨域或不存在，静默回退 */ }
-  // 2) 回退：fetch 示例词库（跨域/桌面版场景）
-  const res = await fetch(TZNET_BASE + 'english/words/sample-vocab.json');
+  } catch (e) { /* 不存在或不可用，静默回退 */ }
+  // 2) 回退：fetch 示例词库（从未使用过背单词应用时）
+  const res = await fetch('../english/words/sample-vocab.json');
   if (!res.ok) throw new Error('单词本加载失败（HTTP ' + res.status + '）');
   const list = await res.json();
   return { words: list, source: 'sample' };
 }
 
-// 写入单词本到 IndexedDB（仅同源时有效；跨域返回 false）
+// 写入单词本到 IndexedDB（与背单词应用同库同键；失败返回 false）
 async function writeWordsVocab(list) {
   try {
-    const db = await new Promise((res, rej) => {
-      const r = indexedDB.open('tzwords');
-      r.onsuccess = () => res(r.result);
-      r.onerror = () => rej(r.error);
-    });
-    if (!db.objectStoreNames || !db.objectStoreNames.contains('vocab')) return false;
-    const tx = db.transaction('vocab', 'readwrite');
+    const db = await openWordsDB();
+    if (!db.objectStoreNames || !db.objectStoreNames.contains('kv')) return false;
     await new Promise((res, rej) => {
-      const r = tx.objectStore('vocab').clear();
-      r.onsuccess = () => res();
-      r.onerror = () => rej(r.error);
-      list.forEach((w, i) => {
-        const key = w.id || (w.word + ':' + i);
-        tx.objectStore('vocab').put(w, key);
-      });
+      const tx = db.transaction('kv', 'readwrite');
+      tx.objectStore('kv').put({ k: 'vocab', v: list });
+      tx.oncomplete = () => res();
+      tx.onerror = () => rej(tx.error);
+      tx.onabort = () => rej(tx.error);
     });
     _appCmdCache.words = null;
     return true;
@@ -1548,7 +1561,7 @@ function splitSub(r) {
 
 const BUILTIN_APP_CMDS = {
   /* ===== COC 玩家村庄存档（coc-data）===== */
-  // coc-data：读写本地保存的玩家村庄存档（localStorage["tz_coc_village"]，与村庄分析页共享）
+  // coc-data：读写本地保存的玩家村庄存档（localStorage["tz_coc_village"]，由 COC 专区首页解析时保存）
   'coc-data': (r) => {
     const arg = r || '';
     const sp = arg.indexOf(' ');
@@ -1567,23 +1580,26 @@ const BUILTIN_APP_CMDS = {
       return '已保存村庄存档（大本 ' + (save.th || '?') + ' 级）。可用 coc-data 查看摘要，或在 COC 专区村庄分析中自动载入。';
     }
     const sv = loadVillageSave();
-    if (!sv) return '（暂无本地村庄存档。在 COC 专区「存档分析」粘贴村庄 JSON 后会自动保存，或用 coc-data save <JSON> 写入。）\n提示：coc-data json 输出原始村庄 JSON；coc-data save <JSON> 保存；coc-game 查询游戏静态数据。';
+    if (!sv) return '（暂无本地村庄存档。在 COC 专区首页粘贴村庄 JSON 解析后会自动保存，或用 coc-data save <JSON> 写入。）\n提示：coc-data json 输出原始村庄 JSON；coc-data save <JSON> 保存；coc-game 查询游戏静态数据。';
     if (sub === 'json' || sub === 'raw') {
       return typeof sv.village === 'string' ? sv.village : JSON.stringify(sv.village, null, 2);
     }
     if (arg && sub !== 'help' && sub !== '?') throw new Error('未知子命令：' + arg + '（coc-data [save <JSON>|json|clear|help]）');
     const th = sv.th || '?', bh = sv.bh || '?';
-    let buildings = 0, troops = 0, heroes = 0, spells = 0;
+    let buildings = 0, troops = 0, heroes = 0, spells = 0, pets = 0, equips = 0;
     try {
       const obj = typeof sv.village === 'string' ? JSON.parse(sv.village) : sv.village;
       buildings = (obj.buildings || []).length;
-      troops = (obj.troops || []).length;
+      // 导出格式为 units；兼容旧字段 troops
+      troops = (obj.units || obj.troops || []).length;
       heroes = (obj.heroes || []).length;
       spells = (obj.spells || []).length;
+      pets = (obj.pets || []).length;
+      equips = (obj.equipment || []).length;
     } catch (e) {}
     return '本地村庄存档摘要：\n' +
       '  大本营：' + th + ' 级 · 夜世界大本：' + bh + ' 级\n' +
-      '  建筑：' + buildings + ' · 兵种：' + troops + ' · 英雄：' + heroes + ' · 法术：' + spells + '\n' +
+      '  建筑：' + buildings + ' · 兵种：' + troops + ' · 英雄：' + heroes + ' · 法术：' + spells + (pets ? ' · 战宠：' + pets : '') + (equips ? ' · 装备：' + equips : '') + '\n' +
       '  保存时间：' + (sv.ts ? new Date(sv.ts).toLocaleString('zh-CN') : '未知') + '\n\n' +
       '提示：coc-data json 输出原始村庄 JSON；coc-data save <JSON> 保存存档；coc-data clear 清除；coc-game 查询游戏静态数据。';
   },
@@ -1771,7 +1787,7 @@ const BUILTIN_APP_CMDS = {
   tree: (r) => {
     const cats = {
       'tznet': '天择网（首页+天择导航）',
-      'tool': '实用工具（COC 专区/村庄分析/升级规划/伤害计算/背单词）',
+      'tool': '实用工具（COC 专区（含存档分析）/升级规划/伤害计算/背单词）',
       'system': '系统（AI 配置/对话/软件商城/设置/关于/我的软件/浏览器/命令行/时钟/文档阅读器/玩机技巧/导航）',
       'ai': 'AI（AI 配置、AI 对话）',
       'game': '游戏（绩点战争）',
@@ -1885,19 +1901,19 @@ const BUILTIN_APP_CMDS = {
 
   /* ===== COC 专区（tz-coc）===== */
   coc: (r) => {
-    if (!r) return 'coc 用法：\n  coc list  COC 专区板块列表\n  coc open  打开 COC 专区主页';
+    if (!r) return 'coc 用法：\n  coc list  COC 专区板块列表\n  coc open  打开 COC 专区（含村庄存档分析）';
     const { sub } = splitSub(r);
-    if (sub === 'list') return 'COC 专区板块：\n  · 数据查询（命令 coc-game，或专区主页「数据查询」按钮）\n  · 玩家村庄存档（命令 coc-data，读本地保存的存档）\n  · tz-coc-village 村庄分析（命令 village）\n  · tz-coc-planner 升级规划（命令 planner）\n  · tz-coc-dmg 伤害计算（命令 dmg）';
-    if (sub === 'open') { openInOsBrowser(TZNET_BASE + 'coc/index.html'); return '已打开 COC 专区'; }
+    if (sub === 'list') return 'COC 专区板块：\n  · 村庄存档分析（COC 专区首页，命令 coc-data 读写本地存档）\n  · 数据查询（命令 coc-game）\n  · tz-coc-planner 升级规划（命令 planner）\n  · tz-coc-dmg 伤害计算（命令 dmg）';
+    if (sub === 'open') { launchApp('tz-coc'); return '已打开 COC 专区（含村庄存档分析）'; }
     throw new Error('未知子命令：' + sub);
   },
 
-  /* ===== 村庄分析（tz-coc-village）===== */
+  /* ===== 村庄存档分析（已并入 COC 专区首页）===== */
   village: (r) => {
-    if (!r) return 'village 用法：\n  village info  功能介绍\n  village open  打开村庄分析';
+    if (!r) return 'village 用法：\n  village info  功能介绍\n  village open  打开村庄存档分析（COC 专区首页）';
     const { sub } = splitSub(r);
-    if (sub === 'info') return '村庄分析：导入村庄存档 JSON，自动分析建筑分布、防御覆盖、升级优先级。支持从 COC 游戏导出存档后上传。';
-    if (sub === 'open') { openInOsBrowser(TZNET_BASE + 'coc/village/index.html'); return '已打开村庄分析'; }
+    if (sub === 'info') return '村庄存档分析已并入 COC 专区首页：粘贴村庄 JSON，自动解析并按家乡/夜世界分类展示，计算剩余升级时间（含墙钟时间）。存档保存在本地，升级规划器与伤害计算器可直接读取。';
+    if (sub === 'open') { launchApp('tz-coc'); return '已打开 COC 专区（含村庄存档分析）'; }
     throw new Error('未知子命令：' + sub);
   },
 
@@ -1905,8 +1921,8 @@ const BUILTIN_APP_CMDS = {
   planner: (r) => {
     if (!r) return 'planner 用法：\n  planner info  功能介绍\n  planner open  打开升级规划';
     const { sub } = splitSub(r);
-    if (sub === 'info') return '升级规划器：输入当前大本营等级与目标，自动列出最优升级顺序（按时间/资源/战力增益排序）。支持多建筑并行规划。';
-    if (sub === 'open') { openInOsBrowser(TZNET_BASE + 'coc/planner/index.html'); return '已打开升级规划'; }
+    if (sub === 'info') return '升级规划器：读取 COC 专区首页解析好的村庄存档，按单级拆分自动规划升级顺序（甘特图排程，稳本/速本两种模式，含前置依赖）。';
+    if (sub === 'open') { launchApp('tz-coc-planner'); return '已打开升级规划'; }
     throw new Error('未知子命令：' + sub);
   },
 
@@ -1914,8 +1930,8 @@ const BUILTIN_APP_CMDS = {
   dmg: (r) => {
     if (!r) return 'dmg 用法：\n  dmg info  功能介绍\n  dmg quake 城墙HP [地震等级]  计算地震法术对城墙的伤害\n  dmg open  打开伤害计算器';
     const { sub, args } = splitSub(r);
-    if (sub === 'info') return '伤害计算器：基于雷电、地震法术与英雄装备技能伤害数据，计算给定法术空间内的最高伤害、摧毁建筑所需最少法术。支持从村庄存档一键导入等级。';
-    if (sub === 'open') { openInOsBrowser(TZNET_BASE + 'coc/dmg-calc/index.html'); return '已打开伤害计算器'; }
+    if (sub === 'info') return '伤害计算器：基于雷电、地震法术与英雄装备技能伤害数据，计算给定法术空间内的最高伤害、摧毁建筑所需最少法术。支持从村庄存档（COC 专区首页解析）一键导入等级。';
+    if (sub === 'open') { launchApp('tz-coc-dmg'); return '已打开伤害计算器'; }
     if (sub === 'quake') {
       // 城墙规则（见 MEMORY）：3 瓶地震不毁任意 HP 城墙，4 瓶必毁
       const p = args.split(/\s+/).map(s => s.trim()).filter(Boolean);
@@ -2080,7 +2096,7 @@ async function cocDataCount() {
 async function wordsExport() {
   const { words, source } = await readWordsVocab();
   const json = JSON.stringify(words, null, 2);
-  return json + (source === 'sample' ? '\n\n（注：当前为示例词库。在网页版天择OS 中会输出你的真实词库；桌面版因跨域限制只能读取示例。）' : '');
+  return json + (source === 'sample' ? '\n\n（注：当前为示例词库——你还未在背单词应用中创建词库。在背单词应用里添加过单词后，这里会输出你的真实词库。）' : '');
 }
 async function wordsList(r) {
   const n = r ? parseInt(r, 10) : 20;
@@ -2124,7 +2140,7 @@ async function wordsAdd(r) {
   const ok = await writeWordsVocab(words);
   const exTip = examples.length ? '（含 ' + examples.length + ' 条例句）' : '';
   if (ok) return '已添加单词：' + word + '（' + item.meaning.join('；') + '）' + exTip;
-  return '⚠ 添加仅在内存生效（桌面版跨域无法写入 IndexedDB）。请在背单词应用内手动添加：\n  ' + word + ' ' + pos + ' ' + item.meaning.join('；') + exTip;
+  return '⚠ 未能写入词库（IndexedDB 不可用）。请在背单词应用内手动添加：\n  ' + word + ' ' + pos + ' ' + item.meaning.join('；') + exTip;
 }
 async function wordsDel(r) {
   need(r, 'words del 编号');
@@ -2134,7 +2150,7 @@ async function wordsDel(r) {
   const removed = words.splice(n - 1, 1)[0];
   const ok = await writeWordsVocab(words);
   if (ok) return '已删除：' + (removed.word || '?');
-  return '⚠ 删除仅在内存生效（桌面版跨域无法写入 IndexedDB）。请在背单词应用内手动删除。';
+  return '⚠ 未能写入词库（IndexedDB 不可用）。请在背单词应用内手动删除。';
 }
 
 /* ===================== 命令行引擎（供终端应用与 AI Agent 调用） ===================== */
@@ -2227,7 +2243,7 @@ const CLI = {
 '  coc-data [save <JSON>|json|clear|help]  读写本地玩家村庄存档\n' +
 '  coc-game [子命令]           COC 游戏静态数据查询；子命令：\n' +
 '    search 名字 | th 等级 | cat 类别 | count | json | help\n' +
-'  village info|open           村庄分析介绍/打开\n' +
+'  village info|open           村庄存档分析（COC 首页）介绍/打开\n' +
 '  planner info|open           升级规划介绍/打开\n' +
 '  dmg info|quake HP [等级]|open 伤害计算/地震规则/打开\n' +
 '  game list|open              游戏列表/打开专区\n' +
@@ -2402,7 +2418,7 @@ const CLI = {
       Store.setStyle(r === 'auto' ? null : r); applyDeviceStyle(); Desktop.render(); refreshOpenApp('settings');
       return '桌面风格已切换为 ' + r;
     },
-    deepthink: (r) => { const on = parseOnOff(r); Store.setDeepThink(on); syncDeepBtns(); return '深度思考已' + (on ? '开启' : '关闭'); },
+    deepthink: (r) => { const on = parseOnOff(r); setDeepThinkCtx(on); syncDeepBtns(); return '深度思考已' + (on ? '开启' : '关闭'); },
     agent: (r) => { const on = parseOnOff(r); Store.setAgentMode(on); refreshOpenApp('settings'); return 'AI 命令行模式已' + (on ? '开启（自动写入记忆已关闭）' : '关闭'); },
     clear: (r) => {
       if (r === 'chat') {
@@ -2629,7 +2645,7 @@ const Shot = {
       track.onended = () => {
         // 用户从浏览器 UI 停止了共享 → 自动关闭开关
         this.stream = null; this.video = null;
-        if (Store.getScreenshotMode()) { Store.setScreenshotMode(false); refreshOpenApp('settings'); refreshChatView(); toast('屏幕共享已停止，自动截图已关闭'); }
+        if (getScreenshotCtx()) { setScreenshotCtx(false); refreshOpenApp('settings'); refreshChatView(); toast('屏幕共享已停止，自动截图已关闭'); }
       };
       const v = document.createElement('video');
       v.srcObject = this.stream; v.muted = true;
@@ -3361,7 +3377,7 @@ window.TZOS.testConfig = async function() {
 
 /* ===================== 内置应用：AI 对话 ===================== */
 function renderAIChat() {
-  const provider = Store.getProvider();
+  const provider = getProviderCtx();
   // 豆包AI：doubao.com 网页版嵌入（非 API Key 方式）
   if (provider === 'doubao') {
     return `
@@ -3382,9 +3398,9 @@ function renderAIChat() {
       </div>
     </div>`;
   }
-  const deep = Store.getDeepThink();
+  const deep = getDeepThinkCtx();
   const caps = Store.getAICaps();
-  const shotOn = caps.image !== false && Store.getScreenshotMode();
+  const shotOn = caps.image !== false && getScreenshotCtx();
   const webOn = !!caps.webSearch;
   return `
   <div class="app-chat" id="chatApp">
@@ -3396,6 +3412,7 @@ function renderAIChat() {
       ${Store.getAgentMode() ? '<span class="chat-flag violet" title="AI 可在对话中直接执行命令行命令">⌨️ 命令行模式</span>' : ''}
       <span style="flex:1"></span>
       <span class="chat-ctx" id="chatCtx"></span>
+      <button class="btn sm ghost" id="chatSync" title="同步最新对话（OS 对话窗口与 AI 悬浮窗内容互通，平时自动同步）">🔄</button>
       <button class="btn sm ghost" id="chatClear" title="清空当前对话">🗑</button>
     </div>
     <div class="chat-messages" id="chatMsgs"></div>
@@ -3454,18 +3471,72 @@ function reasoningHtml(reasoning, ongoing) {
   return `<details class="msg-reasoning"${ongoing?' open':''} style="margin-bottom:6px"><summary style="cursor:pointer;color:var(--ink-faint);font-size:12px">🧠 思考过程${tag}</summary><div style="font-size:12px;color:var(--ink-faint);line-height:1.6;padding:6px 8px;background:var(--surface);border-radius:6px;margin-top:4px;white-space:pre-wrap">${escapeHtml(reasoning)}</div></details>`;
 }
 // 刷新 AI 对话视图：悬浮窗模式下重新渲染 floatRoot，否则刷新 ai-chat 应用窗口
+// v3.1 修复：此前非悬浮窗分支递归调用自身，清空对话/切换开关时直接栈溢出
 function refreshChatView() {
   if (window.__tzFloatMode) {
     const root = document.getElementById('floatRoot');
-    if (root) { root.innerHTML = renderAIChat(); initChat('float-chat-win', true); return; }
+    if (root) { root.innerHTML = renderAIChat(); initChat('float-chat-win', true); }
+    return;
   }
-  refreshChatView();
+  refreshOpenApp('ai-chat');
+}
+
+/* ===================== 对话内容跨窗口同步 =====================
+ * OS 对话窗口与 AI 悬浮窗共享同一份 chatHistory（同源 localStorage）。
+ * 本窗口写入后调用 markChatDirty 记录签名；另一个窗口通过 storage 事件
+ * （跨文档实时）+ 定时轮询（兜底）发现变化后增量重渲染消息区。
+ * 设置不同步：API 配置共享；深度思考/提供方/截图开关各自独立（见 *_Ctx）。 */
+let _lastChatSig = null;
+function _chatSig(h) {
+  if (!h || !h.length) return '0';
+  const last = h[h.length - 1];
+  return h.length + '|' + last.role + '|' + String(last.content || '').length + '|' + String(last.reasoning || '').length + '|' + (last.rounds ? last.rounds.length : 0);
+}
+function markChatDirty() { try { _lastChatSig = _chatSig(Store.getChat()); } catch (e) {} }
+// 发现外部（另一个窗口）写入的新对话时，重渲染消息区（保留输入框草稿，不打断生成）
+function syncChatFromStore(force) {
+  if (_sessCtl()) return; // 本窗口正在生成，不打扰
+  Store._cache = null;    // 另一个窗口可能写过，必须绕过内存缓存读最新
+  const history = Store.getChat();
+  const sig = _chatSig(history);
+  if (!force && sig === _lastChatSig) return;
+  _lastChatSig = sig;
+  if (getProviderCtx() === 'doubao') return; // 豆包嵌入模式无本地消息区
+  const msgs = $('#chatMsgs');
+  if (!msgs || !msgs.isConnected) return;
+  const wasEmpty = !!msgs.querySelector('.chat-empty');
+  if (!history.length && wasEmpty) return;
+  msgs.innerHTML = '';
+  if (!history.length) {
+    const ready = AI.isReady();
+    msgs.innerHTML = `<div class="chat-empty">
+      <div class="ce-icon">💬</div>
+      <div class="ce-title">天择 AI 助手</div>
+      <div id="chatEmptyHint" style="font-size:12px;max-width:360px">${ready ? (getDeepThinkCtx() ? '深度思考已开启，会显示思考过程。' : '问我任何问题，或试试下面的建议') : '请先在「AI 配置」中设置 API Key'}</div>
+      <div class="ce-suggest">
+        ${ready ? ['介绍一下你自己', '帮我写一首关于夏天的诗', '解释一下量子纠缠，给出公式'].map(s => `<div class="chat-suggest-chip" onclick="TZOS.chatSuggest(this.textContent)">${s}</div>`).join('') : '<div class="chat-suggest-chip" onclick="TZOS.openConfig()">去配置 →</div>'}
+      </div>
+    </div>`;
+    return;
+  }
+  history.forEach((m, i) => appendMsg(m.role, m.content, { reasoning: m.reasoning, rounds: m.rounds, usage: m.usage, actions: true, index: i }));
+  if (chatSess) updateContextBar(chatSess, [{ role: 'system', content: '' }, ...history.map(m => ({ role: 'user', content: m.content }))], null);
+}
+// 绑定跨窗口同步（每个文档只绑一次）：storage 事件（另一文档写入时触发）+ 4 秒轮询兜底
+function ensureChatSyncBound() {
+  if (window.__tzChatSyncBound) return;
+  window.__tzChatSyncBound = true;
+  window.addEventListener('storage', (e) => {
+    if (e.key === Store.KEY) { Store._cache = null; setTimeout(() => syncChatFromStore(false), 40); }
+  });
+  setInterval(() => syncChatFromStore(false), 4000);
+  markChatDirty();
 }
 function initChat(winId) {
   // 豆包网页嵌入模式：只绑定切换按钮 + iframe 加载隐藏提示
-  if (Store.getProvider() === 'doubao') {
+  if (getProviderCtx() === 'doubao') {
     const provBtn = $('#chatProvider');
-    if (provBtn) provBtn.onclick = () => { Store.setProvider('custom'); toast('已切换为 ⚙️ 自定义AI'); refreshChatView(); };
+    if (provBtn) provBtn.onclick = () => { setProviderCtx('custom'); toast('已切换为 ⚙️ 自定义AI'); refreshChatView(); };
     const f = $('#doubaoFrame');
     const hint = $('#doubaoHint');
     if (f && hint) {
@@ -3498,13 +3569,13 @@ function initChat(winId) {
     msgs.innerHTML = `<div class="chat-empty">
       <div class="ce-icon">💬</div>
       <div class="ce-title">天择 AI 助手</div>
-      <div id="chatEmptyHint" style="font-size:12px;max-width:360px">${ready?(Store.getDeepThink()?'深度思考已开启，会显示思考过程。':'问我任何问题，或试试下面的建议'):'请先在「AI 配置」中设置 API Key'}</div>
+      <div id="chatEmptyHint" style="font-size:12px;max-width:360px">${ready?(getDeepThinkCtx()?'深度思考已开启，会显示思考过程。':'问我任何问题，或试试下面的建议'):'请先在「AI 配置」中设置 API Key'}</div>
       <div class="ce-suggest">
         ${ready?['介绍一下你自己','帮我写一首关于夏天的诗','解释一下量子纠缠，给出公式'].map(s=>`<div class="chat-suggest-chip" onclick="TZOS.chatSuggest(this.textContent)">${s}</div>`).join(''):'<div class="chat-suggest-chip" onclick="TZOS.openConfig()">去配置 →</div>'}
       </div>
     </div>`;
   } else {
-    history.forEach((m, i) => appendMsg(m.role, m.content, { reasoning: m.reasoning, usage: m.usage, actions: true, index: i }));
+    history.forEach((m, i) => appendMsg(m.role, m.content, { reasoning: m.reasoning, rounds: m.rounds, usage: m.usage, actions: true, index: i }));
   }
   // 智能滚动：用户上滑阅读时不吸底
   bindChatScroll(msgs, sess);
@@ -3543,15 +3614,15 @@ function initChat(winId) {
   // 工具栏
   const provBtn = $('#chatProvider');
   if (provBtn) provBtn.onclick = () => {
-    const next = Store.getProvider()==='doubao' ? 'custom' : 'doubao';
-    Store.setProvider(next);
+    const next = getProviderCtx()==='doubao' ? 'custom' : 'doubao';
+    setProviderCtx(next);
     toast('已切换为 ' + (next==='doubao'?'🫘 豆包AI':'⚙️ 自定义AI'));
     refreshChatView();
   };
   const deepBtn = $('#chatDeep');
   if (deepBtn) deepBtn.onclick = () => {
-    Store.setDeepThink(!Store.getDeepThink());
-    const d = Store.getDeepThink();
+    setDeepThinkCtx(!getDeepThinkCtx());
+    const d = getDeepThinkCtx();
     syncDeepBtns();
     const eh = $('#chatEmptyHint');
     if (eh && AI.isReady()) eh.textContent = d ? '深度思考已开启，会显示思考过程。' : '问我任何问题，或试试下面的建议';
@@ -3560,7 +3631,7 @@ function initChat(winId) {
   // 自动截图开关（需视觉模型 + 图片输入能力开启）
   const shotBtn = $('#chatShot');
   if (shotBtn) shotBtn.onclick = async () => {
-    const next = !Store.getScreenshotMode();
+    const next = !getScreenshotCtx();
     if (next) {
       if (Store.getAICaps().image === false) { toast('「支持图片输入」已在 AI 配置中关闭，无法使用截图'); return; }
       if (!Shot.supported()) { toast('当前环境不支持屏幕截取'); return; }
@@ -3569,7 +3640,7 @@ function initChat(winId) {
     } else {
       Shot.stop();
     }
-    Store.setScreenshotMode(next);
+    setScreenshotCtx(next);
     shotBtn.classList.toggle('ghost', !next);
     shotBtn.textContent = '📷 截图' + (next ? '·开' : '·关');
     toast('自动截图已' + (next ? '开启（请确认模型支持视觉）' : '关闭'));
@@ -3579,8 +3650,19 @@ function initChat(winId) {
     const ok = await confirmDialog({ title: '清空对话', message: '清空当前对话历史？', confirmText: '清空', danger: true });
     if (!ok) return;
     Store.setChat([]);
+    markChatDirty();
     refreshChatView();
   };
+  // 手动同步按钮：立即从共享存档拉取最新对话（悬浮窗 ↔ OS 对话窗口互通）
+  const syncBtn = $('#chatSync');
+  if (syncBtn) syncBtn.onclick = () => {
+    if (_sessCtl()) { toast('正在生成中，完成后再同步'); return; }
+    syncChatFromStore(true);
+    toast('已同步最新对话');
+  };
+  // 自动同步：storage 事件 + 定时轮询（每个文档绑一次）
+  ensureChatSyncBound();
+  markChatDirty();
 }
 // token 用量格式化（缓存命中/缓存写入/普通输入/输出/总量 + 按单价估算费用）
 function usageText(u) {
@@ -3612,7 +3694,10 @@ function appendMsg(role, content, opts = {}) {
   const empty = msgs.querySelector('.chat-empty');
   if (empty) empty.remove();
   const m = el('div', 'msg ' + role);
-  const inner = opts.raw ? content : reasoningHtml(opts.reasoning, false) + (role === 'ai' ? renderAiBody(content) : renderMd(content));
+  const inner = opts.raw ? content
+    : (role === 'ai' && opts.rounds && opts.rounds.length)
+      ? renderRoundsHtml(opts.rounds, null, false)
+      : reasoningHtml(opts.reasoning, false) + (role === 'ai' ? renderAiBody(content) : renderMd(content));
   m.innerHTML = `<div class="msg-avatar">${role==='ai'?'🤖':'🧑'}</div><div class="msg-body"><div class="msg-bubble">${inner}</div>` +
     (opts.usage ? `<div class="msg-usage">${escapeHtml(usageText(opts.usage))}</div>` : '') +
     (opts.actions ? `<div class="msg-actions">` +
@@ -3760,6 +3845,32 @@ function renderAiBody(text, cmdLog, ongoing) {
   if (!html && ongoing) html = '';
   return html;
 }
+/* ---- 多轮 Agent 渲染：思考过程 → 回答 → 命令卡片 → 下一轮…（agent 式交错） ---- */
+function stripTzcli(text) { return String(text || '').replace(/```tzcli\s*\n[\s\S]*?```/g, '').trim(); }
+function cmdCardHtml(cmds) {
+  if (!cmds || !cmds.length) return '';
+  return '<details class="cmd-card" open><summary>调用了 ' + cmds.length + ' 条命令行</summary><div class="cmd-body">' +
+    cmds.map(c => '<div class="cmd-line">' + escapeHtml(c.cmd) + '</div>' +
+      (c.out
+        ? '<div class="cmd-res' + (c.ok ? '' : ' err') + '">' + escapeHtml(String(c.out).length > 900 ? String(c.out).slice(0, 900) + '…' : String(c.out)) + '</div>'
+        : '<div class="cmd-res">(完成)</div>')
+    ).join('') + '</div></details>';
+}
+function renderRoundHtml(r, ongoing) {
+  if (!r) return '';
+  let h = '';
+  if (r.reasoning) h += reasoningHtml(r.reasoning, !!ongoing);
+  const stripped = stripTzcli(r.text);
+  if (stripped) h += renderMd(stripped);
+  if (r.cmds && r.cmds.length) h += cmdCardHtml(r.cmds);
+  return h;
+}
+function renderRoundsHtml(doneRounds, curRound, ongoing) {
+  let html = '';
+  (doneRounds || []).forEach(r => { html += renderRoundHtml(r, false); });
+  if (curRound) html += renderRoundHtml(curRound, ongoing);
+  return html;
+}
 // 复制文本到剪贴板（带降级方案）
 function copyText(text) {
   const done = () => toast('📋 已复制');
@@ -3785,7 +3896,7 @@ function mergeUsage(a, b) {
 }
 // 深度思考开关变化时同步所有窗口中的按钮（修复多窗口状态不一致导致的"关不掉"）
 function syncDeepBtns() {
-  const d = Store.getDeepThink();
+  const d = getDeepThinkCtx();
   $$('.js-deep-btn').forEach(b => {
     b.classList.toggle('ghost', !d);
     b.textContent = '🧠 深度思考' + (d ? '·开' : '·关');
@@ -3919,6 +4030,7 @@ async function regenerateMessage(i) {
   const userText = history[ui].content;
   history.splice(ui + 1); // 删除该 AI 消息及之后的全部
   Store.setChat(history);
+  markChatDirty();
   refreshChatView();
   await runGeneration(userText);
 }
@@ -3937,12 +4049,14 @@ async function sendChat() {
     if (!isNaN(i) && i >= 0 && i < history.length) {
       history.splice(i);
       Store.setChat(history);
+      markChatDirty();
       refreshChatView();
     }
   }
   input.value = ''; input.style.height = 'auto';
   history.push({ role: 'user', content: text });
   Store.setChat(history);
+  markChatDirty();
   appendMsg('user', text, { actions: true, index: history.length - 1 });
   await runGeneration(text);
 }
@@ -3994,12 +4108,12 @@ async function runGeneration(userText) {
   updateChatSendBtn();
   ensureKatex().catch(() => {});
   const agentOn = Store.getAgentMode();
-  const deepOn = Store.getDeepThink();
+  const deepOn = getDeepThinkCtx();
   const caps = Store.getAICaps();
-  let reasoning = '', usage = null, stopped = false;
-  const roundTexts = [];
-  const cmdLog = [];
-  let displayText = '';
+  let usage = null, stopped = false;
+  // 多轮 Agent：每轮 {reasoning, text, cmds}；命令卡片内联在所属轮次下方（agent 式交错显示）
+  const doneRounds = [];
+  let curRound = { reasoning: '', text: '', cmds: [] };
   let paintFrame = 0;
   const paint = () => {
     if (paintFrame) return;
@@ -4009,15 +4123,14 @@ async function runGeneration(userText) {
       if (sig.aborted) return;
       // 窗口已被关闭（bubble 脱离 DOM）：不再触碰界面，只让请求跑完入库
       if (!bubble.isConnected) return;
-      const reasoningPart = reasoningHtml(reasoning, !!reasoning && !sig.aborted);
       let body;
-      if (deepOn && !reasoning) {
+      if (deepOn && !doneRounds.length && !curRound.reasoning && !curRound.text) {
         body = '<span class="chat-streaming-placeholder">正在等待 AI 思考…</span>';
       } else {
-        body = renderAiBody(displayText, cmdLog, !sig.aborted);
+        body = renderRoundsHtml(doneRounds, curRound, !sig.aborted);
         if (!body && !sig.aborted) body = '<span class="chat-streaming-placeholder">正在等待 AI 首字…</span>';
       }
-      bubble.innerHTML = reasoningPart + body;
+      bubble.innerHTML = body;
       // 流式期间实时渲染 LaTeX（已渲染的 .katex 会被 auto-render 自动跳过）
       if (window.renderMathInElement) { try { window.renderMathInElement(bubble, KATEX_OPTS); } catch {} }
       scrollChatToBottom(msgs, sess);
@@ -4025,7 +4138,7 @@ async function runGeneration(userText) {
   };
   // 自动截图（需视觉模型 + 已开启"支持图片输入"；失败则降级为纯文本）
   let shot = null;
-  if (caps.image !== false && Store.getScreenshotMode() && Shot.supported()) {
+  if (caps.image !== false && getScreenshotCtx() && Shot.supported()) {
     if (await Shot.ensure()) {
       await new Promise(r => setTimeout(r, 150));
       shot = Shot.capture();
@@ -4054,35 +4167,35 @@ async function runGeneration(userText) {
   // 联网搜索工具声明（MiMo / 博查等 OpenAI 兼容服务格式；不支持的服务端会忽略或报错降级）
   const tools = caps.webSearch ? [{ type: 'web_search', max_keyword: 3, limit: 5, user_location: { type: 'approximate', country: 'China', city: '合肥' } }] : null;
   try {
-    let round = 0;
+    let guard = 0; // 防失控保险（正常流程在 AI 不再输出命令时结束；仅兜底，不限日常使用）
     while (true) {
-      let roundText = '';
       const r = await AI.chatStream(
         [{ role: 'system', content: sysContent }, ...baseHistory, ...extra],
-        (delta, all) => { roundText = all; displayText = roundTexts.concat([roundText]).join('\n'); paint(); },
-        deepOn ? { onReasoning: (d, allR) => { reasoning = allR; paint(); }, signal: sig, tools } : { signal: sig, tools }
+        (delta, all) => { curRound.text = all; paint(); },
+        deepOn ? { onReasoning: (d, allR) => { curRound.reasoning = allR; paint(); }, signal: sig, tools } : { signal: sig, tools }
       );
-      roundText = r.content || roundText;
-      if (deepOn && r.reasoning) reasoning = r.reasoning;
+      curRound.text = r.content || curRound.text;
+      if (deepOn && r.reasoning) curRound.reasoning = r.reasoning;
       if (r.usage) usage = mergeUsage(usage, r.usage);
-      roundTexts.push(roundText);
-      displayText = roundTexts.join('\n');
-      if (!agentOn) break;
-      const cmds = parseTzcli(roundText);
-      if (!cmds.length || round >= 3) break; // 最多 3 轮命令，避免 token 失控
-      round++;
+      if (!agentOn) { doneRounds.push(curRound); curRound = null; break; }
+      const cmds = parseTzcli(curRound.text);
+      if (!cmds.length) { doneRounds.push(curRound); curRound = null; break; }
+      // 执行本轮命令（次数不设上限；结果回传后 AI 继续下一轮）
       const results = [];
       for (const c of cmds) {
         const res = CLI.exec(c, { byAI: true });
         // 异步命令（fetch / IndexedDB 等）：await 之
-        const r = (res && typeof res.then === 'function') ? await res : res;
-        cmdLog.push({ cmd: c, ok: r.ok, out: r.out });
-        results.push('$ ' + c + '\n' + (r.out || '(完成)'));
+        const rr = (res && typeof res.then === 'function') ? await res : res;
+        curRound.cmds.push({ cmd: c, ok: rr.ok, out: rr.out });
+        results.push('$ ' + c + '\n' + (rr.out || '(完成)'));
         paint();
       }
       toast('⌨️ AI 执行了 ' + cmds.length + ' 条系统命令', 2400);
-      extra.push({ role: 'assistant', content: roundText });
+      extra.push({ role: 'assistant', content: curRound.text });
       extra.push({ role: 'user', content: '（系统回执）你请求执行的命令行命令已完成，结果如下：\n' + results.join('\n------\n').slice(0, 4000) + '\n请据此继续回答用户；如无需再执行命令，请直接给出最终回答，不要重复执行同一命令。' });
+      doneRounds.push(curRound);
+      curRound = { reasoning: '', text: '', cmds: [] };
+      if (++guard >= 50) { curRound = null; break; }
     }
   } catch (e) {
     if (e && (e.name === 'AbortError' || /已停止/.test(e.message || ''))) {
@@ -4108,8 +4221,10 @@ async function runGeneration(userText) {
     sess.target = null;
     updateChatSendBtn();
   }
-  const full = displayText.trim();
-  if (!full && !reasoning) {
+  const full = doneRounds.map(r => r.text).join('\n').trim();
+  const lastReasoning = doneRounds.length ? (doneRounds[doneRounds.length - 1].reasoning || '') : '';
+  const hasAgentTrail = doneRounds.length > 1 || doneRounds.some(r => r.cmds && r.cmds.length);
+  if (!full && !lastReasoning) {
     // 没有任何内容生成：把"等待中"占位移除，避免在错误或空响应下还显示进度文字
     if (bubble.isConnected) {
       const ph = bubble.querySelector('.chat-streaming-placeholder');
@@ -4119,10 +4234,13 @@ async function runGeneration(userText) {
   }
   // 完成（含手动停止的部分内容）：入库（无论窗口是否还开着，回复都会被保留）
   const history = Store.getChat();
-  history.push({ role: 'ai', content: full, reasoning, usage });
+  const msgAi = { role: 'ai', content: full, reasoning: lastReasoning, usage };
+  if (hasAgentTrail) msgAi.rounds = doneRounds.map(r => ({ reasoning: r.reasoning || '', text: r.text || '', cmds: r.cmds || [] }));
+  history.push(msgAi);
   Store.setChat(history);
+  markChatDirty();
   if (bubble.isConnected) {
-    bubble.innerHTML = reasoningHtml(reasoning, false) + renderAiBody(displayText, cmdLog, false) +
+    bubble.innerHTML = renderRoundsHtml(doneRounds, null, false) +
       (stopped ? '<div class="tz-stopped-tip">⏹ 已停止生成</div>' : '');
     if (window.renderMathInElement) { try { window.renderMathInElement(bubble, KATEX_OPTS); } catch {} }
     else renderMath(aiMsg);
@@ -4843,9 +4961,8 @@ const TZ_TREE = [
     { name: '词库转换工具', icon: '🔄', url: 'ai/skill/vocab-to-json/index.html' }
   ]},
   { name: 'COC 专区', icon: '🛡️', url: 'coc/index.html', children: [
-    { name: '实时存档分析', icon: '📋', url: 'coc/index.html' },
+    { name: '村庄存档分析', icon: '📋', url: 'coc/index.html' },
     { name: '数据查询', icon: '📊', url: 'coc/data/index.html' },
-    { name: '村庄分析', icon: '🏘️', url: 'coc/village/index.html' },
     { name: '升级规划', icon: '📅', url: 'coc/planner/index.html' },
     { name: '伤害计算', icon: '💥', url: 'coc/dmg-calc/index.html' }
   ]},
@@ -5627,6 +5744,7 @@ window.TZOS.$ = $;
 window.TZOS.$$ = $$;
 window.TZOS.toast = toast;
 window.TZOS.AI = AI;
+window.TZOS.CLI = CLI;
 window.TZOS.Store = Store;
 window.TZOS.Mem = Mem;
 window.TZOS.Shot = Shot;
@@ -5808,6 +5926,7 @@ function buildFloatChatHTML() {
   '</style></head><body>' +
   '<div class="chat-toolbar">' +
   '<span style="font-size:12px;color:#a78bfa;flex:1">💬 AI 悬浮对话</span>' +
+  '<button class="btn" id="btnSync" title="同步最新对话">🔄</button>' +
   '<button class="btn" id="btnClear" title="清空对话">🗑</button>' +
   '</div>' +
   '<div class="chat-messages" id="chatMsgs"></div>' +
@@ -5822,17 +5941,22 @@ function buildFloatChatHTML() {
   'function load(n,d){try{var s=JSON.parse(localStorage.getItem(KEY)||"{}");return s[n]!==undefined?s[n]:d}catch(e){return d}}' +
   'function saveHist(h){var s=JSON.parse(localStorage.getItem(KEY)||"{}");s.chatHistory=h.slice(-100);localStorage.setItem(KEY,JSON.stringify(s))}' +
   'var cfg=load("aiConfig",{url:"https://api.deepseek.com/v1/chat/completions",key:"",model:"deepseek-chat"});' +
-  'var deep=load("deepThink",true);' +
+  // 悬浮窗独立深度思考键（缺省跟随主设置）；API 配置共享
+  'var deep=load("float_deepThink", load("deepThink",true));' +
   'var caps=load("aiCaps",{image:true,file:true,webSearch:false,contextLength:0});' +
   'var hist=load("chatHistory",[]);' +
   'var msgs=document.getElementById("chatMsgs");' +
   'var input=document.getElementById("chatInput");' +
   'var abortCtl=null;' +
+  // 与 OS 对话窗口同步：比较签名，变化且空闲时重载并重渲染
+  'function sig(h){if(!h||!h.length)return "0";var l=h[h.length-1];return h.length+"|"+l.role+"|"+String(l.content||"").length+"|"+String(l.reasoning||"").length}' +
+  'var lastSig=sig(hist);' +
+  'function syncFromStore(force){if(abortCtl)return;var h=load("chatHistory",[]);var sg=sig(h);if(!force&&sg===lastSig)return;lastSig=sg;hist=h;cfg=load("aiConfig",cfg);deep=load("float_deepThink", load("deepThink",true));render()}' +
+  'setInterval(function(){syncFromStore(false)},4000);' +
+  'window.addEventListener("storage",function(e){if(e.key===KEY)setTimeout(function(){syncFromStore(false)},40)});' +
   // 渲染历史
   'function render(){msgs.innerHTML="";if(!hist.length){msgs.innerHTML=cfg.key?\'' +
-  '<div class="chat-empty"><div style="font-size:32px">💬</div><div>AI 悬浮窗</div><div style="font-size:11px">' +
-  (deep?"深度思考已开启":'问我任何问题') +
-  '</div></div>\':' +
+  '<div class="chat-empty"><div style="font-size:32px">💬</div><div>AI 悬浮窗</div><div style="font-size:11px">\'+(deep?"深度思考已开启":"问我任何问题")+\'</div></div>\':' +
   '<div class="chat-empty"><div style="font-size:32px">🔑</div><div>未配置 AI</div><div style="font-size:11px">请在天择OS的 AI 配置中设置 API Key</div></div>\';return}' +
   'hist.forEach(function(m){addMsg(m.role,m.content,m.reasoning)})}' +
   'function addMsg(role,text,reasoning){var d=document.createElement("div");d.className="msg "+(role==="user"?"user":"ai");' +
@@ -5875,7 +5999,7 @@ function buildFloatChatHTML() {
   'msgs.scrollTop=msgs.scrollHeight;' +
   '}catch(e){}}' +
   '}' +
-  'if(full||reasoning){hist.push({role:"ai",content:full,reasoning:reasoning});saveHist(hist);' +
+  'if(full||reasoning){hist.push({role:"ai",content:full,reasoning:reasoning});saveHist(hist);lastSig=sig(hist);' +
   'bubble.innerHTML=(reasoning?\'<details class="msg-reasoning"><summary>🧠 思考过程</summary><div>\'+esc(reasoning)+\'</div></details>\':"")+md(full)}' +
   'else{bubble.textContent="(空响应)"}' +
   '}catch(e){if(e.name==="AbortError"){bubble.innerHTML+=\'<div class="stopped-tip">⏹ 已停止生成</div>\'}else{bubble.textContent="⚠ "+e.message}}' +
@@ -5883,7 +6007,8 @@ function buildFloatChatHTML() {
   'input.onkeydown=function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}};' +
   'input.oninput=function(){input.style.height="auto";input.style.height=Math.min(80,input.scrollHeight)+"px"};' +
   'document.getElementById("chatSend").onclick=send;' +
-  'document.getElementById("btnClear").onclick=function(){hist=[];saveHist(hist);render()};' +
+  'document.getElementById("btnClear").onclick=function(){hist=[];saveHist(hist);lastSig=sig(hist);render()};' +
+  'document.getElementById("btnSync").onclick=function(){syncFromStore(true)};' +
   'render();' +
   '})()' +
   '<\\/script>' +

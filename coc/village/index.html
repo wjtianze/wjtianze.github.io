@@ -3,121 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>村庄存档分析 · COC 专区 · 天择网</title>
-  <meta name="description" content="粘贴部落冲突村庄JSON数据，自动解析并按家乡/夜世界分类展示村庄完整数据，计算剩余升级时间（含墙钟时间），规划升级排程。" />
+  <title>村庄存档分析已并入 COC 专区首页 · 天择网</title>
+  <meta name="description" content="村庄存档分析功能已并入 COC 专区首页，正在跳转…" />
+  <meta http-equiv="refresh" content="0; url=../index.html" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css" />
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
 </head>
-<body class="coc-tool coc-village-tool">
+<body>
   <div class="bg-mesh"></div>
-
-  <header class="topbar">
-    <div class="wrap topbar-inner">
-      <a class="brand" href="https://wjtianze.github.io/index.html" aria-label="天择网首页">
-        <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/></svg></span>
-        <span class="logo-text">天择网</span>
-      </a>
-      <button class="nav-toggle" aria-label="菜单">☰</button>
-      <nav class="nav"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a></nav>
-    </div>
-  </header>
-
   <main>
     <section class="page-head wrap">
-      <div class="crumb reveal in">
-        <a href="https://wjtianze.github.io/index.html">主页</a> <span>›</span>
-        <a href="https://wjtianze.github.io/coc/index.html">COC 专区</a> <span>›</span>
-        <span>村庄存档分析</span>
-      </div>
-      <div class="coc-kicker reveal in d1">Village Intelligence · Local Analysis</div>
-      <h1 class="reveal in d1">村庄存档 <span class="grad">分析</span></h1>
-      <p class="reveal in d2">粘贴你的部落冲突村庄 JSON 数据，自动解析并按「家乡」与「夜世界」分类展示完整村庄信息，计算各类单位到达当前大本营满级的剩余升级时间（含按工人数量折算的墙钟时间）。所有解析在浏览器本地完成。</p>
-    </section>
-
-    <section class="section wrap" style="padding-top:18px;">
-      <div class="card reveal v-input-area" style="padding:24px 28px;">
-        <div class="section-head" style="margin-bottom:12px;">
-          <h2><span class="bar"></span>粘贴村庄 JSON</h2>
-        </div>
-        <p id="vJsonHelp" style="font-size:13.5px; color:var(--ink-dim); margin-bottom:12px; line-height:1.7;"><span class="coc-status-dot"></span>将游戏中导出的村庄 JSON 粘贴到下方文本框，点击「解析数据」即可。数据仅在浏览器中处理。</p>
-        <label class="coc-section-label" for="vJsonInput">Village JSON Input</label>
-        <textarea id="vJsonInput" spellcheck="false" autocomplete="off" aria-describedby="vJsonHelp vError" placeholder='{"tag":"#XXXXX","timestamp":1783589176,"buildings":[...],"units":[...],"heroes":[...] ...}'></textarea>
-        <div class="v-actions">
-          <button class="btn" id="vParseBtn"><span>解析数据</span></button>
-          <button class="btn btn--sm" id="vSampleBtn"><span>填入示例</span></button>
-          <button class="btn btn--sm" id="vClearBtn"><span>清空</span></button>
-        </div>
-        <div class="v-error" id="vError" role="alert" aria-live="assertive" tabindex="-1"></div>
-      </div>
-    </section>
-
-    <section class="section wrap v-result" id="vResult" tabindex="-1" aria-label="村庄分析结果">
-      <!-- 概况 -->
-      <div class="card reveal" style="padding:24px 28px; margin-bottom:22px;">
-        <div class="section-head" style="margin-bottom:14px;">
-          <h2><span class="bar"></span>村庄概况</h2>
-        </div>
-        <div class="v-metrics" id="vMetrics"></div>
-      </div>
-
-      <!-- 升级时间总览（前置，分家乡/夜世界） -->
-      <div class="card reveal" style="padding:24px 28px; margin-bottom:22px;">
-        <div class="section-head" style="margin-bottom:14px;">
-          <h2><span class="bar"></span>剩余升级时间总览</h2>
-        </div>
-        <p style="font-size:13px; color:var(--ink-dim); margin-bottom:14px; line-height:1.7;">基于当前大本营等级，逐级累加每项单位从当前等级到当前大本营允许最高等级的升级时长。<b style="color:var(--ink);">墙钟时间</b>＝该资源串行总时长 ÷ 对应工人/研究员数量（即并行后实际所需时间）。</p>
-        <div class="v-opt-bar">
-          <span style="font-size:13px; color:var(--ink-faint);">可选加成：</span>
-          <label><input type="checkbox" id="vGobWorker"> 哥布林工人（家乡建筑工人 +1）</label>
-          <label><input type="checkbox" id="vGobLab"> 哥布林研究员（家乡研究员 +1）</label>
-        </div>
-        <div id="vTimeOverview"></div>
-        <p class="v-time-note">分工：研究员（实验室）升级兵种 / 法术 / 攻城机器；战宠研究员升级战宠；建筑工人升级英雄 / 建筑 / 陷阱 / 其他。已满级或尚未解锁的单位不计入；城墙升级无时间成本，不计入。</p>
-      </div>
-
-      <!-- 家乡 -->
-      <div class="v-world">
-        <div class="v-world-title">🏰 家乡 <span class="vw-badge">Home Village</span></div>
-        <div id="vHome"></div>
-      </div>
-
-      <!-- 夜世界 -->
-      <div class="v-world">
-        <div class="v-world-title">🌙 夜世界 <span class="vw-badge">Builder Base</span></div>
-        <div id="vBB"></div>
-      </div>
-
-      <!-- 前往规划器 -->
-      <a class="card reveal" href="https://wjtianze.github.io/coc/planner/index.html" style="padding:20px 26px; display:flex; gap:16px; align-items:center; flex-wrap:wrap; text-decoration:none; margin-top:22px;">
-        <div style="font-size:30px; flex-shrink:0;">📅</div>
-        <div style="flex:1; min-width:200px;">
-          <h3 style="font-size:16px; font-weight:600; margin-bottom:3px; color:var(--ink);">前往升级规划器</h3>
-          <p style="font-size:13.5px; color:var(--ink-dim);">基于刚才解析的村庄数据，用甘特图规划升级排程。家乡与夜世界分开，支持稳本 / 速本两种模式，自动安排工人、可拖拽微调。</p>
-        </div>
-        <span class="btn btn--sm" style="flex-shrink:0;"><span>打开规划器 →</span></span>
-      </a>
-
-      <!-- 脚本开源 -->
-      <a class="card reveal" href="https://wjtianze.github.io/coc/village/village_parser.py" download style="padding:20px 26px; display:flex; gap:16px; align-items:center; flex-wrap:wrap; text-decoration:none; margin-top:14px;">
-        <div style="font-size:30px; flex-shrink:0;">🐍</div>
-        <div style="flex:1; min-width:200px;">
-          <h3 style="font-size:16px; font-weight:600; margin-bottom:3px; color:var(--ink);">本页解析脚本已开源</h3>
-          <p style="font-size:13.5px; color:var(--ink-dim);">村庄 JSON 解析与升级时间计算的完整逻辑（Python 脚本），可独立运行，输入村庄 JSON 即可输出结构化中文报告。免费、不限用途。</p>
-        </div>
-        <span class="btn btn--sm" style="flex-shrink:0;"><span>下载 village_parser.py ↓</span></span>
-      </a>
+      <h1 class="reveal in">村庄存档分析已并入 <span class="grad">COC 专区首页</span></h1>
+      <p class="reveal in d1">正在跳转… 若未自动跳转，请<a href="https://wjtianze.github.io/coc/index.html" style="color:var(--accent);">点击这里进入 COC 专区首页</a>。</p>
     </section>
   </main>
-
-  <footer class="footer">
-    <div class="wrap footer-inner">
-      <div>© 2026 天择网 · 物竞天择，适者生存</div>
-      <div class="links"><a href="https://wjtianze.github.io/index.html">主页</a><a href="https://wjtianze.github.io/news/index.html">新闻</a><a href="https://wjtianze.github.io/blog/index.html">博客</a><a href="https://wjtianze.github.io/open/index.html">数据开源</a><a href="https://wjtianze.github.io/ai/index.html">AI 专区</a><a href="https://wjtianze.github.io/coc/index.html">COC 专区</a><a href="https://wjtianze.github.io/game/index.html">游戏专区</a><a href="https://wjtianze.github.io/english/index.html">英语专区</a><a href="https://wjtianze.github.io/os/index.html">天择OS</a></div>
-    </div>
-  </footer>
-
-  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260718a"></script>
-  <script defer src="https://wjtianze.github.io/coc/village/app.js"></script>
+  <script>location.replace('../index.html');</script>
 </body>
 </html>

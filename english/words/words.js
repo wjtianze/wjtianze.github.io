@@ -1261,6 +1261,61 @@ const AI = {
         ? 'AI 未配置：天择OS 通用配置中尚未设置 API Key，请在天择OS 的「🔑 AI 配置」中设置'
         : 'AI 未配置，请先在「🔑 AI 配置」中设置 URL、Key 和模型');
     }
+    const reqBody = {
+      model: c.model,
+      messages,
+      temperature: opts.temperature != null ? opts.temperature : c.temperature,
+      max_tokens: opts.max_tokens || 4000,
+      stream: true
+    };
+    // SSE 解析：把到达的原始文本喂进来，逐行解析 data: 块
+    let buf = '', full = '', reasoning = '';
+    const onReasoning = opts.onReasoning;
+    let sawDone = false;
+    const consume = (text) => {
+      buf += text;
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        const t = line.trim();
+        if (!t || !t.startsWith('data:')) continue;
+        const data = t.slice(5).trim();
+        if (data === '[DONE]') { sawDone = true; continue; }
+        try {
+          const j = JSON.parse(data);
+          const delta = (j.choices && j.choices[0] && j.choices[0].delta) || {};
+          if (delta.reasoning_content) {
+            reasoning += delta.reasoning_content;
+            if (onReasoning) onReasoning(delta.reasoning_content, reasoning);
+          }
+          if (delta.content) {
+            full += delta.content;
+            if (onChunk) onChunk(delta.content, full);
+          }
+        } catch (_) { /* 忽略解析失败的中间行 */ }
+      }
+    };
+
+    // 天择OS 桌面版：经父窗口 tzDesktop 桥由主进程 net.fetch 发请求（绕开渲染层 CORS 限制）
+    let tzBridge = null;
+    try { if (window.parent && window.parent.tzDesktop && window.parent.tzDesktop.requestAI) tzBridge = window.parent.tzDesktop; } catch (e) {}
+    if (tzBridge) {
+      const reqId = 'words-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+      const timer = setTimeout(() => { try { tzBridge.abortAI(reqId); } catch (e) {} }, 90000);
+      try {
+        const resp = await tzBridge.requestAI({ id: reqId, url: c.url, key: c.key, body: reqBody }, consume);
+        clearTimeout(timer);
+        if (resp && resp.status && (resp.status < 200 || resp.status >= 300)) throw new Error('AI 接口错误 ' + resp.status);
+        if (buf.trim()) consume('\n');
+        return { content: full, reasoning };
+      } catch (e) {
+        clearTimeout(timer);
+        if (e && e.name === 'AbortError') throw new Error('请求超时（90 秒），请检查网络或重试');
+        throw e;
+      }
+    }
+
+    // 网页版：直接 fetch（服务商需允许跨域；DeepSeek/GLM/硅基等均可）
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 90000);
     let res;
@@ -1271,13 +1326,7 @@ const AI = {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ' + c.key
         },
-        body: JSON.stringify({
-          model: c.model,
-          messages,
-          temperature: opts.temperature != null ? opts.temperature : c.temperature,
-          max_tokens: opts.max_tokens || 4000,
-          stream: true
-        }),
+        body: JSON.stringify(reqBody),
         signal: ctrl.signal
       });
     } catch (e) {
@@ -1298,46 +1347,24 @@ const AI = {
       const data = await res.json().catch(() => ({}));
       const content = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
       if (onChunk) onChunk(content, content);
+      clearTimeout(timer);
       return { content, reasoning: '' };
     }
     const reader = res.body.getReader();
     const dec = new TextDecoder();
-    let buf = '', full = '', reasoning = '';
-    const onReasoning = opts.onReasoning;
     try {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        buf += dec.decode(value, { stream: true });
-        const lines = buf.split('\n');
-        buf = lines.pop();
-        for (const line of lines) {
-          const s = line.trim();
-          if (!s || !s.startsWith('data:')) continue;
-          const data = s.slice(5).trim();
-          if (data === '[DONE]') {
-            clearTimeout(timer);
-            return { content: full, reasoning };
-          }
-          try {
-            const j = JSON.parse(data);
-            const delta = (j.choices && j.choices[0] && j.choices[0].delta) || {};
-            if (delta.reasoning_content) {
-              reasoning += delta.reasoning_content;
-              if (onReasoning) onReasoning(delta.reasoning_content, reasoning);
-            }
-            if (delta.content) {
-              full += delta.content;
-              if (onChunk) onChunk(delta.content, full);
-            }
-          } catch (_) { /* 忽略解析失败的中间行 */ }
-        }
+        consume(dec.decode(value, { stream: true }));
+        if (sawDone) break;
       }
     } catch (e) {
       clearTimeout(timer);
       if (full) return { content: full, reasoning, interrupted: true };
       throw new Error('流式读取异常：' + (e.message || e));
     }
+    if (buf.trim()) consume(dec.decode());
     clearTimeout(timer);
     return { content: full, reasoning };
   },

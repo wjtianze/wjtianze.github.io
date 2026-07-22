@@ -106,7 +106,7 @@
         <span class="logo-text">天择网</span>
       </a>
       <button class="nav-toggle" aria-label="菜单">☰</button>
-      <nav class="nav"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a></nav>
+      <nav class="nav"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a><a href="https://wjtianze.github.io/contact/index.html"><span>联系开发者</span></a></nav>
     </div>
   </header>
 
@@ -119,7 +119,7 @@
       </div>
       <div class="coc-kicker reveal in d1">Damage Calculator · Home Village Only</div>
       <h1 class="reveal in d1">法术伤害 <span class="grad">计算器</span></h1>
-      <p class="reveal in d2">基于雷电法术、地震法术各等级伤害数据与英雄装备数据，计算给定法术空间内对家乡目标建筑能造成的<b style="color:var(--ink);">最高伤害</b>，以及<b style="color:var(--ink);">摧毁指定建筑所需的最少法术</b>。<b style="color:var(--ink);">新增</b>：建筑工人小屋回血量与当前方案<b style="color:var(--ink);">回血容错时间</b>——溢出伤害除以小屋总回复速度。支持从村庄存档分析一键导入等级、按大本营等级自动设定建筑等级。所有计算在浏览器本地完成。</p>
+      <p class="reveal in d2">基于雷电法术、地震法术各等级伤害数据与英雄装备数据，计算给定法术空间内对家乡目标建筑能造成的<b style="color:var(--ink);">最高伤害</b>，以及<b style="color:var(--ink);">摧毁指定建筑所需的最少法术</b>。<b style="color:var(--ink);">新增</b>：建筑工人小屋回血量与当前方案<b style="color:var(--ink);">回血容错时间</b>——溢出伤害除以小屋总回复速度。支持从村庄存档一键导入等级、按大本营等级自动设定建筑等级。所有计算在浏览器本地完成。</p>
     </section>
 
     <!-- 法术机制说明 -->
@@ -156,15 +156,15 @@
           <h2><span class="bar"></span>等级设置</h2>
           <span class="more">设定装备 / 法术 / 建筑等级</span>
         </div>
-        <p class="dm-subhead">支持手动逐项设定，或在「村庄存档分析」页解析村庄后，回到本页一键导入装备、法术、建筑等级。</p>
+        <p class="dm-subhead">支持手动逐项设定，或在「COC 专区首页」解析村庄后，回到本页一键导入装备、法术、建筑等级。</p>
 
         <!-- 导入区：从村庄存档分析读取 -->
         <div class="dm-import-area">
-          <label class="coc-section-label">从村庄存档分析导入（装备 + 法术 + 建筑等级）</label>
+          <label class="coc-section-label">从村庄存档导入（装备 + 法术 + 建筑等级）</label>
           <div class="dm-import-actions">
-            <button class="btn" id="dmImportBtn"><span>从村庄存档分析导入</span></button>
+            <button class="btn" id="dmImportBtn"><span>从村庄存档导入</span></button>
             <button class="btn btn--sm" id="dmClearLvlsBtn"><span>清空全部等级</span></button>
-            <span class="dm-import-note">先在「<a href="https://wjtianze.github.io/coc/village/index.html" style="color:var(--coc-blue);">村庄存档分析</a>」页粘贴并解析村庄 JSON，本页会自动读取其结果一键填充等级。</span>
+            <span class="dm-import-note">先在「<a href="https://wjtianze.github.io/coc/index.html" style="color:var(--coc-blue);">COC 专区首页</a>」粘贴并解析村庄 JSON，本页会自动读取其结果一键填充等级。</span>
           </div>
           <div class="v-error" id="dmImportError" role="alert" aria-live="assertive"></div>
         </div>
@@ -208,7 +208,7 @@
         <div class="section-head" style="margin:26px 0 10px;">
           <h3 style="font-size:15px; font-weight:700; color:var(--ink);">🔨 建筑工人小屋回血量计算</h3>
         </div>
-        <p class="dm-subhead">设置实际参与修复目标建筑的小屋数量与各自等级。每座小屋按自身等级读取数据中的<b style="color:var(--ink);">每秒回复量</b>（BuilderRepairPerSecond），求和得到总回复速度。然后用当前法术方案（默认 11 格法术 + 选定目标建筑）相对目标生命值的<b style="color:var(--ink);">溢出伤害</b>除以总回复速度，得到<b style="color:var(--ink);">回血容错时间</b>（秒）—— 即溢出伤害能"白嫖"这些建筑工人小屋回复多少秒。从村庄存档分析一键导入时会自动填入实际的小屋数量与等级。</p>
+        <p class="dm-subhead">设置实际参与修复目标建筑的小屋数量与各自等级。每座小屋按自身等级读取数据中的<b style="color:var(--ink);">每秒回复量</b>（BuilderRepairPerSecond），求和得到总回复速度。然后用当前法术方案（默认 11 格法术 + 选定目标建筑）相对目标生命值的<b style="color:var(--ink);">溢出伤害</b>除以总回复速度，得到<b style="color:var(--ink);">回血容错时间</b>（秒）—— 即溢出伤害能"白嫖"这些建筑工人小屋回复多少秒。从 COC 专区首页一键导入时会自动填入实际的小屋数量与等级。</p>
         <div class="dm-builder-box">
           <div class="dm-builder-head">
             <label for="dmBuilderCount">参与回血的小屋数量<input id="dmBuilderCount" type="number" min="0" max="6" value="0" /></label>
@@ -273,11 +273,11 @@
   <footer class="footer">
     <div class="wrap footer-inner">
       <div>© 2026 天择网 · 物竞天择，适者生存</div>
-      <div class="links"><a href="https://wjtianze.github.io/index.html">主页</a><a href="https://wjtianze.github.io/news/index.html">新闻</a><a href="https://wjtianze.github.io/blog/index.html">博客</a><a href="https://wjtianze.github.io/open/index.html">数据开源</a><a href="https://wjtianze.github.io/ai/index.html">AI 专区</a><a href="https://wjtianze.github.io/coc/index.html">COC 专区</a><a href="https://wjtianze.github.io/game/index.html">游戏专区</a><a href="https://wjtianze.github.io/english/index.html">英语专区</a><a href="https://wjtianze.github.io/os/index.html">天择OS</a></div>
+      <div class="links"><a href="https://wjtianze.github.io/index.html">主页</a><a href="https://wjtianze.github.io/news/index.html">新闻</a><a href="https://wjtianze.github.io/blog/index.html">博客</a><a href="https://wjtianze.github.io/open/index.html">数据开源</a><a href="https://wjtianze.github.io/ai/index.html">AI 专区</a><a href="https://wjtianze.github.io/coc/index.html">COC 专区</a><a href="https://wjtianze.github.io/game/index.html">游戏专区</a><a href="https://wjtianze.github.io/english/index.html">英语专区</a><a href="https://wjtianze.github.io/os/index.html">天择OS</a><a href="https://wjtianze.github.io/contact/index.html">联系开发者</a></div>
     </div>
   </footer>
 
-  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260719a"></script>
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260722a"></script>
   <script defer src="https://wjtianze.github.io/coc/dmg-calc/app.js?v=20260719a"></script>
 </body>
 </html>

@@ -104,13 +104,15 @@
           <div class="changelog">
             <div class="cl-item">
               <div class="cl-ver">v3.1 <span class="cl-badge">最新</span></div>
-              <div class="cl-date">2026-07-22</div>
+              <div class="cl-date">2026-07-22（07-23 修订）</div>
               <ul>
-                <li>修复时钟应用走 1 秒就停（废弃 DOMNodeRemoved 事件改用自检方案）；修复 AI 悬浮窗无法清空对话、无法切换豆包（根因 refreshOpenApp 在悬浮窗无效，改用统一 refreshChatView）</li>
-                <li>悬浮窗仅保留顶栏一个关闭按钮；关闭时记忆位置与大小（桌面版持久化到 userData，网页版存 localStorage），下次打开恢复</li>
-                <li>天择网系列应用精简为天择网主页 + 天择导航；COC 专区与背单词归入「实用工具」分类，并自动读写本地保存的玩家村庄 JSON 与词库</li>
-                <li>命令行重构：coc-data 读写本地玩家村庄存档（save/json/clear）、coc-game 查询游戏静态数据、words 支持导入例句；浏览器↗按钮改为在系统外打开网址</li>
-                <li>COC 专区主页重构为「导航 + 实时存档分析」工作台；天择OS 官网改为电脑端/网页端/更新日志三栏，不再提供历史版本下载</li>
+                <li><b>修订</b>：实用工具（COC 专区/升级规划/伤害计算/背单词）不再实时连接线上天择网，本地页面打包进 OS，存档同源直写（村庄 JSON → localStorage，词库 → IndexedDB），桌面版经内置协议加载、离线可用</li>
+                <li><b>修订</b>：村庄存档分析并入 COC 专区首页（独立应用下线）；修复规划器/伤害计算与首页存档冲突（建筑工人 NaN、夜世界丢失）与小屋座数导入</li>
+                <li><b>修订</b>：修复悬浮窗命令 failed to fetch、词库永远返回示例数据；AI 对话与悬浮窗内容互通（🔄 手动 + 定时自动同步），API 配置共享，深度思考/豆包/截图各自独立</li>
+                <li><b>修订</b>：AI 命令行模式取消 3 轮限制，「调用了 N 条命令行」卡片内联在所属回答下方，agent 式交错展示；联系开发者页修复全屏空白；修复清空对话栈溢出</li>
+                <li>修复时钟应用走 1 秒就停（废弃 DOMNodeRemoved 事件改用自检方案）；修复 AI 悬浮窗无法清空对话、无法切换豆包；悬浮窗仅保留顶栏一个关闭按钮，关闭时记忆位置与大小</li>
+                <li>天择网系列应用精简为天择网主页 + 天择导航；命令行重构：coc-data 读写本地玩家村庄存档（save/json/clear）、coc-game 查询游戏静态数据、words 支持导入例句；浏览器↗按钮改为在系统外打开网址</li>
+                <li>天择OS 官网改为电脑端/网页端/更新日志三栏，不再提供历史版本下载</li>
               </ul>
             </div>
             <div class="cl-item">
