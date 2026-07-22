@@ -82,18 +82,7 @@ window.__tzFloatMode = true;
     root.innerHTML = window.TZOS.renderAIChat({ floatMode: true });
     // 初始化事件绑定，disableAgent=true 禁用 tzcli
     window.TZOS.initChat(winId, true);
-    // 在工具栏右侧追加关闭按钮
-    var toolbar = root.querySelector('.chat-toolbar');
-    if (toolbar) {
-      var spacer = toolbar.querySelector('span[style*="flex:1"]');
-      var closeBtn = document.createElement('button');
-      closeBtn.className = 'btn sm ghost';
-      closeBtn.title = '关闭悬浮窗 (Esc)';
-      closeBtn.textContent = '✕';
-      closeBtn.onclick = function() { window.close(); };
-      if (spacer) toolbar.insertBefore(closeBtn, spacer.nextSibling);
-      else toolbar.appendChild(closeBtn);
-    }
+    // 关闭按钮只在顶栏（floatCloseBar），工具栏不再重复添加
     // Esc 关闭
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') window.close();

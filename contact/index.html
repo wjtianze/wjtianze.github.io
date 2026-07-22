@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>联系开发者 · 天择网</title>
+  <meta name="description" content="联系天择网开发者：QQ 与邮箱。意见箱有计划开发。" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
+  <style>
+    /* 复制数字按钮：紧凑，套用按钮基础 */
+    .contact-val { font-family: 'Consolas','Menlo',monospace; font-size: 17px; font-weight: 700; color: var(--ink); margin: 8px 0 10px; }
+    /* 紧凑 hero：覆盖默认 .hero 的大 padding */
+    .contact-hero { padding: 30px 20px 14px !important; text-align: center; }
+    .contact-hero h1 { font-size: 26px; margin-bottom: 6px; }
+    .contact-hero .lead { font-size: 14px; }
+    /* 意见箱卡片：柔和一些 */
+    .note-card { border-left: 3px solid rgba(124,58,237,.35); }
+  </style>
+</head>
+<body>
+  <div class="bg-mesh"></div>
+
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="https://wjtianze.github.io/index.html" aria-label="天择网首页">
+        <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/></svg></span>
+        <span class="logo-text">天择网</span>
+      </a>
+      <button class="nav-toggle" aria-label="菜单">☰</button>
+      <nav class="nav"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a><a href="https://wjtianze.github.io/contact/index.html" class="active"><span>联系开发者</span></a></nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero contact-hero wrap">
+      <div class="hero-eyebrow reveal in"><span class="dot"></span> 联系开发者</div>
+      <h1 class="reveal in d1">找我<span class="grad">说说话</span></h1>
+      <p class="lead reveal in d2">有任何建议、问题或合作意向，欢迎通过下方方式联系，我会尽快回复。</p>
+    </section>
+
+    <section class="section wrap" style="padding-top:0">
+      <div class="section-head reveal">
+        <h2><span class="bar"></span>联系方式</h2>
+      </div>
+      <div class="grid grid-auto" style="grid-template-columns:1fr 1fr;gap:18px;">
+        <div class="card reveal d1" style="text-align:center;padding:28px 24px;">
+          <div style="font-size:42px;margin-bottom:10px">💬</div>
+          <h3>QQ</h3>
+          <p style="color:var(--ink-faint);font-size:13px;margin-bottom:2px">添加好友时备注「天择网」</p>
+          <div class="contact-val">3233413314</div>
+          <button class="btn" onclick="copyText('3233413314','QQ 号已复制')">复制 QQ 号</button>
+        </div>
+        <div class="card reveal d2" style="text-align:center;padding:28px 24px;">
+          <div style="font-size:42px;margin-bottom:10px">✉️</div>
+          <h3>邮箱</h3>
+          <p style="color:var(--ink-faint);font-size:13px;margin-bottom:2px">邮件主题请包含「天择网」</p>
+          <div class="contact-val">3233413314@qq.com</div>
+          <button class="btn" onclick="copyText('3233413314@qq.com','邮箱已复制')">复制邮箱</button>
+        </div>
+      </div>
+
+      <div class="card note-card reveal d3" style="margin-top:22px;padding:24px 28px;">
+        <div class="section-head" style="margin-bottom:10px;">
+          <h2><span class="bar"></span>关于意见箱</h2>
+        </div>
+        <p style="color:var(--ink-dim);font-size:14.5px;line-height:1.85;">
+          <b>已有开发计划</b>——站内「意见箱」可以让你直接在网站上提交反馈，无需跳转到外部应用。
+          但目前需要购买服务器才能上线，会视天择网的<b>使用人数</b>决定是否开发与何时上线。
+          在那之前，请通过上方 QQ 或邮箱联系我，每一条反馈我都会认真看。
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <div>© 2026 天择网 · 物竞天择，适者生存</div>
+      <div class="links"><a href="https://wjtianze.github.io/index.html">主页</a><a href="https://wjtianze.github.io/news/index.html">新闻</a><a href="https://wjtianze.github.io/blog/index.html">博客</a><a href="https://wjtianze.github.io/open/index.html">数据开源</a><a href="https://wjtianze.github.io/ai/index.html">AI 专区</a><a href="https://wjtianze.github.io/coc/index.html">COC 专区</a><a href="https://wjtianze.github.io/game/index.html">游戏专区</a><a href="https://wjtianze.github.io/english/index.html">英语专区</a><a href="https://wjtianze.github.io/os/index.html">天择OS</a><a href="https://wjtianze.github.io/contact/index.html">联系开发者</a></div>
+    </div>
+  </footer>
+
+  <script>
+  function copyText(t, msg) {
+    if (navigator.clipboard) { navigator.clipboard.writeText(t).then(function () { alert(msg); }).catch(function () { fallback(t, msg); }); }
+    else { fallback(t, msg); }
+  }
+  function fallback(t, msg) { var i = document.createElement('input'); i.value = t; document.body.appendChild(i); i.select(); try { document.execCommand('copy'); alert(msg); } catch (e) {} document.body.removeChild(i); }
+  </script>
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260722a"></script>
+</body>
+</html>

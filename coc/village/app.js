@@ -207,6 +207,15 @@
       $("vClearBtn").addEventListener("click", function(){ $("vJsonInput").value=""; clearError(); $("vResult").classList.remove("show"); });
       $("vGobWorker").addEventListener("change", refreshGob);
       $("vGobLab").addEventListener("change", refreshGob);
+      // 自动恢复上次保存的村庄存档（同源 localStorage["tz_coc_village"]，由本页保存或天择OS命令行 coc-data 写入）
+      try {
+        var saved = JSON.parse(localStorage.getItem("tz_coc_village") || "null");
+        if (saved && saved.village) {
+          $("vJsonInput").value = typeof saved.village === "string" ? saved.village : JSON.stringify(saved.village);
+          V = (typeof saved.village === "string") ? parseVillage(saved.village) : saved.village;
+          if (V) { TH = detectTH(V); BH = detectBH(V); GOB_WORKER = saved.gobWorker||0; GOB_LAB = saved.gobLab||0; $("vGobWorker").checked = !!GOB_WORKER; $("vGobLab").checked = !!GOB_LAB; computeTasks(); render(); }
+        }
+      } catch (e) {}
     });
   }
   init();

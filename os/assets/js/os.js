@@ -10,7 +10,7 @@
 'use strict';
 
 /* 系统版本（每次发布更新必须同步递增，并更新 dev/os/version.json） */
-const OS_VERSION = '3.0.0';
+const OS_VERSION = '3.1.0';
 
 /* ===================== 存储层 ===================== */
 const Store = {
@@ -229,20 +229,16 @@ const TZNET_BASE = (() => {
 })();
 
 const PRESET_APPS = [
+  // 天择网系列（精简为 天择网主页 + 天择导航；其余板块通过天择导航树或天择网主页访问）
   { id: 'tz-home', name: '天择网', icon: '🌐', grad: true, category: 'tznet', url: TZNET_BASE + 'index.html', desc: '天择网主页' },
-  { id: 'tz-news', name: '新闻', icon: '📰', grad: false, category: 'tznet', url: TZNET_BASE + 'news/index.html', desc: '站点新闻' },
-  { id: 'tz-blog', name: '博客', icon: '✍️', grad: false, category: 'tznet', url: TZNET_BASE + 'blog/index.html', desc: '博客文章' },
-  { id: 'tz-open', name: '数据开源', icon: '🔓', grad: false, category: 'tznet', url: TZNET_BASE + 'open/index.html', desc: '开源数据' },
-  { id: 'tz-ai', name: 'AI 专区', icon: '🤖', grad: false, category: 'tznet', url: TZNET_BASE + 'ai/index.html', desc: 'AI 工具' },
-  { id: 'tz-coc', name: 'COC 专区', icon: '🛡️', grad: false, category: 'tznet', url: TZNET_BASE + 'coc/index.html', desc: '部落冲突' },
-  { id: 'tz-coc-data', name: 'COC 数据', icon: '📊', grad: false, category: 'tznet', url: TZNET_BASE + 'coc/data/index.html', desc: '游戏数据查询' },
-  { id: 'tz-coc-village', name: '村庄分析', icon: '🏘️', grad: false, category: 'tznet', url: TZNET_BASE + 'coc/village/index.html', desc: '村庄存档分析' },
-  { id: 'tz-coc-planner', name: '升级规划', icon: '📅', grad: false, category: 'tznet', url: TZNET_BASE + 'coc/planner/index.html', desc: '升级规划器' },
-  { id: 'tz-coc-dmg', name: '伤害计算', icon: '💥', grad: false, category: 'tznet', url: TZNET_BASE + 'coc/dmg-calc/index.html', desc: '法术伤害计算器' },
-  { id: 'tz-game', name: '游戏专区', icon: '🎮', grad: false, category: 'tznet', url: TZNET_BASE + 'game/index.html', desc: '天择网游戏' },
+  // 实用工具：COC 专区及子工具 + 背单词（均直接读写本地保存的玩家数据与词库）
+  { id: 'tz-coc', name: 'COC 专区', icon: '🛡️', grad: false, category: 'tool', url: TZNET_BASE + 'coc/index.html', desc: '部落冲突数据与工具' },
+  { id: 'tz-coc-village', name: '村庄分析', icon: '🏘️', grad: false, category: 'tool', url: TZNET_BASE + 'coc/village/index.html', desc: '村庄存档分析' },
+  { id: 'tz-coc-planner', name: '升级规划', icon: '📅', grad: false, category: 'tool', url: TZNET_BASE + 'coc/planner/index.html', desc: '升级规划器' },
+  { id: 'tz-coc-dmg', name: '伤害计算', icon: '💥', grad: false, category: 'tool', url: TZNET_BASE + 'coc/dmg-calc/index.html', desc: '法术伤害计算器' },
+  { id: 'tz-words', name: '背单词', icon: '📚', grad: true, category: 'tool', url: TZNET_BASE + 'english/words/index.html', desc: '四阶段背单词' },
+  // 游戏
   { id: 'tz-gpa', name: '绩点战争', icon: '⚔️', grad: true, category: 'game', url: TZNET_BASE + 'game/gpa-card/index.html', desc: '卡牌对战游戏' },
-  { id: 'tz-en', name: '英语专区', icon: '📖', grad: false, category: 'tznet', url: TZNET_BASE + 'english/index.html', desc: '英语学习' },
-  { id: 'tz-words', name: '背单词', icon: '📚', grad: true, category: 'tznet', url: TZNET_BASE + 'english/words/index.html', desc: '四阶段背单词' },
   // 系统模拟器（现代系统的网页高仿真版，均可被 iframe 嵌入；均为界面级模拟，非真实虚拟机）
   { id: 'emu-win', name: 'Windows 11 模拟器', icon: '🪟', grad: true, category: 'emu', url: 'https://win11.blueedge.me/', desc: '浏览器内的 Windows 11 高仿真版（开源 Win11React）' },
   { id: 'emu-win10', name: 'Windows 10 模拟器', icon: '💻', grad: false, category: 'emu', url: 'https://dustinbrett.com/', desc: '浏览器内的 Win10 风格功能桌面（daedalOS）' },
@@ -250,7 +246,7 @@ const PRESET_APPS = [
 ];
 
 function getAllApps() {
-  const installed = Store.getApps().map(a => ({ ...a, type: 'installed', category: a.category || 'tool' }));
+  const installed = Store.getApps().map(a => ({ ...a, type: 'installed', category: a.category || 'installed' }));
   return [...Object.entries(BUILTIN_APPS).map(([id, app]) => ({ id, ...app, type: 'builtin' })),
           ...PRESET_APPS.map(a => ({ ...a, type: 'preset' })),
           ...installed];
@@ -684,7 +680,7 @@ const StartMenu = {
     }
     // 按分类分组显示（带分类标题），不再一股脑堆在一起
     const groups = {};
-    apps.forEach(a => { const c = a.category || 'tool'; (groups[c] = groups[c] || []).push(a); });
+    apps.forEach(a => { const c = a.category || 'installed'; (groups[c] = groups[c] || []).push(a); });
     Object.values(groups).forEach(list => list.sort((a, b) => (a.name || '').localeCompare(b.name || '')));
     CAT_ORDER.forEach(cat => {
       const list = groups[cat];
@@ -722,8 +718,8 @@ function showCtxMenu(x, y, items) {
 function hideCtxMenu() { if (ctxEl) { ctxEl.hidden = true; ctxEl = null; } }
 
 /* ===================== 桌面渲染（自由摆放 + 分类整理） ===================== */
-const CAT_ORDER = ['system', 'ai', 'tznet', 'emu', 'game', 'tool'];
-const CAT_LABEL = { system: '系统', ai: 'AI', tznet: '天择网', emu: '模拟器', game: '游戏', tool: '我的软件' };
+const CAT_ORDER = ['system', 'ai', 'tznet', 'tool', 'installed', 'emu', 'game'];
+const CAT_LABEL = { system: '系统', ai: 'AI', tznet: '天择网', tool: '实用工具', installed: '我的软件', emu: '模拟器', game: '游戏' };
 
 const Desktop = {
   selected: null,
@@ -770,7 +766,7 @@ const Desktop = {
     const colW = 100, rowH = 100, labelH = 24;
     const maxBottom = (rect.height || (window.innerHeight - 120)) - 20;
     const groups = {};
-    apps.forEach(a => { const c = a.category || 'tool'; (groups[c] = groups[c] || []).push(a); });
+    apps.forEach(a => { const c = a.category || 'installed'; (groups[c] = groups[c] || []).push(a); });
     let col = 0;
     CAT_ORDER.forEach(cat => {
       const list = groups[cat];
@@ -1482,6 +1478,15 @@ async function fetchCocData() {
   return data;
 }
 
+// 读取本地保存的玩家村庄存档（localStorage["tz_coc_village"]，由 COC 村庄分析页保存）
+function loadVillageSave() {
+  try {
+    const raw = localStorage.getItem('tz_coc_village');
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (e) { return null; }
+}
+
 // 异步获取单词本：优先 IndexedDB（网页版同源），失败回退到示例词库
 async function readWordsVocab() {
   // 1) 尝试同源 IndexedDB（背单词应用在同一 origin 时有效）
@@ -1542,30 +1547,66 @@ function splitSub(r) {
 }
 
 const BUILTIN_APP_CMDS = {
-  /* ===== COC 数据查询（tz-coc-data）===== */
-  // coc-data：输出 COC 中文数据摘要（非 JSON）；带子命令时执行查询
+  /* ===== COC 玩家村庄存档（coc-data）===== */
+  // coc-data：读写本地保存的玩家村庄存档（localStorage["tz_coc_village"]，与村庄分析页共享）
   'coc-data': (r) => {
+    const arg = r || '';
+    const sp = arg.indexOf(' ');
+    const sub = (sp >= 0 ? arg.slice(0, sp) : arg).toLowerCase();
+    if (sub === 'clear' || sub === 'reset' || sub === 'rm') {
+      localStorage.removeItem('tz_coc_village');
+      return '已清除本地村庄存档';
+    }
+    if (sub === 'save' || sub === 'set' || sub === 'import') {
+      const json = sp >= 0 ? arg.slice(sp + 1).trim() : '';
+      if (!json) throw new Error('用法：coc-data save <村庄JSON>（JSON 需压成一行）');
+      let obj; try { obj = JSON.parse(json); } catch (e) { throw new Error('村庄 JSON 格式错误：' + e.message); }
+      const save = { village: obj, th: 0, bh: 0, ts: Date.now() };
+      try { const bs = obj.buildings || []; const th = bs.find(b => b.data === 1000001); if (th) save.th = th.lvl || 0; } catch (e) {}
+      try { localStorage.setItem('tz_coc_village', JSON.stringify(save)); } catch (e) { throw new Error('保存失败（localStorage 可能已满）：' + e.message); }
+      return '已保存村庄存档（大本 ' + (save.th || '?') + ' 级）。可用 coc-data 查看摘要，或在 COC 专区村庄分析中自动载入。';
+    }
+    const sv = loadVillageSave();
+    if (!sv) return '（暂无本地村庄存档。在 COC 专区「存档分析」粘贴村庄 JSON 后会自动保存，或用 coc-data save <JSON> 写入。）\n提示：coc-data json 输出原始村庄 JSON；coc-data save <JSON> 保存；coc-game 查询游戏静态数据。';
+    if (sub === 'json' || sub === 'raw') {
+      return typeof sv.village === 'string' ? sv.village : JSON.stringify(sv.village, null, 2);
+    }
+    if (arg && sub !== 'help' && sub !== '?') throw new Error('未知子命令：' + arg + '（coc-data [save <JSON>|json|clear|help]）');
+    const th = sv.th || '?', bh = sv.bh || '?';
+    let buildings = 0, troops = 0, heroes = 0, spells = 0;
+    try {
+      const obj = typeof sv.village === 'string' ? JSON.parse(sv.village) : sv.village;
+      buildings = (obj.buildings || []).length;
+      troops = (obj.troops || []).length;
+      heroes = (obj.heroes || []).length;
+      spells = (obj.spells || []).length;
+    } catch (e) {}
+    return '本地村庄存档摘要：\n' +
+      '  大本营：' + th + ' 级 · 夜世界大本：' + bh + ' 级\n' +
+      '  建筑：' + buildings + ' · 兵种：' + troops + ' · 英雄：' + heroes + ' · 法术：' + spells + '\n' +
+      '  保存时间：' + (sv.ts ? new Date(sv.ts).toLocaleString('zh-CN') : '未知') + '\n\n' +
+      '提示：coc-data json 输出原始村庄 JSON；coc-data save <JSON> 保存存档；coc-data clear 清除；coc-game 查询游戏静态数据。';
+  },
+  /* ===== COC 游戏静态数据查询（coc-game）===== */
+  // coc-game：查询游戏静态数据（兵种/建筑/法术等）；coc-game json 输出原始 JSON（约 2MB）
+  'coc-game': async (r) => {
     if (!r) return cocDataOverview();
     const { sub, args } = splitSub(r);
     if (sub === 'search') return cocDataSearch(args);
     if (sub === 'th' || sub === 'townhall') return cocDataByTH(args);
     if (sub === 'count' || sub === 'stats') return cocDataCount();
     if (sub === 'cat' || sub === 'category') return cocDataByCategory(args);
+    if (sub === 'json' || sub === 'raw') { const d = await fetchCocData(); return JSON.stringify(d, null, 2); }
     if (sub === 'help' || sub === '?') {
-      return 'coc-data 用法：\n' +
-        '  coc-data                  概览（版本/总数/分类统计+前若干单位）\n' +
-        '  coc-data search 名字      按中文或英文名搜索单位详情\n' +
-        '  coc-data th 大本等级      列出某大本营等级可解锁的单位\n' +
-        '  coc-data cat 类别名       列出某类别（圣水兵/暗黑兵/法术/英雄/建筑/陷阱等）下单位\n' +
-        '  coc-data count            分类统计\n' +
-        '  coc-json                  输出原始 JSON';
+      return 'coc-game 用法：\n' +
+        '  coc-game                  游戏数据概览（版本/总数/分类统计+前若干单位）\n' +
+        '  coc-game search 名字      按中文或英文名搜索单位详情\n' +
+        '  coc-game th 大本等级      列出某大本营等级可解锁的单位\n' +
+        '  coc-game cat 类别名       列出某类别（圣水兵/暗黑兵/法术/英雄/建筑/陷阱等）下单位\n' +
+        '  coc-game count            分类统计\n' +
+        '  coc-game json             输出原始游戏 JSON（约 2MB）';
     }
-    throw new Error('未知子命令：' + sub + '（coc-data help 查看用法）');
-  },
-  // coc-json：输出 COC 原始 JSON（完整，约 2MB，终端会自动折叠）
-  'coc-json': async () => {
-    const data = await fetchCocData();
-    return JSON.stringify(data, null, 2);
+    throw new Error('未知子命令：' + sub + '（coc-game help 查看用法）');
   },
 
   /* ===== 背单词（tz-words）===== */
@@ -1580,8 +1621,9 @@ const BUILTIN_APP_CMDS = {
     if (sub === 'del' || sub === 'rm') return wordsDel(args);
     if (sub === 'help' || sub === '?') {
       return 'words 用法：\n' +
-        '  words                     输出当前单词本 JSON\n' +
-        '  words add word|词性|释义  添加单词，如 words add hypothesis|n.|假设\n' +
+        '  words                     输出当前单词本 JSON（同源读取本地 IndexedDB 词库）\n' +
+        '  words add 单词|词性|释义[|例句]  添加单词；释义用 / 分隔，例句用 英文::中文、多个例句用 || 分隔\n' +
+        '      例：words add hypothesis|n.|假设/猜想|This is a hypothesis::这是一个假设\n' +
         '  words list [N]            列出前 N 个单词（默认 20）\n' +
         '  words count               统计单词总数\n' +
         '  words find 关键词         按单词或释义查找\n' +
@@ -1594,7 +1636,7 @@ const BUILTIN_APP_CMDS = {
   chat: (r) => {
     if (!r) return 'chat 用法：\n  chat clear  清空对话（保留 AI 最后一次回复）\n  chat history  查看对话历史摘要\n  chat last  查看 AI 最后一次回复\n  ask 问题  让 AI 回答（与顶层 ask 等价）';
     const { sub, args } = splitSub(r);
-    if (sub === 'clear') { Store.setChat([]); refreshOpenApp('ai-chat'); return 'AI 对话历史已清空'; }
+    if (sub === 'clear') { Store.setChat([]); refreshChatView(); return 'AI 对话历史已清空'; }
     if (sub === 'history') {
       const h = Store.getChat();
       if (!h.length) return '（暂无对话历史）';
@@ -1728,7 +1770,8 @@ const BUILTIN_APP_CMDS = {
   /* ===== 天择导航（tz-tree）===== */
   tree: (r) => {
     const cats = {
-      'tznet': '天择网（首页/新闻/博客/数据开源/AI/COC/游戏/英语）',
+      'tznet': '天择网（首页+天择导航）',
+      'tool': '实用工具（COC 专区/村庄分析/升级规划/伤害计算/背单词）',
       'system': '系统（AI 配置/对话/软件商城/设置/关于/我的软件/浏览器/命令行/时钟/文档阅读器/玩机技巧/导航）',
       'ai': 'AI（AI 配置、AI 对话）',
       'game': '游戏（绩点战争）',
@@ -1737,7 +1780,7 @@ const BUILTIN_APP_CMDS = {
     if (!r) return '天择导航分类：\n' + Object.entries(cats).map(([k, v]) => '  ' + k + ' → ' + v).join('\n') + '\n\n输入 tree 分类名 查看该分类下应用';
     const c = r.toLowerCase();
     if (!cats[c]) throw new Error('未知分类：' + c + '（' + Object.keys(cats).join('/') + '）');
-    const apps = getAllApps().filter(a => (a.category || 'tool') === c);
+    const apps = getAllApps().filter(a => (a.category || 'installed') === c);
     if (!apps.length) return '（该分类下无应用）';
     return '「' + c + '」分类下应用：\n' + apps.map(a => '  ' + a.id + '  ' + a.name + '  ' + a.desc).join('\n');
   },
@@ -1826,7 +1869,7 @@ const BUILTIN_APP_CMDS = {
   'open-data': (r) => {
     if (!r) return 'open-data 用法：\n  open-data list  列出开源数据集\n  open-data open  打开数据开源主页';
     const { sub } = splitSub(r);
-    if (sub === 'list') return '天择网开源数据集：\n  · COC 完整游戏数据（v18.400.9，272 个单位，coc-json 输出）\n  · COC 单位中文介绍与等级数据\n  · 单词本示例（sample-vocab.json）\n  · GRE 词汇表（gre-vocab.json）\n  · 天择OS 源代码\n\n输入 open-data open 打开主页查看全部';
+    if (sub === 'list') return '天择网开源数据集：\n  · COC 完整游戏数据（v18.400.9，272 个单位，coc-game json 输出）\n  · COC 单位中文介绍与等级数据\n  · 单词本示例（sample-vocab.json）\n  · GRE 词汇表（gre-vocab.json）\n  · 天择OS 源代码\n\n输入 open-data open 打开主页查看全部';
     if (sub === 'open') { openInOsBrowser(TZNET_BASE + 'open/index.html'); return '已打开数据开源主页'; }
     throw new Error('未知子命令：' + sub);
   },
@@ -1844,7 +1887,7 @@ const BUILTIN_APP_CMDS = {
   coc: (r) => {
     if (!r) return 'coc 用法：\n  coc list  COC 专区板块列表\n  coc open  打开 COC 专区主页';
     const { sub } = splitSub(r);
-    if (sub === 'list') return 'COC 专区板块：\n  · tz-coc-data 数据查询（命令 coc-data）\n  · tz-coc-village 村庄分析（命令 village）\n  · tz-coc-planner 升级规划（命令 planner）\n  · tz-coc-dmg 伤害计算（命令 dmg）';
+    if (sub === 'list') return 'COC 专区板块：\n  · 数据查询（命令 coc-game，或专区主页「数据查询」按钮）\n  · 玩家村庄存档（命令 coc-data，读本地保存的存档）\n  · tz-coc-village 村庄分析（命令 village）\n  · tz-coc-planner 升级规划（命令 planner）\n  · tz-coc-dmg 伤害计算（命令 dmg）';
     if (sub === 'open') { openInOsBrowser(TZNET_BASE + 'coc/index.html'); return '已打开 COC 专区'; }
     throw new Error('未知子命令：' + sub);
   },
@@ -1964,11 +2007,11 @@ async function cocDataOverview() {
   const sample = units.slice(0, 15).map((u, i) => (i + 1) + '. ' + u.chineseName + '（' + u.englishName + '）' + u.category + ' · ' + (u.levels ? u.levels.length : (u.levelRows ? u.levelRows.length : '?')) + ' 级').join('\n');
   return '天择 COC 完整数据 · 版本 ' + (meta.version || '?') + '\n' +
     '总单位数：' + (meta.totalUnits || units.length) + ' · 类别：' + catStr + '\n\n' +
-    '单位列表（前 15 个，完整列表用 coc-data cat 类别名）：\n' + sample + '\n\n' +
-    '提示：coc-data search 名字 查看单位详情；coc-data th 等级 列出某大本营可解锁单位；coc-json 输出原始 JSON。';
+    '单位列表（前 15 个，完整列表用 coc-game cat 类别名）：\n' + sample + '\n\n' +
+    '提示：coc-game search 名字 查看单位详情；coc-game th 等级 列出某大本营可解锁单位；coc-game json 输出原始 JSON。';
 }
 async function cocDataSearch(q) {
-  need(q, 'coc-data search 名字');
+  need(q, 'coc-game search 名字');
   const data = await fetchCocData();
   const units = data.units || [];
   const ql = q.toLowerCase();
@@ -2005,7 +2048,7 @@ async function cocDataSearch(q) {
   }).join('\n\n');
 }
 async function cocDataByTH(th) {
-  need(th, 'coc-data th 大本等级');
+  need(th, 'coc-game th 大本等级');
   const n = parseInt(th, 10);
   if (!(n >= 1 && n <= 16)) throw new Error('大本等级 1-16');
   const data = await fetchCocData();
@@ -2018,7 +2061,7 @@ async function cocDataByTH(th) {
   return '大本营 ' + n + ' 级可解锁单位（共 ' + hits.length + ' 个）：\n' + hits.map(u => '  ' + u.chineseName + '（' + u.englishName + '）' + u.category).join('\n');
 }
 async function cocDataByCategory(cat) {
-  need(cat, 'coc-data cat 类别名');
+  need(cat, 'coc-game cat 类别名');
   const data = await fetchCocData();
   const units = data.units || [];
   const hits = units.filter(u => (u.category || '').includes(cat));
@@ -2060,18 +2103,28 @@ async function wordsFind(q) {
   return '匹配 ' + hits.length + ' 个：\n' + hits.map(w => '  ' + (w.word || '?') + ' ' + (w.phonetic || '') + ' ' + (w.pos || '') + ' ' + (Array.isArray(w.meaning) ? w.meaning.join('；') : (w.meaning || ''))).join('\n');
 }
 async function wordsAdd(r) {
-  need(r, 'words add word|词性|释义');
-  const p = r.split('|').map(s => s.trim());
-  if (p.length < 2) throw new Error('用法：words add word|词性|释义（释义可多个用 / 分隔）');
-  const word = p[0]; const pos = p[1] || ''; const meanings = (p[2] || '').split('/').map(s => s.trim()).filter(Boolean);
+  need(r, 'words add word|词性|释义[|例句]');
+  const parts = r.split('|').map(s => s.trim());
+  if (parts.length < 2) throw new Error('用法：words add 单词|词性|释义[|例句]\n  释义多个用 / 分隔；例句格式 英文::中文，多个例句用 || 分隔\n  例：words add hypothesis|n.|假设/猜想|This is a hypothesis::这是一个假设||Another example::另一个例子');
+  const word = parts[0]; const pos = parts[1] || '';
+  const meanings = (parts[2] || '').split('/').map(s => s.trim()).filter(Boolean);
+  // 例句：第 4 段起，用 || 分隔多个例句，每个例句「英文::中文」
+  const examples = [];
+  if (parts[3]) {
+    parts.slice(3).join('|').split('||').forEach(ex => {
+      const m = ex.split('::').map(s => s.trim());
+      if (m[0]) examples.push({ en: m[0], zh: m[1] || '' });
+    });
+  }
   const { words } = await readWordsVocab();
   if (words.some(w => (w.word || '').toLowerCase() === word.toLowerCase())) return '「' + word + '」已在单词本中';
-  const item = { word, pos, meaning: meanings.length ? meanings : [p[2] || ''] };
-  if (pos) item.pos = pos;
+  const item = { word, pos, meaning: meanings.length ? meanings : (parts[2] ? [parts[2]] : ['']) };
+  if (examples.length) item.examples = examples;
   words.push(item);
   const ok = await writeWordsVocab(words);
-  if (ok) return '已添加单词：' + word + '（' + item.meaning.join('；') + '）';
-  return '⚠ 添加仅在内存生效（桌面版跨域无法写入 IndexedDB）。请在背单词应用内手动添加：\n  ' + word + ' ' + pos + ' ' + item.meaning.join('；');
+  const exTip = examples.length ? '（含 ' + examples.length + ' 条例句）' : '';
+  if (ok) return '已添加单词：' + word + '（' + item.meaning.join('；') + '）' + exTip;
+  return '⚠ 添加仅在内存生效（桌面版跨域无法写入 IndexedDB）。请在背单词应用内手动添加：\n  ' + word + ' ' + pos + ' ' + item.meaning.join('；') + exTip;
 }
 async function wordsDel(r) {
   need(r, 'words del 编号');
@@ -2171,9 +2224,9 @@ const CLI = {
 '  timer 时长                  倒计时，如 timer 5m / timer 90s / timer 1h30m\n' +
 '── 天择网专区直达 ──\n' +
 '  coc list|open               COC 专区板块/打开专区\n' +
-'  coc-data [子命令]           COC 中文数据（非 JSON）；子命令：\n' +
-'    search 名字 | th 等级 | cat 类别 | count | help\n' +
-'  coc-json                    输出 COC 原始 JSON（约 2MB）\n' +
+'  coc-data [save <JSON>|json|clear|help]  读写本地玩家村庄存档\n' +
+'  coc-game [子命令]           COC 游戏静态数据查询；子命令：\n' +
+'    search 名字 | th 等级 | cat 类别 | count | json | help\n' +
 '  village info|open           村庄分析介绍/打开\n' +
 '  planner info|open           升级规划介绍/打开\n' +
 '  dmg info|quake HP [等级]|open 伤害计算/地震规则/打开\n' +
@@ -2218,7 +2271,7 @@ const CLI = {
 '· 通知/对话：clear chat | notify 文本\n' +
 '· 浏览器：openurl 网址 | browser tabs|closeall|home | home sections|open 板块 | news [编号] | blog [编号] | bm / bm add 网址|标题 / bm del 编号\n' +
 '· 时钟：clock | clock-now | stopwatch [start|stop|reset] | timer 时长(如5m)\n' +
-'· 天择网专区：coc list|open | coc-data [search 名字|th 等级|cat 类别|count] | coc-json | village info|open | planner info|open | dmg info|quake HP|open | game list|open | gpa info|open|rules | english list|open | ai-zone list|open | open-data list|open | tree [分类]\n' +
+'· 天择网专区：coc list|open | coc-data [save <JSON>|json|clear] | coc-game [search 名字|th 等级|cat 类别|count|json] | village info|open | planner info|open | dmg info|quake HP|open | game list|open | gpa info|open|rules | english list|open | ai-zone list|open | open-data list|open | tree [分类]\n' +
 '· 单词本：words | words add word|词性|释义 | words list [N] | words count | words find 关键词 | words del 编号\n' +
 '· 文档/技巧：docs open URL|recent | tips [编号] | emu-win/emu-win10/emu-android info|open\n' +
 '· 用户安装的 AI 软件：cmd 应用id 指令 [参数]（cmd list 查看注册的命令）\n' +
@@ -2357,7 +2410,7 @@ const CLI = {
         const h = Store.getChat();
         const lastAi = [...h].reverse().find(m => m.role === 'ai');
         Store.setChat(lastAi ? [lastAi] : []);
-        refreshOpenApp('ai-chat');
+        refreshChatView();
         return lastAi ? 'AI 对话历史已清空（保留了 AI 最后一次回复）' : 'AI 对话历史已清空';
       }
       if (r === 'notifs') { Store.clearNotifs(); return '通知已清空'; }
@@ -2416,7 +2469,7 @@ const CLI = {
       setTimeout(() => { try { if (w && w.body) startCountdownInApp(w.body, sec); } catch (e) {} }, 120);
       return '倒计时 ' + sec + ' 秒已开始';
     },
-    // 软件直达（coc-data 与 words 已升级为数据输出命令，见 BUILTIN_APP_CMDS）
+    // 软件直达（coc-data 玩家存档 / coc-game 游戏数据 / words 词库 均为数据输出命令，见 BUILTIN_APP_CMDS）
     // 问 AI：仅用户可调用（AI 命令行模式禁止调用，见 exec 守卫）
     ask: (r) => {
       need(r, 'ask 问题');
@@ -2576,7 +2629,7 @@ const Shot = {
       track.onended = () => {
         // 用户从浏览器 UI 停止了共享 → 自动关闭开关
         this.stream = null; this.video = null;
-        if (Store.getScreenshotMode()) { Store.setScreenshotMode(false); refreshOpenApp('settings'); refreshOpenApp('ai-chat'); toast('屏幕共享已停止，自动截图已关闭'); }
+        if (Store.getScreenshotMode()) { Store.setScreenshotMode(false); refreshOpenApp('settings'); refreshChatView(); toast('屏幕共享已停止，自动截图已关闭'); }
       };
       const v = document.createElement('video');
       v.srcObject = this.stream; v.muted = true;
@@ -2662,8 +2715,11 @@ function initClockApp() {
     const b = $('#clockBig'); if (b) b.textContent = d.toLocaleTimeString('zh-CN', { hour12: false });
     const dd = $('#clockDate'); if (dd) dd.textContent = fmtDate(d) + ' 星期' + '日一二三四五六'[d.getDay()];
   };
-  tick(); const clockTimer = setInterval(tick, 1000);
-  root.addEventListener('DOMNodeRemoved', () => clearInterval(clockTimer), { once: true });
+  tick(); const clockTimer = setInterval(() => {
+    // 自检：root 仍在 DOM 中才继续走表（替代废弃的 DOMNodeRemoved 事件，避免误触发导致时钟走 1 秒就停）
+    if (!document.body.contains(root)) { clearInterval(clockTimer); return; }
+    tick();
+  }, 1000);
   // 秒表
   let swT0 = 0, swAcc = 0, swRun = false, swRaf = 0;
   const swBig = $('#swBig');
@@ -3264,7 +3320,7 @@ window.TZOS.saveConfig = function() {
   if (Store.getAICaps().image === false && Store.getScreenshotMode()) { Store.setScreenshotMode(false); Shot.stop(); }
   toast('配置已保存');
   refreshOpenApp('ai-config');
-  refreshOpenApp('ai-chat');
+  refreshChatView();
 };
 // 用当前 URL + Key 调 /models 拉取接口支持的模型列表，填入 datalist 供选择（仍可自定义手填）
 window.TZOS.fetchModels = async function() {
@@ -3397,11 +3453,19 @@ function reasoningHtml(reasoning, ongoing) {
   const tag = ongoing ? '（进行中…）' : '';
   return `<details class="msg-reasoning"${ongoing?' open':''} style="margin-bottom:6px"><summary style="cursor:pointer;color:var(--ink-faint);font-size:12px">🧠 思考过程${tag}</summary><div style="font-size:12px;color:var(--ink-faint);line-height:1.6;padding:6px 8px;background:var(--surface);border-radius:6px;margin-top:4px;white-space:pre-wrap">${escapeHtml(reasoning)}</div></details>`;
 }
+// 刷新 AI 对话视图：悬浮窗模式下重新渲染 floatRoot，否则刷新 ai-chat 应用窗口
+function refreshChatView() {
+  if (window.__tzFloatMode) {
+    const root = document.getElementById('floatRoot');
+    if (root) { root.innerHTML = renderAIChat(); initChat('float-chat-win', true); return; }
+  }
+  refreshChatView();
+}
 function initChat(winId) {
   // 豆包网页嵌入模式：只绑定切换按钮 + iframe 加载隐藏提示
   if (Store.getProvider() === 'doubao') {
     const provBtn = $('#chatProvider');
-    if (provBtn) provBtn.onclick = () => { Store.setProvider('custom'); toast('已切换为 ⚙️ 自定义AI'); refreshOpenApp('ai-chat'); };
+    if (provBtn) provBtn.onclick = () => { Store.setProvider('custom'); toast('已切换为 ⚙️ 自定义AI'); refreshChatView(); };
     const f = $('#doubaoFrame');
     const hint = $('#doubaoHint');
     if (f && hint) {
@@ -3482,7 +3546,7 @@ function initChat(winId) {
     const next = Store.getProvider()==='doubao' ? 'custom' : 'doubao';
     Store.setProvider(next);
     toast('已切换为 ' + (next==='doubao'?'🫘 豆包AI':'⚙️ 自定义AI'));
-    refreshOpenApp('ai-chat');
+    refreshChatView();
   };
   const deepBtn = $('#chatDeep');
   if (deepBtn) deepBtn.onclick = () => {
@@ -3515,7 +3579,7 @@ function initChat(winId) {
     const ok = await confirmDialog({ title: '清空对话', message: '清空当前对话历史？', confirmText: '清空', danger: true });
     if (!ok) return;
     Store.setChat([]);
-    refreshOpenApp('ai-chat');
+    refreshChatView();
   };
 }
 // token 用量格式化（缓存命中/缓存写入/普通输入/输出/总量 + 按单价估算费用）
@@ -3855,7 +3919,7 @@ async function regenerateMessage(i) {
   const userText = history[ui].content;
   history.splice(ui + 1); // 删除该 AI 消息及之后的全部
   Store.setChat(history);
-  refreshOpenApp('ai-chat');
+  refreshChatView();
   await runGeneration(userText);
 }
 
@@ -3873,7 +3937,7 @@ async function sendChat() {
     if (!isNaN(i) && i >= 0 && i < history.length) {
       history.splice(i);
       Store.setChat(history);
-      refreshOpenApp('ai-chat');
+      refreshChatView();
     }
   }
   input.value = ''; input.style.height = 'auto';
@@ -4072,7 +4136,7 @@ async function runGeneration(userText) {
     scrollChatToBottom(msgs, sess);
   } else {
     // 窗口在生成期间被关闭后又重开：新窗口渲染的是旧历史，这里把已入库的最新对话刷新进去
-    refreshOpenApp('ai-chat');
+    refreshChatView();
   }
   updateContextBar(sess, [{ role: 'system', content: sysContent }, ...baseHistory], usage);
   if (!stopped && full && !agentOn) Mem.autoLearn(userText, full);
@@ -4391,7 +4455,7 @@ function initSettings() {
     ag.classList.toggle('on', next);
     toast('AI 命令行模式已' + (next ? '开启（自动写入记忆已交给命令行）' : '关闭'), 3200);
     refreshOpenApp('ai-config');
-    refreshOpenApp('ai-chat');
+    refreshChatView();
   };
   // 自动截图开关（首次开启需授权屏幕共享）
   const st = $('#shotModeTg');
@@ -4407,7 +4471,7 @@ function initSettings() {
     }
     Store.setScreenshotMode(next);
     st.classList.toggle('on', next);
-    refreshOpenApp('ai-chat');
+    refreshChatView();
     toast('自动截图已' + (next ? '开启（请确认模型支持视觉）' : '关闭'));
   };
   // 已有待更新信息时直接显示
@@ -4775,10 +4839,11 @@ const TZ_TREE = [
   { name: '博客', icon: '✍️', url: 'blog/index.html' },
   { name: '数据开源', icon: '🔓', url: 'open/index.html' },
   { name: 'AI 专区', icon: '🤖', url: 'ai/index.html', children: [
-    { name: 'AI 技能（TLH 课本学习助手）', icon: '📚', url: 'ai/skill/tlh/index.html' },
-    { name: 'AI 词库转换', icon: '🔄', url: 'ai/skill/vocab-to-json/index.html' }
+    { name: 'TLH 课本学习助手', icon: '📚', url: 'ai/skill/tlh/index.html' },
+    { name: '词库转换工具', icon: '🔄', url: 'ai/skill/vocab-to-json/index.html' }
   ]},
   { name: 'COC 专区', icon: '🛡️', url: 'coc/index.html', children: [
+    { name: '实时存档分析', icon: '📋', url: 'coc/index.html' },
     { name: '数据查询', icon: '📊', url: 'coc/data/index.html' },
     { name: '村庄分析', icon: '🏘️', url: 'coc/village/index.html' },
     { name: '升级规划', icon: '📅', url: 'coc/planner/index.html' },
@@ -4790,7 +4855,8 @@ const TZ_TREE = [
   { name: '英语专区', icon: '📖', url: 'english/index.html', children: [
     { name: '天择背单词', icon: '📚', url: 'english/words/index.html' }
   ]},
-  { name: '天择OS', icon: '🖥️', url: 'os/index.html' }
+  { name: '天择OS', icon: '🖥️', url: 'os/index.html' },
+  { name: '联系开发者', icon: '📬', url: 'contact/index.html' }
 ];
 // 打开任意天择网页面为一个新窗口（树状导航用）
 function openTzPage(name, icon, url) {
@@ -4847,7 +4913,7 @@ function renderBrowser() {
       <button class="btn sm" id="brGo">前往</button>
       <button class="btn sm ghost" id="brBookmark" title="收藏/取消收藏当前页">☆</button>
       <button class="btn sm ghost" id="brBookmarkList" title="收藏夹">📑</button>
-      <button class="btn sm ghost" id="brNewTab" title="在OS内新标签页打开当前网址">↗</button>
+      <button class="btn sm ghost" id="brNewTab" title="在系统外（系统浏览器）打开当前网址">↗</button>
     </div>
     <div id="brBmPanel" style="display:none;border-bottom:1px solid var(--glass-border);background:var(--glass-strong);max-height:220px;overflow-y:auto"></div>
     <div id="brViews" style="flex:1;position:relative;background:#fff;min-height:0"></div>
@@ -5021,7 +5087,7 @@ function initBrowser() {
   $('#brGo').onclick = () => navigate(activeId, urlInput.value);
   urlInput.onkeydown = (e) => { if (e.key === 'Enter') navigate(activeId, urlInput.value); };
   // ↗ 在 OS 内新标签页打开当前网址（不再 window.open 外跳）
-  $('#brNewTab').onclick = () => { const t = tabs.find(x => x.id === activeId); const u = urlInput.value || (t && t.url) || ''; newTab(u); };
+  $('#brNewTab').onclick = () => { const t = tabs.find(x => x.id === activeId); const u = urlInput.value || (t && t.url) || ''; if (!u) return; try { if (window.tzDesktop && window.tzDesktop.openExternal) window.tzDesktop.openExternal(u); else window.open(u, '_blank'); } catch (e) { window.open(u, '_blank'); } };
   $('#brBack').onclick = () => { const t = tabs.find(x => x.id === activeId); if (t && t.hi > 0) { t.hi--; navigate(t.id, t.history[t.hi], false); } };
   $('#brFwd').onclick = () => { const t = tabs.find(x => x.id === activeId); if (t && t.hi < t.history.length - 1) { t.hi++; navigate(t.id, t.history[t.hi], false); } };
   $('#brReload').onclick = () => { const t = tabs.find(x => x.id === activeId); if (t && t.url) t.frame.src = t.url; };
@@ -5640,10 +5706,15 @@ function createFloatOverlay() {
   const aiCfg = Store.getAIConfig();
   _floatOverlay = el('div', 'tz-float-overlay');
   _floatOverlay.id = 'tzFloatOverlay';
+  // v3.1：记忆位置与大小（localStorage，下次打开恢复）
+  let _fb = null; try { _fb = JSON.parse(localStorage.getItem('tz_float_bounds') || 'null'); } catch (e) {}
+  _fb = _fb || {};
+  const _hasPos = (_fb.left != null && _fb.top != null);
   Object.assign(_floatOverlay.style, {
     position: 'fixed', zIndex: '2147483640',
-    width: '420px', height: '520px', minWidth: '320px', minHeight: '320px',
-    right: '20px', top: '80px',
+    width: _fb.width ? _fb.width + 'px' : '420px', height: _fb.height ? _fb.height + 'px' : '520px', minWidth: '320px', minHeight: '320px',
+    left: _hasPos ? _fb.left + 'px' : '', top: _hasPos ? _fb.top + 'px' : '80px',
+    right: _hasPos ? 'auto' : '20px',
     background: 'var(--glass-strong)', backdropFilter: 'blur(28px) saturate(170%)',
     border: '2px solid rgba(139,92,246,0.45)', borderRadius: '12px',
     boxShadow: '0 8px 40px rgba(139,92,246,0.25), 0 12px 48px rgba(0,0,0,0.5)',
@@ -5651,6 +5722,10 @@ function createFloatOverlay() {
     resize: 'both', fontFamily: 'inherit', color: 'var(--ink)',
     animation: 'tzFloatIn 0.22s cubic-bezier(0.16,1,0.3,1)'
   });
+  // 保存位置/大小到 localStorage
+  const _saveFloatBounds = () => {
+    try { localStorage.setItem('tz_float_bounds', JSON.stringify({ left: _floatOverlay.offsetLeft, top: _floatOverlay.offsetTop, width: _floatOverlay.offsetWidth, height: _floatOverlay.offsetHeight })); } catch (e) {}
+  };
 
   // 标题栏
   const titleBar = el('div', '');
@@ -5666,7 +5741,7 @@ function createFloatOverlay() {
   titleText.style.cssText = 'font-size:12px;color:#a78bfa;flex:1';
   const closeBtn = el('button', '', '✕');
   closeBtn.style.cssText = 'width:22px;height:22px;border-radius:50%;border:none;background:#ff5f57;color:#5b0700;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center';
-  closeBtn.onclick = () => { _floatOverlay.remove(); _floatOverlay = null; };
+  closeBtn.onclick = () => { _saveFloatBounds(); _floatOverlay.remove(); _floatOverlay = null; };
   titleBar.append(titleIcon, titleText, closeBtn);
 
   // 拖拽
@@ -5685,7 +5760,7 @@ function createFloatOverlay() {
     _floatOverlay.style.top = Math.max(0, st + (e.clientY - sy)) + 'px';
     _floatOverlay.style.right = 'auto';
   });
-  titleBar.addEventListener('pointerup', () => { dragging = false; _floatOverlay.style.transition = ''; });
+  titleBar.addEventListener('pointerup', () => { dragging = false; _floatOverlay.style.transition = ''; _saveFloatBounds(); });
 
   // 聊天内容区：内嵌 iframe 加载独立对话页
   const chatFrame = el('iframe', '');
@@ -5694,6 +5769,8 @@ function createFloatOverlay() {
   chatFrame.srcdoc = buildFloatChatHTML();
   _floatOverlay.append(titleBar, chatFrame);
   document.body.appendChild(_floatOverlay);
+  // v3.1：大小变化时保存位置/大小
+  try { new ResizeObserver(() => _saveFloatBounds()).observe(_floatOverlay); } catch (e) {}
 
   // 加载 KaTeX
   const katexCss = document.createElement('link');
