@@ -36,6 +36,9 @@
     .os-note { text-align: center; color: var(--ink-faint); font-size: 13px; margin-top: 26px; line-height: 1.7; }
     .os-note b { color: var(--ink-dim); }
     @media (max-width: 860px) { .os-pick { grid-template-columns: 1fr; } }
+    /* 下载按钮加载状态 */
+    .btn[data-loading] { opacity: .65; pointer-events: none; }
+    .dl-meta { font-size: 12px; color: var(--ink-muted); margin-top: 8px; text-align: center; min-height: 16px; }
   </style>
 </head>
 <body>
@@ -72,9 +75,14 @@
             <li>AI 接口免跨域，调用更稳定</li>
             <li>桌面快捷方式、开机自启一应俱全</li>
           </ul>
-          <a class="btn" href="https://wjtianze.github.io/os/downloads/tianze-os-setup-3.1.0.exe" download>
-            <span>下载 Windows 安装包（v3.1）</span><span>↓</span>
+          <a class="btn" id="os-dl-btn"
+             href="https://github.com/wjtianze/wjtianze.github.io/releases/download/v3.1.0/tianze-os-setup-3.1.0.exe"
+             download
+             data-fallback-url="https://github.com/wjtianze/wjtianze.github.io/releases/download/v2.0.0/tianze-os-setup-2.0.0.exe"
+             data-fallback-ver="v2.0">
+            <span id="os-dl-text">下载 Windows 安装包（v3.1）</span><span>↓</span>
           </a>
+          <div class="dl-meta" id="os-dl-meta">检测中…</div>
         </div>
         <div class="card os-card w reveal d2">
           <div class="oc-icon">🌐</div>
@@ -179,5 +187,59 @@
   </footer>
 
   <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260722a"></script>
+  <script>
+  // 自动检测 GitHub Release 是否已发布
+  // 原理：HEAD 请求 v3.1.0 release 的 asset URL，存在则用最新版；
+  // 不存在则切到 v2.0.0 fallback（仓库里已发布的最后一个版本）。
+  (function () {
+    var btn = document.getElementById('os-dl-btn');
+    var text = document.getElementById('os-dl-text');
+    var meta = document.getElementById('os-dl-meta');
+    if (!btn || !text || !meta) return;
+
+    var primary = btn.getAttribute('href');
+    var fallbackUrl = btn.getAttribute('data-fallback-url');
+    var fallbackVer = btn.getAttribute('data-fallback-ver');
+
+    // 抽出版本号（v3.1.0 → v3.1）和文件名
+    function parseRelease(url) {
+      var m = url.match(/v(\d+)\.(\d+)(?:\.(\d+))?\/([^/?#]+)\.exe$/);
+      if (!m) return null;
+      var shortVer = 'v' + m[1] + '.' + m[2];
+      var fileSize = '';
+      return { url: url, short: shortVer, file: m[4] + '.exe' };
+    }
+
+    function setBtn(url, shortVer) {
+      btn.setAttribute('href', url);
+      btn.removeAttribute('data-fallback-url');
+      btn.removeAttribute('data-fallback-ver');
+      text.textContent = '下载 Windows 安装包（' + shortVer + '）';
+    }
+
+    function setMeta(msg) { meta.textContent = msg; }
+
+    // 用 HEAD 请求探测 release asset 是否存在（GitHub 会返回 302/200 存在，404 不存在）
+    function probe(url) {
+      return fetch(url, { method: 'HEAD', redirect: 'follow' })
+        .then(function (r) { return r.ok; })
+        .catch(function () { return false; });
+    }
+
+    btn.setAttribute('data-loading', '');
+    probe(primary).then(function (ok) {
+      btn.removeAttribute('data-loading');
+      if (ok) {
+        var info = parseRelease(primary);
+        setMeta('来自 GitHub Releases · v3.1 官方发布版');
+        if (info) setBtn(primary, info.short);
+      } else {
+        // 主版本未发布 → fallback
+        setBtn(fallbackUrl, fallbackVer);
+        setMeta('v3.1 暂未发布 · 已自动切到上一个已发布版本 ' + fallbackVer);
+      }
+    });
+  })();
+  </script>
 </body>
 </html>
