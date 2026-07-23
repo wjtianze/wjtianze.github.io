@@ -1782,7 +1782,7 @@ const UI = {
       spellExtra.removeAttribute("hidden");
       TTS.disableBtn($("#stTts"));
       inputEl.focus();
-      $("#stSubmit").setAttribute("hidden", ""); $("#stSubmit").textContent = "\u63d0\u4ea4";
+      $("#stSubmit").removeAttribute("hidden"); $("#stSubmit").textContent = "\u2713 \u63d0\u4ea4\u62fc\u5199";
     } else {
       optsEl.style.display = ""; inputEl.setAttribute("hidden", ""); spellExtra.setAttribute("hidden", "");
       promptEl.className = "q-prompt";
