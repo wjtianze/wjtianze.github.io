@@ -896,17 +896,12 @@ body.tzos.light .term-input-row input { color: #1e293b; }
 .clock-laps { font-size: 12px; color: var(--ink-muted); max-height: 90px; overflow-y: auto; }
 .clock-quick { display: flex; gap: 6px; }
 
-/* ---------- 文档阅读器（标签页多文档全屏） ---------- */
+/* ---------- 文档阅读器（标签页并入标题栏，v3.1.1 起取消缩放栏仅 Ctrl+滚轮） ---------- */
 .doc-app { display: flex; flex-direction: column; height: 100%; }
 .doc-app.drag .doc-stage { outline: 2px dashed var(--c-blue); outline-offset: -6px; }
-.doc-tabs { display: flex; align-items: center; gap: 4px; padding: 6px 8px; border-bottom: 1px solid var(--glass-border); background: var(--surface); overflow-x: auto; flex-shrink: 0; }
-.doc-tab { display: flex; align-items: center; gap: 6px; padding: 5px 8px 5px 12px; border-radius: 8px; font-size: 12px; color: var(--ink-dim); background: var(--surface-2); border: 1px solid var(--glass-border); white-space: nowrap; transition: background 0.15s; max-width: 180px; }
-.doc-tab .dt-label { overflow: hidden; text-overflow: ellipsis; }
-.doc-tab.active { background: var(--grad-main); color: #fff; border-color: transparent; }
+.doc-tab .dt-label { overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
 .doc-tab .dt-x { opacity: 0.6; padding: 0 3px; border-radius: 4px; }
 .doc-tab .dt-x:hover { opacity: 1; background: rgba(239,68,68,0.3); }
-.doc-newtab { flex-shrink: 0; padding: 5px 12px; border-radius: 8px; font-size: 12px; color: var(--c-blue); background: rgba(59,130,246,0.1); border: 1px dashed rgba(59,130,246,0.4); white-space: nowrap; transition: background 0.15s; }
-.doc-newtab:hover { background: rgba(59,130,246,0.2); }
 .doc-stage { flex: 1; min-height: 0; position: relative; overflow: hidden; }
 .doc-open { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 30px; text-align: center; }
 .doc-open-icon { font-size: 52px; opacity: 0.6; }
@@ -928,16 +923,48 @@ body.tzos.light .doc-pane { background: rgba(255,255,255,0.5); }
 .doc-slide { background: var(--surface); border: 1px solid var(--glass-border); border-radius: 10px; padding: 14px 16px; margin: 12px 0; }
 .doc-slide-no { font-size: 11px; color: var(--c-violet); font-weight: 700; margin-bottom: 8px; }
 .doc-slide-line { font-size: 13.5px; color: var(--ink-dim); line-height: 1.7; padding: 1px 0; }
+/* Ctrl+滚轮缩放时的瞬时百分比提示 */
+.doc-zoom-tip { position: absolute; right: 16px; bottom: 14px; z-index: 5; padding: 5px 12px; border-radius: 999px; background: var(--glass-strong); border: 1px solid var(--glass-border); color: var(--ink); font-size: 12.5px; box-shadow: var(--sh-md); opacity: 0; transition: opacity 0.25s; pointer-events: none; backdrop-filter: blur(12px); }
+.doc-zoom-tip.show { opacity: 1; }
 
-/* ---------- 文档阅读器缩放工具栏 ---------- */
-.doc-zoombar { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 10px; border-bottom: 1px solid var(--glass-border); background: var(--surface); flex-shrink: 0; }
-.doc-zoombar[hidden] { display: none; }
-.dz-btn { width: 28px; height: 26px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--glass-border); color: var(--ink-dim); font-size: 15px; line-height: 1; display: flex; align-items: center; justify-content: center; transition: background 0.14s; }
-.dz-btn:hover { background: var(--hover); color: var(--ink); }
-.dz-value { position: relative; width: 84px; height: 26px; }
-.dz-value input { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0 22px 0 6px; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--surface-2); color: var(--ink); font-size: 12px; text-align: right; outline: none; }
-.dz-value input:focus { border-color: var(--c-blue); }
-.dz-value select { position: absolute; right: 2px; top: 2px; bottom: 2px; width: 18px; border: none; background: transparent; color: transparent; cursor: pointer; outline: none; }
+/* ---------- 笔记（Markdown / LaTeX） ---------- */
+.notes-app { display: flex; height: 100%; min-height: 0; }
+.notes-side { width: 200px; flex-shrink: 0; border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; padding: 10px; gap: 8px; min-height: 0; }
+.notes-new { width: 100%; flex-shrink: 0; }
+.notes-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; min-height: 0; }
+.notes-empty { color: var(--ink-faint); font-size: 12px; text-align: center; padding: 30px 6px; line-height: 1.8; }
+.notes-item { padding: 7px 9px; border-radius: 8px; cursor: pointer; border: 1px solid transparent; transition: background 0.13s; }
+.notes-item:hover { background: var(--hover); }
+.notes-item.active { background: rgba(139,92,246,0.16); border-color: rgba(139,92,246,0.38); }
+.ni-title { font-size: 13px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ni-sub { font-size: 11px; color: var(--ink-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.notes-main { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.notes-toolbar { display: flex; gap: 8px; align-items: center; padding: 10px 12px 6px; flex-shrink: 0; }
+.notes-title { flex: 1; min-width: 0; }
+.notes-modes { display: flex; gap: 2px; background: var(--surface-2); border: 1px solid var(--glass-border); border-radius: 8px; padding: 2px; flex-shrink: 0; }
+.notes-mode { border: none; background: transparent; color: var(--ink-muted); padding: 4px 9px; border-radius: 6px; cursor: pointer; font-size: 13px; line-height: 1; }
+.notes-mode:hover { color: var(--ink); }
+.notes-mode.active { background: rgba(139,92,246,0.28); color: var(--ink); }
+.notes-body { flex: 1; display: flex; gap: 8px; padding: 6px 12px 8px; min-height: 0; }
+.notes-editor { flex: 1; min-width: 0; resize: none; background: var(--surface); border: 1px solid var(--glass-border); border-radius: 10px; padding: 12px; color: var(--ink); font: 13px/1.7 "Cascadia Mono", Consolas, "Segoe UI", "PingFang SC", "Microsoft YaHei", monospace; outline: none; }
+.notes-editor:focus { border-color: var(--c-violet); }
+.notes-preview { flex: 1; min-width: 0; overflow-y: auto; padding: 4px 14px; border-radius: 10px; background: var(--surface); border: 1px solid var(--glass-border); font-size: 14px; line-height: 1.75; color: var(--ink-dim); }
+.notes-body.edit .notes-preview { display: none; }
+.notes-body.prev .notes-editor { display: none; }
+.notes-preview h1, .notes-preview h2, .notes-preview h3, .notes-preview h4, .notes-preview h5, .notes-preview h6 { color: var(--ink); margin: 12px 0 6px; line-height: 1.4; }
+.notes-preview h1 { font-size: 1.35em; } .notes-preview h2 { font-size: 1.2em; } .notes-preview h3 { font-size: 1.1em; }
+.notes-preview p { margin: 7px 0; }
+.notes-preview ul, .notes-preview ol { margin: 6px 0; padding-left: 22px; }
+.notes-preview li { margin: 2px 0; }
+.notes-preview blockquote { margin: 8px 0; padding: 6px 12px; border-left: 3px solid var(--c-violet); background: var(--surface-2); border-radius: 0 8px 8px 0; color: var(--ink-muted); }
+.notes-preview pre { background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px; overflow-x: auto; margin: 8px 0; font-size: 12px; }
+body.tzos.light .notes-preview pre { background: rgba(15,23,42,0.06); }
+.notes-preview code { font-family: "Cascadia Mono", Consolas, monospace; font-size: 0.92em; }
+.notes-preview .md-ic { background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+.notes-preview hr { border: none; border-top: 1px solid var(--glass-border); margin: 12px 0; }
+.notes-preview .md-img { max-width: 100%; border-radius: 8px; }
+.notes-preview .md-link { color: var(--c-blue); }
+.notes-status { padding: 0 14px 8px; font-size: 11px; color: var(--ink-faint); flex-shrink: 0; }
 
 /* ---------- AI 配置左右分栏 ---------- */
 .app-config.cfg-split { max-width: 980px; display: grid; grid-template-columns: 1fr 1fr; gap: 26px; padding: 22px; }

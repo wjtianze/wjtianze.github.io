@@ -59,7 +59,7 @@
     <section class="section wrap" style="padding-top:44px;">
       <div style="text-align:center;max-width:680px;margin:0 auto 30px;">
         <div class="reveal in" style="width:68px;height:68px;margin:0 auto 16px;border-radius:18px;background:var(--grad-main);display:flex;align-items:center;justify-content:center;font-size:36px">🖥️</div>
-        <h1 class="reveal in d1" style="font-size:32px;"><span class="grad">天择OS</span> <span style="font-size:14px;vertical-align:middle;color:var(--ink-faint);font-weight:500;">v3.1</span></h1>
+        <h1 class="reveal in d1" style="font-size:32px;"><span class="grad">天择OS</span> <span style="font-size:14px;vertical-align:middle;color:var(--ink-faint);font-weight:500;">v3.1.1</span></h1>
         <p class="reveal in d2" style="color:var(--ink-dim);font-size:15px;margin-top:8px;">浏览器里的全屏操作系统 · 选择适合你的版本</p>
       </div>
 
@@ -76,11 +76,11 @@
             <li>桌面快捷方式、开机自启一应俱全</li>
           </ul>
           <a class="btn" id="os-dl-btn"
-             href="https://github.com/wjtianze/wjtianze.github.io/releases/download/v3.1.0/tianze-os-setup-3.1.0.exe"
+             href="https://github.com/wjtianze/wjtianze.github.io/releases/download/v3.1.1/tianze-os-setup-3.1.1.exe"
              download
-             data-fallback-url="https://github.com/wjtianze/wjtianze.github.io/releases/download/v2.0.0/tianze-os-setup-2.0.0.exe"
-             data-fallback-ver="v2.0">
-            <span id="os-dl-text">下载 Windows 安装包（v3.1）</span><span>↓</span>
+             data-fallback-url="https://github.com/wjtianze/wjtianze.github.io/releases/download/v3.1.0/tianze-os-setup-3.1.0.exe"
+             data-fallback-ver="v3.1">
+            <span id="os-dl-text">下载 Windows 安装包（v3.1.1）</span><span>↓</span>
           </a>
           <div class="dl-meta" id="os-dl-meta">检测中…</div>
         </div>
@@ -103,7 +103,17 @@
           <p class="oc-tag">自 1.0 至今的版本演进</p>
           <div class="changelog">
             <div class="cl-item">
-              <div class="cl-ver">v3.1 <span class="cl-badge">最新</span></div>
+              <div class="cl-ver">v3.1.1 <span class="cl-badge">最新</span></div>
+              <div class="cl-date">2026-07-23</div>
+              <ul>
+                <li>修复 AI 生成软件的命令包注册失效：软件内自动注入真实应用 id 与 TZOS_CMD.register，命令在软件内部执行可直接调用软件函数；旧写法自动兼容，卸载自动清理注册</li>
+                <li>实用工具新增「笔记」：Markdown / LaTeX 编辑与实时预览，可用命令行 note 全面操控（new / list / open / append / export / search / del）</li>
+                <li>文档阅读器标签页并入窗口标题栏（与浏览器一致），取消缩放工具栏，缩放仅 Ctrl + 滚轮并带瞬时百分比提示</li>
+                <li>命令行输入输出取消字符限制；补全 AI 命令行模式提示词（agent / widget / note 等全部命令）</li>
+              </ul>
+            </div>
+            <div class="cl-item">
+              <div class="cl-ver">v3.1</div>
               <div class="cl-date">2026-07-22（07-23 修订）</div>
               <ul>
                 <li><b>修订</b>：实用工具（COC 专区/升级规划/伤害计算/背单词）不再实时连接线上天择网，本地页面打包进 OS，存档同源直写（村庄 JSON → localStorage，词库 → IndexedDB），桌面版经内置协议加载、离线可用</li>
@@ -191,8 +201,8 @@
   <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260722a"></script>
   <script>
   // 自动检测 GitHub Release 是否已发布
-  // 原理：HEAD 请求 v3.1.0 release 的 asset URL，存在则用最新版；
-  // 不存在则切到 v2.0.0 fallback（仓库里已发布的最后一个版本）。
+  // 原理：HEAD 请求最新 release 的 asset URL，存在则用最新版；
+  // 不存在则切到 fallback（仓库里已发布的上一个版本）。
   (function () {
     var btn = document.getElementById('os-dl-btn');
     var text = document.getElementById('os-dl-text');
@@ -203,12 +213,11 @@
     var fallbackUrl = btn.getAttribute('data-fallback-url');
     var fallbackVer = btn.getAttribute('data-fallback-ver');
 
-    // 抽出版本号（v3.1.0 → v3.1）和文件名
+    // 抽出版本号（v3.1.1 → v3.1.1；v3.1.0 → v3.1.0）和文件名
     function parseRelease(url) {
       var m = url.match(/v(\d+)\.(\d+)(?:\.(\d+))?\/([^/?#]+)\.exe$/);
       if (!m) return null;
-      var shortVer = 'v' + m[1] + '.' + m[2];
-      var fileSize = '';
+      var shortVer = 'v' + m[1] + '.' + m[2] + (m[3] ? '.' + m[3] : '');
       return { url: url, short: shortVer, file: m[4] + '.exe' };
     }
 
@@ -228,17 +237,19 @@
         .catch(function () { return false; });
     }
 
+    var primaryInfo = parseRelease(primary);
+    var primaryShort = primaryInfo ? primaryInfo.short : '最新版';
+
     btn.setAttribute('data-loading', '');
     probe(primary).then(function (ok) {
       btn.removeAttribute('data-loading');
       if (ok) {
-        var info = parseRelease(primary);
-        setMeta('来自 GitHub Releases · v3.1 官方发布版');
-        if (info) setBtn(primary, info.short);
+        setMeta('来自 GitHub Releases · ' + primaryShort + ' 官方发布版');
+        setBtn(primary, primaryShort);
       } else {
         // 主版本未发布 → fallback
         setBtn(fallbackUrl, fallbackVer);
-        setMeta('v3.1 暂未发布 · 已自动切到上一个已发布版本 ' + fallbackVer);
+        setMeta(primaryShort + ' 暂未发布 · 已自动切到上一个已发布版本 ' + fallbackVer);
       }
     });
   })();

@@ -10,7 +10,7 @@
 'use strict';
 
 /* 系统版本（每次发布更新必须同步递增，并更新 dev/os/version.json） */
-const OS_VERSION = '3.1.0';
+const OS_VERSION = '3.1.1';
 
 /* ===================== 存储层 ===================== */
 const Store = {
@@ -229,6 +229,11 @@ const BUILTIN_APPS = {
     name: '文档阅读器', icon: '📄', grad: true, category: 'system',
     desc: '阅读 docx / pptx / xlsx / pdf / html',
     render: () => renderDocReader()
+  },
+  'notes': {
+    name: '笔记', icon: '📝', grad: true, category: 'tool',
+    desc: 'Markdown / LaTeX 笔记（可被命令行 note 操控）',
+    render: () => renderNotes()
   }
 };
 
@@ -267,6 +272,43 @@ function getAllApps() {
           ...installed];
 }
 function findApp(id) { return getAllApps().find(a => a.id === id); }
+
+/* ---- 已安装软件引导注入（v3.1.1）----
+ * 修复"软件命令包不管用"的三个根因：
+ *  1) 应用 id 安装时才生成（app-<时间戳>），AI 写代码时不可能知道
+ *     → 注入 window.TZOS_APP_ID 与 TZOS_CMD.register（无需自己填 id）
+ *  2) 旧教程让 AI 写死错误 id 注册，cmd list 永远查不到
+ *     → shim localStorage.setItem：任何 tz_app_cmds_* 键统一改写到正确键
+ *  3) 旧设计中命令 js 在 OS 父页面执行，够不到软件内部函数
+ *     → 注入执行桥：父页面 postMessage 过来，js 在软件自己的 iframe 里执行 */
+function injectAppBootstrap(html, app) {
+  const meta = { id: app.id, name: app.name || '' };
+  const boot = '<script>(function(){' +
+    'var APP_ID=' + JSON.stringify(app.id) + ';' +
+    'window.TZOS_APP_ID=APP_ID;' +
+    'var REAL_KEY="tz_app_cmds_"+APP_ID;' +
+    'var _set=localStorage.setItem.bind(localStorage);' +
+    'try{localStorage.setItem=function(k,v){if(typeof k==="string"&&k.indexOf("tz_app_cmds_")===0&&k!==REAL_KEY)k=REAL_KEY;return _set(k,v);};}catch(e){}' +
+    'window.TZOS_CMD={' +
+      'appId:APP_ID,' +
+      'register:function(list){if(!Array.isArray(list))return;_set(REAL_KEY,JSON.stringify(list));try{window.parent.postMessage({__tzCmdRegister:{appId:APP_ID,list:list}},"*");}catch(e){}}' +
+    '};' +
+    'window.addEventListener("message",function(ev){' +
+      'var d=ev.data&&ev.data.__tzCmdExec;if(!d)return;' +
+      'var reply=function(ok,value){try{window.parent.postMessage({__tzCmdResult:{reqId:d.reqId,ok:ok,value:value}},"*");}catch(e){}};' +
+      'var api={appId:APP_ID,version:' + JSON.stringify(OS_VERSION) + '};' +
+      'var appMeta=' + JSON.stringify(meta) + ';' +
+      'try{' +
+        'var fn=new Function("args","appId","api","app",d.js);' +
+        'var ret=fn(String(d.args==null?"":d.args),APP_ID,api,appMeta);' +
+        'Promise.resolve(ret).then(function(v){reply(true,v===undefined?"（已执行）":String(v));},function(e){reply(false,"指令执行出错："+(e&&e.message||e));});' +
+      '}catch(e){reply(false,"指令执行出错："+(e&&e.message||e));}' +
+    '});' +
+  '})();<\/script>';
+  const m = String(html || '').match(/<head[^>]*>/i) || String(html || '').match(/<html[^>]*>/i);
+  if (m) { const i = html.indexOf(m[0]) + m[0].length; return html.slice(0, i) + boot + html.slice(i); }
+  return boot + html;
+}
 
 /* ===================== 窗口管理器 ===================== */
 const WM = {
@@ -336,12 +378,13 @@ const WM = {
     const titleIcon = el('span', 'win-title-icon', app.icon || '📦');
     const titleText = el('span', 'win-title-text', escapeHtml(app.name || '应用'));
     const spacer = el('div', 'win-title-spacer');
-    // 浏览器应用：标签页栏与窗口标题栏合并（标签显示网页标题）
-    if (app.id === 'browser') {
-      winEl.classList.add('browser-win');
+    // 浏览器 / 文档阅读器：标签页栏与窗口标题栏合并（参考浏览器 UI）
+    if (app.id === 'browser' || app.id === 'doc-reader') {
+      if (app.id === 'browser') winEl.classList.add('browser-win');
+      else winEl.classList.add('doc-win');
       titleText.style.display = 'none';
       const tabsWrap = el('div', 'win-tabs');
-      tabsWrap.id = 'brTabsTitle';
+      tabsWrap.id = app.id === 'browser' ? 'brTabsTitle' : 'docTabsTitle';
       title.append(icons, titleIcon, tabsWrap, spacer);
     } else {
       title.append(icons, titleIcon, titleText, spacer);
@@ -415,7 +458,7 @@ const WM = {
       body.className = 'win-body no-pad';
       const iframe = el('iframe', 'app-iframe');
       iframe.sandbox = 'allow-scripts allow-forms allow-modals allow-popups allow-same-origin';
-      iframe.srcdoc = app.html;
+      iframe.srcdoc = injectAppBootstrap(app.html, app);
       body.appendChild(iframe);
     } else {
       // builtin
@@ -521,7 +564,7 @@ const WM = {
     } else if (app.type === 'installed') {
       const iframe = el('iframe', 'app-iframe');
       iframe.sandbox = 'allow-scripts allow-forms allow-modals allow-popups allow-same-origin';
-      iframe.srcdoc = app.html;
+      iframe.srcdoc = injectAppBootstrap(app.html, app);
       w.body.appendChild(iframe);
     } else {
       if (app.id === 'browser') cleanupBrowserHooks();
@@ -1059,6 +1102,8 @@ function launchApp(id, opts = {}) {
     defaults.width = 980; defaults.height = 680;
   } else if (id === 'terminal') {
     defaults.width = 680; defaults.height = 480;
+  } else if (id === 'notes') {
+    defaults.width = 880; defaults.height = 600;
   } else if (id === 'tips') {
     defaults.width = 600; defaults.height = 560;
   } else if (id === 'about' || id === 'ai-config' || id === 'settings' || id === 'file-manager') {
@@ -1091,6 +1136,7 @@ async function uninstallApp(id) {
   const ok = await confirmDialog({ title: '卸载软件', message: '确定要卸载「' + name + '」吗？\n该软件将从桌面移除。', confirmText: '卸载', danger: true });
   if (!ok) return;
   Store.removeApp(id);
+  try { localStorage.removeItem('tz_app_cmds_' + id); } catch (e) {}
   WM.windows.filter(w => w.appId === id).forEach(w => WM.close(w.id));
   Desktop.render();
   StartMenu.render();
@@ -1331,8 +1377,8 @@ ${aiCfgText}
 【CDN 使用许可】仅允许引入 KaTeX、marked 这两个库（用上面的 jsdelivr 地址，失败可换 https://cdn.staticfile.org/ 对应路径）；除这两个库与第 C 条的 AI 接口外，不要任何其它外部资源或网络请求（图片用 SVG 或 emoji）。
 
 【可选：让软件能被天择OS命令行操控】若软件适合用命令操作（如笔记、待办、记账类），在代码里注册命令包：
-localStorage.setItem('tz_app_cmds_' + APP_ID, JSON.stringify([{ cmd: '指令名', desc: '说明', js: '执行代码字符串，可用 args/appId/api/app 变量，return 的字符串回显到命令行' }]));
-其中 APP_ID 用安装时分配的应用 id（可在代码里写死为用户可见的常量并提示用户）。注册后用户可在命令行用「cmd 应用id 指令 参数」操控软件，例如笔记软件注册 note 指令后，命令行「cmd xxx note 一段文字」即把文字记入笔记。不需要命令操控的软件可跳过。`;
+TZOS_CMD.register([{ cmd: '指令名', desc: '说明', js: '执行代码字符串，可用 args/appId/api/app 变量，return 的值回显到命令行' }]);
+TZOS_CMD 与 window.TZOS_APP_ID 由系统注入，直接用即可；绝不要自己猜或写死应用 id。js 会在你的软件内部执行，可直接调用你定义的全局函数（如 window.appAdd）。注册后用户可在命令行用「cmd 应用id 指令 参数」操控软件，例如笔记软件注册 note 指令后，命令行「cmd xxx note 一段文字」即把文字记入笔记。不需要命令操控的软件可跳过。`;
   },
 
   // 输出被 token 上限截断时自动续写：从截断点继续，不重复已输出内容
@@ -1381,6 +1427,7 @@ ${userPrompt}
 6. 中文界面，注释用中文
 7. 除原有的 KaTeX/marked 库与 AI 接口外，不要使用任何外部 CDN、外部资源或网络请求（图片用 SVG 或 emoji）
 8. 应用应在 720×540 左右的窗口内良好显示，支持响应式
+9. 若软件含 TZOS_CMD.register（命令包注册）或 window.TZOS_APP_ID 相关代码，必须原样保留，不得删除或改写
 
 【用户修改需求】
 ${instruction}
@@ -1648,6 +1695,91 @@ const BUILTIN_APP_CMDS = {
     throw new Error('未知子命令：' + sub + '（words help 查看用法）');
   },
 
+  /* ===== 笔记（Markdown / LaTeX）===== */
+  // note：无参数打开应用；子命令完成增删查改，数据与笔记应用同源（IndexedDB tznotes）
+  note: async (r) => {
+    if (!r) { launchApp('notes'); return '已打开笔记（note help 查看命令用法）'; }
+    const { sub, args } = splitSub(r);
+    if (sub === 'help' || sub === '?') {
+      return 'note 用法：\n' +
+        '  note                      打开笔记应用\n' +
+        '  note list                 列出全部笔记（编号 标题 · 字数 · 更新时间）\n' +
+        '  note new 标题             新建笔记\n' +
+        '  note open 编号|标题       在应用中打开某篇笔记\n' +
+        '  note append 编号 文本     向笔记末尾追加（文本中 \\n 表示换行）\n' +
+        '  note export 编号          输出笔记完整 Markdown 原文\n' +
+        '  note search 关键词        在标题与正文中搜索\n' +
+        '  note del 编号             删除笔记';
+    }
+    if (sub === 'list') {
+      const ns = await notesLoad();
+      return ns.length
+        ? ns.map((n, i) => (i + 1) + '. ' + (n.title || '未命名') + '（' + (n.content || '').length + ' 字 · ' + new Date(n.updated || 0).toLocaleString('zh-CN') + '）').join('\n')
+        : '（暂无笔记，note new 标题 新建）';
+    }
+    if (sub === 'new') {
+      need(args, 'note new 标题');
+      const ns = await notesLoad();
+      ns.unshift({ id: 'n' + Date.now(), title: args, content: '', updated: Date.now() });
+      await notesSave(ns);
+      refreshOpenApp('notes');
+      return '已新建笔记：' + args;
+    }
+    if (sub === 'open') {
+      need(args, 'note open 编号|标题');
+      const ns = await notesLoad();
+      const n = pickNote(ns, args);
+      if (!n) throw new Error('找不到笔记：' + args + '（note list 查看编号）');
+      notesPendingOpen = n.id;
+      launchApp('notes');
+      refreshOpenApp('notes');
+      return '已打开笔记：' + (n.title || '未命名');
+    }
+    if (sub === 'append') {
+      need(args, 'note append 编号 文本');
+      const sp2 = args.indexOf(' ');
+      if (sp2 < 0) throw new Error('用法：note append 编号 文本');
+      const ref = args.slice(0, sp2), text = args.slice(sp2 + 1).replace(/\\n/g, '\n');
+      const ns = await notesLoad();
+      const n = pickNote(ns, ref);
+      if (!n) throw new Error('找不到笔记：' + ref + '（note list 查看编号）');
+      n.content = (n.content ? n.content.replace(/\s+$/, '') + '\n' : '') + text + '\n';
+      n.updated = Date.now();
+      await notesSave(ns);
+      refreshOpenApp('notes');
+      return '已追加到「' + (n.title || '未命名') + '」（现共 ' + n.content.length + ' 字）';
+    }
+    if (sub === 'export' || sub === 'cat') {
+      need(args, 'note export 编号|标题');
+      const ns = await notesLoad();
+      const n = pickNote(ns, args);
+      if (!n) throw new Error('找不到笔记：' + args);
+      return '# ' + (n.title || '未命名') + '\n\n' + (n.content || '（空笔记）');
+    }
+    if (sub === 'search' || sub === 'find') {
+      need(args, 'note search 关键词');
+      const ns = await notesLoad();
+      const hits = ns.filter(n => (n.title || '').includes(args) || (n.content || '').includes(args));
+      if (!hits.length) return '没有找到包含「' + args + '」的笔记';
+      return hits.map(n => {
+        const idx = ns.indexOf(n) + 1;
+        const ci = (n.content || '').indexOf(args);
+        const ctx = ci >= 0 ? '：…' + n.content.slice(Math.max(0, ci - 12), ci + args.length + 24).replace(/\n/g, ' ') + '…' : '';
+        return idx + '. ' + (n.title || '未命名') + ctx;
+      }).join('\n');
+    }
+    if (sub === 'del' || sub === 'rm') {
+      need(args, 'note del 编号|标题');
+      const ns = await notesLoad();
+      const n = pickNote(ns, args);
+      if (!n) throw new Error('找不到笔记：' + args);
+      await notesSave(ns.filter(x => x.id !== n.id));
+      refreshOpenApp('notes');
+      return '已删除笔记：' + (n.title || '未命名');
+    }
+    throw new Error('未知子命令：' + sub + '（note help 查看用法）');
+  },
+
   /* ===== AI 对话（ai-chat）===== */
   chat: (r) => {
     if (!r) return 'chat 用法：\n  chat clear  清空对话（保留 AI 最后一次回复）\n  chat history  查看对话历史摘要\n  chat last  查看 AI 最后一次回复\n  ask 问题  让 AI 回答（与顶层 ask 等价）';
@@ -1661,7 +1793,7 @@ const BUILTIN_APP_CMDS = {
     if (sub === 'last') {
       const h = Store.getChat();
       const last = [...h].reverse().find(m => m.role === 'ai');
-      return last ? (String(last.content || '').slice(0, 2000) + (String(last.content || '').length > 2000 ? '\n…（仅显示前 2000 字，完整内容请打开 AI 对话）' : '')) : '（暂无 AI 回复）';
+      return last ? String(last.content || '') : '（暂无 AI 回复）';
     }
     throw new Error('未知子命令：' + sub + '（chat help 查看用法）');
   },
@@ -1672,7 +1804,7 @@ const BUILTIN_APP_CMDS = {
     const { sub } = splitSub(r);
     if (sub === 'open') { launchApp('app-store'); return '已打开软件商城'; }
     if (sub === 'tutorial') return APP_STORE_TUTORIAL;
-    if (sub === 'idea') return '软件创意建议：\n1. 番茄钟（25 分钟工作 + 5 分钟休息循环，统计今日专注时长）\n2. 待办清单（按优先级分组，支持截止日期与提醒）\n3. markdown 笔记（左侧目录树 + 右侧编辑/预览，IndexedDB 存储）\n4. 单位换算（长度/重量/温度/压力等，支持科学计数法）\n5. 密码生成器（自定义长度/字符集，避免易混字符）\n6. 倒计时日历（距离重要日期还有多少天，桌面图标徽章）\n7. 调色板（HSL 滑块 + HEX/RGB 互转，保存历史颜色）\n8. 二维码生成（输入文本/网址，下载 PNG）\n\n打开软件商城用自然语言描述即可生成。';
+    if (sub === 'idea') return '软件创意建议：\n1. 番茄钟（25 分钟工作 + 5 分钟休息循环，统计今日专注时长）\n2. 待办清单（按优先级分组，支持截止日期与提醒）\n3. 习惯打卡（每日习惯勾选 + 连续天数 streak 统计）\n4. 单位换算（长度/重量/温度/压力等，支持科学计数法）\n5. 密码生成器（自定义长度/字符集，避免易混字符）\n6. 倒计时日历（距离重要日期还有多少天，桌面图标徽章）\n7. 调色板（HSL 滑块 + HEX/RGB 互转，保存历史颜色）\n8. 二维码生成（输入文本/网址，下载 PNG）\n\n打开软件商城用自然语言描述即可生成（Markdown/LaTeX 笔记已内置为系统应用「笔记」，无需再生成）。';
     throw new Error('未知子命令：' + sub);
   },
 
@@ -1703,8 +1835,8 @@ const BUILTIN_APP_CMDS = {
   about: (r) => {
     if (!r) return 'about 用法：\n  about info  系统详细信息\n  about changelog  查看更新日志\n  about credits  致谢';
     const { sub } = splitSub(r);
-    if (sub === 'info') return '天择OS v' + OS_VERSION + '\n发布日期：2026-07-20\n作者：天择网\n构建：浏览器内操作系统（Web + Electron 桌面版）\nAI：OpenAI 兼容接口（DeepSeek/OpenAI/GLM/MiMo 等）\n开源：https://wjtianze.github.io/open/';
-    if (sub === 'changelog') return 'v2.6（2026-07-20）：窗口置顶、文档缩放、命令行扩展\nv2.5（2026-07-20）：联网搜索、文件上传、命令行全面开放\nv2.2（2026-07-19）：桌面版四大痛点修复\nv2.1（2026-07-18）：命令行终端与 AI Agent\nv2.0（2026-07-18）：AI 全链路升级\nv1.0（2026-07-14）：首个版本发布';
+    if (sub === 'info') return '天择OS v' + OS_VERSION + '\n发布日期：2026-07-23\n作者：天择网\n构建：浏览器内操作系统（Web + Electron 桌面版）\nAI：OpenAI 兼容接口（DeepSeek/OpenAI/GLM/MiMo 等）\n开源：https://wjtianze.github.io/open/';
+    if (sub === 'changelog') return 'v3.1.1（2026-07-23）：修复 AI 软件命令包注册失效、新增命令行笔记应用、文档阅读器标签并入标题栏、命令行输入输出取消字符限制、AI 提示词补全\nv3.1（2026-07-22）：实用工具全面本地化、AI 对话与悬浮窗互通、命令行重构\nv3.0（2026-07-21）：AI 悬浮窗（Ctrl+1）、窗口层级体系、桌面版自定义协议\nv2.6（2026-07-20）：窗口置顶、文档缩放、命令行扩展\nv2.5（2026-07-20）：联网搜索、文件上传、命令行全面开放\nv2.2（2026-07-19）：桌面版四大痛点修复\nv2.1（2026-07-18）：命令行终端与 AI Agent\nv2.0（2026-07-18）：AI 全链路升级\nv1.0（2026-07-14）：首个版本发布';
     if (sub === 'credits') return '天择OS 致谢：\n· DeepSeek / OpenAI / GLM / MiMo 等 AI 服务商\n· Electron 跨平台桌面框架\n· 所有开源项目（marked/highlight.js/pdf.js 等）\n· 天择网用户的支持与反馈';
     throw new Error('未知子命令：' + sub);
   },
@@ -1787,7 +1919,7 @@ const BUILTIN_APP_CMDS = {
   tree: (r) => {
     const cats = {
       'tznet': '天择网（首页+天择导航）',
-      'tool': '实用工具（COC 专区（含存档分析）/升级规划/伤害计算/背单词）',
+      'tool': '实用工具（COC 专区（含存档分析）/升级规划/伤害计算/背单词/笔记）',
       'system': '系统（AI 配置/对话/软件商城/设置/关于/我的软件/浏览器/命令行/时钟/文档阅读器/玩机技巧/导航）',
       'ai': 'AI（AI 配置、AI 对话）',
       'game': '游戏（绩点战争）',
@@ -2259,6 +2391,15 @@ const CLI = {
 '  words count                 统计单词总数\n' +
 '  words find 关键词           按单词或释义查找\n' +
 '  words del 编号              删除指定编号的单词\n' +
+'── 笔记（Markdown / LaTeX）──\n' +
+'  note                        打开笔记应用\n' +
+'  note list                   列出全部笔记\n' +
+'  note new 标题               新建笔记\n' +
+'  note open 编号|标题         打开某篇笔记\n' +
+'  note append 编号 文本       向笔记末尾追加（\\n 表示换行）\n' +
+'  note export 编号            输出笔记完整 Markdown 原文\n' +
+'  note search 关键词          搜索笔记\n' +
+'  note del 编号               删除笔记\n' +
 '── 文档与其他 ──\n' +
 '  docs open URL|recent        文档阅读器打开/最近记录\n' +
 '  tips [编号]                 玩机技巧列表/详情\n' +
@@ -2279,20 +2420,21 @@ const CLI = {
   aiPrompt() {
     return '\n\n【天择OS 命令行能力】你可以输出 tzcli 代码块让操作系统执行命令，格式（每行一条命令）：\n' +
 '```tzcli\nopen ai-config\nmem add 用户喜欢简洁的回答\n```\n' +
-'可用命令（自有软件命令均为顶层命令，无需 cmd 前缀）：\n' +
-'· 系统：version | theme dark|light | style win|mac|auto | settings info|storage|reset | about info|changelog|credits\n' +
+'全部命令如下（自有软件命令均为顶层命令，无需 cmd 前缀；只有用户安装的 AI 软件才走 cmd）：\n' +
+'· 系统：version | theme dark|light | style win|mac|auto | widget open|close | resetlayout | export | settings info|storage|reset | about info|changelog|credits\n' +
 '· 应用：apps | open 应用id | close 应用id | pin/top 应用id | unpin 应用id | pinned | install 名称|图标|完整HTML | uninstall 应用id | rename 应用id|新名[|图标] | sethtml 应用id|完整HTML | gethtml 应用id | files list|export 应用id|size\n' +
-'· AI：aiconfig [url|key|model|maxtokens 值] | price [hit|write|input|output 值] / price unit usd|cny | deepthink on|off | chat clear|history|last | store open|tutorial|idea\n' +
+'· AI：aiconfig [url|key|model|maxtokens 值] | price [hit|write|input|output 值] / price unit usd|cny | deepthink on|off | agent on|off | chat clear|history|last | store open|tutorial|idea | installhelp（AI 软件命令包接入教程）\n' +
 '· 记忆：mem | mem add 内容 | mem del 编号 | mem on|off 编号\n' +
-'· 通知/对话：clear chat | notify 文本\n' +
-'· 浏览器：openurl 网址 | browser tabs|closeall|home | home sections|open 板块 | news [编号] | blog [编号] | bm / bm add 网址|标题 / bm del 编号\n' +
-'· 时钟：clock | clock-now | stopwatch [start|stop|reset] | timer 时长(如5m)\n' +
+'· 通知/对话：notify 文本 | clear chat（清空 AI 对话，保留最后一次回复） | clear notifs\n' +
+'· 浏览器/网页：openurl 网址或搜索词（go 同义） | browser tabs|closeall|home | home sections|open 板块 | news [编号] | blog [编号] | bm / bm add 网址|标题 / bm del 编号\n' +
+'· 时钟：clock | clock-now | stopwatch [start|stop|reset] | timer 时长(如 5m / 90s / 1h30m)\n' +
 '· 天择网专区：coc list|open | coc-data [save <JSON>|json|clear] | coc-game [search 名字|th 等级|cat 类别|count|json] | village info|open | planner info|open | dmg info|quake HP|open | game list|open | gpa info|open|rules | english list|open | ai-zone list|open | open-data list|open | tree [分类]\n' +
 '· 单词本：words | words add word|词性|释义 | words list [N] | words count | words find 关键词 | words del 编号\n' +
-'· 文档/技巧：docs open URL|recent | tips [编号] | emu-win/emu-win10/emu-android info|open\n' +
-'· 用户安装的 AI 软件：cmd 应用id 指令 [参数]（cmd list 查看注册的命令）\n' +
-'· 其他：js JavaScript代码 | resetlayout | export | ask 问题(仅用户可用，你不能调用)\n' +
-'规则：仅在确有必要时使用（普通问答不要用）；命令在你输出后立即执行，结果会以用户消息回传；异步命令（fetch/IndexedDB）会自动等待；块内不要写注释和空行；一次不超过 5 条；写记忆、改配置、装改软件、查 COC/单词数据等操作优先用命令完成，不要只口头描述。';
+'· 笔记（Markdown/LaTeX）：note | note list | note new 标题 | note open 编号|标题 | note append 编号 文本(文本中 \\n 为换行) | note export 编号 | note search 关键词 | note del 编号\n' +
+'· 文档/技巧/模拟器：docs open URL|recent | tips [编号] | emu-win/emu-win10/emu-android info|open\n' +
+'· 用户安装的 AI 软件：cmd list 查看已注册命令；cmd 应用id 指令 [参数] 调用（会自动打开软件窗口，指令在软件内部执行）\n' +
+'· 其他：js JavaScript代码 | echo 文本 | ask 问题(仅用户可用，你不能调用)\n' +
+'规则：仅在确有必要时使用（普通问答不要用）；命令在你输出后立即执行，结果会以用户消息回传；异步命令（fetch/IndexedDB）会自动等待；块内不要写注释和空行；一次不超过 5 条；写记忆、改配置、装改软件、查 COC/单词/笔记数据等操作优先用命令完成，不要只口头描述。';
   },
   cmds: {
     help: () => CLI.manual(),
@@ -2323,6 +2465,7 @@ const CLI = {
       const app = Store.getApps().find(a => a.id === r);
       if (!app) throw new Error('未安装该软件（仅 AI 生成的软件可卸载）：' + r);
       Store.removeApp(r);
+      try { localStorage.removeItem('tz_app_cmds_' + r); } catch (e) {}
       WM.windows.filter(w => w.appId === r).forEach(w => WM.close(w.id));
       Desktop.render(); StartMenu.render(); refreshOpenApp('file-manager');
       return '已卸载「' + app.name + '」';
@@ -2512,7 +2655,7 @@ const CLI = {
       const ret = (0, eval)(r);
       if (ret === undefined) return '（无返回值）';
       const s = typeof ret === 'object' ? JSON.stringify(ret) : String(ret);
-      return String(s).slice(0, 2000);
+      return String(s);
     },
     echo: (r) => r,
     // ===== 自有软件命令（每个软件一个顶层命令，help 直接可见）=====
@@ -2562,16 +2705,39 @@ function parseDuration(s) {
 
 /* ===================== 软件命令包注册表 =====================
  * 已安装软件（含自定义软件）可注册自己的命令，用 cmd 应用id 指令 调用。
- * 注册方式：localStorage 键 tz_app_cmds_<应用id> = [{cmd, desc, js}]
- *   js 为该指令要执行的代码，沙箱内可用 args（参数字符串）、appId、api(TZOS)。
+ * 注册方式（v3.1.1 起推荐）：软件内调用 TZOS_CMD.register([{cmd, desc, js}])
+ *   —— TZOS_CMD 由 injectAppBootstrap 注入，自动使用真实应用 id。
+ * 兼容旧方式：localStorage 键 tz_app_cmds_<应用id>（注入的 shim 会把错误 id 改写到正确键）。
+ * 执行方式：js 字符串经 postMessage 送进软件自己的 iframe 内执行（可调用软件内部函数），
+ *   可用变量 args（参数字符串）、appId、api、app；return 的值（可为 Promise）回显到命令行。
  * 教程见 APP_STORE_TUTORIAL（installhelp 命令 / 软件商城提示词内置）。 */
 const AppCommands = {
   key: (appId) => 'tz_app_cmds_' + appId,
+  _pending: {}, _reqSeq: 0, _listening: false,
   load(appId) {
     try { const v = JSON.parse(localStorage.getItem(this.key(appId)) || '[]'); return Array.isArray(v) ? v : []; }
     catch (e) { return []; }
   },
   save(appId, list) { localStorage.setItem(this.key(appId), JSON.stringify(list || [])); },
+  _ensureListener() {
+    if (this._listening) return;
+    this._listening = true;
+    window.addEventListener('message', (ev) => {
+      const reg = ev.data && ev.data.__tzCmdRegister;
+      if (reg && reg.appId && Array.isArray(reg.list)) {
+        // 双保险：软件内 register 已写共享 localStorage，父页再写一次兜底
+        try { this.save(reg.appId, reg.list); } catch (e) {}
+        return;
+      }
+      const res = ev.data && ev.data.__tzCmdResult;
+      if (res && this._pending[res.reqId]) {
+        const p = this._pending[res.reqId];
+        delete this._pending[res.reqId];
+        clearTimeout(p.timer);
+        p.resolve(res);
+      }
+    });
+  },
   all() {
     const out = [];
     getAllApps().forEach(a => {
@@ -2581,10 +2747,24 @@ const AppCommands = {
   },
   listText() {
     const all = this.all();
-    if (!all.length) return '（暂无软件注册命令包。自定义软件可通过 localStorage 键 tz_app_cmds_<应用id> 注册，教程见 installhelp）';
+    if (!all.length) return '（暂无软件注册命令包。自定义软件在代码里调用 TZOS_CMD.register 注册，教程见 installhelp）';
     return all.map(c => c.appId + ' :: ' + c.cmd + (c.desc ? ' — ' + c.desc : '') + '（' + c.appName + '）').join('\n');
   },
-  exec(appId, rest) {
+  // 找到应用窗口的 iframe（未打开则自动打开并等待其引导注入就绪）
+  async _ensureFrame(appId) {
+    let w = WM.findWindow(appId);
+    if (!w) { launchApp(appId); w = WM.findWindow(appId); }
+    if (!w) return null;
+    for (let i = 0; i < 50; i++) {
+      const f = w.body && w.body.querySelector('iframe');
+      if (f && f.contentWindow) {
+        try { if (f.contentWindow.TZOS_APP_ID) return f; } catch (e) {}
+      }
+      await new Promise(r => setTimeout(r, 100));
+    }
+    return w.body ? w.body.querySelector('iframe') : null;
+  },
+  async exec(appId, rest) {
     const app = findApp(appId);
     if (!app) throw new Error('应用不存在：' + appId);
     const sp = rest.indexOf(' ');
@@ -2596,37 +2776,63 @@ const AppCommands = {
     }
     const def = this.load(appId).find(c => c.cmd === cmd);
     if (!def) throw new Error('「' + app.name + '」没有指令「' + cmd + '」（用 cmd ' + appId + ' 查看）');
-    try {
-      const fn = new Function('args', 'appId', 'api', 'app', def.js);
-      const ret = fn(args, appId, window.TZOS, app);
-      return (ret === undefined) ? '（已执行）' : String(ret);
-    } catch (e) { throw new Error('指令执行出错：' + (e.message || e)); }
+    // 非自定义软件（builtin/preset）没有 iframe 桥，兜底在父页面执行
+    if (app.type !== 'installed') {
+      try {
+        const fn = new Function('args', 'appId', 'api', 'app', def.js);
+        const ret = await fn(args, appId, window.TZOS, app);
+        return (ret === undefined) ? '（已执行）' : String(ret);
+      } catch (e) { throw new Error('指令执行出错：' + (e.message || e)); }
+    }
+    // 自定义软件：桥接进软件 iframe 内执行（window.* 即软件自身作用域）
+    this._ensureListener();
+    const frame = await this._ensureFrame(appId);
+    if (!frame || !frame.contentWindow) throw new Error('无法打开「' + app.name + '」的窗口');
+    const reqId = 'r' + (++this._reqSeq) + '_' + Date.now();
+    const replyP = new Promise((resolve) => {
+      const timer = setTimeout(() => {
+        delete this._pending[reqId];
+        resolve({ ok: false, value: '指令执行超时：软件无响应（请确认软件窗口处于打开状态）' });
+      }, 8000);
+      this._pending[reqId] = { resolve, timer };
+    });
+    frame.contentWindow.postMessage({ __tzCmdExec: { reqId, js: def.js, args } }, '*');
+    const res = await replyP;
+    if (!res.ok) throw new Error(res.value);
+    return res.value;
   }
 };
 
 /* ===================== AI 软件商城提示词（installhelp 返回 + 注入生成提示词） ===================== */
 const APP_STORE_TUTORIAL = `【天择OS 软件命令包接入教程】
-你的软件可以被天择OS命令行直接操控。方法：在软件代码里向 localStorage 写入自己注册的命令列表。
+你的软件可以被天择OS命令行直接操控。系统已为每个软件注入 TZOS_CMD 对象与真实应用 id（window.TZOS_APP_ID），不需要、也绝不要自己猜或写死应用 id。
 
 1) 注册（软件启动时执行一次）：
-const APP_ID = '你的应用id'; // 与安装时一致，可用 location 推断或让用户在软件里填
-const cmds = [
-  { cmd: 'add',  desc: '新增一条记录', js: "window.appAdd && window.appAdd(args); return '已新增：'+args;" },
-  { cmd: 'list', desc: '列出全部记录', js: "return (window.appList ? window.appList() : '无数据');" }
-];
-localStorage.setItem('tz_app_cmds_' + APP_ID, JSON.stringify(cmds));
+TZOS_CMD.register([
+  { cmd: 'add',  desc: '新增一条记录', js: "window.appAdd(args); return '已新增：'+args;" },
+  { cmd: 'list', desc: '列出全部记录', js: "return window.appList();" }
+]);
 
-2) 每条命令的 js 字符串在沙箱中执行，可用变量：
+2) 每条命令的 js 字符串会在【你的软件内部】执行，因此可以直接调用你在软件里定义的全局函数（如 window.appAdd / window.appList）。可用变量：
    - args：命令行传入的参数字符串（如 cmd myapp add 买牛奶 里 args='买牛奶'）
-   - appId：本软件 id；api：TZOS 全局对象；app：本软件元数据
-   - js 里调用你软件内暴露的全局函数（如 window.appAdd）完成实际操作，return 的字符串会回显到命令行
+   - appId：本软件 id（与 window.TZOS_APP_ID 相同）
+   - api：{ appId, version } 系统信息；app：本软件元数据 { id, name }
+   - js 的返回值（可以是 Promise）会回显到命令行；抛出的错误会作为错误信息显示
 
-3) 用户即可这样操控你的软件：
+3) 用户即可这样操控你的软件（执行时系统会自动打开软件窗口）：
    cmd 你的应用id add 买牛奶      → 新增一条
    cmd 你的应用id list            → 列出全部
+   cmd list                       → 查看全部软件已注册的命令
 
-示例：一个 markdown 笔记软件注册 {cmd:'note', js:"window.saveNote&&window.saveNote(args);return '已记入笔记';"}
-之后命令行输入：cmd 笔记应用id note 今天学了量子力学 → 即把这句话记入笔记。`;
+完整示例（待办软件）：
+  window.todos = JSON.parse(localStorage.getItem('my_todos') || '[]');
+  window.todoAdd = function (t) { window.todos.push(t); localStorage.setItem('my_todos', JSON.stringify(window.todos)); render(); };
+  window.todoList = function () { return window.todos.map((t, i) => (i + 1) + '. ' + t).join('\\n') || '（空）'; };
+  TZOS_CMD.register([
+    { cmd: 'add',  desc: '加一条待办', js: "window.todoAdd(args); return '已添加：' + args;" },
+    { cmd: 'list', desc: '列出待办',   js: "return window.todoList();" }
+  ]);
+不需要命令操控的软件可跳过本教程。`;
 
 
 
@@ -2790,101 +2996,109 @@ const DOC_CDN = {
   jszip: 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js'
 };
 function renderDocReader() {
+  // v3.1.1：标签页栏并入窗口标题栏（#docTabsTitle 由 WM 创建）；取消缩放工具栏，仅 Ctrl+滚轮缩放
   return `
   <div class="doc-app">
-    <div class="doc-tabs" id="docTabs">
-      <button class="doc-newtab" id="docNewTab" title="打开文档">＋ 打开文档</button>
-      <input type="file" id="docFile" style="display:none" accept=".docx,.pptx,.xlsx,.pdf,.html,.htm,.txt,.md" />
-    </div>
-    <div class="doc-zoombar" id="docZoomBar">
-      <button class="dz-btn" id="docZoomOut" title="缩小">－</button>
-      <div class="dz-value">
-        <input id="docZoomInput" value="100%" />
-        <select id="docZoomSelect">
-          <option value="fitWidth">页宽填充</option>
-          <option value="fitPage">整页填充</option>
-          <option value="25">25%</option>
-          <option value="50">50%</option>
-          <option value="75">75%</option>
-          <option value="100" selected>100%</option>
-          <option value="125">125%</option>
-          <option value="150">150%</option>
-          <option value="200">200%</option>
-          <option value="300">300%</option>
-          <option value="400">400%</option>
-        </select>
-      </div>
-      <button class="dz-btn" id="docZoomIn" title="放大">＋</button>
-    </div>
+    <input type="file" id="docFile" style="display:none" accept=".docx,.pptx,.xlsx,.pdf,.html,.htm,.txt,.md" />
     <div class="doc-stage" id="docStage">
       <div class="doc-open" id="docOpen">
         <div class="doc-open-icon">📄</div>
         <div class="doc-open-title">文档阅读器</div>
         <div class="doc-open-sub">支持 Word(docx) · PPT(pptx) · Excel(xlsx) · PDF · HTML(含JS) · txt · md</div>
         <button class="btn" id="docPickBtn">📂 选择文件</button>
-        <div class="doc-open-tip">也可把文件直接拖进此窗口；每个文档一个标签页，可同时打开多个</div>
+        <div class="doc-open-tip">也可把文件直接拖进此窗口；标签页在上方标题栏，可同时打开多个；Ctrl + 滚轮缩放</div>
       </div>
     </div>
   </div>`;
 }
 function initDocReader() {
-  const stage = $('#docStage'), tabsBar = $('#docTabs'), openEl = $('#docOpen');
-  const zoomBar = $('#docZoomBar'), zoomInput = $('#docZoomInput'), zoomSelect = $('#docZoomSelect');
-  const zoomOutBtn = $('#docZoomOut'), zoomInBtn = $('#docZoomIn');
+  const stage = $('#docStage'), openEl = $('#docOpen');
+  const tabsBar = $('#docTabsTitle'); // 位于窗口标题栏（WM 创建）
   if (!stage) return;
   const fin = $('#docFile');
-  const docs = []; // {id,name,el,tab,zoom}
+  const docs = []; // {id,name,el,zoom}
   let activeId = null, seq = 0;
   const pick = () => { if (fin) fin.click(); };
-  const pickBtn = $('#docPickBtn'), newTab = $('#docNewTab');
+  const pickBtn = $('#docPickBtn');
   if (pickBtn) pickBtn.onclick = pick;
-  if (newTab) newTab.onclick = pick;
   if (fin) fin.onchange = () => { [...fin.files].forEach(loadFile); fin.value = ''; };
 
-  // 缩放工具栏事件
-  if (zoomOutBtn) zoomOutBtn.onclick = () => { const d = activeDoc(); if (d) changeZoomBy(d, -10); };
-  if (zoomInBtn) zoomInBtn.onclick = () => { const d = activeDoc(); if (d) changeZoomBy(d, 10); };
-  if (zoomInput) {
-    zoomInput.onchange = () => {
-      const d = activeDoc(); if (!d) return;
-      const v = parseInt(zoomInput.value, 10);
-      if (v >= 10 && v <= 500) { d.zoom = { mode: 'percent', value: v }; applyZoom(d); updateZoomBar(); }
-      else { updateZoomBar(); }
-    };
-    zoomInput.onkeydown = (e) => { if (e.key === 'Enter') zoomInput.blur(); };
+  // 标题栏中的"＋"新标签按钮（与浏览器一致的 br-tab-plus 外观）
+  let plusBtn = null;
+  if (tabsBar) {
+    tabsBar.innerHTML = '';
+    plusBtn = el('button', 'br-tab-plus', '＋');
+    plusBtn.title = '打开文档';
+    plusBtn.onclick = pick;
+    tabsBar.appendChild(plusBtn);
   }
-  if (zoomSelect) {
-    zoomSelect.onchange = () => {
-      const d = activeDoc(); if (!d) return;
-      const v = zoomSelect.value;
-      if (v === 'fitWidth' || v === 'fitPage') { d.zoom.mode = v; applyZoom(d); updateZoomBar(); }
-      else { d.zoom = { mode: 'percent', value: parseInt(v, 10) }; applyZoom(d); updateZoomBar(); }
-    };
-  }
+
   function activeDoc() { return docs.find(d => d.id === activeId); }
   function refreshTabs() {
+    if (!tabsBar) return;
     tabsBar.querySelectorAll('.doc-tab').forEach(t => t.remove());
     docs.forEach(d => {
-      const tab = el('button', 'doc-tab' + (d.id === activeId ? ' active' : ''));
-      tab.innerHTML = `<span class="dt-label">${escapeHtml(d.name)}</span><span class="dt-x" title="关闭">✕</span>`;
+      const tab = el('button', 'br-tab doc-tab' + (d.id === activeId ? ' active' : ''));
+      tab.innerHTML = `<span class="br-tab-label dt-label">${escapeHtml(d.name)}</span><span class="br-x dt-x" title="关闭">✕</span>`;
+      tab.title = d.name;
       tab.onclick = (e) => { if (e.target.classList.contains('dt-x')) closeDoc(d.id); else activate(d.id); };
-      tabsBar.insertBefore(tab, newTab);
+      tabsBar.insertBefore(tab, plusBtn);
     });
     if (openEl) openEl.style.display = docs.length ? 'none' : '';
-    if (zoomBar) zoomBar.style.display = docs.length ? '' : 'none';
   }
   function activate(id) {
     activeId = id;
     docs.forEach(d => { d.el.style.display = d.id === id ? '' : 'none'; });
     refreshTabs();
-    updateZoomBar();
   }
   function closeDoc(id) {
     const i = docs.findIndex(d => d.id === id);
     if (i < 0) return;
     docs[i].el.remove(); docs.splice(i, 1);
-    if (!docs.length) { activeId = null; refreshTabs(); updateZoomBar(); return; }
+    if (!docs.length) { activeId = null; refreshTabs(); return; }
     if (activeId === id) activate(docs[Math.min(i, docs.length - 1)].id); else refreshTabs();
+  }
+  // 按类型把数据渲染进 pane（本地文件与在线 URL 共用）
+  function renderDocData(ext, data, pane, fail, done, onReady) {
+    if (ext === 'pdf') {
+      renderPdf(new Uint8Array(data), pane, fail, () => onReady());
+    } else if (ext === 'docx') {
+      ensureLib('mammoth', DOC_CDN.mammoth).then(() =>
+        window.mammoth.convertToHtml({ arrayBuffer: data }).then(r => done(r.value || '<p>（空文档）</p>')).catch(e => fail(e.message))
+      ).catch(e => fail('加载解析库失败：' + e.message));
+    } else if (ext === 'xlsx') {
+      ensureLib('XLSX', DOC_CDN.xlsx).then(() => {
+        try {
+          const wb = window.XLSX.read(data, { type: 'array' });
+          let html = '';
+          wb.SheetNames.forEach(sn => { html += '<h3 style="margin:14px 0 6px">📑 ' + escapeHtml(sn) + '</h3>' + window.XLSX.utils.sheet_to_html(wb.Sheets[sn], { header: '', footer: '' }); });
+          done(html || '<p>（空表格）</p>');
+        } catch (e) { fail(e.message); }
+      }).catch(e => fail('加载解析库失败：' + e.message));
+    } else if (ext === 'pptx') {
+      renderPptx(data, pane, fail, () => onReady());
+    } else if (ext === 'html' || ext === 'htm') {
+      // HTML 全功能运行：allow-scripts 让内联 JS 与交互可用（外部脚本受 CSP 限制）
+      pane.innerHTML = '';
+      const f = document.createElement('iframe');
+      f.className = 'doc-frame';
+      f.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-modals allow-popups');
+      f.srcdoc = data;
+      f.onload = () => onReady();
+      pane.appendChild(f);
+    } else if (ext === 'md') {
+      // Markdown 用系统渲染器（含 LaTeX 公式）
+      const html = '<div class="doc-md">' + renderMd(String(data)) + '</div>';
+      done(html);
+      ensureKatex().then(() => {
+        const c = pane.querySelector('.doc-content');
+        if (c && window.renderMathInElement) { try { window.renderMathInElement(c, KATEX_OPTS); } catch (e) {} }
+      }).catch(() => {});
+    } else if (ext === 'txt') {
+      done('<pre style="white-space:pre-wrap;word-break:break-word;font:13px/1.7 inherit">' + escapeHtml(String(data)) + '</pre>');
+    } else {
+      fail('暂不支持 .' + ext + ' 格式（支持 docx / pptx / xlsx / pdf / html / txt / md）');
+    }
   }
   function loadFile(file) {
     if (!file) return;
@@ -2894,89 +3108,59 @@ function initDocReader() {
     stage.appendChild(pane);
     const d = { id: ++seq, name: file.name, el: pane, zoom: { mode: 'percent', value: 100 } };
     docs.push(d); activate(d.id);
-    const onReady = () => { applyZoom(d); updateZoomBar(); };
+    const onReady = () => { applyZoom(d); };
     const fail = (msg) => { pane.innerHTML = '<div class="app-error"><div class="ae-icon">⚠️</div>' + escapeHtml(msg || '解析失败') + '</div>'; };
     const done = (html) => { pane.innerHTML = '<div class="doc-content">' + html + '</div>'; onReady(); };
     const rd = new FileReader();
-    if (ext === 'pdf') {
-      rd.onload = () => renderPdf(new Uint8Array(rd.result), pane, fail, () => onReady());
-      rd.onerror = () => fail('读取文件失败'); rd.readAsArrayBuffer(file);
-    } else if (ext === 'docx') {
-      rd.onload = () => ensureLib('mammoth', DOC_CDN.mammoth).then(() =>
-        window.mammoth.convertToHtml({ arrayBuffer: rd.result }).then(r => done(r.value || '<p>（空文档）</p>')).catch(e => fail(e.message))
-      ).catch(e => fail('加载解析库失败：' + e.message));
-      rd.onerror = () => fail('读取文件失败'); rd.readAsArrayBuffer(file);
-    } else if (ext === 'xlsx') {
-      rd.onload = () => ensureLib('XLSX', DOC_CDN.xlsx).then(() => {
-        try {
-          const wb = window.XLSX.read(rd.result, { type: 'array' });
-          let html = '';
-          wb.SheetNames.forEach(sn => { html += '<h3 style="margin:14px 0 6px">📑 ' + escapeHtml(sn) + '</h3>' + window.XLSX.utils.sheet_to_html(wb.Sheets[sn], { header: '', footer: '' }); });
-          done(html || '<p>（空表格）</p>');
-        } catch (e) { fail(e.message); }
-      }).catch(e => fail('加载解析库失败：' + e.message));
-      rd.onerror = () => fail('读取文件失败'); rd.readAsArrayBuffer(file);
-    } else if (ext === 'pptx') {
-      rd.onload = () => renderPptx(rd.result, pane, fail, () => onReady());
-      rd.onerror = () => fail('读取文件失败'); rd.readAsArrayBuffer(file);
-    } else if (ext === 'html' || ext === 'htm') {
-      // HTML 全功能运行：allow-scripts 让内联 JS 与交互可用（外部脚本受 CSP 限制）
-      rd.onload = () => {
-        pane.innerHTML = '';
-        const f = document.createElement('iframe');
-        f.className = 'doc-frame';
-        f.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-modals allow-popups');
-        f.srcdoc = rd.result;
-        f.onload = () => onReady();
-        pane.appendChild(f);
-      };
-      rd.onerror = () => fail('读取文件失败'); rd.readAsText(file);
-    } else if (ext === 'txt' || ext === 'md') {
-      rd.onload = () => { done('<pre style="white-space:pre-wrap;word-break:break-word;font:13px/1.7 inherit">' + escapeHtml(rd.result) + '</pre>'); };
-      rd.onerror = () => fail('读取文件失败'); rd.readAsText(file);
-    } else {
-      fail('暂不支持 .' + ext + ' 格式（支持 docx / pptx / xlsx / pdf / html / txt / md）');
-    }
+    const isText = (ext === 'html' || ext === 'htm' || ext === 'txt' || ext === 'md');
+    rd.onload = () => renderDocData(ext, rd.result, pane, fail, done, onReady);
+    rd.onerror = () => fail('读取文件失败');
+    if (isText) rd.readAsText(file); else rd.readAsArrayBuffer(file);
+  }
+  // 在线文档：docs open URL 命令经 __tzDocOpenUrl 调入；同时记录"最近打开"
+  function loadFromUrl(url) {
+    const name = decodeURIComponent((url.split('/').pop() || '').split('?')[0]) || '在线文档';
+    const ext = (name.split('.').pop() || '').toLowerCase();
+    const pane = el('div', 'doc-pane');
+    pane.innerHTML = '<div class="app-loading"><div class="al-spin"></div><div>正在获取 ' + escapeHtml(name) + '…</div></div>';
+    stage.appendChild(pane);
+    const d = { id: ++seq, name: name + '（在线）', el: pane, zoom: { mode: 'percent', value: 100 } };
+    docs.push(d); activate(d.id);
+    const onReady = () => { applyZoom(d); };
+    const fail = (msg) => { pane.innerHTML = '<div class="app-error"><div class="ae-icon">⚠️</div>' + escapeHtml(msg || '加载失败') + '</div>'; };
+    const done = (html) => { pane.innerHTML = '<div class="doc-content">' + html + '</div>'; onReady(); };
+    const isText = (ext === 'html' || ext === 'htm' || ext === 'txt' || ext === 'md');
+    fetch(url).then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      // 获取成功才记入最近打开
+      try {
+        const recent = JSON.parse(localStorage.getItem('tz_doc_recent') || '[]');
+        recent.unshift({ name, url, time: Date.now() });
+        localStorage.setItem('tz_doc_recent', JSON.stringify(recent.slice(0, 10)));
+      } catch (e) {}
+      return isText ? r.text() : r.arrayBuffer();
+    }).then(data => renderDocData(ext, data, pane, fail, done, onReady))
+      .catch(e => fail('获取文档失败：' + (e.message || e) + '（跨域资源可能被目标站点拦截）'));
+  }
+  window.__tzDocOpenUrl = (url) => loadFromUrl(url);
+  // 缩放提示（Ctrl+滚轮时短暂显示当前百分比）
+  let zoomTip = null, zoomTipTimer = 0;
+  function showZoomTip(pct) {
+    if (!zoomTip) { zoomTip = el('div', 'doc-zoom-tip'); stage.appendChild(zoomTip); }
+    zoomTip.textContent = pct + '%';
+    zoomTip.classList.add('show');
+    clearTimeout(zoomTipTimer);
+    zoomTipTimer = setTimeout(() => zoomTip.classList.remove('show'), 750);
   }
   function changeZoomBy(d, delta) {
     const v = Math.max(10, Math.min(500, d.zoom.value + delta));
     d.zoom = { mode: 'percent', value: v };
     applyZoom(d);
-    updateZoomBar();
-  }
-  function computeZoom(d) {
-    const pane = d.el;
-    const content = pane.querySelector('.doc-content, .doc-pdf');
-    const iframe = pane.querySelector('.doc-frame');
-    let naturalW = 0, naturalH = 0;
-    if (content) {
-      // 先恢复 100% 并移除 max-width 限制，以读取真实自然尺寸
-      const oldZoom = content.style.zoom;
-      const oldMaxWidth = content.style.maxWidth;
-      content.style.zoom = '100%';
-      content.style.maxWidth = 'none';
-      naturalW = content.scrollWidth || pane.clientWidth;
-      naturalH = content.scrollHeight || pane.clientHeight;
-      content.style.maxWidth = oldMaxWidth;
-      content.style.zoom = oldZoom;
-    } else if (iframe) {
-      naturalW = iframe.clientWidth || pane.clientWidth;
-      naturalH = iframe.clientHeight || pane.clientHeight;
-    }
-    if (!naturalW) naturalW = pane.clientWidth;
-    if (!naturalH) naturalH = pane.clientHeight;
-    const padX = 28, padY = 28;
-    if (d.zoom.mode === 'fitWidth') {
-      return Math.max(25, Math.min(500, Math.round((pane.clientWidth - padX) / naturalW * 100)));
-    }
-    if (d.zoom.mode === 'fitPage') {
-      return Math.max(25, Math.min(500, Math.round(Math.min((pane.clientWidth - padX) / naturalW, (pane.clientHeight - padY) / naturalH) * 100)));
-    }
-    return d.zoom.value;
+    showZoomTip(v);
   }
   function applyZoom(d) {
     if (!d || !d.el) return;
-    const s = computeZoom(d) / 100;
+    const s = Math.max(10, Math.min(500, d.zoom.value)) / 100;
     const content = d.el.querySelector('.doc-content, .doc-pdf');
     const iframe = d.el.querySelector('.doc-frame');
     if (content) {
@@ -2997,18 +3181,7 @@ function initDocReader() {
       iframe.style.height = (100 / s) + '%';
     }
   }
-  function updateZoomBar() {
-    if (!zoomInput || !zoomSelect) return;
-    const d = activeDoc();
-    if (!d) { zoomInput.value = '100%'; zoomSelect.value = '100'; return; }
-    // 百分比模式直接显示；填充模式显示计算后的等效百分比
-    const effective = computeZoom(d);
-    zoomInput.value = effective + '%';
-    if (d.zoom.mode === 'fitWidth') zoomSelect.value = 'fitWidth';
-    else if (d.zoom.mode === 'fitPage') zoomSelect.value = 'fitPage';
-    else zoomSelect.value = String(effective);
-  }
-  // Ctrl+滚轮缩放（在当前文档区域）
+  // Ctrl+滚轮缩放（唯一缩放方式）
   stage.addEventListener('wheel', (e) => {
     if (!e.ctrlKey) return;
     const d = activeDoc(); if (!d) return;
@@ -3070,6 +3243,193 @@ function renderPptx(data, body, fail, onReady) {
     body.innerHTML = html + '</div>';
     if (onReady) onReady();
   }).catch(e => fail('PPTX 解析失败：' + (e.message || e)));
+}
+
+/* ===================== 内置应用：笔记（Markdown / LaTeX，可被命令行操控） =====================
+ * 存储：IndexedDB tznotes 库 kv 表 key='notes'，[{id,title,content,updated}]
+ * 命令行：note list|new|open|append|export|search|del|help（见 BUILTIN_APP_CMDS.note） */
+function openNotesDB() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open('tznotes', 1);
+    r.onupgradeneeded = () => { const d = r.result; if (!d.objectStoreNames.contains('kv')) d.createObjectStore('kv', { keyPath: 'k' }); };
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+async function notesLoad() {
+  try {
+    const db = await openNotesDB();
+    if (!db.objectStoreNames || !db.objectStoreNames.contains('kv')) return [];
+    const rec = await new Promise((res, rej) => {
+      const r = db.transaction('kv', 'readonly').objectStore('kv').get('notes');
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    });
+    return (rec && Array.isArray(rec.v)) ? rec.v : [];
+  } catch (e) { return []; }
+}
+async function notesSave(list) {
+  try {
+    const db = await openNotesDB();
+    if (!db.objectStoreNames || !db.objectStoreNames.contains('kv')) return false;
+    await new Promise((res, rej) => {
+      const tx = db.transaction('kv', 'readwrite');
+      tx.objectStore('kv').put({ k: 'notes', v: list });
+      tx.oncomplete = () => res();
+      tx.onerror = () => rej(tx.error);
+      tx.onabort = () => rej(tx.error);
+    });
+    return true;
+  } catch (e) { return false; }
+}
+// 按编号（1 起始）或标题查找笔记
+function pickNote(notes, ref) {
+  ref = String(ref || '').trim();
+  const n = parseInt(ref, 10);
+  if (String(n) === ref && n >= 1 && n <= notes.length) return notes[n - 1];
+  const exact = notes.find(x => (x.title || '') === ref);
+  if (exact) return exact;
+  return notes.find(x => (x.title || '').includes(ref)) || null;
+}
+let notesPendingOpen = null; // CLI note open 传参：窗口初始化后聚焦该笔记
+
+function renderNotes() {
+  return `
+  <div class="notes-app">
+    <div class="notes-side">
+      <button class="btn sm notes-new" id="notesNew">＋ 新建笔记</button>
+      <div class="notes-list" id="notesList"></div>
+    </div>
+    <div class="notes-main">
+      <div class="notes-toolbar">
+        <input class="input notes-title" id="notesTitle" placeholder="笔记标题…" />
+        <div class="notes-modes">
+          <button class="notes-mode" id="notesModeEdit" title="仅编辑">✏️</button>
+          <button class="notes-mode active" id="notesModeSplit" title="编辑 + 预览">◫</button>
+          <button class="notes-mode" id="notesModePrev" title="仅预览">👁</button>
+        </div>
+        <button class="btn sm ghost" id="notesDel" title="删除当前笔记">🗑</button>
+      </div>
+      <div class="notes-body split" id="notesBody">
+        <textarea class="notes-editor" id="notesEditor" spellcheck="false" placeholder="支持 Markdown 与 LaTeX：行内 $...$，块级 $$...$$&#10;&#10;命令行也能操控本应用：note new 标题 / note append 编号 内容 / note list"></textarea>
+        <div class="notes-preview" id="notesPreview"></div>
+      </div>
+      <div class="notes-status" id="notesStatus">就绪</div>
+    </div>
+  </div>`;
+}
+async function initNotes() {
+  const listEl = $('#notesList'), ed = $('#notesEditor'), prev = $('#notesPreview');
+  const titleInp = $('#notesTitle'), status = $('#notesStatus'), body = $('#notesBody');
+  if (!listEl || !ed || !prev || !body) return;
+  let notes = await notesLoad();
+  let curId = null;
+  let saveTimer = 0, listTimer = 0, prevTimer = 0;
+  const cur = () => notes.find(n => n.id === curId) || null;
+  const fmtTime = (ts) => { const d = new Date(ts || Date.now()); return (d.getMonth() + 1) + '-' + d.getDate() + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+
+  function renderList() {
+    if (!notes.length) { listEl.innerHTML = '<div class="notes-empty">暂无笔记<br/>点上方「＋ 新建笔记」开始</div>'; return; }
+    listEl.innerHTML = '';
+    notes.forEach(n => {
+      const item = el('div', 'notes-item' + (n.id === curId ? ' active' : ''));
+      item.innerHTML = '<div class="ni-title">' + escapeHtml(n.title || '未命名') + '</div>' +
+        '<div class="ni-sub">' + escapeHtml((n.content || '').replace(/\s+/g, ' ').slice(0, 24) || '（空）') + ' · ' + fmtTime(n.updated) + '</div>';
+      item.onclick = () => open(n.id);
+      listEl.appendChild(item);
+    });
+  }
+  function renderPreview() {
+    prev.innerHTML = renderMd(ed.value || '');
+    if (window.renderMathInElement) { try { window.renderMathInElement(prev, KATEX_OPTS); } catch (e) {} }
+  }
+  function setMode(m) {
+    body.classList.remove('edit', 'split', 'prev');
+    body.classList.add(m);
+    [['Edit', 'edit'], ['Split', 'split'], ['Prev', 'prev']].forEach(([k, v]) => {
+      const b = $('#notesMode' + k); if (b) b.classList.toggle('active', v === m);
+    });
+    if (m !== 'edit') renderPreview();
+  }
+  async function persist() {
+    const ok = await notesSave(notes);
+    status.textContent = ok ? ('已保存 · ' + new Date().toLocaleTimeString('zh-CN')) : '⚠ 保存失败（IndexedDB 不可用）';
+  }
+  function saveSoon() {
+    status.textContent = '编辑中…';
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(persist, 500);
+  }
+  function open(id) {
+    const n = notes.find(x => x.id === id);
+    if (!n) return;
+    curId = id;
+    titleInp.value = n.title || '';
+    ed.value = n.content || '';
+    renderPreview();
+    renderList();
+  }
+  async function createNote(title) {
+    const n = { id: 'n' + Date.now(), title: title || '未命名笔记', content: '', updated: Date.now() };
+    notes.unshift(n);
+    curId = n.id;
+    titleInp.value = n.title;
+    ed.value = '';
+    renderPreview();
+    renderList();
+    await notesSave(notes);
+    status.textContent = '已创建 · ' + new Date().toLocaleTimeString('zh-CN');
+  }
+
+  const newBtn = $('#notesNew');
+  if (newBtn) newBtn.onclick = () => createNote('');
+  const delBtn = $('#notesDel');
+  if (delBtn) delBtn.onclick = async () => {
+    const n = cur();
+    if (!n) { toast('没有打开的笔记'); return; }
+    const ok = await confirmDialog({ title: '删除笔记', message: '确定删除「' + (n.title || '未命名') + '」吗？删除后不可恢复。', confirmText: '删除', danger: true });
+    if (!ok) return;
+    notes = notes.filter(x => x.id !== n.id);
+    curId = null;
+    await notesSave(notes);
+    titleInp.value = ''; ed.value = '';
+    renderPreview(); renderList();
+    status.textContent = '已删除';
+  };
+  const mE = $('#notesModeEdit'), mS = $('#notesModeSplit'), mP = $('#notesModePrev');
+  if (mE) mE.onclick = () => setMode('edit');
+  if (mS) mS.onclick = () => setMode('split');
+  if (mP) mP.onclick = () => setMode('prev');
+
+  ed.addEventListener('input', () => {
+    const n = cur(); if (!n) return;
+    n.content = ed.value; n.updated = Date.now();
+    saveSoon();
+    clearTimeout(prevTimer);
+    prevTimer = setTimeout(renderPreview, 300);
+    clearTimeout(listTimer);
+    listTimer = setTimeout(renderList, 800);
+  });
+  titleInp.addEventListener('input', () => {
+    const n = cur(); if (!n) return;
+    n.title = titleInp.value; n.updated = Date.now();
+    saveSoon();
+    clearTimeout(listTimer);
+    listTimer = setTimeout(renderList, 600);
+  });
+
+  // 初始打开：CLI note open 指定 > 第一篇 > 自动新建一篇
+  if (notesPendingOpen && notes.some(n => n.id === notesPendingOpen)) {
+    const id = notesPendingOpen;
+    notesPendingOpen = null;
+    open(id);
+  } else {
+    notesPendingOpen = null;
+    if (notes.length) open(notes[0].id);
+    else createNote('');
+  }
+  // KaTeX 异步加载完成后重渲染预览（否则首次打开时公式保持源码状态）
+  ensureKatex().then(() => { if (cur()) renderPreview(); }).catch(() => {});
 }
 
 /* ===================== 内置应用：命令行终端 ===================== */
@@ -3852,7 +4212,7 @@ function cmdCardHtml(cmds) {
   return '<details class="cmd-card" open><summary>调用了 ' + cmds.length + ' 条命令行</summary><div class="cmd-body">' +
     cmds.map(c => '<div class="cmd-line">' + escapeHtml(c.cmd) + '</div>' +
       (c.out
-        ? '<div class="cmd-res' + (c.ok ? '' : ' err') + '">' + escapeHtml(String(c.out).length > 900 ? String(c.out).slice(0, 900) + '…' : String(c.out)) + '</div>'
+        ? '<div class="cmd-res' + (c.ok ? '' : ' err') + '">' + escapeHtml(String(c.out)) + '</div>'
         : '<div class="cmd-res">(完成)</div>')
     ).join('') + '</div></details>';
 }
@@ -4192,7 +4552,13 @@ async function runGeneration(userText) {
       }
       toast('⌨️ AI 执行了 ' + cmds.length + ' 条系统命令', 2400);
       extra.push({ role: 'assistant', content: curRound.text });
-      extra.push({ role: 'user', content: '（系统回执）你请求执行的命令行命令已完成，结果如下：\n' + results.join('\n------\n').slice(0, 4000) + '\n请据此继续回答用户；如无需再执行命令，请直接给出最终回答，不要重复执行同一命令。' });
+      // 回传给 AI 的结果保留 token 预算保护（完整结果已在命令卡片/终端无截断展示）：
+      // 仅当总量极大（如 coc-game json 数 MB）时才截断，并明确标注
+      const joinedResults = results.join('\n------\n');
+      const receipt = joinedResults.length > 20000
+        ? joinedResults.slice(0, 20000) + '\n…（结果共 ' + joinedResults.length + ' 字符，仅前 20000 字回传给你以节省 token；完整结果已在用户的命令卡片中完整显示，如需更多细节请改用更精确的命令分段获取）'
+        : joinedResults;
+      extra.push({ role: 'user', content: '（系统回执）你请求执行的命令行命令已完成，结果如下：\n' + receipt + '\n请据此继续回答用户；如无需再执行命令，请直接给出最终回答，不要重复执行同一命令。' });
       doneRounds.push(curRound);
       curRound = { reasoning: '', text: '', cmds: [] };
       if (++guard >= 50) { curRound = null; break; }
@@ -5384,6 +5750,7 @@ function initAppHooks(appId, winObj) {
   if (appId === 'terminal') initTerminal();
   if (appId === 'clock') initClockApp();
   if (appId === 'doc-reader') initDocReader();
+  if (appId === 'notes') initNotes();
   if (appId === 'tips') initTips();
   if (appId === 'tz-tree') initTzTree();
   if (appId === 'about') {
