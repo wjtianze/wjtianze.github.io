@@ -49,6 +49,10 @@ body.tzos { position: relative; height: 100vh; overflow: hidden; background: #0c
 <div id="startMenu" hidden></div>
 <div id="floatingWidget" hidden></div>
 <button id="fwReopen" hidden></button>
+<!-- 修复 v3.2：AI 悬浮窗中执行 clock/timer/openurl/browser/store 等命令时，
+     WM.create 需要 #windows 挂载窗口元素（即使浮窗不显示窗口，逻辑也必须能跑通）。
+     这个容器保持 hidden，WM.create 在浮窗模式下创建的窗口会挂到这里但不显示 -->
+<div id="windows" class="windows-layer" hidden></div>
 
 <!-- 自定义拖拽标题栏 -->
 <div id="floatTitleBar">

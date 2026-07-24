@@ -335,6 +335,10 @@ const WM = {
       const exist = this.windows.find(w => w.appId === app.id);
       if (exist) { this.focus(exist.id); if (exist.minimized) this.restore(exist.id); return exist; }
     }
+    // 修复 v3.2：AI 悬浮窗模式（float-chat.html，独立窗口）下，#windows 是占位 hidden 容器。
+    // 窗口对象照常创建并渲染（让 AI 命令行调用的 timer/clock 等后续操作能找到 w.body），
+    // 但不绑定拖拽/resize/任务栏/全局事件，也不调用 focus()/Taskbar.render()。
+    const floatMode = !!window.__tzFloatMode;
     const mobile = isMobile();
     const id = 'win-' + (++this.openCount);
     const winEl = el('div', 'win' + (mobile ? ' mobile-fullscreen' : ''));
@@ -396,6 +400,11 @@ const WM = {
     const resizerEls = resizers.map(r => { const e = el('div', 'win-resizer ' + r); e.dataset.dir = r; return e; });
 
     winEl.append(title, body, ...resizerEls);
+    // 浮窗模式下：窗口挂到 hidden 占位 #windows，display: none 不显示
+    if (floatMode) {
+      winEl.style.display = 'none';
+      winEl.classList.add('float-mode-hidden');
+    }
     $('#windows').appendChild(winEl);
 
     const winObj = { id, appId: app.id, el: winEl, body, minimized: false, maximized: false, pinned: false, app, savedRect: null };
@@ -404,37 +413,40 @@ const WM = {
     // 渲染内容
     this.renderContent(winObj, opts);
 
-    // 事件
+    // 事件 —— 浮窗模式下跳过窗口级交互（拖拽/调整大小/标题栏菜单等都不需要）
     closeBtn.onclick = (e) => { e.stopPropagation(); this.close(id); };
     minBtn.onclick = (e) => { e.stopPropagation(); this.minimize(id); };
     maxBtn.onclick = (e) => { e.stopPropagation(); this.toggleMax(id); };
     if (reloadBtn) reloadBtn.onclick = (e) => { e.stopPropagation(); this.reload(id); };
     if (uninstBtn) uninstBtn.onclick = (e) => { e.stopPropagation(); uninstallApp(app.id); };
     pinBtn.onclick = (e) => { e.stopPropagation(); this.togglePin(id); };
-    title.oncontextmenu = (e) => {
-      if (e.target.closest('.wctrl')) return;
-      if (e.target.closest('.win-tabs')) return;
-      e.preventDefault(); e.stopPropagation();
-      const w = this.windows.find(x => x.id === id);
-      if (!w) return;
-      const items = [
-        w.pinned
-          ? { icon: '📌', label: '取消置顶', act: () => this.unpin(id) }
-          : { icon: '📌', label: '置顶窗口', act: () => this.pin(id) },
-        { icon: w.maximized ? '⧉' : '□', label: w.maximized ? '还原' : '最大化', act: () => this.toggleMax(id) },
-        { icon: '🗕', label: '最小化', act: () => this.minimize(id) },
-        { sep: true },
-        { icon: '✕', label: '关闭', act: () => this.close(id) }
-      ];
-      showCtxMenu(e.clientX, e.clientY, items);
-    };
-    title.ondblclick = (e) => { if (e.target.closest('.wctrl')) return; if (!isMobile()) this.toggleMax(id); };
-    this.bindDrag(winObj);
-    this.bindResize(winObj);
-    winEl.addEventListener('pointerdown', () => this.focus(id), { passive: true });
+    if (!floatMode) {
+      title.oncontextmenu = (e) => {
+        if (e.target.closest('.wctrl')) return;
+        if (e.target.closest('.win-tabs')) return;
+        e.preventDefault(); e.stopPropagation();
+        const w = this.windows.find(x => x.id === id);
+        if (!w) return;
+        const items = [
+          w.pinned
+            ? { icon: '📌', label: '取消置顶', act: () => this.unpin(id) }
+            : { icon: '📌', label: '置顶窗口', act: () => this.pin(id) },
+          { icon: w.maximized ? '⧉' : '□', label: w.maximized ? '还原' : '最大化', act: () => this.toggleMax(id) },
+          { icon: '🗕', label: '最小化', act: () => this.minimize(id) },
+          { sep: true },
+          { icon: '✕', label: '关闭', act: () => this.close(id) }
+        ];
+        showCtxMenu(e.clientX, e.clientY, items);
+      };
+      title.ondblclick = (e) => { if (e.target.closest('.wctrl')) return; if (!isMobile()) this.toggleMax(id); };
+      this.bindDrag(winObj);
+      this.bindResize(winObj);
+      winEl.addEventListener('pointerdown', () => this.focus(id), { passive: true });
+    }
 
-    this.focus(id);
-    Taskbar.render();
+    // 浮窗模式不调用 focus（依赖任务栏/桌面）和 Taskbar.render（依赖 #tbRunning）
+    if (!floatMode) this.focus(id);
+    if (!floatMode) Taskbar.render();
     persistOpenWindows();
     return winObj;
   },
@@ -1699,7 +1711,7 @@ const BUILTIN_APP_CMDS = {
   // note：无参数打开应用；子命令完成增删查改，数据与笔记应用同源（IndexedDB tznotes）
   // 编号规则：每篇笔记创建时分配一个永不改变的固定编号 no（最早创建的为 1，后续递增），便于 CLI 长期引用。
   note: async (r) => {
-    if (!r) { launchApp('notes'); return '已打开笔记（note help 查看命令用法）'; }
+    if (!r) { launchApp('notes'); return '已打开笔记（note help 查看命令用法）' + floatTip('笔记'); }
     const { sub, args } = splitSub(r);
     if (sub === 'help' || sub === '?') {
       return 'note 用法：\n' +
@@ -1739,7 +1751,7 @@ const BUILTIN_APP_CMDS = {
       notesPendingOpen = n.id;
       launchApp('notes');
       refreshOpenApp('notes');
-      return '已打开笔记：' + (n.title || '未命名') + '（编号' + n.no + '）';
+      return '已打开笔记：' + (n.title || '未命名') + '（编号' + n.no + '）' + floatTip('笔记');
     }
     if (sub === 'view' || sub === 'show') {
       need(args, 'note view 编号|标题');
@@ -1838,7 +1850,7 @@ const BUILTIN_APP_CMDS = {
   store: (r) => {
     if (!r) return 'store 用法：\n  store open  打开软件商城\n  store tutorial  获取软件生成教程（与 installhelp 等价）\n  store idea  获取软件创意建议';
     const { sub } = splitSub(r);
-    if (sub === 'open') { launchApp('app-store'); return '已打开软件商城'; }
+    if (sub === 'open') { launchApp('app-store'); return '已打开软件商城' + floatTip('软件商城'); }
     if (sub === 'tutorial') return APP_STORE_TUTORIAL;
     if (sub === 'idea') return '软件创意建议：\n1. 番茄钟（25 分钟工作 + 5 分钟休息循环，统计今日专注时长）\n2. 待办清单（按优先级分组，支持截止日期与提醒）\n3. 习惯打卡（每日习惯勾选 + 连续天数 streak 统计）\n4. 单位换算（长度/重量/温度/压力等，支持科学计数法）\n5. 密码生成器（自定义长度/字符集，避免易混字符）\n6. 倒计时日历（距离重要日期还有多少天，桌面图标徽章）\n7. 调色板（HSL 滑块 + HEX/RGB 互转，保存历史颜色）\n8. 二维码生成（输入文本/网址，下载 PNG）\n\n打开软件商城用自然语言描述即可生成（Markdown/LaTeX 笔记已内置为系统应用「笔记」，无需再生成）。';
     throw new Error('未知子命令：' + sub);
@@ -1927,7 +1939,7 @@ const BUILTIN_APP_CMDS = {
       try { if (window.__tzBrCloseAll) { window.__tzBrCloseAll(); return '已关闭全部 ' + frames.length + ' 个标签页'; } } catch (e) {}
       return '已尝试关闭标签页（如未生效，请在浏览器内手动关闭）';
     }
-    if (sub === 'home') { openInOsBrowser(TZNET_BASE + 'index.html'); return '已打开天择网主页'; }
+    if (sub === 'home') { openInOsBrowser(TZNET_BASE + 'index.html'); return '已打开天择网主页' + floatTip('浏览器'); }
     throw new Error('未知子命令：' + sub);
   },
 
@@ -2479,7 +2491,7 @@ const CLI = {
     help: () => CLI.manual(),
     version: () => '天择OS v' + OS_VERSION + ' · ' + (isMobile() ? '移动端' : '桌面端'),
     apps: () => getAllApps().map(a => a.id + '  ' + a.name + '  [' + a.type + ']').join('\n'),
-    open: (r) => { need(r, 'open 应用id'); const app = findApp(r); if (!app) throw new Error('应用不存在：' + r); launchApp(r); return '已打开 ' + app.name; },
+    open: (r) => { need(r, 'open 应用id'); const app = findApp(r); if (!app) throw new Error('应用不存在：' + r); launchApp(r); return '已打开 ' + app.name + floatTip(app.name); },
     close: (r) => { need(r, 'close 应用id'); const ws = WM.windows.filter(w => w.appId === r); if (!ws.length) return '没有该应用的窗口'; ws.forEach(w => WM.close(w.id)); return '已关闭 ' + ws.length + ' 个窗口'; },
     pin: (r) => { need(r, 'pin 应用id'); const ws = WM.windows.filter(w => w.appId === r); if (!ws.length) throw new Error('没有该应用的窗口：' + r); ws.forEach(w => WM.pin(w.id)); return '已置顶 ' + ws.length + ' 个窗口'; },
     unpin: (r) => { need(r, 'unpin 应用id'); const ws = WM.windows.filter(w => w.appId === r); if (!ws.length) throw new Error('没有该应用的窗口：' + r); ws.forEach(w => WM.unpin(w.id)); return '已取消置顶 ' + ws.length + ' 个窗口'; },
@@ -2642,11 +2654,11 @@ const CLI = {
     openurl: (r) => {
       need(r, 'openurl 网址或搜索词');
       openInOsBrowser(r);
-      return '已在浏览器打开：' + r;
+      return '已在浏览器打开：' + r + floatTip('浏览器');
     },
-    go: (r) => { need(r, 'go 网址'); openInOsBrowser(r); return '已在浏览器打开：' + r; },
+    go: (r) => { need(r, 'go 网址'); openInOsBrowser(r); return '已在浏览器打开：' + r + floatTip('浏览器'); },
     // 时钟 / 秒表 / 倒计时
-    clock: () => { launchApp('clock'); return '已打开时钟（含秒表与倒计时）'; },
+    clock: () => { launchApp('clock'); return '已打开时钟（含秒表与倒计时）' + floatTip('时钟'); },
     stopwatch: (r) => {
       const w = launchApp('clock');
       const act = (r || '').toLowerCase();
@@ -2657,7 +2669,8 @@ const CLI = {
         else if (act === 'reset') call('reset');
         else call('tab'); // 无参数仅切到秒表页
       }, 120);
-      return '秒表' + ({ start: '已开始', stop: '已停止', reset: '已归零' }[act] || '已就绪');
+      const label = ({ start: '已开始', stop: '已停止', reset: '已归零' }[act] || '已就绪');
+      return '秒表' + label + floatTip('时钟');
     },
     timer: (r) => {
       need(r, 'timer 时长（如 5m / 90s / 1h30m / 300）');
@@ -2665,7 +2678,7 @@ const CLI = {
       if (!(sec > 0)) throw new Error('无法识别时长：' + r);
       const w = launchApp('clock');
       setTimeout(() => { try { if (w && w.body) startCountdownInApp(w.body, sec); } catch (e) {} }, 120);
-      return '倒计时 ' + sec + ' 秒已开始';
+      return '倒计时 ' + sec + ' 秒已开始' + floatTip('时钟');
     },
     // 软件直达（coc-data 玩家存档 / coc-game 游戏数据 / words 词库 均为数据输出命令，见 BUILTIN_APP_CMDS）
     // 问 AI：仅用户可调用（AI 命令行模式禁止调用，见 exec 守卫）
@@ -2709,6 +2722,11 @@ function parseOnOff(r) {
   throw new Error('参数只能是 on 或 off');
 }
 function maskKey(k) { if (!k) return '（未设置）'; if (k.length <= 8) return '****'; return k.slice(0, 4) + '…' + k.slice(-4); }
+// v3.2 修复：AI 悬浮窗模式下，创建窗口的命令追加"需在主 OS 桌面查看"提示，
+// 避免 AI 误以为窗口已显示在悬浮窗中
+function floatTip(name) {
+  return (window.__tzFloatMode ? '（窗口已创建，请在主 OS 桌面查看，悬浮窗无法显示完整窗口）' : '');
+}
 
 /* ---- 在内置浏览器打开网页（供 openurl/go/tzOpenInBrowser 复用；网页版与桌面版通用） ---- */
 function openInOsBrowser(urlOrQuery) {
