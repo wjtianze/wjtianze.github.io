@@ -10,7 +10,7 @@
 'use strict';
 
 /* 系统版本（每次发布更新必须同步递增，并更新 dev/os/version.json） */
-const OS_VERSION = '3.2';
+const OS_VERSION = '3.2.0';
 
 /* ===================== 存储层 ===================== */
 const Store = {
