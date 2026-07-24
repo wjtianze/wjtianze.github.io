@@ -243,6 +243,7 @@
         <div class="dm-tabs">
           <button class="dm-tab active" data-tab="max"><span>① 最高伤害计算器</span></button>
           <button class="dm-tab" data-tab="min"><span>② 摧毁建筑最少法术计算器</span></button>
+          <button class="dm-tab" data-tab="custom"><span>③ 自定义闪震数量计算伤害</span></button>
         </div>
 
         <!-- ① 最高伤害 -->
@@ -265,6 +266,27 @@
             <button class="btn" id="dmCalcMinBtn"><span>计算最少法术</span></button>
           </div>
           <div class="dm-result" id="dmResultMin"></div>
+        </div>
+
+        <!-- ③ 自定义闪震数量 -->
+        <div class="dm-tab-pane" id="dmPaneCustom">
+          <p class="dm-subhead">自定义雷电与地震的数量（不搜索最优解），按当前雷电/地震等级与目标建筑等级，精确给出总伤害、城墙规则细节和回血容错时间。</p>
+          <div class="dm-calc-row">
+            <div class="dm-field">
+              <label for="dmCustomLight">⚡ 雷电数量</label>
+              <input type="number" id="dmCustomLight" min="0" max="200" value="4" />
+            </div>
+            <div class="dm-field">
+              <label for="dmCustomQuake">🌍 地震数量</label>
+              <input type="number" id="dmCustomQuake" min="0" max="80" value="4" />
+            </div>
+            <div class="dm-field">
+              <label>总法术空间</label>
+              <div class="dm-target-info" id="dmCustomSpace" style="padding:9px 0; font-size:14px; color:var(--ink);">—</div>
+            </div>
+            <button class="btn" id="dmCalcCustomBtn"><span>计算伤害</span></button>
+          </div>
+          <div class="dm-result" id="dmResultCustom"></div>
         </div>
       </div>
     </section>

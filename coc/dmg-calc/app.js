@@ -494,6 +494,61 @@
     renderMinResult({best:best, H:H, wall:wall, ql:ql, ll:ll, Dl:Dl, pct:pct, D_eq:D_eq, destroyed:true, immA:immA, immL:immL}, null);
   }
 
+  /* ===== ③ 自定义闪震数量计算伤害 =====
+   * 用户指定雷电数 a、地震数 b，按当前目标/法术等级，输出精确总伤害 + 逐瓶地震明细 + 城墙规则细节 + 回血容错时间。 */
+  function calcCustom(){
+    var b=findBuild(STATE.target);
+    if(!b){ renderCustomResult(null,"请先选择目标建筑。"); return; }
+    var cur=STATE.build[STATE.target]||0;
+    if(cur<=0){ renderCustomResult(null,"目标建筑未设置等级，请先在上方设定。"); return; }
+    var H=buildHP(b.unit,cur), wall=isWall(b.unit);
+    var ql=STATE.spell.q, ll=STATE.spell.l;
+    var Dl=lightDmg(ll), pct=quakePct(ql);
+    var D_eq=totalEquipDmg();
+    var immA=immuneAll(b.unit), immL=immuneLight(b.unit);
+    if(immA){ Dl=0; pct=0; }
+    else if(immL){ Dl=0; }
+
+    var a=intv($("dmCustomLight").value); if(a<0)a=0;
+    var q=intv($("dmCustomQuake").value); if(q<0)q=0; if(q>QUAKE_SEARCH_CAP)q=QUAKE_SEARCH_CAP;
+    if(ql<=0 && ll<=0){ renderCustomResult(null,"请先设定雷电和地震法术等级（上方「法术等级」一栏）。"); return; }
+    if(Dl<=0 && pct<=0){ renderCustomResult(null,"该目标对所有法术免疫，请改选其他目标或仅参考装备伤害。"); return; }
+
+    var liDmg=a*Dl;
+    var qDmg=q>0 && pct>0 ? quakeDmg(q,H,ql,wall) : 0;
+    var total=D_eq + liDmg + qDmg;
+    renderCustomResult({
+      a:a, q:q, liDmg:liDmg, qDmg:qDmg, D_eq:D_eq, total:total,
+      H:H, wall:wall, ql:ql, ll:ll, Dl:Dl, pct:pct,
+      immA:immA, immL:immL
+    }, null);
+  }
+
+  function renderCustomResult(r, err){
+    var box=$("dmResultCustom");
+    if(err){ box.innerHTML='<div class="dm-warn">'+esc(err)+'</div>'; box.classList.add("show"); return; }
+    if(!r){ box.classList.remove("show"); return; }
+    var bName=esc(findBuild(STATE.target).unit.chineseName);
+    var destroyed=r.total >= r.H;
+    var html='<div class="dm-result-headline'+(destroyed?' dm-ok':'')+'">';
+    html+='<div class="dm-rh-label">自定义方案总伤害（⚡ ×'+r.a+' + 🌍 ×'+r.q+'）</div>';
+    html+='<div class="dm-rh-value"><span class="dm-grad">'+fmt(r.total)+'</span></div>';
+    html+='<div class="dm-rh-sub">对 '+bName+'（Lv'+(STATE.build[STATE.target]||0)+'，HP '+fmt(r.H)+(r.wall?'，城墙':'')+(destroyed?'） · ✓ 已摧毁':'） · 占比 '+((r.total/r.H)*100).toFixed(1)+'%')+'</div>';
+    html+='<div class="dm-config">';
+    if(r.D_eq>0)html+='<span class="dm-chip dm-chip-eq">🛡️ 装备伤害 <b>'+fmt(r.D_eq)+'</b></span>';
+    if(r.a>0)html+='<span class="dm-chip dm-chip-l">⚡ 雷电 ×'+r.a+' <b>'+fmt(r.liDmg)+'</b></span>';
+    if(r.q>0)html+='<span class="dm-chip dm-chip-q">🌍 地震 ×'+r.q+' <b>'+fmt(r.qDmg)+'</b></span>';
+    if(!r.a && !r.q && r.D_eq>0)html+='<span class="dm-chip">✓ 仅靠装备</span>';
+    html+='</div></div>';
+    /* 复用最高伤害的逐瓶地震明细（同一 quakeHitDmg 公式与城墙规则） */
+    var pseudoBest={a:r.a,b:r.q,dmg:r.D_eq + r.liDmg + r.qDmg};
+    html+=breakdownTable({H:r.H, wall:r.wall, ql:r.ql, ll:r.ll, D_eq:r.D_eq, immA:r.immA, immL:r.immL}, pseudoBest, r.D_eq, r.liDmg, r.qDmg);
+    html+=toleranceHtml(r.total, r.H);
+    if(r.immA){ html+='<div class="dm-warn">🛡 该建筑对所有法术免疫，雷电与地震均无效，仅英雄装备伤害生效。</div>'; }
+    else if(r.immL){ html+='<div class="dm-warn">🛡 该建筑对雷电法术免疫（雷电伤害按 0 计），地震法术仍然有效。</div>'; }
+    box.innerHTML=html; box.classList.add("show");
+  }
+
   /* ===== 结果渲染 ===== */
   function fmtPct(p){ return (p*100).toFixed(2).replace(/\.?0+$/,"")+"%"; }
 
@@ -648,12 +703,25 @@
       /* 计算按钮 */
       $("dmCalcMaxBtn").addEventListener("click", calcMax);
       $("dmCalcMinBtn").addEventListener("click", calcMin);
+      $("dmCalcCustomBtn").addEventListener("click", calcCustom);
+      /* 自定义：实时显示总法术空间（雷电+地震） */
+      function updateCustomSpace(){
+        var a=intv($("dmCustomLight").value), q=intv($("dmCustomQuake").value);
+        if(a<0)a=0; if(q<0)q=0;
+        $("dmCustomSpace").innerHTML = '⚡ <b>'+a+'</b> + 🌍 <b>'+q+'</b> = <b style="color:var(--coc-blue)">'+(a+q)+'</b> 格';
+      }
+      $("dmCustomLight").addEventListener("input", updateCustomSpace);
+      $("dmCustomQuake").addEventListener("input", updateCustomSpace);
+      updateCustomSpace();
       /* 标签切换 */
       document.querySelectorAll(".dm-tab").forEach(function(t){
         t.addEventListener("click", function(){
           var tab=t.getAttribute("data-tab");
           document.querySelectorAll(".dm-tab").forEach(function(x){ x.classList.toggle("active", x===t); });
-          document.querySelectorAll(".dm-tab-pane").forEach(function(p){ p.classList.toggle("active", p.id==="dmPane"+(tab==="max"?"Max":"Min")); });
+          document.querySelectorAll(".dm-tab-pane").forEach(function(p){
+            var key = p.id==="dmPaneMax"?"max":(p.id==="dmPaneMin"?"min":(p.id==="dmPaneCustom"?"custom":""));
+            p.classList.toggle("active", key===tab);
+          });
         });
       });
       /* 默认目标 */

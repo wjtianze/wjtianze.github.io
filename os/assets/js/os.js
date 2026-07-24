@@ -10,7 +10,7 @@
 'use strict';
 
 /* 系统版本（每次发布更新必须同步递增，并更新 dev/os/version.json） */
-const OS_VERSION = '3.1.1';
+const OS_VERSION = '3.2';
 
 /* ===================== 存储层 ===================== */
 const Store = {
@@ -1697,6 +1697,7 @@ const BUILTIN_APP_CMDS = {
 
   /* ===== 笔记（Markdown / LaTeX）===== */
   // note：无参数打开应用；子命令完成增删查改，数据与笔记应用同源（IndexedDB tznotes）
+  // 编号规则：每篇笔记创建时分配一个永不改变的固定编号 no（最早创建的为 1，后续递增），便于 CLI 长期引用。
   note: async (r) => {
     if (!r) { launchApp('notes'); return '已打开笔记（note help 查看命令用法）'; }
     const { sub, args } = splitSub(r);
@@ -1704,26 +1705,31 @@ const BUILTIN_APP_CMDS = {
       return 'note 用法：\n' +
         '  note                      打开笔记应用\n' +
         '  note list                 列出全部笔记（编号 标题 · 字数 · 更新时间）\n' +
-        '  note new 标题             新建笔记\n' +
+        '  note new 标题             新建笔记（输出包含分配的固定编号）\n' +
         '  note open 编号|标题       在应用中打开某篇笔记\n' +
+        '  note view 编号|标题       查看笔记完整 Markdown 内容\n' +
+        '  note edit 编号 文本       整体替换笔记内容（文本中 \\n 表示换行）\n' +
         '  note append 编号 文本     向笔记末尾追加（文本中 \\n 表示换行）\n' +
-        '  note export 编号          输出笔记完整 Markdown 原文\n' +
+        '  note export 编号          输出笔记完整 Markdown 原文（与 view 同义）\n' +
         '  note search 关键词        在标题与正文中搜索\n' +
+        '  note undo                 撤销最近一次改动（new/edit/append/del，可连续撤销）\n' +
         '  note del 编号             删除笔记';
     }
     if (sub === 'list') {
       const ns = await notesLoad();
       return ns.length
-        ? ns.map((n, i) => (i + 1) + '. ' + (n.title || '未命名') + '（' + (n.content || '').length + ' 字 · ' + new Date(n.updated || 0).toLocaleString('zh-CN') + '）').join('\n')
+        ? ns.map((n) => n.no + '. ' + (n.title || '未命名') + '（' + (n.content || '').length + ' 字 · ' + new Date(n.updated || 0).toLocaleString('zh-CN') + '）').join('\n')
         : '（暂无笔记，note new 标题 新建）';
     }
     if (sub === 'new') {
       need(args, 'note new 标题');
       const ns = await notesLoad();
-      ns.unshift({ id: 'n' + Date.now(), title: args, content: '', updated: Date.now() });
+      const no = notesNextNo(ns);
+      notesSnapshot(ns);
+      ns.unshift({ id: 'n' + Date.now(), no: no, title: args, content: '', updated: Date.now() });
       await notesSave(ns);
       refreshOpenApp('notes');
-      return '已新建笔记：' + args;
+      return '已新建笔记：' + args + '（编号' + no + '）';
     }
     if (sub === 'open') {
       need(args, 'note open 编号|标题');
@@ -1733,7 +1739,29 @@ const BUILTIN_APP_CMDS = {
       notesPendingOpen = n.id;
       launchApp('notes');
       refreshOpenApp('notes');
-      return '已打开笔记：' + (n.title || '未命名');
+      return '已打开笔记：' + (n.title || '未命名') + '（编号' + n.no + '）';
+    }
+    if (sub === 'view' || sub === 'show') {
+      need(args, 'note view 编号|标题');
+      const ns = await notesLoad();
+      const n = pickNote(ns, args);
+      if (!n) throw new Error('找不到笔记：' + args + '（note list 查看编号）');
+      return '# ' + (n.title || '未命名') + '\n\n' + (n.content || '（空笔记）');
+    }
+    if (sub === 'edit' || sub === 'set' || sub === 'write') {
+      need(args, 'note edit 编号 文本');
+      const sp2 = args.indexOf(' ');
+      if (sp2 < 0) throw new Error('用法：note edit 编号 文本');
+      const ref = args.slice(0, sp2), text = args.slice(sp2 + 1).replace(/\\n/g, '\n');
+      const ns = await notesLoad();
+      const n = pickNote(ns, ref);
+      if (!n) throw new Error('找不到笔记：' + ref + '（note list 查看编号）');
+      notesSnapshot(ns);
+      n.content = text;
+      n.updated = Date.now();
+      await notesSave(ns);
+      refreshOpenApp('notes');
+      return '已整体替换「' + (n.title || '未命名') + '」（编号' + n.no + '，现共 ' + n.content.length + ' 字）';
     }
     if (sub === 'append') {
       need(args, 'note append 编号 文本');
@@ -1743,11 +1771,12 @@ const BUILTIN_APP_CMDS = {
       const ns = await notesLoad();
       const n = pickNote(ns, ref);
       if (!n) throw new Error('找不到笔记：' + ref + '（note list 查看编号）');
+      notesSnapshot(ns);
       n.content = (n.content ? n.content.replace(/\s+$/, '') + '\n' : '') + text + '\n';
       n.updated = Date.now();
       await notesSave(ns);
       refreshOpenApp('notes');
-      return '已追加到「' + (n.title || '未命名') + '」（现共 ' + n.content.length + ' 字）';
+      return '已追加到「' + (n.title || '未命名') + '」（编号' + n.no + '，现共 ' + n.content.length + ' 字）';
     }
     if (sub === 'export' || sub === 'cat') {
       need(args, 'note export 编号|标题');
@@ -1762,20 +1791,27 @@ const BUILTIN_APP_CMDS = {
       const hits = ns.filter(n => (n.title || '').includes(args) || (n.content || '').includes(args));
       if (!hits.length) return '没有找到包含「' + args + '」的笔记';
       return hits.map(n => {
-        const idx = ns.indexOf(n) + 1;
         const ci = (n.content || '').indexOf(args);
         const ctx = ci >= 0 ? '：…' + n.content.slice(Math.max(0, ci - 12), ci + args.length + 24).replace(/\n/g, ' ') + '…' : '';
-        return idx + '. ' + (n.title || '未命名') + ctx;
+        return n.no + '. ' + (n.title || '未命名') + ctx;
       }).join('\n');
+    }
+    if (sub === 'undo') {
+      const prev = notesUndoStack.pop();
+      if (!prev) return '（无可撤销的改动）';
+      await notesSave(prev);
+      refreshOpenApp('notes');
+      return '已撤销上一次改动（剩余可撤销次数：' + notesUndoStack.length + '）';
     }
     if (sub === 'del' || sub === 'rm') {
       need(args, 'note del 编号|标题');
       const ns = await notesLoad();
       const n = pickNote(ns, args);
       if (!n) throw new Error('找不到笔记：' + args);
+      notesSnapshot(ns);
       await notesSave(ns.filter(x => x.id !== n.id));
       refreshOpenApp('notes');
-      return '已删除笔记：' + (n.title || '未命名');
+      return '已删除笔记：' + (n.title || '未命名') + '（编号' + n.no + '）';
     }
     throw new Error('未知子命令：' + sub + '（note help 查看用法）');
   },
@@ -2394,11 +2430,14 @@ const CLI = {
 '── 笔记（Markdown / LaTeX）──\n' +
 '  note                        打开笔记应用\n' +
 '  note list                   列出全部笔记\n' +
-'  note new 标题               新建笔记\n' +
+'  note new 标题               新建笔记（输出包含分配的固定编号）\n' +
 '  note open 编号|标题         打开某篇笔记\n' +
+'  note view 编号|标题         查看笔记完整 Markdown 内容\n' +
+'  note edit 编号 文本         整体替换笔记内容（\\n 表示换行）\n' +
 '  note append 编号 文本       向笔记末尾追加（\\n 表示换行）\n' +
 '  note export 编号            输出笔记完整 Markdown 原文\n' +
 '  note search 关键词          搜索笔记\n' +
+'  note undo                   撤销最近一次改动（new/edit/append/del）\n' +
 '  note del 编号               删除笔记\n' +
 '── 文档与其他 ──\n' +
 '  docs open URL|recent        文档阅读器打开/最近记录\n' +
@@ -2430,7 +2469,7 @@ const CLI = {
 '· 时钟：clock | clock-now | stopwatch [start|stop|reset] | timer 时长(如 5m / 90s / 1h30m)\n' +
 '· 天择网专区：coc list|open | coc-data [save <JSON>|json|clear] | coc-game [search 名字|th 等级|cat 类别|count|json] | village info|open | planner info|open | dmg info|quake HP|open | game list|open | gpa info|open|rules | english list|open | ai-zone list|open | open-data list|open | tree [分类]\n' +
 '· 单词本：words | words add word|词性|释义 | words list [N] | words count | words find 关键词 | words del 编号\n' +
-'· 笔记（Markdown/LaTeX）：note | note list | note new 标题 | note open 编号|标题 | note append 编号 文本(文本中 \\n 为换行) | note export 编号 | note search 关键词 | note del 编号\n' +
+'· 笔记（Markdown/LaTeX）：note | note list | note new 标题 | note open 编号|标题 | note view 编号|标题 | note edit 编号 文本(整体替换，\\n 为换行) | note append 编号 文本(\n 为换行) | note export 编号 | note search 关键词 | note undo | note del 编号\n' +
 '· 文档/技巧/模拟器：docs open URL|recent | tips [编号] | emu-win/emu-win10/emu-android info|open\n' +
 '· 用户安装的 AI 软件：cmd list 查看已注册命令；cmd 应用id 指令 [参数] 调用（会自动打开软件窗口，指令在软件内部执行）\n' +
 '· 其他：js JavaScript代码 | echo 文本 | ask 问题(仅用户可用，你不能调用)\n' +
@@ -3246,8 +3285,9 @@ function renderPptx(data, body, fail, onReady) {
 }
 
 /* ===================== 内置应用：笔记（Markdown / LaTeX，可被命令行操控） =====================
- * 存储：IndexedDB tznotes 库 kv 表 key='notes'，[{id,title,content,updated}]
- * 命令行：note list|new|open|append|export|search|del|help（见 BUILTIN_APP_CMDS.note） */
+ * 存储：IndexedDB tznotes 库 kv 表 key='notes'，[{id, no, title, content, updated}]
+ *   no = 固定编号（创建顺序，1 起始，永不改变，永不重用），便于 CLI 长期引用；旧数据加载时按 id 升序补齐。
+ * 命令行：note list|new|open|view|edit|append|export|search|undo|del|help（见 BUILTIN_APP_CMDS.note） */
 function openNotesDB() {
   return new Promise((res, rej) => {
     const r = indexedDB.open('tznotes', 1);
@@ -3265,7 +3305,11 @@ async function notesLoad() {
       r.onsuccess = () => res(r.result);
       r.onerror = () => rej(r.error);
     });
-    return (rec && Array.isArray(rec.v)) ? rec.v : [];
+    const list = (rec && Array.isArray(rec.v)) ? rec.v : [];
+    /* 迁移：为没有 no 字段的旧笔记补上固定编号（按 id 升序=创建顺序，1 开始，永不重用） */
+    const sorted = list.slice().sort((a, b) => String(a.id).localeCompare(String(b.id)));
+    sorted.forEach((n, i) => { if (!n.no) n.no = i + 1; });
+    return list;
   } catch (e) { return []; }
 }
 async function notesSave(list) {
@@ -3282,14 +3326,25 @@ async function notesSave(list) {
     return true;
   } catch (e) { return false; }
 }
-// 按编号（1 起始）或标题查找笔记
+// 按编号（固定 no，1 起始）或标题查找笔记
 function pickNote(notes, ref) {
   ref = String(ref || '').trim();
   const n = parseInt(ref, 10);
-  if (String(n) === ref && n >= 1 && n <= notes.length) return notes[n - 1];
+  if (String(n) === ref && n >= 1) return notes.find(x => x.no === n) || null;
   const exact = notes.find(x => (x.title || '') === ref);
   if (exact) return exact;
   return notes.find(x => (x.title || '').includes(ref)) || null;
+}
+// 取下一个可用固定编号（永不重用已被占用的 no，全删后从 1 重新开始）
+function notesNextNo(notes) {
+  let m = 0;
+  notes.forEach(x => { if (x.no && x.no > m) m = x.no; });
+  return m + 1;
+}
+let notesUndoStack = []; // 每次 CLI 改动前快照原数组，note undo 依次弹出回退
+function notesSnapshot(notes) {
+  notesUndoStack.push(JSON.parse(JSON.stringify(notes)));
+  if (notesUndoStack.length > 30) notesUndoStack.shift(); // 防止无限增长，最多保留 30 步
 }
 let notesPendingOpen = null; // CLI note open 传参：窗口初始化后聚焦该笔记
 
@@ -3333,7 +3388,7 @@ async function initNotes() {
     listEl.innerHTML = '';
     notes.forEach(n => {
       const item = el('div', 'notes-item' + (n.id === curId ? ' active' : ''));
-      item.innerHTML = '<div class="ni-title">' + escapeHtml(n.title || '未命名') + '</div>' +
+      item.innerHTML = '<div class="ni-title"><span class="ni-no">#' + (n.no || '?') + '</span>' + escapeHtml(n.title || '未命名') + '</div>' +
         '<div class="ni-sub">' + escapeHtml((n.content || '').replace(/\s+/g, ' ').slice(0, 24) || '（空）') + ' · ' + fmtTime(n.updated) + '</div>';
       item.onclick = () => open(n.id);
       listEl.appendChild(item);
@@ -3353,10 +3408,18 @@ async function initNotes() {
   }
   async function persist() {
     const ok = await notesSave(notes);
-    status.textContent = ok ? ('已保存 · ' + new Date().toLocaleTimeString('zh-CN')) : '⚠ 保存失败（IndexedDB 不可用）';
+    /* 单条轻量占位，避免与预览重渲染同时呈现"两条进度"。仅在用户真正改动后短暂显示一次，然后回到"已保存 · 时间"。 */
+    if (status.dataset.editing === '1') {
+      status.textContent = ok ? ('已保存 · ' + new Date().toLocaleTimeString('zh-CN')) : '⚠ 保存失败（IndexedDB 不可用）';
+      status.dataset.editing = '0';
+    }
   }
   function saveSoon() {
-    status.textContent = '编辑中…';
+    /* 与 AI 对话修复同源：用 chat-streaming-placeholder 风格的单条轻量占位代替任何"双进度"组合；
+       预览重渲染是 DOM 直接更新，不属于进度条；这里确保状态栏是唯一的进度反馈通道。 */
+    status.dataset.editing = '1';
+    status.textContent = '';
+    status.innerHTML = '<span class="notes-saving-dot"></span><span class="notes-saving-text">正在保存…</span>';
     clearTimeout(saveTimer);
     saveTimer = setTimeout(persist, 500);
   }
@@ -3370,7 +3433,8 @@ async function initNotes() {
     renderList();
   }
   async function createNote(title) {
-    const n = { id: 'n' + Date.now(), title: title || '未命名笔记', content: '', updated: Date.now() };
+    let m = 0; notes.forEach(x => { if (x.no && x.no > m) m = x.no; });
+    const n = { id: 'n' + Date.now(), no: m + 1, title: title || '未命名笔记', content: '', updated: Date.now() };
     notes.unshift(n);
     curId = n.id;
     titleInp.value = n.title;
@@ -3378,7 +3442,8 @@ async function initNotes() {
     renderPreview();
     renderList();
     await notesSave(notes);
-    status.textContent = '已创建 · ' + new Date().toLocaleTimeString('zh-CN');
+    status.dataset.editing = '0';
+    status.innerHTML = '已创建（编号 ' + n.no + '） · ' + new Date().toLocaleTimeString('zh-CN');
   }
 
   const newBtn = $('#notesNew');
@@ -3394,6 +3459,7 @@ async function initNotes() {
     await notesSave(notes);
     titleInp.value = ''; ed.value = '';
     renderPreview(); renderList();
+    status.dataset.editing = '0';
     status.textContent = '已删除';
   };
   const mE = $('#notesModeEdit'), mS = $('#notesModeSplit'), mP = $('#notesModePrev');
