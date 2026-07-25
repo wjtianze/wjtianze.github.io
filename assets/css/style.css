@@ -2502,3 +2502,65 @@ main { isolation: isolate; }
   .vocab-code-card pre { padding: 20px; font-size: 12px; }
   .vocab-import-card .btn { width: 100%; margin-left: 0; justify-content: center; }
 }
+
+/* ============================================================
+   界面配色皮肤（v3.5）：默认冷色（紫·蓝·绿）；
+   html[data-palette="mid"|"warm"] 由 main.js 依本地选择设置。
+   mid 标准：蓝·绿·黄；warm 暖色：绿·黄·橙。与天择OS同源同步。
+   ============================================================ */
+html[data-palette="mid"] {
+  --c-purple: #3b82f6; --c-violet: #60a5fa; --c-indigo: #0ea5e9; --c-blue: #10b981;
+  --c-sky: #34d399; --c-cyan: #4ade80; --c-green: #eab308; --c-emerald: #facc15;
+  --grad-main: linear-gradient(135deg, #3b82f6 0%, #10b981 52%, #eab308 100%);
+  --grad-soft: linear-gradient(135deg, #60a5fa 0%, #6ee7b7 50%, #fde047 100%);
+  --grad-text: linear-gradient(120deg, #60a5fa, #6ee7b7 45%, #fde047);
+  --grad-radial: radial-gradient(80vmax 80vmax at 20% 10%, rgba(59,130,246,0.28), transparent 55%),
+                 radial-gradient(70vmax 70vmax at 85% 90%, rgba(234,179,8,0.24), transparent 55%);
+  --shadow-glow: 0 12px 42px rgba(59, 130, 246, 0.28);
+}
+html[data-palette="warm"] {
+  --c-purple: #10b981; --c-violet: #34d399; --c-indigo: #eab308; --c-blue: #eab308;
+  --c-sky: #fbbf24; --c-cyan: #fb923c; --c-green: #f97316; --c-emerald: #fdba74;
+  --grad-main: linear-gradient(135deg, #10b981 0%, #eab308 52%, #f97316 100%);
+  --grad-soft: linear-gradient(135deg, #6ee7b7 0%, #fde047 50%, #fdba74 100%);
+  --grad-text: linear-gradient(120deg, #6ee7b7, #fde047 45%, #fdba74);
+  --grad-radial: radial-gradient(80vmax 80vmax at 20% 10%, rgba(16,185,129,0.26), transparent 55%),
+                 radial-gradient(70vmax 70vmax at 85% 90%, rgba(249,115,22,0.24), transparent 55%);
+  --shadow-glow: 0 12px 42px rgba(249, 115, 22, 0.28);
+}
+
+/* 配色切换浮钮（main.js 注入） */
+.tzpal-btn {
+  position: fixed; left: 18px; bottom: 18px; z-index: 90;
+  width: 42px; height: 42px; border-radius: 50%; cursor: pointer;
+  background: var(--bg-soft, #11182e); border: 1px solid var(--line-strong, rgba(255,255,255,0.14));
+  color: var(--ink-dim, #c3c8e4); font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow-md, 0 18px 50px rgba(0,0,0,0.32));
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+.tzpal-btn:hover { transform: translateY(-2px); color: var(--ink, #f7f8ff); }
+.tzpal-panel {
+  position: fixed; left: 18px; bottom: 70px; z-index: 90; min-width: 168px;
+  background: var(--bg-soft, #11182e); border: 1px solid var(--line-strong, rgba(255,255,255,0.14));
+  border-radius: 14px; padding: 8px; box-shadow: var(--shadow-lg, 0 28px 80px rgba(0,0,0,0.38));
+  display: none; flex-direction: column; gap: 2px;
+}
+.tzpal-panel.open { display: flex; }
+.tzpal-opt {
+  display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 9px;
+  cursor: pointer; font-size: 13px; color: var(--ink-dim, #c3c8e4); border: none; background: none;
+  font-family: inherit; text-align: left; width: 100%;
+}
+.tzpal-opt:hover { background: var(--bg-elevated-hover, rgba(255,255,255,0.075)); }
+.tzpal-opt.active { background: var(--bg-elevated, rgba(255,255,255,0.045)); color: var(--ink, #f7f8ff); }
+.tzpal-opt.locked { opacity: 0.62; }
+.tzpal-dots { display: flex; gap: 4px; }
+.tzpal-dots i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+.tzpal-cost { margin-left: auto; font-size: 11px; color: var(--ink-faint, #8b94b8); }
+.tzpal-tip {
+  position: fixed; left: 18px; bottom: 70px; z-index: 91; max-width: 240px;
+  background: var(--bg-soft, #11182e); border: 1px solid var(--line-strong, rgba(255,255,255,0.14));
+  color: var(--ink-dim, #c3c8e4); border-radius: 10px; padding: 9px 12px; font-size: 12px; line-height: 1.6;
+  box-shadow: var(--shadow-md, 0 18px 50px rgba(0,0,0,0.32)); display: none;
+}

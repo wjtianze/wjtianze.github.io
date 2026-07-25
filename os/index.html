@@ -59,7 +59,7 @@
     <section class="section wrap" style="padding-top:44px;">
       <div style="text-align:center;max-width:680px;margin:0 auto 30px;">
         <div class="reveal in" style="width:68px;height:68px;margin:0 auto 16px;border-radius:18px;background:var(--grad-main);display:flex;align-items:center;justify-content:center;font-size:36px">🖥️</div>
-        <h1 class="reveal in d1" style="font-size:32px;"><span class="grad">天择OS</span> <span style="font-size:14px;vertical-align:middle;color:var(--ink-faint);font-weight:500;">v3.2.0</span></h1>
+        <h1 class="reveal in d1" style="font-size:32px;"><span class="grad">天择OS</span> <span style="font-size:14px;vertical-align:middle;color:var(--ink-faint);font-weight:500;">v3.5.0</span></h1>
         <p class="reveal in d2" style="color:var(--ink-dim);font-size:15px;margin-top:8px;">浏览器里的全屏操作系统 · 选择适合你的版本</p>
       </div>
 
@@ -76,11 +76,11 @@
             <li>桌面快捷方式、开机自启一应俱全</li>
           </ul>
           <a class="btn" id="os-dl-btn"
-             href="https://github.com/wjtianze/wjtianze.github.io/releases/download/v3.2.0/tianze-os-setup-3.2.0.exe"
+             href="https://github.com/wjtianze/wjtianze.github.io/releases/download/v3.5.0/tianze-os-setup-3.5.0.exe"
              download
-             data-fallback-url="https://github.com/wjtianze/wjtianze.github.io/releases/download/v3.1.1/tianze-os-setup-3.1.1.exe"
-             data-fallback-ver="v3.1.1">
-            <span id="os-dl-text">下载 Windows 安装包（v3.2.0）</span><span>↓</span>
+             data-fallback-url="https://github.com/wjtianze/wjtianze.github.io/releases/download/v3.2.0/tianze-os-setup-3.2.0.exe"
+             data-fallback-ver="v3.2.0">
+            <span id="os-dl-text">下载 Windows 安装包（v3.5.0）</span><span>↓</span>
           </a>
           <div class="dl-meta" id="os-dl-meta">检测中…</div>
         </div>
@@ -103,7 +103,19 @@
           <p class="oc-tag">自 1.0 至今的版本演进</p>
           <div class="changelog">
             <div class="cl-item">
-              <div class="cl-ver">v3.2.0 <span class="cl-badge">最新</span></div>
+              <div class="cl-ver">v3.5.0 <span class="cl-badge">最新</span></div>
+              <div class="cl-date">2026-07-25</div>
+              <ul>
+                <li>新增<b>用户等级与积分</b>：每日启动、AI 对话、终端命令、新建笔记、安装软件、导出存档均可获积分（各项有每日上限），累计积分升级并获称号；终端 <code>level</code> 查看，数据加密存储、随全量存档迁移</li>
+                <li>新增<b>界面配色皮肤</b>：冷（紫·蓝·绿）/ 中（蓝·绿·黄）/ 暖（绿·黄·橙）三套配色；OS 内冷色默认解锁，中、暖色用积分兑换（系统设置或终端 <code>skin</code> 命令）；<b>天择网三色全部免费</b>，网站左下角 🎨 随时切换</li>
+                <li>AI 对话工具栏新增「🌐 联网」「⌨️ 命令行」开关，不用进设置即可切换</li>
+                <li>纯文本模型支持上传图片：本地 <b>OCR</b> 识别成文字随消息发送（不上传图片本身）；文本类文件（txt/md/json/代码等）直接读取内容发送，不再发 base64</li>
+                <li>AI 软件可反向调用系统命令行：软件内 <code>await TZOS_CMD.exec('命令')</code> 即可执行任意系统命令并拿到输出</li>
+                <li>修复上下文用量条刷新页面后数值大幅缩水：持久化上一轮真实 token 用量，历史未变时刷新后显示与刷新前一致；估算器改为中英文分别计权并计入系统提示词与图片</li>
+              </ul>
+            </div>
+            <div class="cl-item">
+              <div class="cl-ver">v3.2.0</div>
               <div class="cl-date">2026-07-24</div>
               <ul>
                 <li>笔记命令行新增 <code>note view</code>（查看内容）、<code>note edit</code>（整体替换）、<code>note undo</code>（撤销最近一次改动）；<code>note new</code> 输出包含分配的固定编号</li>
@@ -208,7 +220,7 @@
     </div>
   </footer>
 
-  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260722a"></script>
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260725a"></script>
   <script>
   // 自动检测 GitHub Release 已发布的最新安装包
   // 修复（v3.2）：旧版用 fetch(HEAD) 直接探测 github.com 的 release download URL，

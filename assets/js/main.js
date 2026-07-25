@@ -33,6 +33,84 @@
     }
   };
 
+  /* ============================================================
+     配色皮肤（v3.5）
+     天择网：冷 / 中 / 暖三色【全部免费】，左下角 🎨 随时切换，
+       选择存于本站专用键 tz_site_palette，全站页面加载时自动应用。
+     天择OS：配色独立（tzos_state_v1.palette），冷色默认解锁，
+       中/暖色用 OS 积分兑换——两边互不干扰。
+     ============================================================ */
+  var TZPAL = {
+    KEY: "tz_site_palette",
+    SKINS: {
+      cold: { name: "冷色", css: ["#7c3aed", "#3b82f6", "#10b981"] },
+      mid: { name: "标准", css: ["#3b82f6", "#10b981", "#eab308"] },
+      warm: { name: "暖色", css: ["#10b981", "#eab308", "#f97316"] }
+    },
+    current: function () {
+      try {
+        var p = localStorage.getItem(this.KEY);
+        return (p === "mid" || p === "warm") ? p : "cold";
+      } catch (e) { return "cold"; }
+    },
+    apply: function () {
+      var p = this.current();
+      if (p === "cold") document.documentElement.removeAttribute("data-palette");
+      else document.documentElement.setAttribute("data-palette", p);
+      return p;
+    },
+    select: function (p) {
+      if (!this.SKINS[p]) return false;
+      try { localStorage.setItem(this.KEY, p); } catch (e) { return false; }
+      this.apply();
+      return true;
+    }
+  };
+  TZPAL.apply();
+  // 左下角配色切换浮钮（全站注入，无需改动各页面；三色全部免费）
+  (function initPaletteSwitcher() {
+    function build() {
+      if (document.querySelector(".tzpal-btn")) return;
+      var btn = document.createElement("button");
+      btn.className = "tzpal-btn";
+      btn.type = "button";
+      btn.title = "界面配色（冷 / 中 / 暖，全部免费）";
+      btn.textContent = "🎨";
+      var panel = document.createElement("div");
+      panel.className = "tzpal-panel";
+      function renderPanel() {
+        var cur = TZPAL.apply();
+        panel.innerHTML = "";
+        Object.keys(TZPAL.SKINS).forEach(function (id) {
+          var s = TZPAL.SKINS[id];
+          var o = document.createElement("button");
+          o.type = "button";
+          o.className = "tzpal-opt" + (cur === id ? " active" : "");
+          o.innerHTML = '<span class="tzpal-dots">' + s.css.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join("") + "</span>" +
+            "<span>" + s.name + "</span>" +
+            '<span class="tzpal-cost">' + (cur === id ? "使用中" : "") + "</span>";
+          o.onclick = function () {
+            TZPAL.select(id);
+            renderPanel();
+          };
+          panel.appendChild(o);
+        });
+      }
+      btn.onclick = function (e) {
+        e.stopPropagation();
+        renderPanel();
+        panel.classList.toggle("open");
+      };
+      document.addEventListener("click", function (e) {
+        if (!panel.contains(e.target) && e.target !== btn) panel.classList.remove("open");
+      });
+      document.body.appendChild(btn);
+      document.body.appendChild(panel);
+    }
+    if (document.body) build();
+    else document.addEventListener("DOMContentLoaded", build);
+  })();
+
   var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   var mobileNav = window.matchMedia("(max-width: 680px)");
   var topbar = document.querySelector(".topbar");

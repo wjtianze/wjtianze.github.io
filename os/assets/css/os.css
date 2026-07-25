@@ -990,3 +990,100 @@ body.tzos.light .notes-preview pre { background: rgba(15,23,42,0.06); }
 .msg { animation: msgIn 0.3s var(--ease); }
 .desktop-icons .desktop-icon, .start-apps .start-app { animation: iconIn 0.3s var(--ease) backwards; }
 @keyframes iconIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: none; } }
+
+/* ============================================================
+   界面配色皮肤（v3.5）：默认冷色（紫·蓝·绿）；
+   body[data-palette="mid"|"warm"] 时整体切换品牌色与桌面背景。
+   mid 标准：蓝·绿·黄；warm 暖色：绿·黄·橙。
+   ============================================================ */
+body[data-palette="mid"] {
+  --c-purple: #3b82f6; --c-violet: #60a5fa; --c-blue: #10b981; --c-sky: #34d399;
+  --c-cyan: #4ade80; --c-green: #eab308; --c-emerald: #facc15;
+  --grad-main: linear-gradient(135deg, #3b82f6 0%, #10b981 52%, #eab308 100%);
+  --grad-soft: linear-gradient(135deg, #60a5fa 0%, #6ee7b7 50%, #fde047 100%);
+}
+body[data-palette="warm"] {
+  --c-purple: #10b981; --c-violet: #34d399; --c-blue: #eab308; --c-sky: #fbbf24;
+  --c-cyan: #fb923c; --c-green: #f97316; --c-emerald: #fdba74;
+  --grad-main: linear-gradient(135deg, #10b981 0%, #eab308 52%, #f97316 100%);
+  --grad-soft: linear-gradient(135deg, #6ee7b7 0%, #fde047 50%, #fdba74 100%);
+}
+/* 桌面背景（深色） */
+body[data-palette="mid"] .desktop {
+  background:
+    radial-gradient(120vmax 80vmax at 15% 12%, rgba(59,130,246,0.38), transparent 55%),
+    radial-gradient(110vmax 70vmax at 88% 85%, rgba(234,179,8,0.30), transparent 55%),
+    radial-gradient(90vmax 90vmax at 75% 20%, rgba(16,185,129,0.32), transparent 55%),
+    linear-gradient(160deg, #0a0f24 0%, #070b1a 100%);
+}
+body[data-palette="mid"] .desktop.mac-style {
+  background:
+    radial-gradient(120vmax 80vmax at 20% 15%, rgba(59,130,246,0.34), transparent 55%),
+    radial-gradient(110vmax 70vmax at 80% 80%, rgba(234,179,8,0.26), transparent 55%),
+    linear-gradient(150deg, #101a30 0%, #0a121f 100%);
+}
+body[data-palette="warm"] .desktop {
+  background:
+    radial-gradient(120vmax 80vmax at 15% 12%, rgba(16,185,129,0.36), transparent 55%),
+    radial-gradient(110vmax 70vmax at 88% 85%, rgba(249,115,22,0.30), transparent 55%),
+    radial-gradient(90vmax 90vmax at 75% 20%, rgba(234,179,8,0.30), transparent 55%),
+    linear-gradient(160deg, #0a0f24 0%, #070b1a 100%);
+}
+body[data-palette="warm"] .desktop.mac-style {
+  background:
+    radial-gradient(120vmax 80vmax at 20% 15%, rgba(16,185,129,0.32), transparent 55%),
+    radial-gradient(110vmax 70vmax at 80% 80%, rgba(249,115,22,0.26), transparent 55%),
+    linear-gradient(150deg, #10241c 0%, #0a140f 100%);
+}
+/* 桌面背景（浅色，特异性需高于 body.tzos.light .desktop） */
+body.tzos.light[data-palette="mid"] .desktop {
+  background:
+    radial-gradient(120vmax 80vmax at 15% 12%, rgba(59,130,246,0.20), transparent 55%),
+    radial-gradient(110vmax 70vmax at 88% 85%, rgba(234,179,8,0.18), transparent 55%),
+    radial-gradient(90vmax 90vmax at 75% 20%, rgba(16,185,129,0.18), transparent 55%),
+    linear-gradient(160deg, #e8ecf8 0%, #dde4f2 100%);
+}
+body.tzos.light[data-palette="mid"] .desktop.mac-style {
+  background:
+    radial-gradient(120vmax 80vmax at 20% 15%, rgba(59,130,246,0.18), transparent 55%),
+    radial-gradient(110vmax 70vmax at 80% 80%, rgba(234,179,8,0.16), transparent 55%),
+    linear-gradient(150deg, #e4ecfa 0%, #e2e8f5 100%);
+}
+body.tzos.light[data-palette="warm"] .desktop {
+  background:
+    radial-gradient(120vmax 80vmax at 15% 12%, rgba(16,185,129,0.20), transparent 55%),
+    radial-gradient(110vmax 70vmax at 88% 85%, rgba(249,115,22,0.18), transparent 55%),
+    radial-gradient(90vmax 90vmax at 75% 20%, rgba(234,179,8,0.18), transparent 55%),
+    linear-gradient(160deg, #e8f4ec 0%, #dde8f2 100%);
+}
+body.tzos.light[data-palette="warm"] .desktop.mac-style {
+  background:
+    radial-gradient(120vmax 80vmax at 20% 15%, rgba(16,185,129,0.18), transparent 55%),
+    radial-gradient(110vmax 70vmax at 80% 80%, rgba(249,115,22,0.16), transparent 55%),
+    linear-gradient(150deg, #e4f5ec 0%, #e2e8f5 100%);
+}
+
+/* ---------- 配色选择卡片（系统设置） ---------- */
+.skin-pick { display: flex; gap: 10px; flex-wrap: wrap; }
+.skin-opt {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 10px 14px; border-radius: var(--r-md); cursor: pointer; min-width: 86px;
+  background: var(--surface); border: 1.5px solid var(--glass-border);
+  transition: border-color 0.18s var(--ease), transform 0.18s var(--ease), box-shadow 0.18s var(--ease);
+}
+.skin-opt:hover { transform: translateY(-2px); }
+.skin-opt.active { border-color: var(--c-violet); box-shadow: var(--sh-glow); }
+.skin-opt.locked { opacity: 0.72; }
+.skin-dots { display: flex; gap: 5px; }
+.skin-dots i { width: 16px; height: 16px; border-radius: 50%; display: block; box-shadow: 0 1px 4px rgba(0,0,0,0.35); }
+.skin-name { font-size: 13px; font-weight: 600; color: var(--ink); }
+.skin-sub { font-size: 11px; color: var(--ink-faint); }
+.skin-cost { font-size: 11px; color: var(--c-emerald); }
+.skin-opt.locked .skin-cost { color: #fbbf24; }
+
+/* ---------- 等级进度条（系统设置） ---------- */
+.rpg-bar {
+  width: 180px; height: 10px; border-radius: 999px; flex-shrink: 0;
+  background: var(--surface-2); overflow: hidden; border: 1px solid var(--glass-border);
+}
+.rpg-bar i { display: block; height: 100%; border-radius: 999px; background: var(--grad-main); transition: width 0.4s var(--ease); }
