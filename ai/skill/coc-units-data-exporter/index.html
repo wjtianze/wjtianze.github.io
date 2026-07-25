@@ -47,7 +47,7 @@
           <h2><span class="bar"></span>这个技能做什么</h2>
         </div>
         <p style="color:var(--ink-dim); font-size:16px; max-width:820px; line-height:1.95;">
-          本技能包含两个独立可用的 Python 脚本：<b>coc_pipeline.py</b> 给定一份《部落冲突》APK 安装包，自动完成提取、解密、解析、命名映射、导出五步，产出覆盖全部单位的 <code style="font-family:ui-monospace,monospace; background:rgba(124,58,237,0.22); color:#d6c5ff; padding:2px 7px; border-radius:5px;">单位完整数据.json</code>；<b>village_parser.py</b> 则读取你的村庄存档 JSON，结合前者提取的游戏数据，按家乡/夜世界分类输出村庄完整信息，并计算各类单位到达当前大本营满级的剩余升级时间。两个脚本都内置默认名称表与 ID 映射，开箱即用。
+          本技能包含两个独立可用的 Python 脚本：<b>coc_pipeline.py</b> 给定一份《部落冲突》APK 安装包，自动完成提取、解密、解析、命名映射、导出五步，产出覆盖全部单位的 <code style="font-family:ui-monospace,monospace; background:rgba(var(--c-purple-rgb),0.22); color:#d6c5ff; padding:2px 7px; border-radius:5px;">单位完整数据.json</code>；<b>village_parser.py</b> 则读取你的村庄存档 JSON，结合前者提取的游戏数据，按家乡/夜世界分类输出村庄完整信息，并计算各类单位到达当前大本营满级的剩余升级时间。两个脚本都内置默认名称表与 ID 映射，开箱即用。
         </p>
       </div>
     </section>
@@ -99,7 +99,7 @@
           <h2><span class="bar"></span>怎么用</h2>
         </div>
         <p style="color:var(--ink-dim); font-size:15px; line-height:1.9; max-width:760px;">
-          下载下方技能包解压后，安装依赖（Python 3.10+，需 <code style="font-family:ui-monospace,monospace; background:rgba(124,58,237,0.22); color:#d6c5ff; padding:2px 7px; border-radius:5px;">sc_compression</code>、<code style="font-family:ui-monospace,monospace; background:rgba(124,58,237,0.22); color:#d6c5ff; padding:2px 7px; border-radius:5px;">openpyxl</code>），然后运行提取脚本：
+          下载下方技能包解压后，安装依赖（Python 3.10+，需 <code style="font-family:ui-monospace,monospace; background:rgba(var(--c-purple-rgb),0.22); color:#d6c5ff; padding:2px 7px; border-radius:5px;">sc_compression</code>、<code style="font-family:ui-monospace,monospace; background:rgba(var(--c-purple-rgb),0.22); color:#d6c5ff; padding:2px 7px; border-radius:5px;">openpyxl</code>），然后运行提取脚本：
         </p>
         <pre style="background:rgba(8,12,30,0.7); border:1px solid var(--line); border-radius:12px; padding:16px 18px; overflow-x:auto; margin:16px 0; font-size:13px; line-height:1.7; color:#c8d3f5;"><code># 基本用法（使用内置名称表）
 python scripts/coc_pipeline.py "你的APK文件路径.apk"
@@ -122,7 +122,7 @@ python scripts/coc_pipeline.py "APK.apk" "名称表.xlsx" "输出目录/"</code>
           <h2><span class="bar"></span>村庄存档解析脚本 village_parser.py</h2>
         </div>
         <p style="color:var(--ink-dim); font-size:15px; line-height:1.9; max-width:760px;">
-          这是本技能新增的第二个脚本。输入一份从游戏中导出的村庄存档 JSON，它会结合 <code style="font-family:ui-monospace,monospace; background:rgba(124,58,237,0.22); color:#d6c5ff; padding:2px 7px; border-radius:5px;">单位完整数据.json</code>（由 coc_pipeline.py 生成，或从天择网数据开源下载），输出一份结构化中文报告：村庄概况、家乡与夜世界按单位类型分类的完整清单、以及各类单位到达当前大本营满级的剩余升级时间汇总。
+          这是本技能新增的第二个脚本。输入一份从游戏中导出的村庄存档 JSON，它会结合 <code style="font-family:ui-monospace,monospace; background:rgba(var(--c-purple-rgb),0.22); color:#d6c5ff; padding:2px 7px; border-radius:5px;">单位完整数据.json</code>（由 coc_pipeline.py 生成，或从天择网数据开源下载），输出一份结构化中文报告：村庄概况、家乡与夜世界按单位类型分类的完整清单、以及各类单位到达当前大本营满级的剩余升级时间汇总。
         </p>
         <p style="color:var(--ink-dim); font-size:15px; line-height:1.9; max-width:760px; margin-top:8px;">运行方式：</p>
         <pre style="background:rgba(8,12,30,0.7); border:1px solid var(--line); border-radius:12px; padding:16px 18px; overflow-x:auto; margin:12px 0; font-size:13px; line-height:1.7; color:#c8d3f5;"><code># 基本用法（默认读取同目录 ../data/all_game_data_zh.json）

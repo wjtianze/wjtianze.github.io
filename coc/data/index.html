@@ -14,8 +14,8 @@
     .dm-cols { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:18px; align-items:start; }
     @media (max-width:720px){ .dm-cols { grid-template-columns:1fr; } }
     .dq-sub-side h4 { font-size:13px; color:var(--ink-faint); margin:0 0 10px; letter-spacing:.5px; }
-    .dq-sub-card { position:relative; display:block; width:100%; text-align:left; cursor:pointer; border:1px solid rgba(139,92,246,.35); background:rgba(139,92,246,.08); border-radius:12px; padding:12px; margin-bottom:10px; color:var(--ink); transition:border-color .15s, background .15s; }
-    .dq-sub-card:hover { border-color:var(--coc-purple,#8b5cf6); background:rgba(139,92,246,.16); }
+    .dq-sub-card { position:relative; display:block; width:100%; text-align:left; cursor:pointer; border:1px solid rgba(var(--c-violet-rgb),.35); background:rgba(var(--c-violet-rgb),.08); border-radius:12px; padding:12px; margin-bottom:10px; color:var(--ink); transition:border-color .15s, background .15s; }
+    .dq-sub-card:hover { border-color:var(--coc-purple,var(--c-violet)); background:rgba(var(--c-violet-rgb),.16); }
     .dq-sub-badge { display:inline-block; font-size:11px; padding:2px 8px; border-radius:999px; background:linear-gradient(135deg,#f59e0b,#ef4444); color:#fff; margin-bottom:6px; }
     .dq-sub-name { font-size:14px; font-weight:700; }
     .dq-sub-en { font-size:11px; color:var(--ink-faint); margin-top:1px; }
@@ -27,8 +27,8 @@
     .dq-back:hover { background:rgba(255,255,255,.12); }
     .dq-abil { margin-top:6px; }
     .dq-abil-head { display:flex; align-items:center; gap:8px; margin:14px 0 8px; }
-    .dq-abil-tag { font-size:11px; padding:2px 8px; border-radius:999px; background:rgba(59,130,246,.2); color:#93c5fd; }
-    .dq-abil-tag.extra { background:rgba(16,185,129,.18); color:#6ee7b7; }
+    .dq-abil-tag { font-size:11px; padding:2px 8px; border-radius:999px; background:rgba(var(--c-blue-rgb),.2); color:#93c5fd; }
+    .dq-abil-tag.extra { background:rgba(var(--c-green-rgb),.18); color:var(--c-green-soft); }
     .dq-abil-name { font-size:14px; font-weight:700; color:var(--ink); }
   </style>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />

@@ -106,9 +106,9 @@ const Store = {
  * 全量存档导出覆盖 localStorage 全量，等级积分随存档一并迁移。
  * 注意：字段只含数字/英文/数组（btoa 不容非 Latin1 字符），勿存中文。 */
 const RPG_SKINS = {
-  cold: { name: '冷色', desc: '紫 · 蓝 · 绿', cost: 0,   css: ['#7c3aed', '#3b82f6', '#10b981'] },
-  mid:  { name: '标准', desc: '蓝 · 绿 · 黄', cost: 300, css: ['#3b82f6', '#10b981', '#eab308'] },
-  warm: { name: '暖色', desc: '绿 · 黄 · 橙', cost: 800, css: ['#10b981', '#eab308', '#f97316'] }
+  cold: { name: '冷色', desc: '紫 · 蓝 · 绿', cost: 0,   css: ['#7c3aed', '#3b82f6', '#10b981'], soft: ['#a78bfa', '#60a5fa', '#6ee7b7'], rgb: ['139,92,246', '59,130,246', '16,185,129'] },
+  mid:  { name: '标准', desc: '蓝 · 绿 · 黄', cost: 300, css: ['#3b82f6', '#10b981', '#eab308'], soft: ['#60a5fa', '#6ee7b7', '#fde047'], rgb: ['96,165,250', '110,231,183', '253,224,71'] },
+  warm: { name: '暖色', desc: '绿 · 黄 · 橙', cost: 800, css: ['#10b981', '#eab308', '#f97316'], soft: ['#6ee7b7', '#fde047', '#fdba74'], rgb: ['110,231,183', '253,224,71', '253,186,116'] }
 };
 const RPG_RULES = [
   { id: 'boot',    pts: 10, cap: 10, name: '每日启动' },
@@ -208,9 +208,10 @@ function applyPalette() {
 window.TZOS = window.TZOS || {}; // TZOS 正式赋值在后文，这里先确保存在
 window.TZOS.setPalette = function (p) {
   if (!RPG_SKINS[p]) return;
-  if (!RPG.hasSkin(p)) { toast('「' + RPG_SKINS[p].name + '」配色尚未解锁（需 ' + RPG_SKINS[p].cost + ' 积分，系统设置或 level 命令查看）', 3200); return; }
+  if (!RPG.hasSkin(p)) { toast('「' + RPG_SKINS[p].name + '」配色尚未解锁（需 ' + RPG_SKINS[p].cost + ' 积分，「等级与外观」应用或 level 命令查看）', 3200); return; }
   Store.setPalette(p);
   applyPalette();
+  refreshOpenApp('growth');
   refreshOpenApp('settings');
   toast('已切换为「' + RPG_SKINS[p].name + '」配色（' + RPG_SKINS[p].desc + '）');
 };
@@ -222,7 +223,7 @@ window.TZOS.tryUnlockSkin = function (p) {
   const res = RPG.unlockSkin(p);
   toast(res.msg, 3400);
   if (res.ok) window.TZOS.setPalette(p);
-  else refreshOpenApp('settings');
+  else { refreshOpenApp('growth'); refreshOpenApp('settings'); }
 };
 
 /* ===================== 悬浮窗独立设置 =====================
@@ -312,6 +313,11 @@ const BUILTIN_APPS = {
     desc: '用自然语言生成新软件',
     render: () => renderAppStore(),
     singleton: true
+  },
+  'growth': {
+    name: '等级与外观', icon: '🏆', grad: true, category: 'system',
+    desc: '用户等级、积分与界面配色皮肤',
+    render: () => renderGrowth()
   },
   'settings': {
     name: '系统设置', icon: '⚙️', grad: false, category: 'system',
@@ -2508,7 +2514,7 @@ const CLI = {
 '  version                     查看系统版本\n' +
 '  theme dark|light            切换深色/浅色主题\n' +
 '  style win|mac|auto          切换桌面风格\n' +
-'  level [rule]                查看等级与积分（rule 查看获取规则）\n' +
+'  level [rule|open]           查看等级与积分（rule 规则；open 打开等级与外观应用）\n' +
 '  skin [list|use|unlock]      界面配色：查看/切换/积分解锁（冷中暖）\n' +
 '  widget open|close           打开/关闭快捷面板\n' +
 '  resetlayout                 重置桌面图标布局\n' +
@@ -2760,6 +2766,7 @@ const CLI = {
     // v3.5：用户等级与积分
     level: (r) => {
       const { sub } = splitSub(r);
+      if (sub === 'open') { launchApp('growth'); return '已打开「等级与外观」' + floatTip('等级与外观'); }
       if (sub === 'rule' || sub === 'rules') {
         return '积分获取规则（每日 0 点重置上限）：\n' +
           RPG_RULES.map(x => '  ' + x.name + '：每次 +' + x.pts + ' 分（每日上限 ' + x.cap + ' 分）').join('\n') +
@@ -2773,7 +2780,7 @@ const CLI = {
         '升级进度：' + s.into + ' / ' + s.need + '（再获 ' + (s.need - s.into) + ' 分升 Lv.' + (s.lv + 1) + '）\n' +
         '今日已获：' + RPG_RULES.map(x => (s.gain[x.id] || 0) + '/' + x.cap + '（' + x.name + '）').join('、') + '\n' +
         '已解锁配色：' + s.skins.map(id => RPG_SKINS[id].name).join('、') + '\n' +
-        '（level rule 查看规则；skin 命令兑换/切换配色）';
+        '（level rule 查看规则；level open 打开「等级与外观」应用；skin 命令兑换/切换配色）';
     },
     // v3.5：配色皮肤（冷/中/暖；中暖需积分解锁）
     skin: (r) => {
@@ -2792,7 +2799,7 @@ const CLI = {
         const id = args.toLowerCase();
         if (!RPG_SKINS[id]) throw new Error('用法：skin use cold|mid|warm');
         if (!RPG.hasSkin(id)) throw new Error('「' + RPG_SKINS[id].name + '」尚未解锁（需 ' + RPG_SKINS[id].cost + ' 积分：skin unlock ' + id + '）');
-        Store.setPalette(id); applyPalette(); refreshOpenApp('settings');
+        Store.setPalette(id); applyPalette(); refreshOpenApp('growth');
         return '已切换为「' + RPG_SKINS[id].name + '」配色（' + RPG_SKINS[id].desc + '）';
       }
       if (sub === 'unlock') {
@@ -2800,7 +2807,7 @@ const CLI = {
         if (!RPG_SKINS[id]) throw new Error('用法：skin unlock mid|warm');
         const res = RPG.unlockSkin(id);
         if (!res.ok) throw new Error(res.msg);
-        refreshOpenApp('settings');
+        refreshOpenApp('growth');
         return res.msg + '（skin use ' + id + ' 立即启用）';
       }
       throw new Error('用法：skin [list|use cold|mid|warm|unlock mid|warm]');
@@ -3850,11 +3857,11 @@ function renderAIConfig() {
       <h3 class="cfg-h3">🧩 能力设置</h3>
       <p class="sub" style="margin-bottom:10px">按你的模型与服务商能力开启对应功能；不支持的功能保持关闭可避免报错与浪费 token。</p>
       <div class="setting-row" style="border:none;padding:7px 0">
-        <div><div class="sr-label" style="font-size:13px">支持图片输入</div><div class="sr-desc">视觉模型（GPT-4o、GLM-4V 等）才开；关闭后「自动截图」不可用，上传的图片改为本地 OCR 识别成文字发送</div></div>
+        <div><div class="sr-label" style="font-size:13px">支持图片输入</div><div class="sr-desc">视觉模型（GPT-4o、GLM-4V 等）才开，上传的图片/截图直接发给模型；关闭后图片与截图改在本地 OCR 识别成文字发送</div></div>
         <div class="toggle ${caps.image!==false?'on':''}" id="capImageTg"></div>
       </div>
       <div class="setting-row" style="border:none;padding:7px 0">
-        <div><div class="sr-label" style="font-size:13px">支持文件输入</div><div class="sr-desc">允许在对话中上传/粘贴文件；文本类文件直接读取内容发送，二进制文件以 base64 发送（仅建议给小文件）</div></div>
+        <div><div class="sr-label" style="font-size:13px">支持文件输入</div><div class="sr-desc">开启后任何文件都可上传（文本类直读内容、二进制以 base64 发送）；关闭后文本类文件仍可读取文字发送，二进制文件不可附加</div></div>
         <div class="toggle ${caps.file!==false?'on':''}" id="capFileTg"></div>
       </div>
       <div class="setting-row" style="border:none;padding:7px 0">
@@ -4060,7 +4067,7 @@ function renderAIChat() {
   }
   const deep = getDeepThinkCtx();
   const caps = Store.getAICaps();
-  const shotOn = caps.image !== false && getScreenshotCtx();
+  const shotOn = getScreenshotCtx();
   const webOn = !!caps.webSearch;
   return `
   <div class="app-chat" id="chatApp">
@@ -4068,7 +4075,7 @@ function renderAIChat() {
       <button class="btn sm ghost" id="chatProvider" title="切换 AI 提供方">⚙️ 自定义AI</button>
       <button class="btn sm ${deep?'':'ghost'} js-deep-btn" id="chatDeep" title="深度思考（显示思考过程）">🧠 深度思考${deep?'·开':'·关'}</button>
       <button class="btn sm ${webOn?'':'ghost'}" id="chatWeb" title="联网搜索（需服务商支持 web_search 工具，如小米MiMo；不支持会自动降级关闭）">🌐 联网${webOn?'·开':'·关'}</button>
-      ${caps.image !== false ? `<button class="btn sm ${shotOn?'':'ghost'}" id="chatShot" title="发送消息时自动截取当前屏幕（需视觉模型）">📷 截图${shotOn?'·开':'·关'}</button>` : ''}
+      <button class="btn sm ${shotOn?'':'ghost'}" id="chatShot" title="发送消息时自动截取当前屏幕（视觉模型直接读图，纯文本模型本地 OCR 识别为文字）">📷 截图${shotOn?'·开':'·关'}</button>
       <button class="btn sm ${Store.getAgentMode()?'':'ghost'}" id="chatAgent" title="AI 命令行模式：AI 可在对话中直接执行命令行命令（消耗大量 token）">⌨️ 命令行${Store.getAgentMode()?'·开':'·关'}</button>
       <span style="flex:1"></span>
       <span class="chat-ctx" id="chatCtx"></span>
@@ -4078,8 +4085,8 @@ function renderAIChat() {
     <div class="chat-messages" id="chatMsgs"></div>
     <div class="chat-attach" id="chatAttach" hidden></div>
     <div class="chat-input-bar">
-      ${(caps.image !== false || caps.file !== false) ? '<button class="chat-attach-btn" id="chatAttachBtn" title="上传图片或文件（也可直接粘贴到这里）">📎</button><input type="file" id="chatFileInput" style="display:none" multiple />' : ''}
-      <textarea class="textarea" id="chatInput" placeholder="输入消息，Enter 发送，Shift+Enter 换行${caps.image !== false ? '，可粘贴图片/文件' : (caps.file !== false ? '，可粘贴文件/图片（图片将 OCR 识别为文字）' : '')}…" rows="1"></textarea>
+      <button class="chat-attach-btn" id="chatAttachBtn" title="上传图片或文件（也可直接粘贴到这里）；不支持图片/文件输入的模型会自动转为文字（图片 OCR、文本直读）">📎</button><input type="file" id="chatFileInput" style="display:none" multiple />
+      <textarea class="textarea" id="chatInput" placeholder="输入消息，Enter 发送，Shift+Enter 换行，可粘贴图片/文件${caps.image === false ? '（图片将 OCR 识别为文字）' : ''}…" rows="1"></textarea>
       <button class="chat-send" id="chatSend" title="发送">➤</button>
     </div>
   </div>`;
@@ -4137,34 +4144,40 @@ function ensureTesseract() {
   return _tessP;
 }
 async function runImageOcr(p, sess) {
-  try {
-    const T = await ensureTesseract();
-    const r = await T.recognize(p.dataUrl, 'chi_sim+eng', {
-      logger: (m) => {
-        if (m && m.status === 'recognizing text' && typeof m.progress === 'number') {
-          p.progress = m.progress;
-          p._tick = (p._tick || 0) + 1;
-          if (p._tick % 4 === 0) renderPendingChips(sess);
-        }
-      }
-    });
-    p.text = ((r && r.data && r.data.text) || '').trim();
-    p.status = p.text ? 'done' : 'fail';
-    if (!p.text) toast('「' + p.name + '」未识别到文字', 3000);
-  } catch (e) {
-    p.status = 'fail';
-    toast('图片 OCR 失败：' + (e.message || e), 3600);
-  }
+  p.text = await ocrDataUrl(p.dataUrl, (prog) => {
+    p.progress = prog;
+    p._tick = (p._tick || 0) + 1;
+    if (p._tick % 4 === 0) renderPendingChips(sess);
+  });
+  p.status = p.text ? 'done' : 'fail';
+  if (!p.text) toast('「' + p.name + '」未识别到文字', 3000);
   renderPendingChips(sess);
 }
-// 把 File 读成待发送附件并加入列表（受能力开关约束）
-// v3.5：① 关闭「图片输入」（纯文本模型）时图片改走本地 OCR；② 文本类文件直接读取文字内容发送
+// 识别一张 dataURL 图片，返回文字（失败/无字返回 ''）；onProgress 可选
+async function ocrDataUrl(dataUrl, onProgress) {
+  try {
+    const T = await ensureTesseract();
+    const r = await T.recognize(dataUrl, 'chi_sim+eng', {
+      logger: (m) => {
+        if (onProgress && m && m.status === 'recognizing text' && typeof m.progress === 'number') onProgress(m.progress);
+      }
+    });
+    return ((r && r.data && r.data.text) || '').trim();
+  } catch (e) {
+    toast('图片 OCR 失败：' + (e.message || e), 3600);
+    return '';
+  }
+}
+// 把 File 读成待发送附件并加入列表
+// v3.5 统一规则：① 图片——模型支持图片输入则直发，不支持则本地 OCR 成文字（任何模型都能发图）
+// ② 文本类文件——任何模型都能接受文字，直接读取内容发送
+// ③ 二进制文件——需开启「文件输入」（base64 发送），否则无法附加
 function addPendingFile(sess, file) {
   if (!file) return;
   const caps = Store.getAICaps();
   const isImg = /^image\//i.test(file.type || '');
+  if (file.size > 8 * 1024 * 1024) { toast('「' + file.name + '」超过 8MB，已跳过'); return; }
   if (isImg && caps.image === false) {
-    if (file.size > 8 * 1024 * 1024) { toast('「' + file.name + '」超过 8MB，已跳过'); return; }
     const rd = new FileReader();
     rd.onload = () => {
       const p = { kind: 'ocr', name: file.name || '粘贴图片.png', dataUrl: rd.result, status: 'doing', progress: 0, text: '' };
@@ -4177,9 +4190,7 @@ function addPendingFile(sess, file) {
     rd.readAsDataURL(file);
     return;
   }
-  if (!isImg && caps.file === false) { toast('当前已在 AI 配置中关闭「文件输入」'); return; }
-  if (file.size > 8 * 1024 * 1024) { toast('「' + file.name + '」超过 8MB，已跳过'); return; }
-  if (!isImg && looksTextFile(file) && file.size <= 1024 * 1024) {
+  if (!isImg && looksTextFile(file)) {
     const rd = new FileReader();
     rd.onload = () => {
       sess.pending.push({ kind: 'file', name: file.name || '未命名文件', mime: file.type || 'text/plain', text: String(rd.result || '') });
@@ -4187,6 +4198,10 @@ function addPendingFile(sess, file) {
     };
     rd.onerror = () => toast('读取「' + file.name + '」失败');
     rd.readAsText(file);
+    return;
+  }
+  if (!isImg && caps.file === false) {
+    toast('「文件输入」已在 AI 配置中关闭：文本类文件与图片会自动转为文字发送，此二进制文件无法附加', 3800);
     return;
   }
   const rd = new FileReader();
@@ -4332,14 +4347,10 @@ function initChat(winId) {
     if (files.length) { e.preventDefault(); files.forEach(f => addPendingFile(sess, f)); }
   });
   sendBtn.onclick = sendChat;
-  // 附件上传按钮
+  // 附件上传按钮（v3.5：任何模型都可传——不支持图片/文件输入时自动转为文字发送）
   const attachBtn = $('#chatAttachBtn'), fileInput = $('#chatFileInput');
   if (attachBtn && fileInput) {
-    const caps = Store.getAICaps();
-    const accept = [];
-    if (caps.image !== false) accept.push('image/*');
-    if (caps.file !== false) accept.push('*/*');
-    fileInput.accept = accept.join(',') || '*/*';
+    fileInput.accept = 'image/*,*/*';
     attachBtn.onclick = () => fileInput.click();
     fileInput.onchange = () => { [...fileInput.files].forEach(f => addPendingFile(sess, f)); fileInput.value = ''; };
   }
@@ -4381,12 +4392,11 @@ function initChat(winId) {
     refreshOpenApp('ai-config');
     refreshOpenApp('settings');
   };
-  // 自动截图开关（需视觉模型 + 图片输入能力开启）
+  // 自动截图开关（v3.5：任何模型可用——视觉模型直发截图，纯文本模型截图 OCR 成文字）
   const shotBtn = $('#chatShot');
   if (shotBtn) shotBtn.onclick = async () => {
     const next = !getScreenshotCtx();
     if (next) {
-      if (Store.getAICaps().image === false) { toast('「支持图片输入」已在 AI 配置中关闭，无法使用截图'); return; }
       if (!Shot.supported()) { toast('当前环境不支持屏幕截取'); return; }
       toast('请在弹窗中选择「此标签页」共享天择OS画面', 3600);
       if (!(await Shot.ensure())) { toast('未获得屏幕共享授权，功能未开启', 3000); return; }
@@ -4396,7 +4406,7 @@ function initChat(winId) {
     setScreenshotCtx(next);
     shotBtn.classList.toggle('ghost', !next);
     shotBtn.textContent = '📷 截图' + (next ? '·开' : '·关');
-    toast('自动截图已' + (next ? '开启（请确认模型支持视觉）' : '关闭'));
+    toast('自动截图已' + (next ? '开启（' + (Store.getAICaps().image !== false ? '截图随消息直接发送' : '纯文本模型：截图将 OCR 识别为文字') + '）' : '关闭'));
   };
   const clrBtn = $('#chatClear');
   if (clrBtn) clrBtn.onclick = async () => {
@@ -4922,14 +4932,21 @@ async function runGeneration(userText) {
       scrollChatToBottom(msgs, sess);
     });
   };
-  // 自动截图（需视觉模型 + 已开启"支持图片输入"；失败则降级为纯文本）
+  // 自动截图（v3.5：任何模型都能用——视觉模型直接发图，纯文本模型本地 OCR 成文字；失败则降级为纯文本）
   let shot = null;
-  if (caps.image !== false && getScreenshotCtx() && Shot.supported()) {
+  if (getScreenshotCtx() && Shot.supported()) {
     if (await Shot.ensure()) {
       await new Promise(r => setTimeout(r, 150));
       shot = Shot.capture();
     }
     if (!shot) toast('📷 截图失败，本条按纯文本发送', 2800);
+  }
+  // 纯文本模型：截图本地 OCR，识别文字随消息发送（图片不上传）
+  let shotOcr = '';
+  if (shot && caps.image === false) {
+    shotOcr = await ocrDataUrl(shot);
+    if (!shotOcr) toast('📷 截图 OCR 未识别到文字，本条按纯文本发送', 2800);
+    shot = null;
   }
   // 待发送附件（输入框上传/粘贴的图片与文件；v3.5：文本文件发内容、纯文本模型图片走 OCR 文字）
   const pend = (sess.pending || []).slice();
@@ -4938,6 +4955,7 @@ async function runGeneration(userText) {
   const imgParts = pend.filter(p => p.kind === 'image').map(p => ({ type: 'image_url', image_url: { url: p.dataUrl } }));
   const ocrNotes = pend.filter(p => p.kind === 'ocr' && p.status === 'done' && p.text)
     .map(p => '📷 图片「' + p.name + '」的 OCR 文字识别结果（本地识别，可能有误差）：\n' + (p.text.length > 20000 ? p.text.slice(0, 20000) + '\n…（识别内容过长已截断）' : p.text));
+  if (shotOcr) ocrNotes.unshift('📷 当前屏幕截图的 OCR 文字识别结果（本地识别，可能有误差）：\n' + (shotOcr.length > 20000 ? shotOcr.slice(0, 20000) + '\n…（识别内容过长已截断）' : shotOcr));
   const fileNotes = pend.filter(p => p.kind === 'file').map(p => {
     if (p.text != null) return '📎 文件「' + p.name + '」（文本内容如下）：\n' + (p.text.length > 20000 ? p.text.slice(0, 20000) + '\n…（文件过长已截断）' : p.text);
     return '📎 附件「' + p.name + '」（' + (p.mime || '未知类型') + '，base64 数据如下）：\n' + (p.dataUrl.length > 120000 ? p.dataUrl.slice(0, 120000) + '\n…（附件过长已截断）' : p.dataUrl);
@@ -5277,13 +5295,11 @@ window.TZOS.fixApp = async function(id) {
   }
 };
 
-/* ===================== 内置应用：系统设置 ===================== */
-function renderSettings() {
-  const style = Store.getStyle();
-  const theme = Store.getTheme();
-  const rpg = RPG.summary();
+/* ===================== 内置应用：等级与外观（v3.5）===================== */
+// 配色皮肤卡片（本应用与系统设置入口共用；点击=已解锁切换/未解锁兑换）
+function skinCardsHtml() {
   const curPal = Store.getPalette();
-  const skinHtml = Object.keys(RPG_SKINS).map(id => {
+  return Object.keys(RPG_SKINS).map(id => {
     const s = RPG_SKINS[id];
     const locked = !RPG.hasSkin(id);
     return `<div class="skin-opt ${curPal === id ? 'active' : ''} ${locked ? 'locked' : ''}" onclick="TZOS.tryUnlockSkin('${id}')" title="${locked ? '点击用 ' + s.cost + ' 积分解锁' : '点击切换为' + s.name}">
@@ -5293,6 +5309,45 @@ function renderSettings() {
       <span class="skin-cost">${curPal === id ? '使用中' : locked ? '🔒 ' + s.cost + ' 分' : '已解锁'}</span>
     </div>`;
   }).join('');
+}
+function renderGrowth() {
+  const rpg = RPG.summary();
+  const pct = Math.min(100, Math.round(rpg.into / rpg.need * 100));
+  const todayHtml = RPG_RULES.map(x => {
+    const got = rpg.gain[x.id] || 0;
+    const w = Math.min(100, Math.round(got / x.cap * 100));
+    return `<div class="growth-rule">
+      <div class="gr-head"><span>${x.name}</span><span class="gr-vals">${got} / ${x.cap}（每次 +${x.pts} 分）</span></div>
+      <div class="rpg-bar" style="width:100%"><i style="width:${w}%"></i></div>
+    </div>`;
+  }).join('');
+  const titlesHtml = RPG_TITLES.map(p => `<span class="growth-title ${rpg.lv >= p[0] ? 'got' : ''}">Lv${p[0]} ${p[1]}</span>`).join('');
+  return `
+  <div class="settings-panel growth-panel">
+    <h2>🏆 等级与外观</h2>
+    <div class="growth-hero">
+      <div class="gh-lv">Lv.${rpg.lv}</div>
+      <div class="gh-main">
+        <div class="gh-title">「${rpg.title}」</div>
+        <div class="gh-pts">可用 <b>${rpg.points}</b> 分 · 累计 ${rpg.total} 分</div>
+        <div class="rpg-bar" style="width:100%;margin-top:8px"><i style="width:${pct}%"></i></div>
+        <div class="gh-next">距 Lv.${rpg.lv + 1} 还差 ${rpg.need - rpg.into} 分（终端 level 命令也可查看）</div>
+      </div>
+    </div>
+    <div class="growth-titles">${titlesHtml}</div>
+    <h3 class="cfg-h3">📈 今日积分获取</h3>
+    ${todayHtml}
+    <p class="sub" style="margin:8px 0 2px">每日 0 点重置各项上限。等级与积分加密存储，随全量存档迁移到其它设备。</p>
+    <h3 class="cfg-h3" style="margin-top:20px">🎨 界面配色</h3>
+    <p class="sub" style="margin-bottom:10px">冷色默认解锁；标准、暖色用积分解锁（当前可用 <b>${rpg.points}</b> 分）。天择网配色全部免费，在网站左下角 🎨 切换。</p>
+    <div class="skin-pick">${skinCardsHtml()}</div>
+  </div>`;
+}
+
+/* ===================== 内置应用：系统设置 ===================== */
+function renderSettings() {
+  const style = Store.getStyle();
+  const theme = Store.getTheme();
   return `
   <div class="settings-panel">
     <h2>⚙️ 系统设置</h2>
@@ -5303,13 +5358,9 @@ function renderSettings() {
         <button class="${theme==='light'?'active':''}" onclick="TZOS.setTheme('light')">☀️ 浅色</button>
       </div>
     </div>
-    <div class="setting-row" style="align-items:flex-start">
-      <div><div class="sr-label">界面配色</div><div class="sr-desc">冷 / 中 / 暖三种配色；中、暖色需用积分解锁（当前可用 <b>${rpg.points}</b> 分）。天择网配色全部免费，在网站左下角 🎨 切换</div></div>
-      <div class="skin-pick">${skinHtml}</div>
-    </div>
     <div class="setting-row">
-      <div><div class="sr-label">我的等级</div><div class="sr-desc">Lv.${rpg.lv}「${rpg.title}」 · 可用 ${rpg.points} 分 / 累计 ${rpg.total} 分 · 距 Lv.${rpg.lv + 1} 还差 ${rpg.need - rpg.into} 分<br/>终端输入 level rule 查看积分获取规则</div></div>
-      <div class="rpg-bar" title="${rpg.into} / ${rpg.need}"><i style="width:${Math.min(100, Math.round(rpg.into / rpg.need * 100))}%"></i></div>
+      <div><div class="sr-label">等级与外观</div><div class="sr-desc">用户等级、积分获取与界面配色皮肤，已移至独立应用</div></div>
+      <button class="btn sm" onclick="TZOS.launchApp('growth')">🏆 打开</button>
     </div>
     <div class="setting-row">
       <div><div class="sr-label">系统版本</div><div class="sr-desc">当前 v${OS_VERSION} · 启动时自动检查更新</div></div>
@@ -5352,7 +5403,7 @@ function renderSettings() {
       <div class="toggle ${Store.getAgentMode()?'on':''}" id="agentModeTg"></div>
     </div>
     <div class="setting-row">
-      <div><div class="sr-label">发送时自动截图</div><div class="sr-desc">每次向 AI 发送消息时自动截取当前屏幕一并发送（需视觉模型，纯文本模型会浪费 token 甚至报错）；首次开启需授权屏幕共享</div></div>
+      <div><div class="sr-label">发送时自动截图</div><div class="sr-desc">每次向 AI 发送消息时自动截取当前屏幕：视觉模型直接把截图发给模型，纯文本模型在本地 OCR 识别成文字发送；首次开启需授权屏幕共享</div></div>
       <div class="toggle ${Store.getScreenshotMode()?'on':''}" id="shotModeTg"></div>
     </div>
     ${window.tzDesktop ? `<div class="setting-row">
@@ -5402,7 +5453,6 @@ function initSettings() {
   if (st) st.onclick = async () => {
     const next = !Store.getScreenshotMode();
     if (next) {
-      if (Store.getAICaps().image === false) { toast('「支持图片输入」已在 AI 配置中关闭，无法开启截图', 3200); return; }
       if (!Shot.supported()) { toast('当前环境不支持屏幕截取'); return; }
       toast('请在弹窗中选择「此标签页」共享天择OS画面', 3600);
       if (!(await Shot.ensure())) { toast('未获得屏幕共享授权，功能未开启', 3000); return; }
@@ -5412,7 +5462,7 @@ function initSettings() {
     Store.setScreenshotMode(next);
     st.classList.toggle('on', next);
     refreshChatView();
-    toast('自动截图已' + (next ? '开启（请确认模型支持视觉）' : '关闭'));
+    toast('自动截图已' + (next ? '开启（' + (Store.getAICaps().image !== false ? '截图随消息直接发送' : '纯文本模型：截图将 OCR 识别为文字') + '）' : '关闭'));
   };
   // 已有待更新信息时直接显示
   const pending = Store.get('updateAvailable', null);
@@ -5728,8 +5778,8 @@ const TIPS_DATA = [
   { cat: '软件商城', title: '一句话生成软件', body: '在软件商城输入需求，AI 会先优化提示词，再实时流式生成代码（可看到代码逐行写出），完成后自动安装到桌面并打开。' },
   { cat: '软件商城', title: '管理已安装软件', body: '「📁我的软件」或软件商城底部可查看/打开/卸载 AI 生成的软件。卸载按钮在窗口标题栏（紫色圆点）。' },
   { cat: '软件商城', title: 'AI 改进软件', body: '已生成的软件可继续用 AI 修改：右键桌面软件图标 →「AI 改进」，或在「我的软件」点「AI改进」，输入要改的地方（如修复某 bug、加个功能），AI 会基于现有代码改好后自动更新。' },
-  { cat: '个性化', title: '用户等级与积分', body: '每日启动、AI 对话、终端命令、新建笔记、安装软件、导出存档都能获得积分（各项有每日上限），累计积分升级并获得称号。终端输入 level 查看等级与今日进度，level rule 查看完整规则。等级积分加密存储、随全量存档迁移。' },
-  { cat: '个性化', title: '界面配色皮肤', body: '系统设置 → 界面配色可在冷（紫蓝绿）/ 中（蓝绿黄）/ 暖（绿黄橙）三套配色间切换：冷色默认解锁，中、暖色用积分解锁（终端 skin 命令同样可行）。天择网配色全部免费，网站左下角 🎨 随时切换。' },
+  { cat: '个性化', title: '用户等级与积分', body: '每日启动、AI 对话、终端命令、新建笔记、安装软件、导出存档都能获得积分（各项有每日上限），累计积分升级并获得称号。打开「等级与外观」应用或终端输入 level 查看等级与今日进度，level rule 查看完整规则。等级积分加密存储、随全量存档迁移。' },
+  { cat: '个性化', title: '界面配色皮肤', body: '「等级与外观」应用可在冷（紫蓝绿）/ 中（蓝绿黄）/ 暖（绿黄橙）三套配色间切换：冷色默认解锁，中、暖色用积分解锁（终端 skin 命令同样可行）。天择网配色全部免费，网站左下角 🎨 随时切换。' },
   { cat: 'AI 对话', title: '工具栏快捷开关', body: 'AI 对话工具栏可直接开关「🌐 联网搜索」与「⌨️ 命令行模式」，不用进设置页；与 AI 配置、系统设置中的开关同源同步。' },
   { cat: 'AI 对话', title: '图片 OCR 与文本文件', body: '使用纯文本模型（关闭图片输入）时，上传/粘贴的图片会在本地 OCR 识别成文字随消息发送，图片本身不上传；txt/md/json/代码等文本文件会直接读取内容发送，不再是 base64。' },
   { cat: '命令行', title: '软件调用系统命令行', body: 'AI 生成的软件不仅能注册自己的命令，还能在软件内用 await TZOS_CMD.exec("命令") 调用任意系统命令并拿到输出（如读取笔记列表、打开系统应用），教程见 installhelp。' },
@@ -5764,7 +5814,7 @@ function initTips() {
     if (!items.length) { list.innerHTML = '<div style="color:var(--ink-faint);font-size:13px;text-align:center;padding:24px">未找到匹配的技巧</div>'; return; }
     list.innerHTML = items.map(t => `
       <div style="background:var(--surface);border:1px solid var(--glass-border);border-radius:10px;padding:12px 14px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(99,102,241,0.2);color:var(--c-violet)">${escapeHtml(t.cat)}</span><strong style="font-size:14px">${escapeHtml(t.title)}</strong></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(var(--c-indigo-rgb),0.2);color:var(--c-violet)">${escapeHtml(t.cat)}</span><strong style="font-size:14px">${escapeHtml(t.title)}</strong></div>
         <div style="font-size:13px;color:var(--ink-dim);line-height:1.7">${escapeHtml(t.body)}</div>
       </div>`).join('');
   };
@@ -6666,8 +6716,8 @@ function createFloatOverlay() {
     left: _hasPos ? _fb.left + 'px' : '', top: _hasPos ? _fb.top + 'px' : '80px',
     right: _hasPos ? 'auto' : '20px',
     background: 'var(--glass-strong)', backdropFilter: 'blur(28px) saturate(170%)',
-    border: '2px solid rgba(139,92,246,0.45)', borderRadius: '12px',
-    boxShadow: '0 8px 40px rgba(139,92,246,0.25), 0 12px 48px rgba(0,0,0,0.5)',
+    border: '2px solid rgba(var(--c-violet-rgb),0.45)', borderRadius: '12px',
+    boxShadow: '0 8px 40px rgba(var(--c-violet-rgb),0.25), 0 12px 48px rgba(0,0,0,0.5)',
     display: 'flex', flexDirection: 'column', overflow: 'hidden',
     resize: 'both', fontFamily: 'inherit', color: 'var(--ink)',
     animation: 'tzFloatIn 0.22s cubic-bezier(0.16,1,0.3,1)'
@@ -6682,13 +6732,13 @@ function createFloatOverlay() {
   Object.assign(titleBar.style, {
     height: '34px', flexShrink: '0', display: 'flex', alignItems: 'center',
     padding: '0 10px', gap: '8px', cursor: 'move',
-    background: 'linear-gradient(135deg, rgba(139,92,246,0.2), rgba(59,130,246,0.12))',
+    background: 'linear-gradient(135deg, rgba(var(--c-violet-rgb),0.2), rgba(var(--c-blue-rgb),0.12))',
     borderBottom: '1px solid rgba(255,255,255,0.08)'
   });
   const titleIcon = el('span', '', '💬');
   titleIcon.style.cssText = 'font-size:14px;pointer-events:none';
   const titleText = el('span', '', 'AI 悬浮窗');
-  titleText.style.cssText = 'font-size:12px;color:#a78bfa;flex:1';
+  titleText.style.cssText = 'font-size:12px;color:var(--c-violet-soft);flex:1';
   const closeBtn = el('button', '', '✕');
   closeBtn.style.cssText = 'width:22px;height:22px;border-radius:50%;border:none;background:#ff5f57;color:#5b0700;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center';
   closeBtn.onclick = () => { _saveFloatBounds(); _floatOverlay.remove(); _floatOverlay = null; };
@@ -6730,8 +6780,10 @@ function createFloatOverlay() {
 }
 
 // 构建悬浮窗内的独立对话页面 HTML（精简自 renderAIChat + AI 引擎）
+// v3.5：srcdoc 是独立文档拿不到 os.css 变量，构建时按当前配色皮肤注入对应色值
 function buildFloatChatHTML() {
-  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' +
+  const pal = RPG_SKINS[Store.getPalette()] || RPG_SKINS.cold;
+  let h = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' +
   '*{margin:0;padding:0;box-sizing:border-box}' +
   'body{font-family:"Segoe UI",-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;' +
   'color:#f5f7ff;background:rgba(8,12,28,0.4);display:flex;flex-direction:column;height:100%;overflow:hidden}' +
@@ -6845,6 +6897,10 @@ function buildFloatChatHTML() {
   '})()' +
   '<\\/script>' +
   '</body></html>';
+  // 按当前配色皮肤把冷色基准色值替换为对应皮肤色（单趟替换，避免链式串色）
+  h = h.replace(/#7c3aed|#3b82f6|#10b981|#a78bfa/g, (m) => ({ '#7c3aed': pal.css[0], '#3b82f6': pal.css[1], '#10b981': pal.css[2], '#a78bfa': pal.soft[0] }[m]));
+  h = h.replace(/139,92,246|59,130,246/g, (m) => (m === '139,92,246' ? pal.rgb[0] : pal.rgb[1]));
+  return h;
 }
 
 /* ===================== 启动 ===================== */
