@@ -62,7 +62,7 @@
   --shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.22);
   --shadow-md: 0 18px 50px rgba(0, 0, 0, 0.32);
   --shadow-lg: 0 28px 80px rgba(0, 0, 0, 0.38);
-  --shadow-glow: 0 12px 42px rgba(99, 102, 241, 0.28);
+  --shadow-glow: 0 12px 42px rgba(var(--c-indigo-rgb), 0.28);
 
   /* 圆角 */
   --r-sm: 10px;
@@ -174,7 +174,7 @@ a { color: inherit; text-decoration: none; }
 
 img { max-width: 100%; display: block; }
 
-::selection { background: rgba(124, 58, 237, 0.45); color: #fff; }
+::selection { background: rgba(var(--c-purple-rgb), 0.45); color: #fff; }
 
 /* 滚动条 */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -356,17 +356,17 @@ img { max-width: 100%; display: block; }
 .card:hover {
   transform: translateY(-8px) scale(1.005);
   box-shadow: var(--shadow-md);
-  border-color: rgba(139, 92, 246, 0.42);
+  border-color: rgba(var(--c-violet-rgb), 0.42);
   background: var(--bg-elevated-hover);
 }
 .card:hover::before { opacity: 1; }
 
 /* 渐变描边卡片（用于强调） */
 .card--accent {
-  border-color: rgba(139, 92, 246, 0.32);
+  border-color: rgba(var(--c-violet-rgb), 0.32);
 }
 .card--accent:hover {
-  border-color: rgba(110, 231, 183, 0.55);
+  border-color: rgba(var(--c-green-soft-rgb), 0.55);
 }
 
 /* ============================================================
@@ -403,7 +403,7 @@ img { max-width: 100%; display: block; }
 }
 .btn:hover {
   transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 16px 48px rgba(99, 102, 241, 0.38);
+  box-shadow: 0 16px 48px rgba(var(--c-indigo-rgb), 0.38);
   filter: brightness(1.08);
 }
 .btn:hover::after { transform: translateX(130%); }
@@ -600,7 +600,7 @@ img { max-width: 100%; display: block; }
 .banner:hover {
   transform: translateY(-4px) scale(1.005);
   filter: saturate(1.08) brightness(1.05);
-  box-shadow: 0 20px 56px rgba(99, 102, 241, 0.42);
+  box-shadow: 0 20px 56px rgba(var(--c-indigo-rgb), 0.42);
 }
 .banner::after {
   content: "";
@@ -1235,8 +1235,8 @@ img { max-width: 100%; display: block; }
   padding: 16px 18px;
   border-radius: 14px;
   margin-bottom: 18px;
-  background: rgba(16, 185, 129, 0.10);
-  border: 1px solid rgba(16, 185, 129, 0.35);
+  background: rgba(var(--c-green-rgb), 0.10);
+  border: 1px solid rgba(var(--c-green-rgb), 0.35);
   font-size: 14px;
   color: #b9f5d8;
   line-height: 1.7;
@@ -1258,9 +1258,9 @@ img { max-width: 100%; display: block; }
               box-shadow var(--t-base) var(--ease-out);
 }
 .ak-input:focus-within {
-  border-color: rgba(110, 231, 183, 0.6);
+  border-color: rgba(var(--c-green-soft-rgb), 0.6);
   background: var(--bg-elevated);
-  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.10);
+  box-shadow: 0 0 0 4px rgba(var(--c-green-rgb), 0.10);
 }
 .ak-input .ak-pre { font-size: 16px; color: var(--ink-faint); font-family: ui-monospace, monospace; }
 .ak-input input {
@@ -1373,7 +1373,7 @@ img { max-width: 100%; display: block; }
 .tutorial-body code {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 13.5px;
-  background: rgba(124, 58, 237, 0.22);
+  background: rgba(var(--c-purple-rgb), 0.22);
   color: #d6c5ff;
   padding: 2px 7px;
   border-radius: 5px;
@@ -1420,7 +1420,7 @@ img { max-width: 100%; display: block; }
   vertical-align: middle;
 }
 .tut-tag.req { background: rgba(229, 57, 53, 0.2); color: #ff9a9a; }
-.tut-tag.opt { background: rgba(14, 165, 233, 0.2); color: #7dd3fc; }
+.tut-tag.opt { background: rgba(var(--c-sky-rgb), 0.2); color: #7dd3fc; }
 
 @media (max-width: 900px) {
   .feature-grid { grid-template-columns: 1fr; }
@@ -1486,9 +1486,9 @@ img { max-width: 100%; display: block; }
               box-shadow var(--t-base) var(--ease-out);
 }
 .dq-search:focus-within {
-  border-color: rgba(110, 231, 183, 0.6);
+  border-color: rgba(var(--c-green-soft-rgb), 0.6);
   background: var(--bg-elevated);
-  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.10);
+  box-shadow: 0 0 0 4px rgba(var(--c-green-rgb), 0.10);
 }
 .dq-search .dq-ic { font-size: 16px; color: var(--ink-faint); flex-shrink: 0; }
 .dq-search input {
@@ -1735,7 +1735,7 @@ a:focus-visible,
 button:focus-visible,
 input:focus-visible,
 [tabindex]:focus-visible {
-  outline: 2px solid rgba(110, 231, 183, 0.6);
+  outline: 2px solid rgba(var(--c-green-soft-rgb), 0.6);
   outline-offset: 2px;
 }
 
@@ -2115,7 +2115,7 @@ main { isolation: isolate; }
   margin-top: 72px;
   border-radius: 14px;
   padding: 22px 26px;
-  background: linear-gradient(115deg, rgba(103,58,237,.92), rgba(47,106,229,.90) 56%, rgba(11,155,111,.86));
+  background: linear-gradient(115deg, rgba(var(--c-purple-rgb),.92), rgba(var(--c-blue-rgb),.90) 56%, rgba(var(--c-green-rgb),.86));
 }
 .banner .tag { border-radius: 6px; letter-spacing: .08em; }
 

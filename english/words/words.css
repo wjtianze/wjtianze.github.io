@@ -122,8 +122,8 @@
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 20% 20%, rgba(124, 58, 237, 0.08), transparent 40%),
-    radial-gradient(circle at 80% 70%, rgba(16, 185, 129, 0.07), transparent 45%);
+    radial-gradient(circle at 20% 20%, rgba(var(--c-purple-rgb), 0.08), transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(var(--c-green-rgb), 0.07), transparent 45%);
 }
 .words-app .bg-mesh::after {
   content: "";
@@ -621,7 +621,7 @@
 .words-app .vi-pos {
   display: inline-block;
   padding: 2px 8px;
-  background: rgba(124, 58, 237, 0.18);
+  background: rgba(var(--c-purple-rgb), 0.18);
   color: var(--c-violet);
   border-radius: var(--r-pill);
   font-size: 11px;
@@ -810,10 +810,10 @@
 }
 .words-app .opt.locked { cursor: default; }
 .words-app .opt.correct {
-  background: rgba(16, 185, 129, 0.16);
+  background: rgba(var(--c-green-rgb), 0.16);
   border-color: var(--c-green);
   color: var(--c-emerald);
-  box-shadow: 0 0 0 1px var(--c-green), 0 8px 24px rgba(16, 185, 129, 0.25);
+  box-shadow: 0 0 0 1px var(--c-green), 0 8px 24px rgba(var(--c-green-rgb), 0.25);
 }
 .words-app .opt.wrong {
   background: rgba(239, 68, 68, 0.14);
@@ -829,8 +829,8 @@
   animation: words-panelIn var(--t-base);
 }
 .words-app .quiz-feedback.ok {
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  background: rgba(var(--c-green-rgb), 0.12);
+  border: 1px solid rgba(var(--c-green-rgb), 0.3);
   color: var(--c-emerald);
 }
 .words-app .quiz-feedback.bad {
@@ -908,7 +908,7 @@
   display: inline-block;
   align-self: flex-start;
   padding: 4px 10px;
-  background: rgba(124, 58, 237, 0.18);
+  background: rgba(var(--c-purple-rgb), 0.18);
   color: var(--c-violet);
   border-radius: var(--r-pill);
   font-size: 12px;
@@ -949,8 +949,8 @@
   margin-bottom: 16px;
 }
 .words-app .spell-feedback.ok {
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  background: rgba(var(--c-green-rgb), 0.12);
+  border: 1px solid rgba(var(--c-green-rgb), 0.3);
   color: var(--c-emerald);
 }
 .words-app .spell-feedback.bad {
@@ -966,7 +966,7 @@
   word-break: break-all;
 }
 .words-app .diff .char { padding: 1px 2px; border-radius: 3px; }
-.words-app .diff .char.ok  { color: var(--c-emerald); background: rgba(16, 185, 129, 0.15); }
+.words-app .diff .char.ok  { color: var(--c-emerald); background: rgba(var(--c-green-rgb), 0.15); }
 .words-app .diff .char.bad { color: #fca5a5; background: rgba(239, 68, 68, 0.15); text-decoration: line-through; }
 .words-app .diff .char.miss {
   color: var(--ink-muted);
@@ -1206,7 +1206,7 @@
 .words-app .ai-stream li { margin: 3px 0; }
 .words-app .ai-stream strong { color: var(--ink); font-weight: 600; }
 .words-app .ai-stream code {
-  background: rgba(124, 58, 237, 0.18);
+  background: rgba(var(--c-purple-rgb), 0.18);
   color: var(--c-violet);
   padding: 1px 6px;
   border-radius: 4px;
@@ -1250,7 +1250,7 @@
   background: var(--bg-elevated-hover);
 }
 .words-app .ai-stream .ai-quiz-item .qi-opt.correct {
-  background: rgba(16, 185, 129, 0.16);
+  background: rgba(var(--c-green-rgb), 0.16);
   border-color: var(--c-green);
   color: var(--c-emerald);
 }
@@ -1262,7 +1262,7 @@
 .words-app .ai-stream .ai-quiz-item .qi-explain {
   margin-top: 8px;
   padding: 8px 12px;
-  background: rgba(59, 130, 246, 0.10);
+  background: rgba(var(--c-blue-rgb), 0.10);
   border-left: 3px solid var(--c-blue);
   border-radius: var(--r-sm);
   font-size: 12px;
@@ -1297,8 +1297,8 @@
   color: #fca5a5;
 }
 .words-app .ai-status.ok {
-  background: rgba(16, 185, 129, 0.10);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  background: rgba(var(--c-green-rgb), 0.10);
+  border: 1px solid rgba(var(--c-green-rgb), 0.3);
   color: var(--c-emerald);
 }
 
@@ -1352,7 +1352,7 @@
   border-color: var(--c-blue);
 }
 .words-app .opt.checkable.selected {
-  background: rgba(59, 130, 246, 0.12);
+  background: rgba(var(--c-blue-rgb), 0.12);
   border-color: var(--c-blue);
   color: var(--ink);
 }
@@ -1372,7 +1372,7 @@
 }
 /* 锁定后正确/错误高亮覆盖选中态 */
 .words-app .opt.checkable.locked.correct {
-  background: rgba(16, 185, 129, 0.16);
+  background: rgba(var(--c-green-rgb), 0.16);
   border-color: var(--c-green);
 }
 .words-app .opt.checkable.locked.correct::before {
@@ -1400,8 +1400,8 @@
 .words-app .quiz-hint {
   display: inline-block;
   padding: 4px 10px;
-  background: rgba(59, 130, 246, 0.14);
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  background: rgba(var(--c-blue-rgb), 0.14);
+  border: 1px solid rgba(var(--c-blue-rgb), 0.3);
   border-radius: var(--r-pill);
   font-size: 12px;
   color: #93c5fd;
@@ -1433,7 +1433,7 @@
   margin-bottom: 4px;
 }
 .words-app .example-item .ex-en .highlight {
-  background: rgba(124, 58, 237, 0.22);
+  background: rgba(var(--c-purple-rgb), 0.22);
   color: var(--c-violet);
   padding: 1px 5px;
   border-radius: 4px;
@@ -1522,8 +1522,8 @@
 }
 .words-app .si-step.done {
   color: var(--c-emerald);
-  border-color: rgba(16, 185, 129, 0.3);
-  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(var(--c-green-rgb), 0.3);
+  background: rgba(var(--c-green-rgb), 0.08);
 }
 .words-app .si-arrow {
   color: var(--ink-muted);
@@ -1569,8 +1569,8 @@
 /* 预习释义展示（阶段1答完） */
 .words-app .preview-card {
   padding: 18px;
-  background: rgba(59, 130, 246, 0.08);
-  border: 1px solid rgba(59, 130, 246, 0.25);
+  background: rgba(var(--c-blue-rgb), 0.08);
+  border: 1px solid rgba(var(--c-blue-rgb), 0.25);
   border-left: 4px solid var(--c-blue);
   border-radius: var(--r-md);
   margin: 12px 0;
@@ -1598,7 +1598,7 @@
 .words-app .preview-card .pv-pos {
   display: inline-block;
   padding: 2px 8px;
-  background: rgba(124, 58, 237, 0.18);
+  background: rgba(var(--c-purple-rgb), 0.18);
   color: var(--c-violet);
   border-radius: var(--r-pill);
   font-size: 11px;
@@ -1623,7 +1623,7 @@
 .words-app .preview-card .pv-examples {
   margin-top: 14px;
   padding-top: 12px;
-  border-top: 1px solid rgba(59, 130, 246, 0.2);
+  border-top: 1px solid rgba(var(--c-blue-rgb), 0.2);
 }
 .words-app .preview-card .pv-examples-title {
   margin-bottom: 7px;
@@ -1634,7 +1634,7 @@
 }
 .words-app .preview-card .pv-example {
   padding: 7px 0 7px 12px;
-  border-left: 2px solid rgba(96, 165, 250, 0.45);
+  border-left: 2px solid rgba(var(--c-blue-soft-rgb), 0.45);
 }
 .words-app .preview-card .pv-example + .pv-example { margin-top: 5px; }
 .words-app .preview-card .pv-example-en {
@@ -1663,7 +1663,7 @@
 .words-app .q-prompt .q-example-en {
   margin-top: 10px;
   padding: 8px 12px;
-  background: rgba(124, 58, 237, 0.06);
+  background: rgba(var(--c-purple-rgb), 0.06);
   border-left: 3px solid var(--accent, #7c3aed);
   border-radius: 6px;
   color: var(--ink-dim);
@@ -1675,7 +1675,7 @@
   color: var(--accent, #7c3aed);
   font-weight: 700;
   font-style: normal;
-  background: rgba(124, 58, 237, 0.12);
+  background: rgba(var(--c-purple-rgb), 0.12);
   padding: 0 3px;
   border-radius: 3px;
 }

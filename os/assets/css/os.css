@@ -59,7 +59,7 @@
   --sh-sm: 0 4px 16px rgba(0, 0, 0, 0.3);
   --sh-md: 0 12px 40px rgba(0, 0, 0, 0.45);
   --sh-lg: 0 24px 70px rgba(0, 0, 0, 0.55);
-  --sh-glow: 0 8px 32px rgba(99, 102, 241, 0.35);
+  --sh-glow: 0 8px 32px rgba(var(--c-indigo-rgb), 0.35);
 
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -823,11 +823,11 @@ body.tzos.light .term-out .tz-term-pre { background: rgba(15,23,42,.05); color: 
 .term-input-row input { flex: 1; background: transparent; border: none; outline: none; color: #d7e0f4; font-family: inherit; font-size: 13px; }
 body.tzos.light .term-app { background: rgba(240,244,252,0.85); }
 body.tzos.light .term-out { color: #1e293b; }
-body.tzos.light .term-out .t-cmd { color: #047857; }
+body.tzos.light .term-out .t-cmd { color: var(--c-green); }
 body.tzos.light .term-out .t-dim { color: #64748b; }
 body.tzos.light .term-out .t-err { color: #dc2626; }
 body.tzos.light .term-input-row { background: rgba(226,232,244,0.8); }
-body.tzos.light .term-prompt { color: #047857; }
+body.tzos.light .term-prompt { color: var(--c-green); }
 body.tzos.light .term-input-row input { color: #1e293b; }
 
 /* ============ AI 对话中的命令行执行卡片 ============ */
