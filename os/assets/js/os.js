@@ -4963,13 +4963,14 @@ async function runGeneration(userText) {
   const attachNotes = [...ocrNotes, ...fileNotes];
   const sysContent = buildChatSysPrompt(agentOn, caps, shot);
   const baseHistory = Store.getChat().slice(-12).map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content }));
-  // 最后一条用户消息注入截图与附件（图片走 image_url，文件走文本 base64）
+  // 最后一条用户消息注入截图与附件（图片走 image_url，文件/OCR 文字并入文本）
+  // v3.5 修复：此前仅当 parts.length>1（含图片）才写回，纯 OCR/文本附件（无图）时 attachNotes 被静默丢弃
   if (baseHistory.length && baseHistory[baseHistory.length - 1].role === 'user') {
     const last = baseHistory[baseHistory.length - 1];
     const parts = [{ type: 'text', text: last.content + (attachNotes.length ? '\n\n' + attachNotes.join('\n\n') : '') }];
     if (shot) parts.push({ type: 'image_url', image_url: { url: shot } });
     imgParts.forEach(p => parts.push(p));
-    if (parts.length > 1) baseHistory[baseHistory.length - 1] = { role: 'user', content: parts };
+    if (parts.length > 1 || attachNotes.length) baseHistory[baseHistory.length - 1] = { role: 'user', content: parts };
   }
   const extra = [];
   // 联网搜索工具声明（MiMo / 博查等 OpenAI 兼容服务格式；不支持的服务端会忽略或报错降级）
