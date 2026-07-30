@@ -35,6 +35,7 @@
   var lightningUnit = null, quakeUnit = null;
   var thUnit = null, builderHutUnit = null; /* 大本营 / 建筑工人小屋 unit */
   var STATE = { eq:{}, eqOn:{}, spell:{l:0,q:0}, build:{}, th:0, target:"", builders:{count:0,levels:[]} }; /* eqOn=是否计入伤害；builders=参与回血的小屋 */
+  var SHARE_MODE = false;   /* 分享查看模式：只读展示好友的计算结果，禁止写入 localStorage */
 
   var LS_KEY = "tz_coc_dmgcalc_v1";
 
@@ -546,6 +547,7 @@
     html+=toleranceHtml(r.total, r.H);
     if(r.immA){ html+='<div class="dm-warn">🛡 该建筑对所有法术免疫，雷电与地震均无效，仅英雄装备伤害生效。</div>'; }
     else if(r.immL){ html+='<div class="dm-warn">🛡 该建筑对雷电法术免疫（雷电伤害按 0 计），地震法术仍然有效。</div>'; }
+    html+=shareRowHtml("custom");
     box.innerHTML=html; box.classList.add("show");
   }
 
@@ -573,6 +575,7 @@
     if(r.immA){ html+='<div class="dm-warn">🛡 该建筑对所有法术免疫，雷电与地震均无效，仅英雄装备伤害生效。</div>'; }
     else if(r.immL){ html+='<div class="dm-warn">🛡 该建筑对雷电法术免疫（雷电伤害按 0 计），地震法术仍然有效。</div>'; }
     if(r.ql<=0 && r.ll<=0){ html+='<div class="dm-warn">未设定雷电/地震法术等级，无法术伤害贡献。请先设定法术等级。</div>'; }
+    html+=shareRowHtml("max");
     box.innerHTML=html; box.classList.add("show");
   }
 
@@ -628,6 +631,7 @@
     html+=toleranceHtml(total,r.H);
     if(r.immA){ html+='<div class="dm-warn">🛡 该建筑对所有法术免疫，仅英雄装备伤害生效。</div>'; }
     else if(r.immL){ html+='<div class="dm-warn">🛡 该建筑对雷电法术免疫（雷电伤害按 0 计），地震法术仍然有效。</div>'; }
+    html+=shareRowHtml("min");
     box.innerHTML=html; box.classList.add("show");
   }
 
@@ -663,8 +667,108 @@
   }
   function showError(msg){ var e=$("dmImportError"); e.textContent=msg; e.classList.add("show"); }
 
+  /* ===== 分享链接（纯前端：数据编码进 URL 的 #hash，不经任何服务器） ===== */
+  /* URL 安全 base64：字母数字 + "-_"，去掉补位 "=" */
+  function b64urlEncode(str){
+    var b=btoa(unescape(encodeURIComponent(str)));
+    return b.replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+  }
+  function b64urlDecode(s){
+    s=String(s).replace(/-/g,"+").replace(/_/g,"/");
+    while(s.length%4)s+="=";
+    return decodeURIComponent(escape(atob(s)));
+  }
+  /* 采集本次计算用到的数据（只含计算相关：法术/勾选装备/目标建筑/回血小屋/模式参数） */
+  function collectShareData(mode){
+    var d={ v:1, m:mode, l:intv(STATE.spell.l), q:intv(STATE.spell.q) };
+    /* 用到的装备：已勾选计入且已设等级 */
+    var eq={};
+    dmgEquips.forEach(function(e){
+      var lv=STATE.eq[e.id]||0;
+      if(lv>0 && STATE.eqOn[e.id] && e.hasSkillDmg)eq[e.id]=lv;
+    });
+    if(Object.keys(eq).length)d.eq=eq;
+    /* 被计算的目标建筑及其等级 */
+    d.t=STATE.target;
+    d.tl=intv(STATE.build[STATE.target]);
+    /* 参与回血的建筑工人小屋 */
+    var bc=Math.max(0,Math.min(6,intv(STATE.builders.count)));
+    if(bc>0)d.b={ c:bc, ls:STATE.builders.levels.slice(0,bc).map(function(v){return intv(v);}) };
+    /* 各模式参数 */
+    if(mode==="max")d.s=Math.max(0,Math.min(200,intv($("dmSpaceMax").value)));
+    if(mode==="custom"){
+      d.ca=Math.max(0,intv($("dmCustomLight").value));
+      d.cq=Math.max(0,Math.min(QUAKE_SEARCH_CAP,intv($("dmCustomQuake").value)));
+    }
+    return d;
+  }
+  function buildShareUrl(mode){
+    var base=location.href.split("#")[0];
+    return base+"#share="+b64urlEncode(JSON.stringify(collectShareData(mode)));
+  }
+  function parseShareHash(){
+    var m=(location.hash||"").match(/#share=([A-Za-z0-9\-_]+)/);
+    if(!m)return null;
+    try{
+      var d=JSON.parse(b64urlDecode(m[1]));
+      if(!d||d.v!==1||!d.t||["max","min","custom"].indexOf(d.m)<0)return null;
+      return d;
+    }catch(e){ return null; }
+  }
+  /* 用分享的数据构造一份只读 STATE（不读取访问者本地存档，save() 已被 SHARE_MODE 拦截） */
+  function enterShareMode(d){
+    SHARE_MODE=true;
+    STATE={ eq:{}, eqOn:{}, spell:{l:intv(d.l),q:intv(d.q)}, build:{}, th:0, target:String(d.t), builders:{count:0,levels:[]} };
+    if(d.eq)Object.keys(d.eq).forEach(function(id){ STATE.eq[id]=intv(d.eq[id]); STATE.eqOn[id]=true; });
+    STATE.build[STATE.target]=Math.max(0,intv(d.tl));
+    if(d.b){
+      STATE.builders.count=Math.max(0,Math.min(6,intv(d.b.c)));
+      STATE.builders.levels=(d.b.ls||[]).slice(0,STATE.builders.count).map(function(v){return Math.max(1,intv(v));});
+      while(STATE.builders.levels.length<STATE.builders.count)STATE.builders.levels.push(1);
+    }
+  }
+  /* 横幅里的配置摘要 chips */
+  function shareConfigChips(d){
+    var chips=[];
+    var modeName={max:"① 最高伤害",min:"② 摧毁所需最少法术",custom:"③ 自定义闪震数量"}[d.m]||d.m;
+    chips.push('<span class="dm-chip">🧮 模式 <b>'+esc(modeName)+'</b></span>');
+    var b=findBuild(String(d.t));
+    if(b)chips.push('<span class="dm-chip">🎯 目标 <b>'+esc(b.unit.chineseName)+' Lv'+Math.max(0,intv(d.tl))+'</b></span>');
+    if(intv(d.l)>0)chips.push('<span class="dm-chip dm-chip-l">⚡ 雷电法术 <b>Lv '+intv(d.l)+'</b></span>');
+    if(intv(d.q)>0)chips.push('<span class="dm-chip dm-chip-q">🌍 地震法术 <b>Lv '+intv(d.q)+'</b></span>');
+    if(d.eq)Object.keys(d.eq).forEach(function(id){
+      var info=EQUIP_MAP[id];
+      if(info)chips.push('<span class="dm-chip dm-chip-eq">🛡️ '+esc(info.zh)+' <b>Lv '+intv(d.eq[id])+'</b></span>');
+    });
+    if(d.b&&intv(d.b.c)>0)chips.push('<span class="dm-chip">🔨 回血小屋 ×'+intv(d.b.c)+'（Lv '+(d.b.ls||[]).map(function(v){return intv(v);}).join(" / ")+'）</span>');
+    if(d.m==="max")chips.push('<span class="dm-chip">📦 法术空间上限 <b>'+(d.s!=null?intv(d.s):11)+'</b></span>');
+    if(d.m==="custom")chips.push('<span class="dm-chip">⚡ ×'+intv(d.ca)+' + 🌍 ×'+intv(d.cq)+'</span>');
+    return chips.join("");
+  }
+  function copyText(t, cb){
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(function(){cb(true);},function(){fallbackCopy(t,cb);});
+      return;
+    }
+    fallbackCopy(t,cb);
+  }
+  function fallbackCopy(t, cb){
+    try{
+      var ta=document.createElement("textarea");
+      ta.value=t; ta.style.position="fixed"; ta.style.opacity="0"; ta.style.pointerEvents="none";
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      var ok=document.execCommand("copy");
+      document.body.removeChild(ta);
+      cb(!!ok);
+    }catch(e){ cb(false); }
+  }
+  /* 结果区底部的「复制分享链接」按钮行 */
+  function shareRowHtml(mode){
+    return '<div class="dm-share-row"><button type="button" class="btn btn--sm dm-share-btn" data-share-mode="'+mode+'"><span>🔗 复制分享链接</span></button><span class="dm-share-tip">链接内含本次计算的全部配置（法术 / 装备 / 目标建筑 / 回血小屋等级与计算模式），好友打开即可只读查看，不会影响对方保存的数据。</span></div>';
+  }
+
   /* ===== 持久化 ===== */
-  function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(STATE)); }catch(e){} }
+  function save(){ if(SHARE_MODE)return; try{ localStorage.setItem(LS_KEY, JSON.stringify(STATE)); }catch(e){} }
   function load(){
     try{
       var s=localStorage.getItem(LS_KEY);
@@ -684,8 +788,59 @@
     renderSpellLevels(); renderTHLevels(); renderEquipGroups(); renderBuilders(); renderBuildGroups(); renderTargetOptions(); renderTargetInfo(); save();
   }
 
+  function updateCustomSpace(){
+    var a=intv($("dmCustomLight").value), q=intv($("dmCustomQuake").value);
+    if(a<0)a=0; if(q<0)q=0;
+    $("dmCustomSpace").innerHTML = '⚡ <b>'+a+'</b> + 🌍 <b>'+q+'</b> = <b style="color:var(--coc-blue)">'+(a+q)+'</b> 格';
+  }
+
+  /* ===== 分享查看模式：隐藏所有设置区，只读展示分享的配置与计算结果 ===== */
+  function hideSetupSections(){
+    $("dmMechSection").style.display="none";
+    $("dmSetup").style.display="none";
+    $("dmTargetSection").style.display="none";
+    document.querySelector(".dm-tabs").style.display="none";
+    /* 面板里的计算输入行（参数输入框 + 计算按钮）也一并隐藏，只留结果，保持纯只读 */
+    document.querySelectorAll(".dm-tab-pane .dm-calc-row").forEach(function(r){ r.style.display="none"; });
+  }
+  function setupShareView(d){
+    hideSetupSections();
+    /* 只显示对应模式的结果面板（标签切换条已隐藏，无法再切换） */
+    document.querySelectorAll(".dm-tab-pane").forEach(function(p){
+      var key=p.id==="dmPaneMax"?"max":(p.id==="dmPaneMin"?"min":"custom");
+      p.classList.toggle("active", key===d.m);
+    });
+    /* 填入分享的模式参数并直接算出结果 */
+    if(d.m==="max"){
+      $("dmSpaceMax").value=(d.s!=null?Math.max(0,Math.min(200,intv(d.s))):11);
+      calcMax();
+    }else if(d.m==="min"){
+      calcMin();
+    }else{
+      $("dmCustomLight").value=Math.max(0,intv(d.ca));
+      $("dmCustomQuake").value=Math.max(0,Math.min(QUAKE_SEARCH_CAP,intv(d.cq)));
+      updateCustomSpace();
+      calcCustom();
+    }
+    /* 显示横幅与配置摘要 */
+    $("dmShareConfig").innerHTML=shareConfigChips(d);
+    $("dmShareView").hidden=false;
+    document.title="好友分享的计算结果 · 伤害计算器 · 天择网";
+  }
+  function setupShareInvalid(){
+    SHARE_MODE=true;
+    hideSetupSections();
+    $("dmShareTitle").textContent="分享链接无效或已损坏";
+    $("dmShareDesc").innerHTML="这条链接无法解析（可能已被截断，或与当前版本不兼容）。请让好友回到伤害计算器重新生成分享链接，或点右侧按钮回到你自己的计算器。";
+    $("dmShareView").hidden=false;
+  }
+
   function init(){
-    load();
+    /* 分享链接：#share=... 则进入只读查看模式，完全不读取访问者本地存档 */
+    var shareData=parseShareHash();
+    var shareInvalid=!shareData && (location.hash||"").indexOf("#share=")===0;
+    if(shareData)enterShareMode(shareData);
+    else load();
     loadGame(function(){
       renderAll();
       /* 法术等级变化 */
@@ -705,11 +860,6 @@
       $("dmCalcMinBtn").addEventListener("click", calcMin);
       $("dmCalcCustomBtn").addEventListener("click", calcCustom);
       /* 自定义：实时显示总法术空间（雷电+地震） */
-      function updateCustomSpace(){
-        var a=intv($("dmCustomLight").value), q=intv($("dmCustomQuake").value);
-        if(a<0)a=0; if(q<0)q=0;
-        $("dmCustomSpace").innerHTML = '⚡ <b>'+a+'</b> + 🌍 <b>'+q+'</b> = <b style="color:var(--coc-blue)">'+(a+q)+'</b> 格';
-      }
       $("dmCustomLight").addEventListener("input", updateCustomSpace);
       $("dmCustomQuake").addEventListener("input", updateCustomSpace);
       updateCustomSpace();
@@ -730,8 +880,34 @@
         if(wall)STATE.target=wall.gid;
       }
       renderTargetOptions(); renderTargetInfo();
+      /* 分享链接：结果区「复制分享链接」按钮（事件委托，结果区为动态 HTML） */
+      document.addEventListener("click", function(ev){
+        var t=ev.target;
+        var btn=(t&&t.closest)?t.closest(".dm-share-btn"):null;
+        if(!btn)return;
+        var url=buildShareUrl(btn.getAttribute("data-share-mode"));
+        copyText(url, function(ok){
+          var span=btn.querySelector("span");
+          if(span){
+            var old=span.textContent;
+            span.textContent=ok?"✓ 链接已复制，发给好友即可":"✗ 复制失败";
+            setTimeout(function(){ span.textContent=old; },2600);
+          }
+          if(!ok)window.prompt("自动复制失败，请手动复制此链接：", url);
+        });
+      });
+      /* 分享查看模式：返回自己的计算器（访问者本地数据从未被改动，回到无 hash 的干净地址即可） */
+      $("dmShareBack").addEventListener("click", function(ev){
+        ev.preventDefault();
+        location.href=location.pathname+location.search;
+      });
+      if(shareData)setupShareView(shareData);
+      else if(shareInvalid)setupShareInvalid();
     });
   }
+
+  /* 自动化测试钩子（界面无引用） */
+  window.__dmgShare={ buildUrl:buildShareUrl, parse:parseShareHash, isShareMode:function(){return SHARE_MODE;} };
 
   init();
 })();

@@ -94,6 +94,18 @@
     .coc-tool.dmg-calc .dm-tolerance { margin-top: 12px; padding: 11px 15px; border-radius: 10px; border: 1px solid rgba(56,189,248,.28); background: rgba(56,189,248,.08); color: var(--ink-dim); font-size: 13px; }
     .coc-tool.dmg-calc .dm-tolerance strong { color: var(--coc-blue); }
     @media (max-width: 620px) { .coc-tool.dmg-calc .dm-builder-total { width: 100%; margin-left: 0; } }
+
+    /* 分享链接：结果区分享按钮 + 分享查看模式横幅 */
+    .coc-tool.dmg-calc .dm-share-row { margin-top: 14px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .coc-tool.dmg-calc .dm-share-tip { font-size: 12.5px; color: var(--ink-faint); flex: 1; min-width: 220px; }
+    .coc-tool.dmg-calc #dmShareView[hidden] { display: none; }
+    .coc-tool.dmg-calc .dm-share-banner { padding: 22px 26px; background: linear-gradient(145deg, rgba(var(--c-purple-rgb),.13), rgba(var(--c-blue-rgb),.07)); border: 1px solid rgba(var(--c-violet-rgb),.35); }
+    .coc-tool.dmg-calc .dm-share-banner-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 14px; }
+    .coc-tool.dmg-calc .dm-share-badge { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .05em; color: var(--coc-blue); background: rgba(56,189,248,.1); border: 1px solid rgba(56,189,248,.3); border-radius: 999px; padding: 4px 12px; margin-bottom: 8px; }
+    .coc-tool.dmg-calc .dm-share-banner h2 { font-size: 20px; font-weight: 800; color: var(--ink); margin-bottom: 6px; }
+    .coc-tool.dmg-calc .dm-share-desc { font-size: 13px; color: var(--ink-dim); line-height: 1.7; max-width: 600px; }
+    .coc-tool.dmg-calc .dm-share-config { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 15px; padding-top: 14px; border-top: 1px dashed var(--coc-stroke); }
+    .coc-tool.dmg-calc .dm-share-back { flex-shrink: 0; }
   </style>
 </head>
 <body class="coc-tool dmg-calc">
@@ -122,8 +134,23 @@
       <p class="reveal in d2">基于雷电法术、地震法术各等级伤害数据与英雄装备数据，计算给定法术空间内对家乡目标建筑能造成的<b style="color:var(--ink);">最高伤害</b>，以及<b style="color:var(--ink);">摧毁指定建筑所需的最少法术</b>。<b style="color:var(--ink);">新增</b>：建筑工人小屋回血量与当前方案<b style="color:var(--ink);">回血容错时间</b>——溢出伤害除以小屋总回复速度。支持从村庄存档一键导入等级、按大本营等级自动设定建筑等级。所有计算在浏览器本地完成。</p>
     </section>
 
+    <!-- 分享查看模式横幅（默认隐藏，仅通过分享链接打开时显示） -->
+    <section class="section wrap" id="dmShareView" hidden style="padding-top:18px;">
+      <div class="card dm-share-banner">
+        <div class="dm-share-banner-head">
+          <div>
+            <div class="dm-share-badge">🔗 分享查看模式</div>
+            <h2 id="dmShareTitle">好友分享的计算结果</h2>
+            <p class="dm-share-desc" id="dmShareDesc">你正在查看好友通过天择网伤害计算器分享的配置与计算结果。<b style="color:var(--ink);">此页面为只读</b>：不会读取、更不会改动你在本浏览器中保存的任何等级设置。看完点右侧按钮即可回到你自己的计算器。</p>
+          </div>
+          <a class="btn dm-share-back" id="dmShareBack" href="#"><span>← 返回我的计算器</span></a>
+        </div>
+        <div class="dm-share-config" id="dmShareConfig"></div>
+      </div>
+    </section>
+
     <!-- 法术机制说明 -->
-    <section class="section wrap" style="padding-top:18px;">
+    <section class="section wrap" id="dmMechSection" style="padding-top:18px;">
       <div class="card reveal dm-mech">
         <div class="section-head" style="margin-bottom:6px;">
           <h2><span class="bar"></span>法术机制说明</h2>
@@ -220,7 +247,7 @@
     </section>
 
     <!-- 目标建筑选择（共享） -->
-    <section class="section wrap" style="padding-top:6px;">
+    <section class="section wrap" id="dmTargetSection" style="padding-top:6px;">
       <div class="card reveal" style="padding:24px 28px;">
         <div class="section-head" style="margin-bottom:6px;">
           <h2><span class="bar"></span>目标建筑</h2>
@@ -300,6 +327,6 @@
   </footer>
 
   <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260725a"></script>
-  <script defer src="https://wjtianze.github.io/coc/dmg-calc/app.js?v=20260719a"></script>
+  <script defer src="https://wjtianze.github.io/coc/dmg-calc/app.js?v=20260730a"></script>
 </body>
 </html>
