@@ -6,6 +6,9 @@
 (function () {
 'use strict';
 
+// 用户授权随站点提供，仅用于两个免费的智谱 GLM 预设。
+const BUNDLED_GLM_API_KEY = '6cec7915b15e44359c2f429e4df0ee4e.DiFqD4e5XMFiVHaI';
+
 /* ============================================================
    工具函数
    ============================================================ */
@@ -16,6 +19,12 @@ const escapeHtml = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
 }[c]));
 
+const uiGlyph = (key, extraClass) =>
+  `<span class="tz-icon${extraClass ? ` ${extraClass}` : ''}" data-icon="${escapeHtml(key)}" aria-hidden="true"></span>`;
+
+const uiLabel = (key, label) =>
+  `<span class="tz-icon-label">${uiGlyph(key)}<span>${escapeHtml(label)}</span></span>`;
+
 const uid = () => 'w_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
 const todayStr = () => {
@@ -24,6 +33,39 @@ const todayStr = () => {
 };
 
 const daysBetween = (t1, t2) => Math.floor((t2 - t1) / 86400000);
+
+const yieldToMain = () => new Promise(resolve => {
+  // 用 MessageChannel 让出主线程：零延迟 macrotask，不受窗口隐藏/后台 rAF 节流影响。
+  // 原先用 requestAnimationFrame，但窗口最小化或标签页切到后台时 rAF 会被节流到约
+  // 1 次/秒，导致批量导入每批 yield 等待约 1 秒，7000 词要 20+ 秒甚至卡死。
+  if (typeof MessageChannel !== 'undefined') {
+    const ch = new MessageChannel();
+    ch.port1.onmessage = () => { ch.port1.close(); ch.port2.close(); resolve(); };
+    ch.port2.postMessage(null);
+  } else if (typeof setTimeout === 'function') {
+    setTimeout(resolve, 0);
+  } else {
+    resolve();
+  }
+});
+
+const parseJsonAsync = (text) => new Promise((resolve, reject) => {
+  if (typeof Worker !== 'function' || typeof Blob !== 'function' || typeof URL === 'undefined') {
+    try { resolve(JSON.parse(text)); } catch (e) { reject(e); }
+    return;
+  }
+  const source = 'self.onmessage=function(e){try{self.postMessage({ok:true,data:JSON.parse(e.data)})}catch(err){self.postMessage({ok:false,error:err.message})}}';
+  const url = URL.createObjectURL(new Blob([source], { type: 'text/javascript' }));
+  const worker = new Worker(url);
+  const finish = () => { worker.terminate(); URL.revokeObjectURL(url); };
+  worker.onmessage = e => {
+    finish();
+    if (e.data && e.data.ok) resolve(e.data.data);
+    else reject(new Error((e.data && e.data.error) || 'JSON 解析失败'));
+  };
+  worker.onerror = e => { finish(); reject(new Error(e.message || 'JSON 解析失败')); };
+  worker.postMessage(text);
+});
 
 const shuffle = (arr) => {
   const a = arr.slice();
@@ -35,6 +77,42 @@ const shuffle = (arr) => {
 };
 
 const CIRCLED = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
+
+const normalizeExamples = (value) => {
+  const result = [];
+  const add = (item) => {
+    if (item == null) return;
+    if (Array.isArray(item)) { item.forEach(add); return; }
+    if (typeof item === 'string' || typeof item === 'number') {
+      const en = String(item).trim();
+      if (en) result.push({ en, zh: '' });
+      return;
+    }
+    if (typeof item !== 'object') return;
+    const en = item.en != null ? item.en
+      : (item.english != null ? item.english
+      : (item.sentence != null ? item.sentence
+      : (item.example != null ? item.example : item.text)));
+    const zh = item.zh != null ? item.zh
+      : (item.cn != null ? item.cn
+      : (item.chinese != null ? item.chinese : item.translation));
+    if (en != null || zh != null) {
+      const cleanEn = en == null ? '' : String(en).trim();
+      const cleanZh = zh == null ? '' : String(zh).trim();
+      if (cleanEn || cleanZh) result.push({ en: cleanEn, zh: cleanZh });
+      return;
+    }
+    Object.values(item).forEach(add);
+  };
+  add(value);
+  const seen = new Set();
+  return result.filter(item => {
+    const key = item.en + '\u0000' + item.zh;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
 
 // 简易 Markdown → HTML（标题/列表/粗体/代码/段落）
 const renderMd = (md) => {
@@ -81,11 +159,128 @@ const formatTime = (ts) => {
 };
 
 /* ============================================================
-   Store 子模块（localStorage 持久化）
+   DB 子模块（IndexedDB 持久化大块数据：vocab / records）
+   ------------------------------------------------------------
+   localStorage 单 key 受 ~5MB 限制，且 setItem 是同步阻塞主线程
+   的操作。导入 7000+ 词时，JSON.stringify(整个state) + setItem
+   会卡死 UI 数百毫秒到数秒，甚至因超配额直接抛错失败。
+   把最大的两块（vocab 词库数组、records 学习记录对象）迁到
+   IndexedDB：异步读写、无容量限制、不阻塞 UI。内存缓存保证
+   同步读接口（DB.vocab()/DB.records()），写入防抖异步落盘。
+   meta（stats/wrongBook/examples/aiConfig/settings）仍走
+   localStorage，体积小、结构简单。
+   ============================================================ */
+const DB = {
+  DB_NAME: 'tzwords',
+  DB_VERSION: 1,
+  STORE: 'kv',
+  LEGACY_KEY: 'tzwords_state_v1',   // 旧版统一 state（含 vocab/records）
+  META_KEY: 'tzwords_meta_v1',      // 新版 meta（stats/wrongBook/examples/aiConfig/settings/version）
+  _db: null,
+  _cache: { vocab: null, records: null },
+  _recTimer: null,
+
+  open() {
+    if (this._db) return Promise.resolve(this._db);
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(this.DB_NAME, this.DB_VERSION);
+      req.onupgradeneeded = (e) => {
+        const d = e.target.result;
+        if (!d.objectStoreNames.contains(this.STORE)) d.createObjectStore(this.STORE, { keyPath: 'k' });
+      };
+      req.onsuccess = (e) => { this._db = e.target.result; resolve(this._db); };
+      req.onerror = () => reject(req.error);
+    });
+  },
+  _get(k) {
+    return this.open().then(db => new Promise((resolve, reject) => {
+      const tx = db.transaction(this.STORE, 'readonly');
+      const rq = tx.objectStore(this.STORE).get(k);
+      rq.onsuccess = () => resolve(rq.result ? rq.result.v : undefined);
+      rq.onerror = () => reject(rq.error);
+    }));
+  },
+  _set(k, v) {
+    return this.open().then(db => new Promise((resolve, reject) => {
+      const tx = db.transaction(this.STORE, 'readwrite');
+      tx.objectStore(this.STORE).put({ k, v });
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    }));
+  },
+
+  // 启动加载 + 旧数据迁移（旧 localStorage state → IndexedDB + meta key）
+  async loadAll() {
+    try {
+      let vocab = await this._get('vocab');
+      let records = await this._get('records');
+      const needMigrate = (!vocab || !vocab.length) && (!records || !Object.keys(records).length);
+      if (needMigrate) {
+        const legacy = localStorage.getItem(this.LEGACY_KEY);
+        if (legacy) {
+          try {
+            const s = JSON.parse(legacy);
+            if (Array.isArray(s.vocab) && s.vocab.length) { vocab = s.vocab; await this._set('vocab', vocab); }
+            if (s.records && typeof s.records === 'object' && !Array.isArray(s.records)) { records = s.records; await this._set('records', records); }
+            const meta = {
+              stats: s.stats, wrongBook: s.wrongBook, examples: s.examples,
+              aiConfig: s.aiConfig, settings: s.settings, version: s.version
+            };
+            localStorage.setItem(this.META_KEY, JSON.stringify(meta));
+            localStorage.removeItem(this.LEGACY_KEY);
+            console.log('[DB] 已从旧版 localStorage 迁移词库到 IndexedDB');
+          } catch (e) { console.warn('[DB] 迁移失败', e); }
+        }
+      }
+      this._cache.vocab = Array.isArray(vocab) ? vocab : [];
+      this._cache.records = (records && typeof records === 'object' && !Array.isArray(records)) ? records : {};
+    } catch (e) {
+      console.warn('[DB] loadAll 失败，回退空缓存', e);
+      this._cache.vocab = [];
+      this._cache.records = {};
+    }
+    return this._cache;
+  },
+
+  vocab() { return this._cache.vocab || []; },
+  records() { return this._cache.records || {}; },
+
+  // 立即写 vocab（导入/清空用，低频）
+  async saveVocab(v) {
+    this._cache.vocab = Array.isArray(v) ? v : [];
+    await this._set('vocab', this._cache.vocab);
+  },
+  // 立即写 records（清空用）
+  async saveRecords(r) {
+    this._cache.records = r || {};
+    try { await this._set('records', this._cache.records); }
+    catch (e) { console.warn('[DB] saveRecords 失败', e); }
+  },
+  // 防抖写 records（答题高频，不阻塞 UI）
+  commitRecords(delay) {
+    if (this._recTimer) clearTimeout(this._recTimer);
+    this._recTimer = setTimeout(() => {
+      this._recTimer = null;
+      this._set('records', this._cache.records).catch(e => console.warn('[DB] records 持久化失败', e));
+    }, delay == null ? 1200 : delay);
+  },
+  // 立即冲刷待写的 records（页面隐藏/卸载时调用，防丢）
+  flushRecords() {
+    if (this._recTimer) { clearTimeout(this._recTimer); this._recTimer = null; }
+    try { this._set('records', this._cache.records).catch(() => {}); } catch (e) {}
+  }
+};
+
+/* ============================================================
+   Store 子模块（localStorage 持久化 meta：stats/wrongBook/
+   examples/aiConfig/settings；vocab/records 由 DB 托管）
    ============================================================ */
 const Store = {
-  KEY: 'tzwords_state_v1',
+  KEY: 'tzwords_meta_v1',
   _cache: null,
+  _saveTimer: null,
+  SAVE_DELAY: 1000,
 
   _defaultState() {
     return {
@@ -104,7 +299,7 @@ const Store = {
       aiConfig: {
         url: 'https://api.deepseek.com/v1/chat/completions',
         key: '',
-        model: 'deepseek-chat',
+        model: 'deepseek-v4-flash',
         temperature: 0.6
       },
       settings: {
@@ -129,30 +324,41 @@ const Store = {
   },
 
   load() {
+    if (this._cache) return this._cache;
     try {
       const raw = localStorage.getItem(this.KEY);
-      if (!raw) return this._defaultState();
-      const s = JSON.parse(raw);
-      // 兼容补全
       const def = this._defaultState();
-      return Object.assign(def, s, {
+      if (!raw) { this._cache = def; return this._cache; }
+      const s = JSON.parse(raw);
+      // meta 不含 vocab/records（由 DB/IndexedDB 托管）
+      this._cache = Object.assign(def, s, {
         stats: Object.assign(def.stats, s.stats || {}),
         aiConfig: Object.assign(def.aiConfig, s.aiConfig || {}),
         settings: Object.assign(def.settings, s.settings || {}),
-        records: s.records || {},
         wrongBook: s.wrongBook || [],
-        examples: s.examples || {},
-        vocab: s.vocab || []
+        examples: s.examples || {}
       });
+      return this._cache;
     } catch (e) {
       console.warn('Store.load 失败，回退默认状态', e);
-      return this._defaultState();
+      this._cache = this._defaultState();
+      return this._cache;
     }
   },
 
   save(state) {
+    this._cache = state;
     try {
-      localStorage.setItem(this.KEY, JSON.stringify(state));
+      // 只持久化 meta 字段，vocab/records 由 DB 托管，避免大对象阻塞 localStorage
+      const meta = {
+        stats: state.stats,
+        wrongBook: state.wrongBook,
+        examples: state.examples,
+        aiConfig: state.aiConfig,
+        settings: state.settings,
+        version: state.version
+      };
+      localStorage.setItem(this.KEY, JSON.stringify(meta));
       return true;
     } catch (e) {
       console.error('Store.save 失败', e);
@@ -166,15 +372,30 @@ const Store = {
     return this._cache;
   },
 
-  commit() { this.save(this._cache); },
+  commit(immediate) {
+    if (immediate) {
+      if (this._saveTimer) clearTimeout(this._saveTimer);
+      this._saveTimer = null;
+      return this.save(this._cache);
+    }
+    if (this._saveTimer) clearTimeout(this._saveTimer);
+    this._saveTimer = setTimeout(() => {
+      this._saveTimer = null;
+      this.save(this._cache);
+    }, this.SAVE_DELAY);
+    return true;
+  },
 
-  vocab() { return this.get().vocab; },
-  records() { return this.get().records; },
+  flush() { return this.commit(true); },
+
+  vocab() { return DB.vocab(); },
+  records() { return DB.records(); },
   record(id) {
-    const r = this.records()[id];
+    const records = DB.records();
+    const r = records[id];
     if (r) return r;
     const nr = this._newRecord(id);
-    this.records()[id] = nr;
+    records[id] = nr;
     return nr;
   },
   aiConfig() { return this.get().aiConfig; },
@@ -209,6 +430,23 @@ const Store = {
    Vocab 子模块（词库导入/校验/查询）
    ============================================================ */
 const Vocab = {
+  _idIndex: null,
+  _idIndexVocab: null,
+
+  _ensureIdIndex() {
+    const vocab = Store.vocab();
+    if (this._idIndexVocab !== vocab || !this._idIndex) {
+      this._idIndex = new Map(vocab.map(v => [v.id, v]));
+      this._idIndexVocab = vocab;
+    }
+    return this._idIndex;
+  },
+
+  _invalidateIndex() {
+    this._idIndex = null;
+    this._idIndexVocab = null;
+  },
+
   normalize(parsed) {
     let arr;
     if (Array.isArray(parsed)) arr = parsed;
@@ -242,44 +480,50 @@ const Vocab = {
         phonetic: typeof item.phonetic === 'string' ? item.phonetic.trim() : '',
         pos: typeof item.pos === 'string' ? item.pos.trim() : '',
         meaning,
-        examples: Array.isArray(item.examples) ? item.examples.filter(e => e && (e.en || e.zh)) : [],
+        examples: normalizeExamples(item.examples != null ? item.examples : item.example),
         tags: Array.isArray(item.tags) ? item.tags.map(String) : []
       }
     };
   },
 
-  import(parsed) {
+  async import(parsed, onProgress) {
     const arr = this.normalize(parsed);
-    const state = Store.get();
-    const existing = {}; // lowercase word → 索引
-    state.vocab.forEach((v, i) => { existing[v.word.toLowerCase()] = i; });
+    const nextVocab = DB.vocab().slice();
+    const existing = new Map(); // lowercase word → 索引
+    nextVocab.forEach((v, i) => { existing.set(v.word.toLowerCase(), i); });
     let count = 0, skipped = 0;
     const skipReasons = [];
-    arr.forEach(raw => {
-      const v = this.validate(raw);
-      if (!v.ok) { skipped++; skipReasons.push(v.error); return; }
-      const lw = v.item.word.toLowerCase();
-      if (lw in existing) {
-        // 合并 meaning（去重）
-        const idx = existing[lw];
-        const old = state.vocab[idx];
-        const mset = new Set(old.meaning.map(m => m.toLowerCase()));
-        v.item.meaning.forEach(m => {
-          if (!mset.has(m.toLowerCase())) { old.meaning.push(m); mset.add(m.toLowerCase()); }
-        });
-        if (v.item.phonetic && !old.phonetic) old.phonetic = v.item.phonetic;
-        if (v.item.pos && !old.pos) old.pos = v.item.pos;
-        if (v.item.examples.length) old.examples = (old.examples || []).concat(v.item.examples);
-        if (v.item.tags.length) old.tags = Array.from(new Set([...(old.tags || []), ...v.item.tags]));
-        count++;
-      } else {
-        const id = uid();
-        state.vocab.push(Object.assign({ id, addedAt: Date.now() }, v.item));
-        existing[lw] = state.vocab.length - 1;
+    const importedAt = Date.now();
+    const batchSize = 300;
+    for (let start = 0; start < arr.length; start += batchSize) {
+      const end = Math.min(start + batchSize, arr.length);
+      for (let i = start; i < end; i++) {
+        const v = this.validate(arr[i]);
+        if (!v.ok) { skipped++; if (skipReasons.length < 20) skipReasons.push(v.error); continue; }
+        const lw = v.item.word.toLowerCase();
+        if (existing.has(lw)) {
+          const idx = existing.get(lw);
+          const old = nextVocab[idx];
+          const mset = new Set((old.meaning || []).map(m => String(m).toLowerCase()));
+          v.item.meaning.forEach(m => {
+            if (!mset.has(m.toLowerCase())) { old.meaning.push(m); mset.add(m.toLowerCase()); }
+          });
+          if (v.item.phonetic && !old.phonetic) old.phonetic = v.item.phonetic;
+          if (v.item.pos && !old.pos) old.pos = v.item.pos;
+          if (v.item.examples.length) old.examples = normalizeExamples(normalizeExamples(old.examples).concat(v.item.examples));
+          if (v.item.tags.length) old.tags = Array.from(new Set([...(old.tags || []), ...v.item.tags]));
+        } else {
+          const id = uid();
+          nextVocab.push(Object.assign({ id, addedAt: importedAt }, v.item));
+          existing.set(lw, nextVocab.length - 1);
+        }
         count++;
       }
-    });
-    Store.commit();
+      if (onProgress) onProgress(end, arr.length);
+      if (end < arr.length) await yieldToMain();
+    }
+    await DB.saveVocab(nextVocab);
+    this._invalidateIndex();
     return { count, skipped, skipReasons };
   },
 
@@ -292,14 +536,24 @@ const Vocab = {
 
   clear() {
     const s = Store.get();
-    s.vocab = []; s.records = {}; s.wrongBook = []; s.examples = {};
+    s.wrongBook = []; s.examples = {};
     s.stats.learnedWordIds = [];
     s.stats.totalAnswered = 0; s.stats.totalCorrect = 0;
     s.stats.studyLog = {};
-    Store.commit();
+    // vocab/records 由 IndexedDB 托管：同步清内存缓存，异步落盘
+    DB.saveVocab([]).catch(e => console.warn('clear saveVocab 失败', e));
+    DB.saveRecords({}).catch(e => console.warn('clear saveRecords 失败', e));
+    this._invalidateIndex();
+    Store.commit(true);
   },
 
-  byId(id) { return Store.vocab().find(v => v.id === id); },
+  byId(id) {
+    const index = this._ensureIdIndex();
+    const cached = index.get(id);
+    if (cached || index.size === Store.vocab().length) return cached;
+    this._invalidateIndex();
+    return this._ensureIdIndex().get(id);
+  },
 
   search(q) {
     q = (q || '').trim().toLowerCase();
@@ -326,7 +580,8 @@ const Records = {
   },
 
   weight(wordId) {
-    const r = Store.record(wordId);
+    const r = Store.records()[wordId];
+    if (!r) return 45 + Math.random();
     const days = r.lastReview ? daysBetween(r.lastReview, Date.now()) : 30;
     return (5 - (r.mastery || 0)) * 3 + days + Math.random();
   },
@@ -378,7 +633,8 @@ const Records = {
     if (correct) state.stats.totalCorrect++;
     Store.touchStreak();
     Store.addStudyLog(correct);
-    Store.commit();
+    Store.commit();        // meta（stats/wrongBook）落 localStorage
+    DB.commitRecords();    // records 防抖异步落 IndexedDB
   },
 
   masteredCount() {
@@ -457,7 +713,7 @@ const Quiz = {
           const distractors = AI.parseDistractorsJson(res.content, words);
           if (distractors && Object.keys(distractors).length) {
             this.session.distractors = distractors;
-            UI.toast('✅ AI 干扰项已生成', 'success');
+            UI.toast('AI 干扰项已生成', 'success');
           } else {
             UI.toast('AI 干扰项格式异常，使用本地干扰项', 'warn');
           }
@@ -670,7 +926,7 @@ const Study = {
         try {
           const res = await AI.generateDistractors(words, (delta, full) => UI.updateStudyLoading(full));
           const distractors = AI.parseDistractorsJson(res.content, words);
-          if (distractors && Object.keys(distractors).length) { this.session.distractors = distractors; UI.toast('✅ AI 干扰项已生成', 'success'); }
+          if (distractors && Object.keys(distractors).length) { this.session.distractors = distractors; UI.toast('AI 干扰项已生成', 'success'); }
           else UI.toast('AI 干扰项格式异常，使用本地干扰项', 'warn');
         } catch (e) { UI.toast('AI 干扰项失败：' + e.message + '，使用本地', 'warn'); }
       }
@@ -953,7 +1209,7 @@ const Stats = {
     if (!el) return;
     const list = WrongBook.list();
     if (!list.length) {
-      el.innerHTML = '<div class="empty-state"><div class="es-icon">✨</div><div>暂无错词，继续保持！</div></div>';
+      el.innerHTML = `<div class="empty-state"><div class="es-icon">${uiGlyph('sparkle')}</div><div>暂无错词，继续保持！</div></div>`;
       return;
     }
     el.innerHTML = list.map(item => {
@@ -964,8 +1220,8 @@ const Stats = {
         <div class="wi-meaning">${escapeHtml((w.meaning || []).slice(0, 2).join('；'))}</div>
         <span class="wi-count">×${item.wrong}</span>
         <div class="wi-actions">
-          <button data-act="analyze" data-id="${w.id}">🔍</button>
-          <button data-act="practice" data-id="${w.id}">▶</button>
+          <button type="button" data-act="analyze" data-id="${w.id}" title="AI 解析" aria-label="AI 解析 ${escapeHtml(w.word)}">${uiGlyph('ai')}</button>
+          <button type="button" data-act="practice" data-id="${w.id}" title="练习此词" aria-label="练习 ${escapeHtml(w.word)}">${uiGlyph('play')}</button>
         </div>
       </div>`;
     }).join('');
@@ -978,26 +1234,23 @@ const Stats = {
 const AI = {
   // 检测是否在天择OS内运行（被 iframe 嵌入且同源）
   _inOS() {
-    try { return window.parent !== window && window.parent.location && localStorage.getItem('tzos_state_v1'); }
-    catch (e) { return window.parent !== window && localStorage.getItem('tzos_state_v1'); }
+    try { return window.parent !== window && !!localStorage.getItem('tzos_state_v1'); }
+    catch (e) { return false; }
   },
 
-  // 读取天择OS的AI配置
+  // 读取天择OS的AI配置（统一走全站 TZAI 助手，见 assets/js/main.js）
   _osAIConfig() {
-    try {
-      const osState = JSON.parse(localStorage.getItem('tzos_state_v1') || '{}');
-      const provider = osState.aiProvider || 'custom';
-      const cfg = provider === 'doubao' ? osState.doubaoConfig : osState.aiConfig;
-      if (cfg && cfg.url && cfg.key && cfg.model) return Object.assign({}, cfg);
-    } catch (e) {}
+    if (window.TZAI && window.TZAI.osConfig) return window.TZAI.osConfig();
     return null;
   },
 
   config() {
-    // 在OS内运行时优先使用OS的AI配置
+    // 在OS内运行时必须使用OS的通用AI配置（不再使用应用内单独配置）
     if (this._inOS()) {
       const osCfg = this._osAIConfig();
       if (osCfg) { if (typeof osCfg.temperature !== 'number') osCfg.temperature = 0.6; return osCfg; }
+      // OS 未配置：返回空配置（isReady=false），引导用户去 OS 的「AI 配置」设置
+      return { url: '', key: '', model: '', temperature: 0.6 };
     }
     const c = Object.assign({}, Store.aiConfig());
     if (typeof c.temperature !== 'number') c.temperature = 0.6;
@@ -1013,8 +1266,65 @@ const AI = {
     opts = opts || {};
     const c = this.config();
     if (!this.isReady()) {
-      throw new Error('AI 未配置，请先在「🔑 AI 配置」中设置 URL、Key 和模型');
+      throw new Error(this._inOS()
+        ? 'AI 未配置：天择OS 通用配置中尚未设置 API Key，请在天择OS 的「AI 配置」中设置'
+        : 'AI 未配置，请先在「AI 配置」中设置 URL、Key 和模型');
     }
+    const reqBody = {
+      model: c.model,
+      messages,
+      temperature: opts.temperature != null ? opts.temperature : c.temperature,
+      max_tokens: opts.max_tokens || 4000,
+      stream: true
+    };
+    // SSE 解析：把到达的原始文本喂进来，逐行解析 data: 块
+    let buf = '', full = '', reasoning = '';
+    const onReasoning = opts.onReasoning;
+    let sawDone = false;
+    const consume = (text) => {
+      buf += text;
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        const t = line.trim();
+        if (!t || !t.startsWith('data:')) continue;
+        const data = t.slice(5).trim();
+        if (data === '[DONE]') { sawDone = true; continue; }
+        try {
+          const j = JSON.parse(data);
+          const delta = (j.choices && j.choices[0] && j.choices[0].delta) || {};
+          if (delta.reasoning_content) {
+            reasoning += delta.reasoning_content;
+            if (onReasoning) onReasoning(delta.reasoning_content, reasoning);
+          }
+          if (delta.content) {
+            full += delta.content;
+            if (onChunk) onChunk(delta.content, full);
+          }
+        } catch (_) { /* 忽略解析失败的中间行 */ }
+      }
+    };
+
+    // 天择OS 桌面版：经父窗口 tzDesktop 桥由主进程 net.fetch 发请求（绕开渲染层 CORS 限制）
+    let tzBridge = null;
+    try { if (window.parent && window.parent.tzDesktop && window.parent.tzDesktop.requestAI) tzBridge = window.parent.tzDesktop; } catch (e) {}
+    if (tzBridge) {
+      const reqId = 'words-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+      const timer = setTimeout(() => { try { tzBridge.abortAI(reqId); } catch (e) {} }, 90000);
+      try {
+        const resp = await tzBridge.requestAI({ id: reqId, url: c.url, key: c.key, body: reqBody }, consume);
+        clearTimeout(timer);
+        if (resp && resp.status && (resp.status < 200 || resp.status >= 300)) throw new Error('AI 接口错误 ' + resp.status);
+        if (buf.trim()) consume('\n');
+        return { content: full, reasoning };
+      } catch (e) {
+        clearTimeout(timer);
+        if (e && e.name === 'AbortError') throw new Error('请求超时（90 秒），请检查网络或重试');
+        throw e;
+      }
+    }
+
+    // 网页版：直接 fetch（服务商需允许跨域；DeepSeek/GLM/硅基等均可）
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 90000);
     let res;
@@ -1025,13 +1335,7 @@ const AI = {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ' + c.key
         },
-        body: JSON.stringify({
-          model: c.model,
-          messages,
-          temperature: opts.temperature != null ? opts.temperature : c.temperature,
-          max_tokens: opts.max_tokens || 4000,
-          stream: true
-        }),
+        body: JSON.stringify(reqBody),
         signal: ctrl.signal
       });
     } catch (e) {
@@ -1052,46 +1356,24 @@ const AI = {
       const data = await res.json().catch(() => ({}));
       const content = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
       if (onChunk) onChunk(content, content);
+      clearTimeout(timer);
       return { content, reasoning: '' };
     }
     const reader = res.body.getReader();
     const dec = new TextDecoder();
-    let buf = '', full = '', reasoning = '';
-    const onReasoning = opts.onReasoning;
     try {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        buf += dec.decode(value, { stream: true });
-        const lines = buf.split('\n');
-        buf = lines.pop();
-        for (const line of lines) {
-          const s = line.trim();
-          if (!s || !s.startsWith('data:')) continue;
-          const data = s.slice(5).trim();
-          if (data === '[DONE]') {
-            clearTimeout(timer);
-            return { content: full, reasoning };
-          }
-          try {
-            const j = JSON.parse(data);
-            const delta = (j.choices && j.choices[0] && j.choices[0].delta) || {};
-            if (delta.reasoning_content) {
-              reasoning += delta.reasoning_content;
-              if (onReasoning) onReasoning(delta.reasoning_content, reasoning);
-            }
-            if (delta.content) {
-              full += delta.content;
-              if (onChunk) onChunk(delta.content, full);
-            }
-          } catch (_) { /* 忽略解析失败的中间行 */ }
-        }
+        consume(dec.decode(value, { stream: true }));
+        if (sawDone) break;
       }
     } catch (e) {
       clearTimeout(timer);
       if (full) return { content: full, reasoning, interrupted: true };
       throw new Error('流式读取异常：' + (e.message || e));
     }
+    if (buf.trim()) consume(dec.decode());
     clearTimeout(timer);
     return { content: full, reasoning };
   },
@@ -1302,10 +1584,29 @@ const TTS = {
    ============================================================ */
 const UI = {
   currentView: 'vocab',
+  VOCAB_PAGE_SIZE: 120,
+  _vocabList: [],
+  _vocabRendered: 0,
+  _vocabObserver: null,
+  _activeModal: null,
+  _modalReturnFocus: null,
+  _focusableSelector: [
+    'a[href]',
+    'button:not([disabled])',
+    'input:not([disabled])',
+    'select:not([disabled])',
+    'textarea:not([disabled])',
+    '[tabindex]:not([tabindex="-1"])'
+  ].join(','),
 
   switchView(name) {
     this.currentView = name;
-    $$('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+    $$('.nav-item').forEach(b => {
+      const active = b.dataset.view === name;
+      b.classList.toggle('active', active);
+      if (active) b.setAttribute('aria-current', 'page');
+      else b.removeAttribute('aria-current');
+    });
     $$('.panel').forEach(p => {
       const active = p.id === 'view-' + name;
       p.classList.toggle('active', active);
@@ -1331,11 +1632,69 @@ const UI = {
 
   openModal(id) {
     const m = $('#' + id);
-    if (m) m.removeAttribute('hidden');
+    if (!m) return;
+    if (this._activeModal && this._activeModal !== m) {
+      this.closeModal(this._activeModal.id, false);
+    }
+    this._modalReturnFocus = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+    m.removeAttribute('hidden');
+    this._activeModal = m;
+    document.body.classList.add('words-modal-open');
+    requestAnimationFrame(() => {
+      const focusables = this._modalFocusables(m);
+      const target = m.querySelector('[autofocus]') || focusables[0] || m.querySelector('.modal-card');
+      if (target && typeof target.focus === 'function') target.focus();
+    });
   },
-  closeModal(id) {
+  closeModal(id, restoreFocus) {
     const m = $('#' + id);
-    if (m) m.setAttribute('hidden', '');
+    if (!m || m.hasAttribute('hidden')) return;
+    m.setAttribute('hidden', '');
+    if (this._activeModal === m) this._activeModal = null;
+    document.body.classList.remove('words-modal-open');
+    const returnTarget = this._modalReturnFocus;
+    this._modalReturnFocus = null;
+    if (restoreFocus !== false && returnTarget && returnTarget.isConnected && typeof returnTarget.focus === 'function') {
+      requestAnimationFrame(() => returnTarget.focus());
+    }
+  },
+
+  _modalFocusables(modal) {
+    return $$(this._focusableSelector, modal).filter(el =>
+      !el.hasAttribute('hidden') &&
+      el.getAttribute('aria-hidden') !== 'true' &&
+      el.getClientRects().length > 0
+    );
+  },
+
+  handleModalKeydown(e) {
+    const modal = this._activeModal;
+    if (!modal || modal.hasAttribute('hidden')) return false;
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      this.closeModal(modal.id);
+      return true;
+    }
+    if (e.key !== 'Tab') return false;
+    const focusables = this._modalFocusables(modal);
+    if (!focusables.length) {
+      e.preventDefault();
+      const card = modal.querySelector('.modal-card');
+      if (card) card.focus();
+      return true;
+    }
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (e.shiftKey && (document.activeElement === first || !modal.contains(document.activeElement))) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && (document.activeElement === last || !modal.contains(document.activeElement))) {
+      e.preventDefault();
+      first.focus();
+    }
+    return true;
   },
 
   renderTopStats() {
@@ -1360,17 +1719,29 @@ const UI = {
   },
 
   renderVocabList(filter) {
-    const list = Vocab.search(filter);
     const el = $('#vocabList');
-    if (!list.length) {
+    this._vocabList = Vocab.search(filter);
+    this._vocabRendered = 0;
+    if (this._vocabObserver) this._vocabObserver.disconnect();
+    if (!this._vocabList.length) {
       el.innerHTML = `<div class="empty-state">
-        <div class="es-icon">${filter ? '🔍' : '📚'}</div>
-        <div>${filter ? '未找到匹配的单词' : '词库为空，点击「导入 JSON」开始'}</div>
+        <div class="es-icon">${uiGlyph(filter ? 'search' : 'book')}</div>
+        <strong>${filter ? '没有匹配的词条' : '还没有词条'}</strong>
+        <span>${filter ? '换一个单词、释义或标签继续检索。' : '从上方装载 JSON 词库后，这里会成为你的学习索引。'}</span>
       </div>`;
       return;
     }
+    el.innerHTML = '';
+    this._appendVocabPage();
+  },
+
+  _appendVocabPage() {
+    const el = $('#vocabList');
+    if (!el || this._vocabRendered >= this._vocabList.length) return;
     const records = Store.records();
-    el.innerHTML = list.map(w => {
+    const start = this._vocabRendered;
+    const end = Math.min(start + this.VOCAB_PAGE_SIZE, this._vocabList.length);
+    const html = this._vocabList.slice(start, end).map(w => {
       const r = records[w.id];
       const mastery = (r && r.mastery) || 0;
       const dots = Array.from({ length: 5 }, (_, i) =>
@@ -1383,11 +1754,34 @@ const UI = {
         <div class="vi-meaning">${escapeHtml((w.meaning || []).join('；'))}</div>
         <div class="vi-mastery" title="掌握度 ${mastery}/5">${dots}</div>
         <div class="vi-actions">
-          <button class="vi-btn" data-act="examples" data-id="${w.id}" title="AI 例句">📖</button>
-          <button class="vi-btn" data-act="analyze" data-id="${w.id}" title="AI 解析">🤖</button>
+          <button class="vi-btn" data-act="examples" data-id="${w.id}" title="AI 例句">${uiGlyph('book')}</button>
+          <button class="vi-btn" data-act="analyze" data-id="${w.id}" title="AI 解析">${uiGlyph('ai')}</button>
         </div>
       </div>`;
     }).join('');
+    el.insertAdjacentHTML('beforeend', html);
+    this._vocabRendered = end;
+    this._observeVocabTail();
+  },
+
+  _observeVocabTail() {
+    if (this._vocabObserver) this._vocabObserver.disconnect();
+    if (this._vocabRendered >= this._vocabList.length) return;
+    const el = $('#vocabList');
+    const tail = el && el.lastElementChild;
+    if (!tail) return;
+    if ('IntersectionObserver' in window) {
+      this._vocabObserver = new IntersectionObserver(entries => {
+        if (entries.some(entry => entry.isIntersecting)) this._appendVocabPage();
+      }, { root: el, rootMargin: '240px 0px' });
+      this._vocabObserver.observe(tail);
+    } else {
+      const more = document.createElement('button');
+      more.className = 'btn btn--ghost vocab-more';
+      more.textContent = `加载更多（${this._vocabList.length - this._vocabRendered}）`;
+      more.addEventListener('click', () => { more.remove(); this._appendVocabPage(); });
+      el.appendChild(more);
+    }
   },
 
   // ===== 释义考察 =====
@@ -1412,8 +1806,11 @@ const UI = {
       var cls = "si-step";
       if (i < stageIdx) cls += " done";
       else if (i === stageIdx) cls += " active";
-      var icon = i < stageIdx ? "\u2713" : (i + 1);
-      return "<span class=\"" + cls + "\">" + icon + " " + escapeHtml(st.name) + "</span>" + (i < stages.length - 1 ? "<span class=\"si-arrow\">\u2192</span>" : "");
+      var marker = i < stageIdx
+        ? uiGlyph('check')
+        : "<span class=\"si-number\">" + (i + 1) + "</span>";
+      return "<span class=\"" + cls + "\">" + marker + "<span>" + escapeHtml(st.name) + "</span></span>" +
+        (i < stages.length - 1 ? "<span class=\"si-arrow\">" + uiGlyph('right') + "</span>" : "");
     }).join("");
     $("#stIndicator").innerHTML = html;
     $("#stStageTitle").textContent = "\u9636\u6bb5 " + (stageIdx + 1) + "/" + stages.length + "\uff1a" + stages[stageIdx].name;
@@ -1423,20 +1820,20 @@ const UI = {
       var pct = prevResult.total ? Math.round(prevResult.correct / prevResult.total * 100) : 0;
       sr.innerHTML = "<div class=\"sr-row\"><span>\u4e0a\u4e00\u9636\u6bb5\u6210\u7ee9</span><b>" + prevResult.correct + " / " + prevResult.total + "\uff08" + pct + "%\uff09</b></div>";
       sr.classList.add("show");
-      $("#btnStageStart").textContent = "\u8fdb\u5165\u4e0b\u4e00\u9636\u6bb5 \u2192";
+      $("#btnStageStart").innerHTML = uiLabel('right', '进入下一阶段');
     } else {
       sr.classList.remove("show");
       sr.innerHTML = "";
-      $("#btnStageStart").textContent = "\u5f00\u59cb\u672c\u9636\u6bb5 \u2192";
+      $("#btnStageStart").innerHTML = uiLabel('play', '开始本阶段');
     }
   },
   showStudyLoading() {
     this._showStudyState("studyLoading");
-    $("#stLoadingText").textContent = "\ud83e\udd16 AI \u6b63\u5728\u751f\u6210\u5e72\u6270\u9879\u2026";
+    $("#stLoadingText").innerHTML = uiLabel('ai', 'AI 正在生成干扰项…');
   },
   updateStudyLoading(full) {
     var el = $("#stLoadingText");
-    if (el && full) el.textContent = "\ud83e\udd16 AI \u6b63\u5728\u751f\u6210\u5e72\u6270\u9879\u2026\uff08\u5df2\u751f\u6210 " + full.length + " \u5b57\u7b26\uff09";
+    if (el && full) el.innerHTML = uiLabel('ai', "AI 正在生成干扰项（已生成 " + full.length + " 字符）");
   },
   showStudyPlay() { this._showStudyState("studyPlay"); },
   _showStudyState(state) {
@@ -1450,7 +1847,11 @@ const UI = {
     var html = stages.map(function(st, i) {
       var cls = "si-step";
       if (i < stageIdx) cls += " done"; else if (i === stageIdx) cls += " active";
-      return "<span class=\"" + cls + "\">" + (i < stageIdx ? "\u2713" : (i + 1)) + "</span>" + (i < stages.length - 1 ? "<span class=\"si-arrow\">\u2192</span>" : "");
+      var marker = i < stageIdx
+        ? uiGlyph('check')
+        : "<span class=\"si-number\">" + (i + 1) + "</span>";
+      return "<span class=\"" + cls + "\">" + marker + "</span>" +
+        (i < stages.length - 1 ? "<span class=\"si-arrow\">" + uiGlyph('right') + "</span>" : "");
     }).join("");
     $("#stIndicator2").innerHTML = html;
     $("#stProg").textContent = idx + " / " + total;
@@ -1471,10 +1872,25 @@ const UI = {
       spellExtra.removeAttribute("hidden");
       TTS.disableBtn($("#stTts"));
       inputEl.focus();
-      $("#stSubmit").setAttribute("hidden", ""); $("#stSubmit").textContent = "\u63d0\u4ea4";
+      $("#stSubmit").removeAttribute("hidden"); $("#stSubmit").innerHTML = uiLabel('check', '提交拼写');
     } else {
       optsEl.style.display = ""; inputEl.setAttribute("hidden", ""); spellExtra.setAttribute("hidden", "");
-      promptEl.className = "q-prompt"; promptEl.textContent = q.prompt;
+      promptEl.className = "q-prompt";
+      // 英译中预习：题干下追加已缓存例句的英文作为语境（不显示中文，防泄题）
+      var _stageInfo = Study.STAGES[stageIdx];
+      if (_stageInfo && _stageInfo.isPreview && q.mode === 'en2cn') {
+        var _exsEn = normalizeExamples(q.word.examples).concat(normalizeExamples(Store.get().examples[q.word.id]));
+        var _exEn = _exsEn[0];
+        if (_exEn && _exEn.en) {
+          var _re = new RegExp('(' + q.word.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+          var _exHtml = escapeHtml(_exEn.en).replace(_re, '<span class="ex-hl">$1</span>');
+          promptEl.innerHTML = '<div class="q-word">' + escapeHtml(q.prompt) + '</div><div class="q-example-en tz-icon-label" title="例句语境">' + uiGlyph('chat') + '<span>' + _exHtml + '</span></div>';
+        } else {
+          promptEl.textContent = q.prompt;
+        }
+      } else {
+        promptEl.textContent = q.prompt;
+      }
       subEl.textContent = q.sub || "";
       var isMulti = !!q.multi;
       optsEl.className = "quiz-options" + (isMulti ? " multi" : "");
@@ -1483,8 +1899,8 @@ const UI = {
           var letter = String.fromCharCode(65 + i);
           return "<button class=\"opt checkable\" data-idx=\"" + i + "\" data-correct=\"" + o.correct + "\" data-text=\"" + escapeHtml(o.text) + "\"><span style=\"color:var(--ink-faint);margin-right:8px;font-weight:600;\">" + letter + ".</span>" + escapeHtml(o.text) + "</button>";
         }).join("");
-        subEl.innerHTML = (q.sub || "") + (q.sub ? " \u00b7 " : "") + "<span class=\"quiz-hint\">\ud83d\udccc \u4e0d\u5b9a\u9879\u9009\u62e9\uff0c\u9009\u51fa\u6240\u6709\u7b26\u5408\u7684\u91ca\u4e49</span>";
-        $("#stSubmit").removeAttribute("hidden"); $("#stSubmit").textContent = "\u2713 \u63d0\u4ea4\u7b54\u6848";
+        subEl.innerHTML = (q.sub || "") + (q.sub ? " \u00b7 " : "") + "<span class=\"quiz-hint tz-icon-label\">" + uiGlyph('pin') + "<span>\u4e0d\u5b9a\u9879\u9009\u62e9\uff0c\u9009\u51fa\u6240\u6709\u7b26\u5408\u7684\u91ca\u4e49</span></span>";
+        $("#stSubmit").removeAttribute("hidden"); $("#stSubmit").innerHTML = uiLabel('check', '提交答案');
       } else {
         optsEl.innerHTML = q.options.map(function(o, i) {
           var letter = String.fromCharCode(65 + i);
@@ -1501,7 +1917,9 @@ const UI = {
     var fb = $("#stFeedback");
     var isSpell = q.type === "spell";
     fb.className = (isSpell ? "spell-feedback " : "quiz-feedback ") + (correct ? "ok" : "bad");
-    var html = correct ? "<div>\u2705 \u7b54\u5bf9\u4e86\uff01</div>" : "<div>\u274c \u7b54\u9519\u4e86</div>";
+    var html = correct
+      ? "<div class=\"tz-icon-label\">" + uiGlyph('check') + "<span>\u7b54\u5bf9\u4e86\uff01</span></div>"
+      : "<div class=\"tz-icon-label\">" + uiGlyph('close') + "<span>\u7b54\u9519\u4e86</span></div>";
     if (isSpell) {
       var diffHtml = UI._diffHtml(typeof userSelection === "string" ? userSelection : "", q.word.word);
       html += "<div class=\"diff\">" + diffHtml + "</div>";
@@ -1528,11 +1946,31 @@ const UI = {
       q.word.meaning.forEach(function(m, i) {
         html += "<li data-i=\"" + (CIRCLED[i] || (i + 1) + ".") + "\">" + escapeHtml(m) + "</li>";
       });
-      html += "</ul></div>";
+      html += "</ul>";
+      var exs = normalizeExamples(q.word.examples);
+      var cachedEx = Store.get().examples[q.word.id];
+      if (cachedEx && cachedEx.length) exs = exs.concat(cachedEx);
+      exs = exs.slice(0, 3);
+      html += "<div class=\"pv-examples\" id=\"stPvExamples\"><div class=\"pv-examples-title\">" + uiLabel('book', '例句') + "</div>";
+      if (exs.length) {
+        exs.forEach(function(example) {
+          html += "<div class=\"pv-example\">";
+          if (example.en) html += "<div class=\"pv-example-en\">" + escapeHtml(example.en) + "</div>";
+          if (example.zh) html += "<div class=\"pv-example-zh\">" + escapeHtml(example.zh) + "</div>";
+          html += "</div>";
+        });
+      } else {
+        html += "<div class=\"pv-example-empty\" id=\"stPvExEmpty\">暂无例句</div>";
+      }
+      html += "</div></div>";
     } else {
       html += "<div class=\"ans\" style=\"color:var(--ink-dim);margin-top:4px;\">" + escapeHtml(q.word.word) + " \u2014 " + escapeHtml((q.word.meaning || []).join("\uff1b")) + "</div>";
     }
-    html += "<div class=\"feedback-actions\"><button class=\"btn btn--ghost btn--sm\" id=\"stExamples\" data-wid=\"" + q.word.id + "\">\ud83d\udcd6 AI \u4f8b\u53e5</button><button class=\"btn btn--ghost btn--sm\" id=\"stAiAnalyze\" data-wid=\"" + q.word.id + "\">\ud83e\udd16 AI \u89e3\u6790</button></div>";
+    html += "<div class=\"feedback-actions\"><button class=\"btn btn--secondary btn--sm\" id=\"stExamples\" data-wid=\"" + q.word.id + "\">" +
+      uiLabel('book', 'AI 例句') +
+      "</button><button class=\"btn btn--secondary btn--sm\" id=\"stAiAnalyze\" data-wid=\"" + q.word.id + "\">" +
+      uiLabel('ai', 'AI 解析') +
+      "</button></div>";
     fb.innerHTML = html;
     fb.removeAttribute("hidden");
     if (!isSpell) {
@@ -1552,6 +1990,42 @@ const UI = {
     if (isSpell) { $("#stInput").setAttribute("disabled", ""); $("#stSubmit").setAttribute("hidden", ""); }
     else if (q.multi) { $("#stSubmit").setAttribute("hidden", ""); }
     $("#stNext").removeAttribute("hidden");
+    // 预习阶段无例句时，自动 AI 生成并缓存（确保每个单词都能看到例句）
+    if (isPreview && !isSpell) {
+      var _exs0 = normalizeExamples(q.word.examples);
+      var _cached0 = Store.get().examples[q.word.id];
+      if (_cached0 && _cached0.length) _exs0 = _exs0.concat(_cached0);
+      if (!_exs0.length) {
+        if (AI.isReady()) { UI._autoGenStudyExample(q.word); }
+        else { var _e0 = document.getElementById('stPvExEmpty'); if (_e0) _e0.textContent = '暂无例句（配置 AI 后自动生成，或点下方「AI 例句」）'; }
+      }
+    }
+  },
+  // 预习反馈区：自动 AI 生成例句（异步，不阻塞答题；生成后缓存供下次使用）
+  async _autoGenStudyExample(word) {
+    var box = document.getElementById('stPvExamples');
+    if (!box) return;
+    box.innerHTML = '<div class="pv-examples-title">' + uiLabel('book', '例句') + '</div><div class="pv-example-empty">' + uiLabel('ai', 'AI 正在生成例句…') + '</div>';
+    try {
+      var res = await AI.generateExamples(word, function(){});
+      var items = null;
+      try { items = JSON.parse(res.content.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '')); }
+      catch (_) { var m = res.content.match(/\[[\s\S]*\]/); if (m) try { items = JSON.parse(m[0]); } catch (e) {} }
+      var fb = document.getElementById('stFeedback');
+      if (fb && fb.hasAttribute('hidden')) return; // 已进入下一题，放弃更新
+      if (items && Array.isArray(items) && items.length) {
+        var clean = items.filter(function(i){return i && i.en;}).slice(0, 3).map(function(i){return {en:String(i.en),zh:String(i.zh||'')};});
+        Store.get().examples[word.id] = clean;
+        Store.commit();
+        var html2 = '<div class="pv-examples-title">' + uiLabel('book', '例句') + '</div>';
+        clean.forEach(function(ex){ html2 += '<div class="pv-example"><div class="pv-example-en">' + escapeHtml(ex.en) + '</div>' + (ex.zh ? '<div class="pv-example-zh">' + escapeHtml(ex.zh) + '</div>' : '') + '</div>'; });
+        box.innerHTML = html2;
+      } else {
+        box.innerHTML = '<div class="pv-examples-title">' + uiLabel('book', '例句') + '</div><div class="pv-example-empty">生成失败，可点下方「AI 例句」重试</div>';
+      }
+    } catch (e) {
+      box.innerHTML = '<div class="pv-examples-title">' + uiLabel('book', '例句') + '</div><div class="pv-example-empty">生成失败：' + escapeHtml(e.message) + '</div>';
+    }
   },
   showStudyResult(data) {
     this._showStudyState("studyResult");
@@ -1578,7 +2052,7 @@ const UI = {
     $('#qProg').textContent = '准备中…';
     $('#qBar').style.width = '0%';
     $('#qPrompt').className = 'q-prompt';
-    $('#qPrompt').innerHTML = '<div class="ai-loading"><div class="spinner"></div><span>🤖 AI 正在生成高质量干扰项，请稍候…</span></div>';
+    $('#qPrompt').innerHTML = '<div class="ai-loading"><div class="spinner"></div>' + uiLabel('ai', 'AI 正在生成高质量干扰项，请稍候…') + '</div>';
     $('#qSub').textContent = '';
     $('#qOptions').innerHTML = '';
     $('#qFeedback').setAttribute('hidden', '');
@@ -1589,7 +2063,7 @@ const UI = {
   updateQuizLoading(full) {
     // 流式输出预览（可选）
     const el = $('#qPrompt .ai-loading span');
-    if (el && full) el.textContent = '🤖 AI 正在生成干扰项…' + (full.length > 50 ? '（已生成 ' + full.length + ' 字符）' : '');
+    if (el && full) el.textContent = 'AI 正在生成干扰项…' + (full.length > 50 ? '（已生成 ' + full.length + ' 字符）' : '');
   },
 
   renderQuizQuestion(q, idx, total) {
@@ -1615,7 +2089,7 @@ const UI = {
         </button>`;
       }).join('');
       subEl.innerHTML = (q.sub || '') + (q.sub ? ' · ' : '') +
-        `<span class="quiz-hint">📌 不定项选择，选出所有符合的释义</span>`;
+        `<span class="quiz-hint tz-icon-label">${uiGlyph('pin')}<span>不定项选择，选出所有符合的释义</span></span>`;
       $('#qSubmit').removeAttribute('hidden');
     } else {
       // 四选一
@@ -1638,7 +2112,9 @@ const UI = {
   showQuizFeedback(correct, q, userSelection) {
     const fb = $('#qFeedback');
     fb.className = 'quiz-feedback ' + (correct ? 'ok' : 'bad');
-    let html = correct ? `<div>✅ 答对了！</div>` : `<div>❌ 答错了</div>`;
+    let html = correct
+      ? `<div class="tz-icon-label">${uiGlyph('check')}<span>答对了！</span></div>`
+      : `<div class="tz-icon-label">${uiGlyph('close')}<span>答错了</span></div>`;
 
     if (q.mode === 'cn2en') {
       if (!correct) {
@@ -1658,8 +2134,8 @@ const UI = {
     }
     html += `<div class="ans" style="color:var(--ink-dim);margin-top:4px;">${escapeHtml(q.word.word)} — ${escapeHtml((q.word.meaning || []).join('；'))}</div>`;
     html += `<div class="feedback-actions">
-      <button class="btn btn--ghost btn--sm" id="fbExamples" data-wid="${q.word.id}">📖 AI 例句</button>
-      <button class="btn btn--ghost btn--sm" id="fbAiAnalyze" data-wid="${q.word.id}">🤖 AI 解析</button>
+      <button class="btn btn--ghost btn--sm" id="fbExamples" data-wid="${q.word.id}">${uiLabel('book', 'AI 例句')}</button>
+      <button class="btn btn--ghost btn--sm" id="fbAiAnalyze" data-wid="${q.word.id}">${uiLabel('ai', 'AI 解析')}</button>
     </div>`;
     fb.innerHTML = html;
     fb.removeAttribute('hidden');
@@ -1706,7 +2182,7 @@ const UI = {
       });
       html += `</div>`;
     } else {
-      html += `<div style="color:var(--c-emerald);margin:14px 0;">🎉 全部答对！</div>`;
+      html += `<div class="result-celebration">${uiLabel('sparkle', '全部答对！')}</div>`;
     }
     html += `<div class="actions" style="justify-content:center;margin-top:20px;">`;
     if (wrongList && wrongList.length) {
@@ -1757,8 +2233,8 @@ const UI = {
     const fb = $('#spFeedback');
     fb.className = 'spell-feedback ' + (correct ? 'ok' : 'bad');
     let html = correct
-      ? `<div>✅ 拼写正确！</div>`
-      : `<div>❌ 拼写错误</div>`;
+      ? `<div class="tz-icon-label">${uiGlyph('check')}<span>拼写正确！</span></div>`
+      : `<div class="tz-icon-label">${uiGlyph('close')}<span>拼写错误</span></div>`;
     // diff 高亮
     const diffHtml = this._diffHtml(user, right);
     html += `<div class="diff">${diffHtml}</div>`;
@@ -1767,8 +2243,8 @@ const UI = {
     }
     if (word) {
       html += `<div class="feedback-actions">
-        <button class="btn btn--ghost btn--sm" id="spExamples" data-wid="${word.id}">📖 AI 例句</button>
-        <button class="btn btn--ghost btn--sm" id="spAiAnalyze" data-wid="${word.id}">🤖 AI 解析</button>
+        <button class="btn btn--ghost btn--sm" id="spExamples" data-wid="${word.id}">${uiLabel('book', 'AI 例句')}</button>
+        <button class="btn btn--ghost btn--sm" id="spAiAnalyze" data-wid="${word.id}">${uiLabel('ai', 'AI 解析')}</button>
       </div>`;
     }
     fb.innerHTML = html;
@@ -1820,7 +2296,7 @@ const UI = {
       });
       html += `</div>`;
     } else {
-      html += `<div style="color:var(--c-emerald);margin:14px 0;">🎉 全部拼写正确！</div>`;
+      html += `<div class="result-celebration">${uiLabel('sparkle', '全部拼写正确！')}</div>`;
     }
     html += `<div class="actions" style="justify-content:center;margin-top:20px;">
       <button class="btn btn--ghost" id="spRestart">再来一轮</button>
@@ -1851,13 +2327,13 @@ const UI = {
 
   showAiError(elId, e) {
     const msg = escapeHtml(e.message || String(e));
-    this.setAiStatus(elId, 'error', '⚠️ ' + msg);
+    this.setAiStatus(elId, 'error', msg);
   },
 
   // 通用 AI 解析弹层（词库/答题反馈/错词本共用）
   showAiAnalyze(word) {
     if (!AI.isReady()) {
-      UI.toast('请先配置 AI（点右上角 🔑）', 'warn');
+      UI.toast('请先配置 AI（点右上角 AI 配置）', 'warn');
       App._loadAIConfigToForm();
       UI.openModal('aiConfigModal');
       return;
@@ -1865,10 +2341,10 @@ const UI = {
     const title = $('#aiAnTitle');
     const stream = $('#aiAnStream');
     const status = $('#aiAnStatus');
-    title.textContent = '🤖 ' + word.word + ' · AI 深度解析';
+    title.innerHTML = uiLabel('ai', word.word + ' · AI 深度解析');
     status.className = 'ai-status';
     stream.removeAttribute('hidden');
-    stream.innerHTML = '<div class="muted small">⏳ AI 正在解析「' + escapeHtml(word.word) + '」…</div>';
+    stream.innerHTML = '<div class="muted small">' + uiLabel('ai', 'AI 正在解析「' + word.word + '」…') + '</div>';
     UI.openModal('aiAnalyzeModal');
 
     let reasoningEl = null;
@@ -1877,7 +2353,7 @@ const UI = {
       if (!bodyEl) {
         stream.innerHTML = '';
         const det = document.createElement('details');
-        det.innerHTML = '<summary>🧠 AI 思考过程（点击展开）</summary>';
+        det.innerHTML = '<summary>' + uiLabel('ai', 'AI 思考过程（点击展开）') + '</summary>';
         reasoningEl = document.createElement('div');
         reasoningEl.style.cssText = 'margin-top:8px;font-size:12px;color:var(--ink-faint);white-space:pre-wrap;';
         det.appendChild(reasoningEl);
@@ -1892,7 +2368,7 @@ const UI = {
       if (!reasoningEl) {
         stream.innerHTML = '';
         const det = document.createElement('details');
-        det.innerHTML = '<summary>🧠 AI 思考过程（点击展开）</summary>';
+        det.innerHTML = '<summary>' + uiLabel('ai', 'AI 思考过程（点击展开）') + '</summary>';
         reasoningEl = document.createElement('div');
         reasoningEl.style.cssText = 'margin-top:8px;font-size:12px;color:var(--ink-faint);white-space:pre-wrap;';
         det.appendChild(reasoningEl);
@@ -1904,17 +2380,17 @@ const UI = {
       if (reasoningEl) reasoningEl.textContent = r;
     }).then(res => {
       if (bodyEl) bodyEl.innerHTML = renderMd(res.content);
-      UI.setAiStatus('aiAnStatus', 'ok', '✅ 解析完成');
+      UI.setAiStatus('aiAnStatus', 'ok', '解析完成');
     }).catch(e => {
       UI.showAiError('aiAnStatus', e);
-      stream.innerHTML = '<div class="muted small">⚠️ 解析失败：' + escapeHtml(e.message) + '</div>';
+      stream.innerHTML = '<div class="muted small">' + uiLabel('warning', '解析失败：' + e.message) + '</div>';
     });
   },
 
   // 通用例句弹层（词库/答题反馈共用）
   async showExamples(word) {
     if (!AI.isReady()) {
-      UI.toast('请先配置 AI（点右上角 🔑）', 'warn');
+      UI.toast('请先配置 AI（点右上角 AI 配置）', 'warn');
       App._loadAIConfigToForm();
       UI.openModal('aiConfigModal');
       return;
@@ -1922,7 +2398,7 @@ const UI = {
     const title = $('#exTitle');
     const content = $('#exContent');
     const status = $('#exStatus');
-    title.textContent = '📖 ' + word.word + ' · 例句';
+    title.innerHTML = uiLabel('book', word.word + ' · 例句');
     status.className = 'ai-status';
 
     // 检查已有例句
@@ -1942,11 +2418,11 @@ const UI = {
     const content = $('#exContent');
     const status = $('#exStatus');
     status.className = 'ai-status';
-    content.innerHTML = '<div class="ai-loading"><div class="spinner"></div>🤖 AI 正在为例句「' + escapeHtml(word.word) + '」生成…</div>';
+    content.innerHTML = '<div class="ai-loading"><div class="spinner"></div>' + uiLabel('ai', 'AI 正在为例句「' + word.word + '」生成…') + '</div>';
     $('#exRegen').setAttribute('disabled', '');
     try {
       const res = await AI.generateExamples(word, (delta, full) => {
-        content.innerHTML = '<div class="ai-loading"><div class="spinner"></div>🤖 生成中…</div><pre style="white-space:pre-wrap;font-size:12px;color:var(--ink-faint);margin-top:8px;">' + escapeHtml(full) + '</pre>';
+        content.innerHTML = '<div class="ai-loading"><div class="spinner"></div>' + uiLabel('ai', '生成中…') + '</div><pre style="white-space:pre-wrap;font-size:12px;color:var(--ink-faint);margin-top:8px;">' + escapeHtml(full) + '</pre>';
       });
       let items = null;
       try { items = JSON.parse(res.content.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '')); }
@@ -1956,14 +2432,14 @@ const UI = {
         Store.get().examples[word.id] = clean;
         Store.commit();
         content.innerHTML = this._renderExamplesHtml(clean, word.word);
-        UI.setAiStatus('exStatus', 'ok', '✅ 已生成 ' + clean.length + ' 个例句');
+        UI.setAiStatus('exStatus', 'ok', '已生成 ' + clean.length + ' 个例句');
       } else {
-        content.innerHTML = '<div class="muted small">⚠️ AI 返回格式异常，原始内容：</div><pre style="white-space:pre-wrap;font-size:12px;color:var(--ink-faint);margin-top:8px;">' + escapeHtml(res.content) + '</pre>';
-        UI.setAiStatus('exStatus', 'error', '⚠️ 例句格式异常，可点「重新生成」重试');
+        content.innerHTML = '<div class="muted small">' + uiLabel('warning', 'AI 返回格式异常，原始内容：') + '</div><pre style="white-space:pre-wrap;font-size:12px;color:var(--ink-faint);margin-top:8px;">' + escapeHtml(res.content) + '</pre>';
+        UI.setAiStatus('exStatus', 'error', '例句格式异常，可点「重新生成」重试');
       }
     } catch (e) {
-      content.innerHTML = '<div class="muted small">⚠️ 生成失败：' + escapeHtml(e.message) + '</div>';
-      UI.setAiStatus('exStatus', 'error', '⚠️ ' + escapeHtml(e.message));
+      content.innerHTML = '<div class="muted small">' + uiLabel('warning', '生成失败：' + e.message) + '</div>';
+      UI.setAiStatus('exStatus', 'error', escapeHtml(e.message));
     }
     $('#exRegen').removeAttribute('disabled');
   },
@@ -1995,7 +2471,7 @@ const UI = {
         <div class="qi-word">单词：${escapeHtml(q.word || '')}</div>
         <div class="qi-stem">${escapeHtml(q.stem || '')}</div>
         <div class="qi-opts">${opts}</div>
-        <div class="qi-explain" hidden>💡 ${escapeHtml(q.explain || '')}</div>
+        <div class="qi-explain tz-icon-label" hidden>${uiGlyph('bulb')}<span>${escapeHtml(q.explain || '')}</span></div>
       </div>`;
     }).join('');
     // 绑定点击
@@ -2026,8 +2502,10 @@ const UI = {
    App 子模块（事件绑定 + 初始化）
    ============================================================ */
 const App = {
-  init() {
+  async init() {
     TTS.init();
+    // 先异步加载 IndexedDB 中的词库与学习记录（不阻塞主线程）
+    await DB.loadAll();
     this._loadAIConfigToForm();
     // 在天择OS内运行时隐藏应用内AI配置按钮（复用OS配置）
     if (AI._inOS()) {
@@ -2044,11 +2522,9 @@ const App = {
     this.bindAI();
     this.bindModal();
     this.bindSample();
-    // 全局键盘：Enter 提交
+    // 弹层键盘：Escape 关闭，Tab 保持在当前弹层内。
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        $$('.modal').forEach(m => m.setAttribute('hidden', ''));
-      }
+      UI.handleModalKeydown(e);
     });
   },
 
@@ -2068,11 +2544,6 @@ const App = {
   },
 
   bindTopbar() {
-    const topbar = $('#topbar');
-    window.addEventListener('scroll', () => {
-      if (window.scrollY > 8) topbar.classList.add('scrolled');
-      else topbar.classList.remove('scrolled');
-    });
     $('#btnAiConfig').addEventListener('click', () => {
       this._loadAIConfigToForm();
       UI.openModal('aiConfigModal');
@@ -2080,44 +2551,56 @@ const App = {
   },
 
   bindVocab() {
+    const setImportBusy = (busy, text) => {
+      const status = $('#importStatus');
+      const statusText = $('#importStatusText');
+      const importBtn = $('#btnImport');
+      const pasteBtn = $('#pasteImport');
+      if (status) busy ? status.removeAttribute('hidden') : status.setAttribute('hidden', '');
+      if (statusText && text) statusText.textContent = text;
+      if (importBtn) busy ? importBtn.setAttribute('disabled', '') : importBtn.removeAttribute('disabled');
+      if (pasteBtn) busy ? pasteBtn.setAttribute('disabled', '') : pasteBtn.removeAttribute('disabled');
+    };
+    const importText = async (text, closePaste) => {
+      setImportBusy(true, '正在解析 JSON…');
+      try {
+        const parsed = await parseJsonAsync(text);
+        const r = await Vocab.import(parsed, (done, total) => {
+          setImportBusy(true, `正在导入 ${done.toLocaleString()} / ${total.toLocaleString()}…`);
+        });
+        UI.toast(`成功导入 ${r.count} 个单词${r.skipped ? `，跳过 ${r.skipped} 个` : ''}`, 'success');
+        UI.renderVocabList();
+        UI.renderTopStats();
+        if (closePaste) UI.closeModal('pasteModal');
+      } catch (err) {
+        UI.toast('导入失败：' + err.message, 'error');
+      } finally {
+        setImportBusy(false);
+      }
+    };
+
     $('#btnImport').addEventListener('click', () => $('#fileVocab').click());
-    $('#fileVocab').addEventListener('change', (e) => {
+    $('#fileVocab').addEventListener('change', async (e) => {
       const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const parsed = JSON.parse(reader.result);
-          const r = Vocab.import(parsed);
-          UI.toast(`成功导入 ${r.count} 个单词${r.skipped ? `，跳过 ${r.skipped} 个` : ''}`, 'success');
-          UI.renderVocabList();
-          UI.renderTopStats();
-        } catch (err) {
-          UI.toast('JSON 解析失败：' + err.message, 'error');
-        }
-      };
-      reader.onerror = () => UI.toast('文件读取失败', 'error');
-      reader.readAsText(file);
       e.target.value = ''; // 允许重复导入同一文件
+      if (!file) return;
+      setImportBusy(true, '正在读取文件…');
+      try {
+        await importText(await file.text(), false);
+      } catch (err) {
+        UI.toast('文件读取失败：' + err.message, 'error');
+        setImportBusy(false);
+      }
     });
 
     $('#btnPaste').addEventListener('click', () => {
       $('#pasteArea').value = '';
       UI.openModal('pasteModal');
     });
-    $('#pasteImport').addEventListener('click', () => {
+    $('#pasteImport').addEventListener('click', async () => {
       const text = $('#pasteArea').value.trim();
       if (!text) { UI.toast('请粘贴 JSON 内容', 'warn'); return; }
-      try {
-        const parsed = JSON.parse(text);
-        const r = Vocab.import(parsed);
-        UI.toast(`成功导入 ${r.count} 个单词${r.skipped ? `，跳过 ${r.skipped} 个` : ''}`, 'success');
-        UI.renderVocabList();
-        UI.renderTopStats();
-        UI.closeModal('pasteModal');
-      } catch (err) {
-        UI.toast('JSON 解析失败：' + err.message, 'error');
-      }
+      await importText(text, true);
     });
     $('#pasteCancel').addEventListener('click', () => UI.closeModal('pasteModal'));
     $('#pasteClose').addEventListener('click', () => UI.closeModal('pasteModal'));
@@ -2148,12 +2631,15 @@ const App = {
         UI.toast('已清空词库与记录', 'success');
       } else {
         clearConfirmTimer = setTimeout(() => { clearConfirmTimer = null; }, 3000);
-        UI.toast('⚠️ 再次点击确认清空（3秒内有效）', 'warn');
+        UI.toast('再次点击确认清空（3秒内有效）', 'warn');
       }
     });
 
+    let searchTimer = null;
     $('#vocabSearch').addEventListener('input', (e) => {
-      UI.renderVocabList(e.target.value);
+      const value = e.target.value;
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => UI.renderVocabList(value), 120);
     });
 
     // 点击单词项跳到 AI 解析
@@ -2328,15 +2814,19 @@ const App = {
       chip.addEventListener('click', () => {
         $('#cfgUrl').value = chip.dataset.url;
         $('#cfgModel').value = chip.dataset.model;
+        const keyInput = $('#cfgKey');
+        if (chip.dataset.bundledKey === 'glm') keyInput.value = BUNDLED_GLM_API_KEY;
+        else if (keyInput.value === BUNDLED_GLM_API_KEY) keyInput.value = '';
       });
     });
 
     $('#cfgSave').addEventListener('click', () => {
+      const parsedTemperature = Number.parseFloat($('#cfgTemp').value);
       const c = {
         url: $('#cfgUrl').value.trim(),
         key: $('#cfgKey').value.trim(),
         model: $('#cfgModel').value.trim(),
-        temperature: parseFloat($('#cfgTemp').value) || 0.6
+        temperature: Number.isFinite(parsedTemperature) ? parsedTemperature : 0.6
       };
       Store.setAIConfig(c);
       UI.toast('AI 配置已保存', 'success');
@@ -2356,20 +2846,20 @@ const App = {
       }
       const btn = $('#cfgTest');
       btn.setAttribute('disabled', '');
-      btn.textContent = '🧪 测试中…';
+      btn.innerHTML = uiLabel('network', '测试中…');
       // 临时保存测试配置
       const old = Store.aiConfig();
       Store.setAIConfig(c);
       try {
         await AI.test();
-        UI.toast('✅ 连接成功', 'success');
+        UI.toast('连接成功', 'success');
       } catch (e) {
-        UI.toast('❌ ' + e.message, 'error');
+        UI.toast(e.message, 'error');
         // 恢复旧配置
         Store.setAIConfig(old);
       } finally {
         btn.removeAttribute('disabled');
-        btn.textContent = '🧪 测试连接';
+        btn.innerHTML = uiLabel('network', '测试连接');
       }
     });
   },
@@ -2410,6 +2900,10 @@ const App = {
   }
 };
 
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') { Store.flush(); DB.flushRecords(); }
+});
+window.addEventListener('pagehide', () => { Store.flush(); DB.flushRecords(); });
 document.addEventListener('DOMContentLoaded', () => App.init());
 
 })();

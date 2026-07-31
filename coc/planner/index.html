@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>升级规划器 · COC 专区 · 天择网</title>
   <meta name="description" content="基于村庄存档的升级规划器，单级拆分+前置依赖，稳本/速本模式，甘特图缩放滚动，待规划区拖拽安排。" />
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css" />
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css" />
+  <script>(function(){try{var p=localStorage.getItem("tz_site_palette");if(p==="mid"||p==="warm")document.documentElement.setAttribute("data-palette",p);}catch(e){}})();</script>
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260731-v4.13" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css?v=20260731-v4.13" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-workspace.css?v=20260731-v4.13" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
 </head>
 <body class="coc-tool coc-planner-tool">
@@ -18,37 +20,44 @@
         <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/></svg></span>
         <span class="logo-text">天择网</span>
       </a>
-      <button class="nav-toggle" aria-label="菜单">☰</button>
+      <button class="nav-toggle" type="button" aria-label="菜单" data-ui-icon="menu"></button>
       <nav class="nav"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a><a href="https://wjtianze.github.io/contact/index.html"><span>联系开发者</span></a></nav>
     </div>
   </header>
 
-  <main>
-    <section class="page-head wrap">
+  <main class="coc-console">
+    <div class="coc-tool-layout wrap">
+    <section class="page-head coc-tool-brief" aria-labelledby="cocPlannerTitle">
       <div class="crumb reveal in">
         <a href="https://wjtianze.github.io/index.html">主页</a> <span>›</span>
         <a href="https://wjtianze.github.io/coc/index.html">COC 专区</a> <span>›</span>
         <span>升级规划器</span>
       </div>
       <div class="coc-kicker reveal in d1">Upgrade Operations · Timeline Engine</div>
-      <h1 class="reveal in d1">升级 <span class="grad">规划器</span></h1>
+      <h1 class="reveal in d1" id="cocPlannerTitle">升级 <span class="grad">规划器</span></h1>
       <p class="reveal in d2">基于村庄存档数据，按单级拆分规划升级。每级一个滑块，自动处理前置依赖（同单位串行、实验室/英雄殿堂/战宠小屋等级要求）。支持稳本/速本模式、甘特图缩放滚动、待规划区拖拽安排。</p>
-    </section>
-
-    <section class="section wrap" style="padding-top:18px;">
-      <div class="card reveal" style="padding:22px 28px;" id="vpSource"><div id="vpMetricsWrap"></div></div>
-    </section>
-
-    <section class="section wrap" id="vpNoData" style="display:none;">
-      <div class="card reveal vp-nodata">
-        <div style="font-size:40px; margin-bottom:10px;">🗂️</div>
-        <h3>尚未载入村庄数据</h3>
-        <p>请先前往「COC 专区首页」粘贴并解析你的村庄 JSON，解析后数据会自动带到本页。</p>
-        <a class="btn" href="https://wjtianze.github.io/coc/index.html" style="margin-top:14px; display:inline-block;"><span>前往 COC 专区首页 →</span></a>
+      <div class="coc-brief-notes reveal in d2" aria-label="规划器特性">
+        <span data-ui-icon="tree">自动处理逐级与建筑前置</span>
+        <span data-ui-icon="settings">稳本、速本两套排程逻辑</span>
+        <span data-ui-icon="cursor">支持拖拽与键盘移除任务</span>
       </div>
     </section>
 
-    <section class="section wrap" id="vpBody" style="display:none;">
+    <div class="coc-tool-content">
+    <section class="section" style="padding-top:18px;">
+      <div class="card reveal" style="padding:22px 28px;" id="vpSource"><div class="v-metrics" id="vpMetricsWrap"></div></div>
+    </section>
+
+    <section class="section" id="vpNoData" style="display:none;">
+      <div class="card reveal vp-nodata">
+        <div class="coc-empty-icon" data-ui-icon="folder" aria-hidden="true"></div>
+        <h3>尚未载入村庄数据</h3>
+        <p>请先前往「COC 专区首页」粘贴并解析你的村庄 JSON，解析后数据会自动带到本页。</p>
+        <a class="btn" href="https://wjtianze.github.io/coc/index.html" style="margin-top:14px; display:inline-block;"><span data-ui-icon="right">前往 COC 专区首页</span></a>
+      </div>
+    </section>
+
+    <section class="section" id="vpBody" style="display:none;">
       <div class="vp-opt-bar">
         <div class="vp-opt-group">
           <span class="vog-title">可选加成</span>
@@ -66,52 +75,54 @@
       <div class="vp-mode-desc" id="vpModeDesc"></div>
 
       <div class="vp-tabs" role="tablist" aria-label="村庄世界" style="margin-top:18px;">
-        <button class="vp-tab active" data-world="home" role="tab" id="vpTabHome" aria-selected="true" aria-controls="vpHome">🏰 家乡</button>
-        <button class="vp-tab" data-world="bb" role="tab" id="vpTabBB" aria-selected="false" aria-controls="vpBB">🌙 夜世界</button>
+        <button class="vp-tab active" data-world="home" role="tab" id="vpTabHome" aria-selected="true" aria-controls="vpHome" data-ui-icon="home">家乡</button>
+        <button class="vp-tab" data-world="bb" role="tab" id="vpTabBB" aria-selected="false" aria-controls="vpBB" data-ui-icon="moon">夜世界</button>
       </div>
 
       <div class="vp-pane active" id="vpHome" role="tabpanel" aria-labelledby="vpTabHome">
         <div class="vp-toolbar">
-          <button class="btn btn--sm" id="vpAutoHome"><span>一键全排程</span></button>
+          <button class="btn btn--sm btn--primary" id="vpAutoHome"><span>一键全排程</span></button>
           <button class="btn btn--sm" id="vpClearHome"><span>清空规划</span></button>
           <span class="vp-info" id="vpInfoHome" role="status" aria-live="polite"></span>
           <div class="vp-zoom">
-            <button class="vp-zoom-btn" id="vpZoomOutHome" title="缩小">−</button>
+            <button class="vp-zoom-btn" id="vpZoomOutHome" type="button" title="缩小" aria-label="缩小家乡时间轴" data-ui-icon="left"></button>
             <span class="vp-zoom-label" id="vpZoomLabelHome">100%</span>
-            <button class="vp-zoom-btn" id="vpZoomInHome" title="放大">+</button>
+            <button class="vp-zoom-btn" id="vpZoomInHome" type="button" title="放大" aria-label="放大家乡时间轴" data-ui-icon="right"></button>
             <button class="vp-zoom-btn" id="vpZoomResetHome" title="重置" style="width:auto;padding:0 10px;font-size:12px;">重置</button>
           </div>
         </div>
         <div class="v-gantt-wrap" id="vpGanttWrapHome" tabindex="0" aria-label="家乡升级甘特图，可横向滚动"><svg class="v-gantt" id="vpGanttHome" viewBox="0 0 1000 200" width="100%"></svg></div>
         <div class="v-planner-stats" id="vpStatsHome"></div>
         <div class="vp-pending" id="vpPendingHome">
-          <div class="vp-pending-head"><span>📥 待规划任务（点击或拖到上方甘特图即可安排）</span><b id="vpPendingCountHome"></b></div>
+          <div class="vp-pending-head"><span data-ui-icon="download">待规划任务（点击或拖到上方甘特图即可安排）</span><b id="vpPendingCountHome"></b></div>
           <div class="vp-pending-grid" id="vpPendingGridHome" aria-label="家乡待规划任务"></div>
         </div>
       </div>
 
       <div class="vp-pane" id="vpBB" role="tabpanel" aria-labelledby="vpTabBB" hidden>
         <div class="vp-toolbar">
-          <button class="btn btn--sm" id="vpAutoBB"><span>一键全排程</span></button>
+          <button class="btn btn--sm btn--primary" id="vpAutoBB"><span>一键全排程</span></button>
           <button class="btn btn--sm" id="vpClearBB"><span>清空规划</span></button>
           <span class="vp-info" id="vpInfoBB" role="status" aria-live="polite"></span>
           <div class="vp-zoom">
-            <button class="vp-zoom-btn" id="vpZoomOutBB" title="缩小">−</button>
+            <button class="vp-zoom-btn" id="vpZoomOutBB" type="button" title="缩小" aria-label="缩小夜世界时间轴" data-ui-icon="left"></button>
             <span class="vp-zoom-label" id="vpZoomLabelBB">100%</span>
-            <button class="vp-zoom-btn" id="vpZoomInBB" title="放大">+</button>
+            <button class="vp-zoom-btn" id="vpZoomInBB" type="button" title="放大" aria-label="放大夜世界时间轴" data-ui-icon="right"></button>
             <button class="vp-zoom-btn" id="vpZoomResetBB" title="重置" style="width:auto;padding:0 10px;font-size:12px;">重置</button>
           </div>
         </div>
         <div class="v-gantt-wrap" id="vpGanttWrapBB" tabindex="0" aria-label="夜世界升级甘特图，可横向滚动"><svg class="v-gantt" id="vpGanttBB" viewBox="0 0 1000 200" width="100%"></svg></div>
         <div class="v-planner-stats" id="vpStatsBB"></div>
         <div class="vp-pending" id="vpPendingBB">
-          <div class="vp-pending-head"><span>📥 待规划任务（点击或拖到上方甘特图即可安排）</span><b id="vpPendingCountBB"></b></div>
+          <div class="vp-pending-head"><span data-ui-icon="download">待规划任务（点击或拖到上方甘特图即可安排）</span><b id="vpPendingCountBB"></b></div>
           <div class="vp-pending-grid" id="vpPendingGridBB" aria-label="夜世界待规划任务"></div>
         </div>
       </div>
 
       <p class="v-planner-hint">每级一个滑块，前置依赖自动处理：同单位必须逐级升级；兵种/法术/攻城机器需实验室达到对应等级，战宠需战宠小屋等级，英雄需英雄殿堂等级。下方「待规划区」显示尚未安排的单级任务，可点击或拖到甘特图自动排程（含前置）；甘特图里的滑块可拖回待规划区，键盘用户也可聚焦滑块后按 Delete / Backspace 移除（含其后置等级）。缩放按钮可放大时间轴横向滚动查看。</p>
     </section>
+    </div>
+    </div>
   </main>
 
   <footer class="footer">
@@ -121,7 +132,7 @@
     </div>
   </footer>
 
-  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260725a"></script>
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260731-v4.13"></script>
   <script defer src="https://wjtianze.github.io/coc/planner/app.js"></script>
 </body>
 </html>

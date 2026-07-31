@@ -5,22 +5,56 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>天择OS · 天择网操作系统</title>
   <meta name="description" content="天择OS —— 一个在浏览器中运行的全屏模拟操作系统，内嵌天择网全部功能与 AI 代码生成引擎。" />
-  <link rel="stylesheet" href="https://wjtianze.github.io/os/assets/css/os.css?v=20260724a" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/os/assets/css/os.css?v=4.0.5-ui414" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cpath d='M10 14h12v8a2 2 0 0 1-2 2H12a2 2 0 0 1-2-2v-8zm2-4a4 4 0 0 1 8 0v4h-8v-4z' fill='white'/%3E%3C/svg%3E" />
 </head>
 <body class="tzos">
+  <script>
+    try {
+      var __tzBootState = JSON.parse(localStorage.getItem("tzos_state_v1") || "{}");
+      if (__tzBootState.theme === "light") document.body.classList.add("light");
+      if (__tzBootState.palette === "mid" || __tzBootState.palette === "warm") {
+        document.body.setAttribute("data-palette", __tzBootState.palette);
+      }
+    } catch (_) {}
+  </script>
   <!-- 开机动画 -->
   <div id="bootScreen" class="boot-screen">
-    <div class="boot-logo">
-      <svg viewBox="0 0 32 32" width="64" height="64"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--c-purple)"/><stop offset=".5" stop-color="var(--c-blue)"/><stop offset="1" stop-color="var(--c-green)"/></linearGradient></defs><rect width="32" height="32" rx="8" fill="url(#bg)"/><path d="M10 14h12v8a2 2 0 0 1-2 2H12a2 2 0 0 1-2-2v-8zm2-4a4 4 0 0 1 8 0v4h-8v-4z" fill="white"/></svg>
-    </div>
-    <div class="boot-name">天择OS</div>
+    <div class="boot-logo"><span class="tz-icon tz-icon-hero" style="--tz-ix:7;--tz-iy:7" aria-hidden="true"></span></div>
+    <div class="boot-name">天择OS <span>4.0</span></div>
+    <div class="boot-edition">EVOLUTION SHELL</div>
     <div class="boot-spinner"><span></span><span></span><span></span></div>
     <div class="boot-tip" id="bootTip">正在唤醒系统…</div>
   </div>
 
   <!-- 桌面 -->
   <div id="desktop" class="desktop" hidden>
+    <!-- 4.0 顶部态势线：只承载系统状态与入口，层级保持低于普通窗口 -->
+    <header id="osTopline" class="os-topline" aria-label="天择OS 4.0 系统状态">
+      <button class="os-brand-chip" data-shell-app="about" title="关于天择OS 4.0">
+        <span class="tz-icon" style="--tz-ix:7;--tz-iy:7" aria-hidden="true"></span>
+        <span><b>天择OS</b><small>4.0 · Evolution Shell</small></span>
+      </button>
+      <button class="os-command-chip" id="shellSearch" title="搜索应用">
+        <span class="tz-icon" style="--tz-ix:0;--tz-iy:4" aria-hidden="true"></span>
+        <span>搜索应用</span><kbd>Ctrl + Space</kbd>
+      </button>
+      <div class="os-top-status">
+        <span class="os-live-dot" aria-hidden="true"></span>
+        <span id="osTopStatus">系统就绪</span>
+        <span id="osTopClock">--:--</span>
+      </div>
+    </header>
+
+    <!-- 4.0 系统轨道：保留桌面主体与窗口系统，仅新增常用功能入口 -->
+    <aside id="systemRail" class="system-rail" aria-label="系统轨道">
+      <button data-shell-app="ai-chat" title="AI 对话"><span class="tz-icon" style="--tz-ix:5;--tz-iy:1"></span><span>AI</span></button>
+      <button data-shell-app="app-store" title="软件商城"><span class="tz-icon" style="--tz-ix:6;--tz-iy:1"></span><span>商城</span></button>
+      <button data-shell-app="tz-tree" title="天择导航"><span class="tz-icon" style="--tz-ix:5;--tz-iy:2"></span><span>导航</span></button>
+      <button data-shell-app="growth" title="配色与外观"><span class="tz-icon" style="--tz-ix:2;--tz-iy:1"></span><span>外观</span></button>
+      <button data-shell-app="settings" title="系统设置"><span class="tz-icon" style="--tz-ix:0;--tz-iy:2"></span><span>设置</span></button>
+    </aside>
+
     <!-- 桌面图标层 -->
     <div id="desktopIcons" class="desktop-icons"></div>
 
@@ -34,51 +68,51 @@
     <div id="ctxMenu" class="ctx-menu" hidden></div>
 
     <!-- 开始菜单（Windows 风格） -->
-    <div id="startMenu" class="start-menu" hidden>
+    <div id="startMenu" class="start-menu" role="dialog" aria-modal="false" aria-label="开始菜单" hidden>
       <div class="start-search">
         <input id="startSearch" type="text" placeholder="搜索应用…" />
       </div>
       <div class="start-apps" id="startApps"></div>
       <div class="start-footer">
-        <button class="start-close-btn" id="btnStartClose" title="关闭开始菜单">✕ 关闭</button>
-        <button class="start-power" id="btnPower" title="关机/刷新">⏻</button>
-        <button class="start-settings" id="btnSettings" title="系统设置">⚙</button>
+        <button class="start-close-btn" id="btnStartClose" title="关闭开始菜单"><span class="tz-icon" style="--tz-ix:1;--tz-iy:4"></span><span>关闭</span></button>
+        <button class="start-power" id="btnPower" title="关机/刷新" aria-label="打开电源菜单"><span class="tz-icon" style="--tz-ix:2;--tz-iy:4"></span></button>
+        <button class="start-settings" id="btnSettings" title="系统设置" aria-label="打开系统设置"><span class="tz-icon" style="--tz-ix:0;--tz-iy:2"></span></button>
       </div>
     </div>
 
     <!-- 左下角悬浮窗（可拖拽 / 可关闭） -->
     <div id="floatingWidget" class="floating-widget">
       <div class="fw-header" id="fwHeader">
-        <span class="fw-title">⚡ 快捷面板</span>
-        <button class="fw-close" id="fwClose" title="关闭">×</button>
+        <span class="fw-title"><span class="tz-icon" style="--tz-ix:3;--tz-iy:7"></span>快捷轨道</span>
+        <button class="fw-close" id="fwClose" title="关闭" aria-label="关闭快捷轨道"><span class="tz-icon" style="--tz-ix:1;--tz-iy:4"></span></button>
       </div>
       <div class="fw-body">
         <div class="fw-clock" id="fwClock">--:--</div>
         <div class="fw-actions">
-          <button class="fw-btn" data-app="ai-chat" title="AI 对话">💬</button>
-          <button class="fw-btn" data-app="app-store" title="软件商城">🛒</button>
-          <button class="fw-btn" data-app="settings" title="系统设置">⚙️</button>
+          <button class="fw-btn" data-app="ai-chat" title="AI 对话" aria-label="打开 AI 对话"><span class="tz-icon" style="--tz-ix:5;--tz-iy:1"></span></button>
+          <button class="fw-btn" data-app="app-store" title="软件商城" aria-label="打开软件商城"><span class="tz-icon" style="--tz-ix:6;--tz-iy:1"></span></button>
+          <button class="fw-btn" data-app="settings" title="系统设置" aria-label="打开系统设置"><span class="tz-icon" style="--tz-ix:0;--tz-iy:2"></span></button>
         </div>
       </div>
     </div>
-    <button id="fwReopen" class="fw-reopen hidden" title="显示快捷面板">⚡</button>
+    <button id="fwReopen" class="fw-reopen hidden" title="显示快捷面板" aria-label="显示快捷轨道"><span class="tz-icon" style="--tz-ix:3;--tz-iy:7"></span></button>
 
     <!-- 任务栏（Windows 风格 / 通用底栏） -->
     <div id="taskbar" class="taskbar">
-      <button class="tb-start" id="btnStart" title="开始">
-        <svg viewBox="0 0 24 24" width="20" height="20"><rect x="3" y="3" width="8" height="8" rx="2" fill="url(#tg1)"/><rect x="13" y="3" width="8" height="8" rx="2" fill="url(#tg2)"/><rect x="3" y="13" width="8" height="8" rx="2" fill="url(#tg3)"/><rect x="13" y="13" width="8" height="8" rx="2" fill="url(#tg4)"/><defs><linearGradient id="tg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--c-purple)"/><stop offset="1" stop-color="var(--c-blue)"/></linearGradient><linearGradient id="tg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--c-blue)"/><stop offset="1" stop-color="var(--c-green)"/></linearGradient><linearGradient id="tg3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--c-green)"/><stop offset="1" stop-color="var(--c-purple)"/></linearGradient><linearGradient id="tg4" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--c-violet)"/><stop offset="1" stop-color="var(--c-cyan)"/></linearGradient></defs></svg>
+      <button class="tb-start" id="btnStart" title="开始" aria-label="打开开始菜单" aria-expanded="false" aria-controls="startMenu">
+        <span class="tz-icon" style="--tz-ix:3;--tz-iy:3"></span>
       </button>
       <div class="tb-running" id="tbRunning"></div>
       <div class="tb-tray">
-        <button class="tb-tray-btn" id="btnTheme" title="切换浅色/深色主题">🌓</button>
-        <button class="tb-tray-btn" id="btnStyle" title="切换桌面风格">🖥</button>
-        <button class="tb-tray-btn" id="btnAiConfig" title="AI 配置">🔑</button>
-        <span class="tb-status" id="tbNet" title="联网状态">📶</span>
-        <button class="tb-status tb-vol" id="tbVol" title="音量 / 静音切换">🔊</button>
-        <span class="tb-status" id="tbBattery" title="电量">🔋</span>
-        <span class="tb-clock" id="tbClock"></span>
+        <button class="tb-tray-btn" id="btnTheme" title="切换浅色/深色主题" aria-label="切换浅色或深色主题"><span class="tz-icon" style="--tz-ix:6;--tz-iy:4"></span></button>
+        <button class="tb-tray-btn" id="btnStyle" title="切换桌面风格" aria-label="切换桌面风格"><span class="tz-icon" style="--tz-ix:0;--tz-iy:1"></span></button>
+        <button class="tb-tray-btn" id="btnAiConfig" title="AI 配置" aria-label="打开 AI 配置"><span class="tz-icon" style="--tz-ix:4;--tz-iy:1"></span></button>
+        <span class="tb-status" id="tbNet" title="联网状态"><span class="tz-icon" style="--tz-ix:3;--tz-iy:4"></span></span>
+        <button class="tb-status tb-vol" id="tbVol" title="音量 / 静音切换" aria-label="切换静音"><span class="tz-icon" style="--tz-ix:4;--tz-iy:4"></span></button>
+        <span class="tb-status" id="tbBattery" title="电量"><span class="tz-icon" style="--tz-ix:5;--tz-iy:4"></span></span>
+        <button type="button" class="tb-clock" id="tbClock" aria-label="打开通知中心" aria-expanded="false" aria-controls="notifCenter"></button>
       </div>
-      <button class="tb-show-desktop" id="btnShowDesktop" title="显示桌面（最小化所有窗口，再点复原）"></button>
+      <button class="tb-show-desktop" id="btnShowDesktop" title="显示桌面（最小化所有窗口，再点复原）" aria-label="显示桌面"></button>
     </div>
 
     <!-- 移动端底栏 Home 条 + Dock -->
@@ -86,9 +120,9 @@
     <div id="homeBar" class="home-bar" hidden></div>
 
     <!-- 通知中心 -->
-    <div id="notifCenter" class="notif-center" hidden></div>
+    <div id="notifCenter" class="notif-center" role="region" aria-label="通知中心" hidden></div>
   </div>
 
-  <script defer src="https://wjtianze.github.io/os/assets/js/os.js?v=20260724a"></script>
+  <script defer src="https://wjtianze.github.io/os/assets/js/os.js?v=4.0.5-ui414"></script>
 </body>
 </html>

@@ -9,12 +9,12 @@
   };
   var HERO_ORDER = ["蛮王","女王","永王","王子","闰土","龙王"];
   var BUILD_CATS = [
-    {key:"防御建筑", emoji:"🛡️"},
-    {key:"资源建筑", emoji:"💰"},
-    {key:"科技建筑", emoji:"🔬"},
-    {key:"守卫", emoji:"👤"},
-    {key:"陷阱", emoji:"🪤"},
-    {key:"其它建筑", emoji:"🏠"}
+    {key:"防御建筑", icon:"shield"},
+    {key:"资源建筑", icon:"star"},
+    {key:"科技建筑", icon:"info"},
+    {key:"守卫", icon:"user"},
+    {key:"陷阱", icon:"warning"},
+    {key:"其它建筑", icon:"home"}
   ];
   /* 法术 globalID */
   var LIGHT_GID = "26000000", QUAKE_GID = "26000010";
@@ -44,6 +44,7 @@
   function intv(v){ v=parseInt(v,10); return isNaN(v)?0:v; }
   function fmt(n){ n=Math.round(n); return n.toLocaleString("zh-CN"); }
   function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];}); }
+  function uiGlyph(key){ return '<span data-ui-icon="'+key+'" aria-hidden="true"></span>'; }
 
   function thOf(r){ if(!r) return 99; var v=r.requiredTownHallLevel!=null?r.requiredTownHallLevel:(r.RequiredTownHallLevel!=null?r.RequiredTownHallLevel:(r.TownHallLevel!=null?r.TownHallLevel:99)); return intv(v); }
   function lvlData(unit, lvl){ if(!unit||!unit.levels)return null; for(var i=0;i<unit.levels.length;i++){ if(intv(unit.levels[i].level)===lvl)return unit.levels[i]; } return null; }
@@ -149,7 +150,7 @@
     HERO_ORDER.forEach(function(hero){
       var list=(byHero[hero]||[]).filter(function(e){return e.hasSkillDmg;});
       if(!list.length)return;
-      h+='<div class="dm-eq-group"><h4>👑 '+hero+'装备</h4>';
+      h+='<div class="dm-eq-group"><h4>'+uiGlyph("trophy")+' '+hero+'装备</h4>';
       list.forEach(function(e){
         var cur=STATE.eq[e.id]||0;
         var on=!!STATE.eqOn[e.id];
@@ -276,7 +277,7 @@
     BUILD_CATS.forEach(function(c){
       var list=buildList.filter(function(b){return b.cat===c.key;});
       if(!list.length)return;
-      h+='<div class="section-head" style="margin:18px 0 6px;"><h3 style="font-size:13.5px; font-weight:600; color:var(--ink-dim);">'+c.emoji+' '+c.key+' <span style="color:var(--ink-faint); font-weight:400;">('+list.length+')</span></h3></div>';
+      h+='<div class="section-head" style="margin:18px 0 6px;"><h3 style="font-size:13.5px; font-weight:600; color:var(--ink-dim);">'+uiGlyph(c.icon)+' '+c.key+' <span style="color:var(--ink-faint); font-weight:400;">('+list.length+')</span></h3></div>';
       h+='<div class="dm-build-grid">';
       list.forEach(function(b){
         var gid=b.gid, cur=STATE.build[gid]||0;
@@ -307,8 +308,8 @@
     sorted.forEach(function(b){
       var gid=b.gid, cur=STATE.build[gid]||0;
       var name=b.unit.chineseName;
-      if(immuneAll(b.unit))name+=" 🛡全免疫";
-      else if(immuneLight(b.unit))name+=" 🛡免疫雷电";
+      if(immuneAll(b.unit))name+="【全免疫】";
+      else if(immuneLight(b.unit))name+="【免疫雷电】";
       var tag = cur>0 ? (" Lv"+cur+" · HP "+fmt(buildHP(b.unit,cur))) : "（未设等级）";
       h+='<option value="'+gid+'"'+(gid===STATE.target?' selected':'')+'>'+esc(name)+tag+'</option>';
     });
@@ -324,8 +325,8 @@
     var hp=buildHP(b.unit,cur);
     var ql=STATE.spell.q, qpRaw=quakePctRaw(ql);
     var immHtml="";
-    if(immuneAll(b.unit))immHtml=' · <span style="color:#fbbf24">🛡 对所有法术免疫（仅装备伤害有效）</span>';
-    else if(immuneLight(b.unit))immHtml=' · <span style="color:#fbbf24">🛡 对雷电法术免疫（地震有效）</span>';
+    if(immuneAll(b.unit))immHtml=' · <span style="color:#fbbf24">'+uiGlyph("shield")+' 对所有法术免疫（仅装备伤害有效）</span>';
+    else if(immuneLight(b.unit))immHtml=' · <span style="color:#fbbf24">'+uiGlyph("shield")+' 对雷电法术免疫（地震有效）</span>';
     info.innerHTML = esc(b.unit.chineseName)+" · Lv"+cur+" · 最大生命值 <b>"+fmt(hp)+"</b>"+(ql>0?(' · 地震全额 '+(qpRaw*100).toFixed(1)+'%'):'')+immHtml;
     /* 目标变化时同步刷新"建筑工人小屋回血"区的实时容错时间 */
     renderBuilders();
@@ -532,21 +533,21 @@
     var bName=esc(findBuild(STATE.target).unit.chineseName);
     var destroyed=r.total >= r.H;
     var html='<div class="dm-result-headline'+(destroyed?' dm-ok':'')+'">';
-    html+='<div class="dm-rh-label">自定义方案总伤害（⚡ ×'+r.a+' + 🌍 ×'+r.q+'）</div>';
+    html+='<div class="dm-rh-label">自定义方案总伤害（'+uiGlyph("lightning")+' ×'+r.a+' + '+uiGlyph("globe")+' ×'+r.q+'）</div>';
     html+='<div class="dm-rh-value"><span class="dm-grad">'+fmt(r.total)+'</span></div>';
-    html+='<div class="dm-rh-sub">对 '+bName+'（Lv'+(STATE.build[STATE.target]||0)+'，HP '+fmt(r.H)+(r.wall?'，城墙':'')+(destroyed?'） · ✓ 已摧毁':'） · 占比 '+((r.total/r.H)*100).toFixed(1)+'%')+'</div>';
+    html+='<div class="dm-rh-sub">对 '+bName+'（Lv'+(STATE.build[STATE.target]||0)+'，HP '+fmt(r.H)+(r.wall?'，城墙':'')+(destroyed?'） · '+uiGlyph("check")+' 已摧毁':'） · 占比 '+((r.total/r.H)*100).toFixed(1)+'%')+'</div>';
     html+='<div class="dm-config">';
-    if(r.D_eq>0)html+='<span class="dm-chip dm-chip-eq">🛡️ 装备伤害 <b>'+fmt(r.D_eq)+'</b></span>';
-    if(r.a>0)html+='<span class="dm-chip dm-chip-l">⚡ 雷电 ×'+r.a+' <b>'+fmt(r.liDmg)+'</b></span>';
-    if(r.q>0)html+='<span class="dm-chip dm-chip-q">🌍 地震 ×'+r.q+' <b>'+fmt(r.qDmg)+'</b></span>';
-    if(!r.a && !r.q && r.D_eq>0)html+='<span class="dm-chip">✓ 仅靠装备</span>';
+    if(r.D_eq>0)html+='<span class="dm-chip dm-chip-eq">'+uiGlyph("shield")+' 装备伤害 <b>'+fmt(r.D_eq)+'</b></span>';
+    if(r.a>0)html+='<span class="dm-chip dm-chip-l">'+uiGlyph("lightning")+' 雷电 ×'+r.a+' <b>'+fmt(r.liDmg)+'</b></span>';
+    if(r.q>0)html+='<span class="dm-chip dm-chip-q">'+uiGlyph("globe")+' 地震 ×'+r.q+' <b>'+fmt(r.qDmg)+'</b></span>';
+    if(!r.a && !r.q && r.D_eq>0)html+='<span class="dm-chip">'+uiGlyph("check")+' 仅靠装备</span>';
     html+='</div></div>';
     /* 复用最高伤害的逐瓶地震明细（同一 quakeHitDmg 公式与城墙规则） */
     var pseudoBest={a:r.a,b:r.q,dmg:r.D_eq + r.liDmg + r.qDmg};
     html+=breakdownTable({H:r.H, wall:r.wall, ql:r.ql, ll:r.ll, D_eq:r.D_eq, immA:r.immA, immL:r.immL}, pseudoBest, r.D_eq, r.liDmg, r.qDmg);
     html+=toleranceHtml(r.total, r.H);
-    if(r.immA){ html+='<div class="dm-warn">🛡 该建筑对所有法术免疫，雷电与地震均无效，仅英雄装备伤害生效。</div>'; }
-    else if(r.immL){ html+='<div class="dm-warn">🛡 该建筑对雷电法术免疫（雷电伤害按 0 计），地震法术仍然有效。</div>'; }
+    if(r.immA){ html+='<div class="dm-warn">'+uiGlyph("shield")+' 该建筑对所有法术免疫，雷电与地震均无效，仅英雄装备伤害生效。</div>'; }
+    else if(r.immL){ html+='<div class="dm-warn">'+uiGlyph("shield")+' 该建筑对雷电法术免疫（雷电伤害按 0 计），地震法术仍然有效。</div>'; }
     html+=shareRowHtml("custom");
     box.innerHTML=html; box.classList.add("show");
   }
@@ -565,15 +566,15 @@
     html+='<div class="dm-rh-value"><span class="dm-grad">'+fmt(b.dmg)+'</span></div>';
     html+='<div class="dm-rh-sub">对 '+esc(findBuild(STATE.target).unit.chineseName)+'（Lv'+(STATE.build[STATE.target]||0)+'，HP '+fmt(r.H)+(r.wall?'，城墙':'')+'）</div>';
     html+='<div class="dm-config">';
-    if(r.D_eq>0)html+='<span class="dm-chip dm-chip-eq">🛡️ 装备伤害 <b>'+fmt(eqDmg)+'</b></span>';
-    if(b.a>0)html+='<span class="dm-chip dm-chip-l">⚡ 雷电 ×'+b.a+' <b>'+fmt(liDmg)+'</b></span>';
-    if(b.b>0)html+='<span class="dm-chip dm-chip-q">🌍 地震 ×'+b.b+' <b>'+fmt(qDmg)+'</b></span>';
-    if(r.S>0 && b.a===0 && b.b===0 && r.D_eq===0)html+='<span class="dm-chip">⚠️ 未设定法术等级，仅装备伤害</span>';
+    if(r.D_eq>0)html+='<span class="dm-chip dm-chip-eq">'+uiGlyph("shield")+' 装备伤害 <b>'+fmt(eqDmg)+'</b></span>';
+    if(b.a>0)html+='<span class="dm-chip dm-chip-l">'+uiGlyph("lightning")+' 雷电 ×'+b.a+' <b>'+fmt(liDmg)+'</b></span>';
+    if(b.b>0)html+='<span class="dm-chip dm-chip-q">'+uiGlyph("globe")+' 地震 ×'+b.b+' <b>'+fmt(qDmg)+'</b></span>';
+    if(r.S>0 && b.a===0 && b.b===0 && r.D_eq===0)html+='<span class="dm-chip">'+uiGlyph("warning")+' 未设定法术等级，仅装备伤害</span>';
     html+='</div></div>';
     html+=breakdownTable(r, b, eqDmg, liDmg, qDmg);
     html+=toleranceHtml(b.dmg,r.H);
-    if(r.immA){ html+='<div class="dm-warn">🛡 该建筑对所有法术免疫，雷电与地震均无效，仅英雄装备伤害生效。</div>'; }
-    else if(r.immL){ html+='<div class="dm-warn">🛡 该建筑对雷电法术免疫（雷电伤害按 0 计），地震法术仍然有效。</div>'; }
+    if(r.immA){ html+='<div class="dm-warn">'+uiGlyph("shield")+' 该建筑对所有法术免疫，雷电与地震均无效，仅英雄装备伤害生效。</div>'; }
+    else if(r.immL){ html+='<div class="dm-warn">'+uiGlyph("shield")+' 该建筑对雷电法术免疫（雷电伤害按 0 计），地震法术仍然有效。</div>'; }
     if(r.ql<=0 && r.ll<=0){ html+='<div class="dm-warn">未设定雷电/地震法术等级，无法术伤害贡献。请先设定法术等级。</div>'; }
     html+=shareRowHtml("max");
     box.innerHTML=html; box.classList.add("show");
@@ -582,12 +583,12 @@
   function breakdownTable(r, b, eqDmg, liDmg, qDmg){
     var H=r.H, ql=r.ql, ll=r.ll;
     var html='<div class="dm-breakdown"><table><thead><tr><th>伤害来源</th><th>数量</th><th>单次伤害</th><th style="text-align:right">小计</th></tr></thead><tbody>';
-    if(eqDmg>0)html+='<tr><td>🛡️ 英雄装备（技能伤害累计）</td><td>—</td><td>—</td><td class="dm-num">'+fmt(eqDmg)+'</td></tr>';
+    if(eqDmg>0)html+='<tr><td>'+uiGlyph("shield")+' 英雄装备（技能伤害累计）</td><td>—</td><td>—</td><td class="dm-num">'+fmt(eqDmg)+'</td></tr>';
     if(b.a>0){
-      html+='<tr><td>⚡ 雷电法术 Lv'+ll+'</td><td>'+b.a+'</td><td class="dm-num">'+fmt(lightDmg(ll))+'</td><td class="dm-num">'+fmt(liDmg)+'</td></tr>';
+      html+='<tr><td>'+uiGlyph("lightning")+' 雷电法术 Lv'+ll+'</td><td>'+b.a+'</td><td class="dm-num">'+fmt(lightDmg(ll))+'</td><td class="dm-num">'+fmt(liDmg)+'</td></tr>';
     }
     if(b.b>0){
-      html+='<tr><td>🌍 地震法术 Lv'+ql+'（'+fmtPct(quakePct(ql))+' 全额'+(r.wall?'，城墙四震必毁':'，逐次递减')+'）</td><td>'+b.b+'</td><td class="dm-num">'+(r.wall&&b.b>=4?'第4瓶补足':'按递减')+'</td><td class="dm-num">'+fmt(qDmg)+'</td></tr>';
+      html+='<tr><td>'+uiGlyph("globe")+' 地震法术 Lv'+ql+'（'+fmtPct(quakePct(ql))+' 全额'+(r.wall?'，城墙四震必毁':'，逐次递减')+'）</td><td>'+b.b+'</td><td class="dm-num">'+(r.wall&&b.b>=4?'第4瓶补足':'按递减')+'</td><td class="dm-num">'+fmt(qDmg)+'</td></tr>';
       /* 逐次明细 */
       for(var i=1;i<=b.b;i++){
         var once=quakeHitDmg(i,H,ql,r.wall);
@@ -598,7 +599,7 @@
     html+='<tr class="dm-total"><td>合计</td><td>'+((b.a||0)+(b.b||0))+' 法术</td><td></td><td class="dm-num">'+fmt(b.dmg!=null?b.dmg:(eqDmg+liDmg+qDmg))+'</td></tr>';
     if(H>0){
       var pctOfHp=(eqDmg+liDmg+qDmg)/H;
-      html+='<tr><td style="color:var(--ink-faint);">占建筑最大生命值比例</td><td colspan="3" class="dm-num">'+(pctOfHp*100).toFixed(1)+'%'+(pctOfHp>=1?' ✓ 已可摧毁':'')+'</td></tr>';
+      html+='<tr><td style="color:var(--ink-faint);">占建筑最大生命值比例</td><td colspan="3" class="dm-num">'+(pctOfHp*100).toFixed(1)+'%'+(pctOfHp>=1?' '+uiGlyph("check")+' 已可摧毁':'')+'</td></tr>';
     }
     html+='</tbody></table></div>';
     return html;
@@ -615,22 +616,22 @@
     html+='<div class="dm-rh-label">摧毁所需最少法术空间</div>';
     html+='<div class="dm-rh-value"><span class="dm-grad">'+b.space+'</span> <span style="font-size:16px; color:var(--ink-dim); font-weight:600;">格</span></div>';
     if(r.eqSolo){
-      html+='<div class="dm-rh-sub">⚡ 装备伤害已可单独摧毁 '+esc(findBuild(STATE.target).unit.chineseName)+'（HP '+fmt(r.H)+'），无需法术！</div>';
+      html+='<div class="dm-rh-sub">'+uiGlyph("lightning")+' 装备伤害已可单独摧毁 '+esc(findBuild(STATE.target).unit.chineseName)+'（HP '+fmt(r.H)+'），无需法术！</div>';
     }else{
       html+='<div class="dm-rh-sub">摧毁 '+esc(findBuild(STATE.target).unit.chineseName)+'（Lv'+(STATE.build[STATE.target]||0)+'，HP '+fmt(r.H)+(r.wall?'，城墙':'')+'），总伤害 '+fmt(total)+' / '+fmt(r.H)+'</div>';
     }
     html+='<div class="dm-config">';
-    if(r.D_eq>0)html+='<span class="dm-chip dm-chip-eq">🛡️ 装备 <b>'+fmt(eqDmg)+'</b></span>';
-    if(b.a>0)html+='<span class="dm-chip dm-chip-l">⚡ 雷电 ×'+b.a+' <b>'+fmt(liDmg)+'</b></span>';
-    if(b.b>0)html+='<span class="dm-chip dm-chip-q">🌍 地震 ×'+b.b+' <b>'+fmt(qDmg)+'</b></span>';
-    if(b.a===0&&b.b===0&&r.D_eq>0)html+='<span class="dm-chip">✓ 仅靠装备即可</span>';
+    if(r.D_eq>0)html+='<span class="dm-chip dm-chip-eq">'+uiGlyph("shield")+' 装备 <b>'+fmt(eqDmg)+'</b></span>';
+    if(b.a>0)html+='<span class="dm-chip dm-chip-l">'+uiGlyph("lightning")+' 雷电 ×'+b.a+' <b>'+fmt(liDmg)+'</b></span>';
+    if(b.b>0)html+='<span class="dm-chip dm-chip-q">'+uiGlyph("globe")+' 地震 ×'+b.b+' <b>'+fmt(qDmg)+'</b></span>';
+    if(b.a===0&&b.b===0&&r.D_eq>0)html+='<span class="dm-chip">'+uiGlyph("check")+' 仅靠装备即可</span>';
     html+='</div></div>';
     if(!r.eqSolo){
       html+=minBreakdownTable(r, b, eqDmg, liDmg, qDmg, total);
     }
     html+=toleranceHtml(total,r.H);
-    if(r.immA){ html+='<div class="dm-warn">🛡 该建筑对所有法术免疫，仅英雄装备伤害生效。</div>'; }
-    else if(r.immL){ html+='<div class="dm-warn">🛡 该建筑对雷电法术免疫（雷电伤害按 0 计），地震法术仍然有效。</div>'; }
+    if(r.immA){ html+='<div class="dm-warn">'+uiGlyph("shield")+' 该建筑对所有法术免疫，仅英雄装备伤害生效。</div>'; }
+    else if(r.immL){ html+='<div class="dm-warn">'+uiGlyph("shield")+' 该建筑对雷电法术免疫（雷电伤害按 0 计），地震法术仍然有效。</div>'; }
     html+=shareRowHtml("min");
     box.innerHTML=html; box.classList.add("show");
   }
@@ -638,9 +639,9 @@
   function minBreakdownTable(r, b, eqDmg, liDmg, qDmg, total){
     var H=r.H, ql=r.ql, ll=r.ll;
     var html='<div class="dm-breakdown"><table><thead><tr><th>伤害来源</th><th>数量 / 占法术空间</th><th>单次伤害</th><th style="text-align:right">小计</th></tr></thead><tbody>';
-    if(eqDmg>0)html+='<tr><td>🛡️ 英雄装备（技能伤害累计）</td><td>—（不占法术空间）</td><td>—</td><td class="dm-num">'+fmt(eqDmg)+'</td></tr>';
+    if(eqDmg>0)html+='<tr><td>'+uiGlyph("shield")+' 英雄装备（技能伤害累计）</td><td>—（不占法术空间）</td><td>—</td><td class="dm-num">'+fmt(eqDmg)+'</td></tr>';
     if(b.b>0){
-      html+='<tr><td>🌍 地震法术 Lv'+ql+'（'+fmtPct(quakePct(ql))+' 全额'+(r.wall?'，城墙四震必毁':'，逐次递减')+'）</td><td>'+b.b+' 格</td><td class="dm-num">'+(r.wall&&b.b>=4?'第4瓶补足':'按递减')+'</td><td class="dm-num">'+fmt(qDmg)+'</td></tr>';
+      html+='<tr><td>'+uiGlyph("globe")+' 地震法术 Lv'+ql+'（'+fmtPct(quakePct(ql))+' 全额'+(r.wall?'，城墙四震必毁':'，逐次递减')+'）</td><td>'+b.b+' 格</td><td class="dm-num">'+(r.wall&&b.b>=4?'第4瓶补足':'按递减')+'</td><td class="dm-num">'+fmt(qDmg)+'</td></tr>';
       for(var i=1;i<=b.b;i++){
         var once=quakeHitDmg(i,H,ql,r.wall);
         var note=r.wall&&i===4?'补足剩余生命值':(r.wall&&i>4?'目标已摧毁':'系数 1/'+(2*i-1));
@@ -648,7 +649,7 @@
       }
     }
     if(b.a>0){
-      html+='<tr><td>⚡ 雷电法术 Lv'+ll+'</td><td>'+b.a+' 格</td><td class="dm-num">'+fmt(lightDmg(ll))+'</td><td class="dm-num">'+fmt(liDmg)+'</td></tr>';
+      html+='<tr><td>'+uiGlyph("lightning")+' 雷电法术 Lv'+ll+'</td><td>'+b.a+' 格</td><td class="dm-num">'+fmt(lightDmg(ll))+'</td><td class="dm-num">'+fmt(liDmg)+'</td></tr>';
     }
     html+='<tr class="dm-total"><td>合计伤害 / 建筑生命值</td><td>'+(b.a+b.b)+' 格法术</td><td></td><td class="dm-num">'+fmt(total)+' / '+fmt(H)+'</td></tr>';
     html+='</tbody></table></div>';
@@ -660,7 +661,7 @@
   function clearImportError(){ var e=$("dmImportError"); e.textContent=""; e.classList.remove("show"); }
   function flashImportOk(msg){
     var e=$("dmImportError");
-    e.textContent="✓ "+msg;
+    e.innerHTML=uiGlyph("check")+' <span>'+esc(msg)+'</span>';
     e.style.background="rgba(16,185,129,.12)"; e.style.color="#a7f3d0"; e.style.borderColor="rgba(16,185,129,.34)";
     e.classList.add("show");
     setTimeout(function(){ e.classList.remove("show"); e.style.background=""; e.style.color=""; e.style.borderColor=""; }, 4000);
@@ -703,7 +704,9 @@
     return d;
   }
   function buildShareUrl(mode){
-    var base=location.href.split("#")[0];
+    /* 分享地址必须始终可在普通浏览器打开。桌面版运行于 tzos://app，
+       不能把自定义协议或 OS 专用的 nochrome 参数复制给接收者。 */
+    var base="https://wjtianze.github.io/coc/dmg-calc/index.html";
     return base+"#share="+b64urlEncode(JSON.stringify(collectShareData(mode)));
   }
   function parseShareHash(){
@@ -731,18 +734,18 @@
   function shareConfigChips(d){
     var chips=[];
     var modeName={max:"① 最高伤害",min:"② 摧毁所需最少法术",custom:"③ 自定义闪震数量"}[d.m]||d.m;
-    chips.push('<span class="dm-chip">🧮 模式 <b>'+esc(modeName)+'</b></span>');
+    chips.push('<span class="dm-chip">'+uiGlyph("info")+' 模式 <b>'+esc(modeName)+'</b></span>');
     var b=findBuild(String(d.t));
-    if(b)chips.push('<span class="dm-chip">🎯 目标 <b>'+esc(b.unit.chineseName)+' Lv'+Math.max(0,intv(d.tl))+'</b></span>');
-    if(intv(d.l)>0)chips.push('<span class="dm-chip dm-chip-l">⚡ 雷电法术 <b>Lv '+intv(d.l)+'</b></span>');
-    if(intv(d.q)>0)chips.push('<span class="dm-chip dm-chip-q">🌍 地震法术 <b>Lv '+intv(d.q)+'</b></span>');
+    if(b)chips.push('<span class="dm-chip">'+uiGlyph("cursor")+' 目标 <b>'+esc(b.unit.chineseName)+' Lv'+Math.max(0,intv(d.tl))+'</b></span>');
+    if(intv(d.l)>0)chips.push('<span class="dm-chip dm-chip-l">'+uiGlyph("lightning")+' 雷电法术 <b>Lv '+intv(d.l)+'</b></span>');
+    if(intv(d.q)>0)chips.push('<span class="dm-chip dm-chip-q">'+uiGlyph("globe")+' 地震法术 <b>Lv '+intv(d.q)+'</b></span>');
     if(d.eq)Object.keys(d.eq).forEach(function(id){
       var info=EQUIP_MAP[id];
-      if(info)chips.push('<span class="dm-chip dm-chip-eq">🛡️ '+esc(info.zh)+' <b>Lv '+intv(d.eq[id])+'</b></span>');
+      if(info)chips.push('<span class="dm-chip dm-chip-eq">'+uiGlyph("shield")+' '+esc(info.zh)+' <b>Lv '+intv(d.eq[id])+'</b></span>');
     });
-    if(d.b&&intv(d.b.c)>0)chips.push('<span class="dm-chip">🔨 回血小屋 ×'+intv(d.b.c)+'（Lv '+(d.b.ls||[]).map(function(v){return intv(v);}).join(" / ")+'）</span>');
-    if(d.m==="max")chips.push('<span class="dm-chip">📦 法术空间上限 <b>'+(d.s!=null?intv(d.s):11)+'</b></span>');
-    if(d.m==="custom")chips.push('<span class="dm-chip">⚡ ×'+intv(d.ca)+' + 🌍 ×'+intv(d.cq)+'</span>');
+    if(d.b&&intv(d.b.c)>0)chips.push('<span class="dm-chip">'+uiGlyph("settings")+' 回血小屋 ×'+intv(d.b.c)+'（Lv '+(d.b.ls||[]).map(function(v){return intv(v);}).join(" / ")+'）</span>');
+    if(d.m==="max")chips.push('<span class="dm-chip">'+uiGlyph("file")+' 法术空间上限 <b>'+(d.s!=null?intv(d.s):11)+'</b></span>');
+    if(d.m==="custom")chips.push('<span class="dm-chip">'+uiGlyph("lightning")+' ×'+intv(d.ca)+' + '+uiGlyph("globe")+' ×'+intv(d.cq)+'</span>');
     return chips.join("");
   }
   function copyText(t, cb){
@@ -764,7 +767,7 @@
   }
   /* 结果区底部的「复制分享链接」按钮行 */
   function shareRowHtml(mode){
-    return '<div class="dm-share-row"><button type="button" class="btn btn--sm dm-share-btn" data-share-mode="'+mode+'"><span>🔗 复制分享链接</span></button><span class="dm-share-tip">链接内含本次计算的全部配置（法术 / 装备 / 目标建筑 / 回血小屋等级与计算模式），好友打开即可只读查看，不会影响对方保存的数据。</span></div>';
+    return '<div class="dm-share-row"><button type="button" class="btn btn--sm dm-share-btn" data-share-mode="'+mode+'"><span>'+uiGlyph("copy")+' 复制分享链接</span></button><span class="dm-share-tip">链接内含本次计算的全部配置（法术 / 装备 / 目标建筑 / 回血小屋等级与计算模式），好友打开即可只读查看，不会影响对方保存的数据。</span></div>';
   }
 
   /* ===== 持久化 ===== */
@@ -791,7 +794,26 @@
   function updateCustomSpace(){
     var a=intv($("dmCustomLight").value), q=intv($("dmCustomQuake").value);
     if(a<0)a=0; if(q<0)q=0;
-    $("dmCustomSpace").innerHTML = '⚡ <b>'+a+'</b> + 🌍 <b>'+q+'</b> = <b style="color:var(--coc-blue)">'+(a+q)+'</b> 格';
+    $("dmCustomSpace").innerHTML = uiGlyph("lightning")+' <b>'+a+'</b> + '+uiGlyph("globe")+' <b>'+q+'</b> = <b style="color:var(--coc-blue)">'+(a+q)+'</b> 格';
+  }
+
+  var TAB_PANES={max:"dmPaneMax",min:"dmPaneMin",custom:"dmPaneCustom"};
+  function activateCalcTab(key, focusTab){
+    if(!TAB_PANES[key])key="max";
+    var activeTab=null;
+    document.querySelectorAll(".dm-tab").forEach(function(tab){
+      var selected=tab.getAttribute("data-tab")===key;
+      tab.classList.toggle("active",selected);
+      tab.setAttribute("aria-selected",String(selected));
+      tab.tabIndex=selected?0:-1;
+      if(selected)activeTab=tab;
+    });
+    document.querySelectorAll(".dm-tab-pane").forEach(function(pane){
+      var selected=pane.id===TAB_PANES[key];
+      pane.classList.toggle("active",selected);
+      pane.hidden=!selected;
+    });
+    if(focusTab&&activeTab)activeTab.focus();
   }
 
   /* ===== 分享查看模式：隐藏所有设置区，只读展示分享的配置与计算结果 ===== */
@@ -806,10 +828,7 @@
   function setupShareView(d){
     hideSetupSections();
     /* 只显示对应模式的结果面板（标签切换条已隐藏，无法再切换） */
-    document.querySelectorAll(".dm-tab-pane").forEach(function(p){
-      var key=p.id==="dmPaneMax"?"max":(p.id==="dmPaneMin"?"min":"custom");
-      p.classList.toggle("active", key===d.m);
-    });
+    activateCalcTab(d.m,false);
     /* 填入分享的模式参数并直接算出结果 */
     if(d.m==="max"){
       $("dmSpaceMax").value=(d.s!=null?Math.max(0,Math.min(200,intv(d.s))):11);
@@ -864,16 +883,22 @@
       $("dmCustomQuake").addEventListener("input", updateCustomSpace);
       updateCustomSpace();
       /* 标签切换 */
-      document.querySelectorAll(".dm-tab").forEach(function(t){
+      var calcTabs=Array.prototype.slice.call(document.querySelectorAll(".dm-tab"));
+      calcTabs.forEach(function(t){
         t.addEventListener("click", function(){
-          var tab=t.getAttribute("data-tab");
-          document.querySelectorAll(".dm-tab").forEach(function(x){ x.classList.toggle("active", x===t); });
-          document.querySelectorAll(".dm-tab-pane").forEach(function(p){
-            var key = p.id==="dmPaneMax"?"max":(p.id==="dmPaneMin"?"min":(p.id==="dmPaneCustom"?"custom":""));
-            p.classList.toggle("active", key===tab);
-          });
+          activateCalcTab(t.getAttribute("data-tab"),false);
+        });
+        t.addEventListener("keydown",function(ev){
+          if(["ArrowLeft","ArrowRight","Home","End"].indexOf(ev.key)===-1)return;
+          ev.preventDefault();
+          var index=calcTabs.indexOf(t);
+          if(ev.key==="Home")index=0;
+          else if(ev.key==="End")index=calcTabs.length-1;
+          else index=(index+(ev.key==="ArrowRight"?1:-1)+calcTabs.length)%calcTabs.length;
+          activateCalcTab(calcTabs[index].getAttribute("data-tab"),true);
         });
       });
+      activateCalcTab("max",false);
       /* 默认目标 */
       if(!STATE.target && buildList.length){
         var wall=buildList.find(function(b){return isWall(b.unit);});
@@ -889,9 +914,9 @@
         copyText(url, function(ok){
           var span=btn.querySelector("span");
           if(span){
-            var old=span.textContent;
-            span.textContent=ok?"✓ 链接已复制，发给好友即可":"✗ 复制失败";
-            setTimeout(function(){ span.textContent=old; },2600);
+            var old=span.innerHTML;
+            span.innerHTML=uiGlyph(ok?"check":"warning")+' '+(ok?"链接已复制，发给好友即可":"复制失败");
+            setTimeout(function(){ span.innerHTML=old; },2600);
           }
           if(!ok)window.prompt("自动复制失败，请手动复制此链接：", url);
         });

@@ -4,44 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>天择OS · 天择网</title>
-  <meta name="description" content="天择OS —— 浏览器里的全屏操作系统。选择桌面版或网页版，预装天择网全部功能与 AI 代码生成引擎。" />
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css" />
+  <meta name="description" content="天择OS 4.0 —— 生成式星图工作台。新版网页端采用三套图片配色、生成式图集图标与重构后的系统结构；桌面下载始终指向仓库中实际存在的最新安装包。" />
+  <script>(function(){try{var p=localStorage.getItem("tz_site_palette");if(p==="mid"||p==="warm")document.documentElement.setAttribute("data-palette",p);}catch(e){}})();</script>
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260731-v4.13" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/workspace-pages.css?v=20260731-v4.13" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cpath d='M10 14h12v8a2 2 0 0 1-2 2H12a2 2 0 0 1-2-2v-8zm2-4a4 4 0 0 1 8 0v4h-8v-4z' fill='white'/%3E%3C/svg%3E" />
-  <style>
-    /* 三栏：电脑端 | 网页端 | 更新日志 */
-    .os-pick { display: grid; grid-template-columns: 1fr 1fr 1.25fr; gap: 24px; max-width: 1160px; margin: 0 auto; align-items: start; }
-    .os-card { display: flex; flex-direction: column; padding: 26px 24px; }
-    .os-card .oc-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 14px; color: #fff; }
-    .os-card.d .oc-icon { background: linear-gradient(135deg, var(--c-purple), var(--c-blue)); }
-    .os-card.w .oc-icon { background: linear-gradient(135deg, var(--c-blue), var(--c-green)); }
-    .os-card h3 { font-size: 20px; margin-bottom: 4px; }
-    .os-card .oc-tag { color: var(--ink-faint); font-size: 12.5px; margin-bottom: 14px; }
-    .os-card ul { list-style: none; margin: 0 0 18px; flex: 1; }
-    .os-card li { font-size: 13.5px; color: var(--ink-dim); padding: 5px 0 5px 22px; position: relative; line-height: 1.5; }
-    .os-card li::before { content: "✓"; position: absolute; left: 0; top: 5px; color: var(--c-green); font-weight: 700; }
-    .os-card.d li::before { color: var(--c-purple); }
-    /* 更新日志栏 */
-    .os-card.cl { padding-bottom: 18px; }
-    .os-card.cl h3 { margin-bottom: 2px; }
-    .changelog { display: flex; flex-direction: column; gap: 0; max-height: 460px; overflow-y: auto; padding-right: 6px; }
-    .cl-item { position: relative; padding: 0 0 18px 24px; border-left: 2px solid rgba(var(--c-purple-rgb),0.25); margin-left: 6px; }
-    .cl-item:last-child { padding-bottom: 4px; }
-    .cl-item::before { content: ""; position: absolute; left: -7px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--grad-main); box-shadow: 0 0 0 3px rgba(var(--c-purple-rgb),0.18); }
-    .cl-ver { font-size: 14.5px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-    .cl-ver .cl-badge { font-size: 10.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: linear-gradient(135deg, var(--c-purple), var(--c-blue)); color: #fff; }
-    .cl-date { font-size: 11.5px; color: var(--ink-muted); margin: 2px 0 6px; }
-    .cl-item ul { list-style: none; margin: 0; }
-    .cl-item li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.6; padding: 2px 0 2px 14px; position: relative; }
-    .cl-item li::before { content: "·"; position: absolute; left: 2px; color: var(--c-purple); font-weight: 700; }
-    .os-note { text-align: center; color: var(--ink-faint); font-size: 13px; margin-top: 26px; line-height: 1.7; }
-    .os-note b { color: var(--ink-dim); }
-    @media (max-width: 860px) { .os-pick { grid-template-columns: 1fr; } }
-    /* 下载按钮加载状态 */
-    .btn[data-loading] { opacity: .65; pointer-events: none; }
-    .dl-meta { font-size: 12px; color: var(--ink-muted); margin-top: 8px; text-align: center; min-height: 16px; }
-  </style>
 </head>
-<body>
+<body data-workspace-page="os">
+  <a class="wp-skip" href="#main-content">跳到主要内容</a>
   <div class="bg-mesh"></div>
 
   <header class="topbar">
@@ -50,60 +20,85 @@
         <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/></svg></span>
         <span class="logo-text">天择网</span>
       </a>
-      <button class="nav-toggle" aria-label="菜单">☰</button>
+      <button class="nav-toggle" type="button" aria-label="菜单" data-ui-icon="menu"></button>
       <nav class="nav"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html" class="active"><span>天择OS</span></a><a href="https://wjtianze.github.io/contact/index.html"><span>联系开发者</span></a></nav>
     </div>
   </header>
 
-  <main>
-    <section class="section wrap" style="padding-top:44px;">
-      <div style="text-align:center;max-width:680px;margin:0 auto 30px;">
-        <div class="reveal in" style="width:68px;height:68px;margin:0 auto 16px;border-radius:18px;background:var(--grad-main);display:flex;align-items:center;justify-content:center;font-size:36px">🖥️</div>
-        <h1 class="reveal in d1" style="font-size:32px;"><span class="grad">天择OS</span> <span style="font-size:14px;vertical-align:middle;color:var(--ink-faint);font-weight:500;">v3.5.0</span></h1>
-        <p class="reveal in d2" style="color:var(--ink-dim);font-size:15px;margin-top:8px;">浏览器里的全屏操作系统 · 选择适合你的版本</p>
+  <main id="main-content" tabindex="-1">
+    <section class="tz-page-hero tz-os-landing-hero wrap">
+      <div class="tz-os-hero-copy reveal in">
+        <span class="tz-os-kicker">EVOLUTION SHELL · GENERATIVE WORKSPACE</span>
+        <h1><span class="grad">天择OS</span><span class="tz-os-version">v4.0.0</span></h1>
+        <p>一套在浏览器与 Windows 桌面运行的生成式星图工作台。网页端已完成 4.0 结构升级，三套图片配色、图集图标与桌面级窗口系统保持同源。</p>
+        <div class="tz-os-hero-actions">
+          <a class="btn" href="https://wjtianze.github.io/os/webos.html"><span>进入网页版</span><span data-ui-icon="right" aria-hidden="true"></span></a>
+          <a class="btn btn--ghost" href="#downloads"><span>查看桌面版本</span><span data-ui-icon="download" aria-hidden="true"></span></a>
+        </div>
       </div>
+      <div class="tz-os-hero-node reveal in d2" aria-hidden="true">
+        <div class="tz-os-hero-icon" data-ui-icon="monitor"></div>
+        <div class="tz-os-node-meta"><span>WEB / READY</span><span>DESKTOP / 3.5</span><span>PALETTE / 03</span><span>SHELL / 4.0</span></div>
+      </div>
+    </section>
 
-      <!-- 三栏：电脑端 | 网页端 | 更新日志 -->
+    <section class="section wrap tz-workspace-section" id="downloads">
+      <div class="section-head reveal">
+        <h2><span class="bar"></span>运行方式与版本演进</h2>
+        <span class="more">网页端 4.0 · Windows 安装包 3.5</span>
+      </div>
       <div class="os-pick">
-        <div class="card os-card d reveal d1">
-          <div class="oc-icon">🖥️</div>
+        <div class="card os-card tz-workspace-card d reveal d1">
+          <div class="oc-icon" data-ui-icon="windows" aria-hidden="true"></div>
           <h3>电脑端</h3>
-          <p class="oc-tag">Windows 原生应用 · 体验更完整</p>
+          <p class="oc-tag">Windows 原生应用 · 当前安装包 v3.5.0</p>
           <ul>
             <li>独立窗口运行，不占浏览器标签</li>
             <li>可设为系统默认浏览器，外部链接自动接管</li>
             <li>AI 接口免跨域，调用更稳定</li>
             <li>桌面快捷方式、开机自启一应俱全</li>
+            <li>4.0 安装包尚未公开发布，下载安全回退到现有最新版</li>
           </ul>
           <a class="btn" id="os-dl-btn"
              href="https://github.com/wjtianze/wjtianze.github.io/releases/download/v3.5.0/tianze-os-setup-3.5.0.exe"
              download
-             data-fallback-url="https://github.com/wjtianze/wjtianze.github.io/releases/download/v3.2.0/tianze-os-setup-3.2.0.exe"
-             data-fallback-ver="v3.2.0">
-            <span id="os-dl-text">下载 Windows 安装包（v3.5.0）</span><span>↓</span>
+             data-fallback-url="https://github.com/wjtianze/wjtianze.github.io/releases/download/v3.5.0/tianze-os-setup-3.5.0.exe"
+             data-fallback-ver="v3.5.0">
+            <span id="os-dl-text">下载 Windows 安装包（v3.5.0）</span><span data-ui-icon="download" aria-hidden="true"></span>
           </a>
-          <div class="dl-meta" id="os-dl-meta">检测中…</div>
+          <div class="dl-meta" id="os-dl-meta">正在检测实际已发布的桌面安装包…</div>
         </div>
-        <div class="card os-card w reveal d2">
-          <div class="oc-icon">🌐</div>
-          <h3>网页端</h3>
-          <p class="oc-tag">免安装 · 浏览器即开即用</p>
+        <div class="card os-card tz-workspace-card w reveal d2">
+          <div class="oc-icon" data-ui-icon="globe" aria-hidden="true"></div>
+          <h3>网页端 4.0</h3>
+          <p class="oc-tag">免安装 · 本次更新的完整体验</p>
           <ul>
             <li>无需下载，打开网页即可使用</li>
             <li>跨平台，手机/平板/电脑都能跑</li>
             <li>数据存浏览器本地，隐私可控</li>
-            <li>预装天择网全部功能与 AI 代码生成</li>
+            <li>生成式星图结构与冷 / 中 / 暖三套图片界面</li>
+            <li>生成式图集图标随当前配色呈现</li>
           </ul>
           <a class="btn btn--ghost" href="https://wjtianze.github.io/os/webos.html">
-            <span>进入网页版</span><span>→</span>
+            <span>进入网页版</span><span data-ui-icon="right" aria-hidden="true"></span>
           </a>
         </div>
-        <div class="card os-card cl reveal d3">
-          <h3>📜 更新日志</h3>
+        <div class="card os-card tz-workspace-card cl reveal d3">
+          <h3><span data-ui-icon="clock" aria-hidden="true"></span>更新日志</h3>
           <p class="oc-tag">自 1.0 至今的版本演进</p>
           <div class="changelog">
             <div class="cl-item">
-              <div class="cl-ver">v3.5.0 <span class="cl-badge">最新</span></div>
+              <div class="cl-ver">v4.0.0 <span class="cl-badge">最新</span></div>
+              <div class="cl-date">2026-07-30</div>
+              <ul>
+                <li>全面升级为<b>生成式星图工作台</b>，重构桌面、系统导航与应用入口的信息结构</li>
+                <li>冷（紫·蓝·绿）、中（蓝·绿·黄）、暖（绿·黄·橙）三套配色均加入专属<b>图片壁纸、按钮材质与表面纹理</b></li>
+                <li>核心界面图标统一切换为<b>生成式图集图标</b>，形状一致，并随当前配色呈现</li>
+                <li>网页版与桌面工程已更新至 4.0.0；Windows 4.0 安装包尚未公开发布，下载页会继续提供仓库中实际存在的最新桌面安装包</li>
+              </ul>
+            </div>
+            <div class="cl-item">
+              <div class="cl-ver">v3.5.0</div>
               <div class="cl-date">2026-07-25</div>
               <ul>
                 <li>新增<b>用户等级与积分</b>：每日启动、AI 对话、终端命令、新建笔记、安装软件、导出存档均可获积分（各项有每日上限），累计积分升级并获称号；终端 <code>level</code> 查看，数据加密存储、随全量存档迁移</li>
@@ -209,7 +204,7 @@
         </div>
       </div>
 
-      <p class="os-note">两版数据各自独立，可分别使用。首次使用桌面版需在「🔑 AI 配置」中单独填入 API Key。<br/><b>不再提供历史版本下载</b>，想下载历史版本请联系开发者。</p>
+      <p class="os-note">网页端与桌面版数据各自独立，可分别使用。<b>当前网页端与桌面工程为 4.0.0，公开下载仍指向实际已发布的 3.5.0 安装包</b>；待新的桌面安装包进入 GitHub Releases 后，下载按钮会自动选择它。<br/>首次使用桌面版需在「AI 配置」中单独填入 API Key；不再提供历史版本下载。</p>
     </section>
   </main>
 
@@ -220,7 +215,7 @@
     </div>
   </footer>
 
-  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260725a"></script>
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260731-v4.13"></script>
   <script>
   // 自动检测 GitHub Release 已发布的最新安装包
   // 修复（v3.2）：旧版用 fetch(HEAD) 直接探测 github.com 的 release download URL，
@@ -292,17 +287,44 @@
           setMeta('来自 GitHub Releases · ' + c.ver + ' 官方发布版');
           try { localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), url: c.url, ver: c.ver })); } catch (e) {}
         } else {
-          // 没有已发布的 exe → 用 fallback（页面写死的上一个已发布版本）
+          // 没有已发布的 exe → 使用页面写死且已确认存在的安全回退版本
           setBtn(fallbackUrl, fallbackVer);
           setMeta(primaryShort + ' 暂未发布安装包 · 已自动切到 ' + fallbackVer);
         }
       })
       .catch(function () {
         btn.removeAttribute('data-loading');
-        // API 失败（限流/网络）→ 用 primary（赌最新版已发布，正常发版后均成立）
+        // API 失败（限流/网络）→ 使用页面写死且已确认存在的 primary
         setBtn(primary, primaryShort);
         setMeta('来自 GitHub Releases · ' + primaryShort);
       });
+  })();
+  </script>
+  <script>
+  (function () {
+    var items = Array.prototype.slice.call(document.querySelectorAll('.changelog .cl-item'));
+    items.forEach(function (item, index) {
+      var version = item.querySelector(':scope > .cl-ver');
+      var date = item.querySelector(':scope > .cl-date');
+      var content = item.querySelector(':scope > ul');
+      if (!version || !date || !content) return;
+      var button = document.createElement('button');
+      var contentId = 'os-changelog-' + index;
+      button.type = 'button';
+      button.className = 'cl-toggle';
+      button.setAttribute('aria-controls', contentId);
+      button.setAttribute('aria-expanded', index === 0 ? 'true' : 'false');
+      content.id = contentId;
+      content.hidden = index !== 0;
+      button.appendChild(version);
+      button.appendChild(date);
+      item.insertBefore(button, content);
+      button.addEventListener('click', function () {
+        var open = button.getAttribute('aria-expanded') === 'true';
+        button.setAttribute('aria-expanded', open ? 'false' : 'true');
+        content.hidden = open;
+      });
+    });
   })();
   </script>
 </body>

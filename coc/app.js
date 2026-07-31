@@ -11,6 +11,7 @@
   var GOB_WORKER = 0, GOB_LAB = 0;
 
   function $(id){ return document.getElementById(id); }
+  function uiGlyph(key){ return '<span data-ui-icon="'+key+'" aria-hidden="true"></span>'; }
   function fmtDur(sec){ sec=Math.max(0,Math.round(sec)); var d=Math.floor(sec/86400),h=Math.floor(sec%86400/3600),m=Math.floor(sec%3600/60),s=sec%60,p=[]; if(d)p.push(d+"天"); if(h)p.push(h+"时"); if(m)p.push(m+"分"); if(!p.length)p.push(s+"秒"); return p.join(""); }
   function num(v){ v=parseInt(v,10); return isNaN(v)?0:v; }
   function nameOf(id){ var u=IDMAP[String(id)]; if(u&&u.chineseName)return u.chineseName; if(EQUIP_MAP[id])return EQUIP_MAP[id].zh; if(HELPER_MAP[id])return HELPER_MAP[id].zh; return "ID"+id; }
@@ -80,29 +81,29 @@
     var cnt=it.cnt?'<span class="vi-cnt">×'+it.cnt+'</span>':'';
     return '<div class="v-item"><span class="vi-name">'+nm+cnt+'</span><span class="vi-meta"><span class="vi-lvl">'+it.lvl+'级</span>'+tags+'</span></div>';
   }
-  function renderCat(title,emoji,items){
-    if(!items||!items.length)return '<div class="v-cat"><div class="v-cat-head"><span class="vc-emoji">'+emoji+'</span>'+title+'</div><div class="v-empty">无</div></div>';
-    var h='<div class="v-cat"><div class="v-cat-head"><span class="vc-emoji">'+emoji+'</span>'+title+' <span class="vc-count">'+items.length+' 项</span></div><div class="v-cat-grid">';
+  function renderCat(title,iconKey,items){
+    if(!items||!items.length)return '<div class="v-cat"><div class="v-cat-head"><span class="vc-emoji" data-ui-icon="'+iconKey+'" aria-hidden="true"></span>'+title+'</div><div class="v-empty">无</div></div>';
+    var h='<div class="v-cat"><div class="v-cat-head"><span class="vc-emoji" data-ui-icon="'+iconKey+'" aria-hidden="true"></span>'+title+' <span class="vc-count">'+items.length+' 项</span></div><div class="v-cat-grid">';
     items.forEach(function(it){ h+=renderItem(it); }); h+='</div></div>'; return h;
   }
   function renderHome(){
     var v=V,h="";
-    h+=renderCat("英雄","👑",v.heroes||[]);
-    h+=renderCat("兵种","⚔️",v.units||[]);
-    h+=renderCat("攻城机器","🛒",v.siege_machines||[]);
-    h+=renderCat("法术","✨",v.spells||[]);
-    h+=renderCat("战宠","🐾",v.pets||[]);
+    h+=renderCat("英雄","trophy",v.heroes||[]);
+    h+=renderCat("兵种","swords",v.units||[]);
+    h+=renderCat("攻城机器","cart",v.siege_machines||[]);
+    h+=renderCat("法术","sparkle",v.spells||[]);
+    h+=renderCat("战宠","heart",v.pets||[]);
     var eqs=v.equipment||[];
     if(eqs.length){
-      h+='<div class="v-cat"><div class="v-cat-head"><span class="vc-emoji">🛡️</span>英雄装备 <span class="vc-count">'+eqs.length+' 件</span></div><div class="v-cat-grid">';
+      h+='<div class="v-cat"><div class="v-cat-head"><span class="vc-emoji" data-ui-icon="shield" aria-hidden="true"></span>英雄装备 <span class="vc-count">'+eqs.length+' 件</span></div><div class="v-cat-grid">';
       eqs.forEach(function(e){ var info=EQUIP_MAP[e.data]||{zh:"ID"+e.data,hero:"?"}; h+='<div class="v-item"><span class="vi-name">'+info.zh+' <span class="vi-cnt">'+info.hero+'</span></span><span class="vi-meta"><span class="vi-lvl">'+e.lvl+'级</span>'+(e.lvl>=18?'<span class="vi-tag v-tag-done">满级</span>':'')+'</span></div>'; });
       h+='</div></div>';
     }
-    h+=renderCat("建筑","🏰",v.buildings||[]);
-    h+=renderCat("陷阱","🪤",v.traps||[]);
+    h+=renderCat("建筑","home",v.buildings||[]);
+    h+=renderCat("陷阱","warning",v.traps||[]);
     var hs=v.helpers||[];
     if(hs.length){
-      h+='<div class="v-cat"><div class="v-cat-head"><span class="vc-emoji">🧰</span>帮手 <span class="vc-count">'+hs.length+' 个</span></div><div class="v-cat-grid">';
+      h+='<div class="v-cat"><div class="v-cat-head"><span class="vc-emoji" data-ui-icon="settings" aria-hidden="true"></span>帮手 <span class="vc-count">'+hs.length+' 个</span></div><div class="v-cat-grid">';
       hs.forEach(function(it){ var info=HELPER_MAP[it.data]||{zh:"ID"+it.data}; var cd=it.helper_cooldown?'<span class="vi-tag v-tag-up">冷却 '+fmtDur(it.helper_cooldown)+'</span>':''; h+='<div class="v-item"><span class="vi-name">'+info.zh+'</span><span class="vi-meta"><span class="vi-lvl">'+it.lvl+'级</span>'+cd+'</span></div>'; });
       h+='</div></div>';
     }
@@ -110,10 +111,10 @@
   }
   function renderBB(){
     var v=V,h="";
-    h+=renderCat("英雄","👑",v.heroes2||[]);
-    h+=renderCat("兵种","⚔️",v.units2||[]);
-    h+=renderCat("建筑","🏰",v.buildings2||[]);
-    h+=renderCat("陷阱","🪤",v.traps2||[]);
+    h+=renderCat("英雄","trophy",v.heroes2||[]);
+    h+=renderCat("兵种","swords",v.units2||[]);
+    h+=renderCat("建筑","home",v.buildings2||[]);
+    h+=renderCat("陷阱","warning",v.traps2||[]);
     $("vBB").innerHTML=h;
   }
 
@@ -151,9 +152,9 @@
     };
     TASKS.forEach(function(t){ var k=laneOf(t.cat,t.world); if(groups[k]){groups[k].sec+=t.sec;groups[k].n++;} });
 
-    function block(title, emoji, keys){
+    function block(title, iconKey, keys){
       var maxSec=0; keys.forEach(function(k){ if(groups[k].sec>maxSec)maxSec=groups[k].sec; });
-      var h='<div class="v-world-block"><h3>'+emoji+' '+title+'</h3>';
+      var h='<div class="v-world-block"><h3>'+uiGlyph(iconKey)+' '+title+'</h3>';
       h+='<table class="v-time-table"><thead><tr><th>资源</th><th>任务数</th><th>串行总时长</th><th>工人/研究员</th><th>墙钟时间</th><th style="width:22%">占比</th></tr></thead><tbody>';
       keys.forEach(function(k){
         var g=groups[k], slots=wc[k]||0, wall = slots>0?g.sec/slots:0;
@@ -164,7 +165,7 @@
       h+='</tbody></table></div>';
       return h;
     }
-    var html = block("家乡 · Home Village","🏰",["home_builder","home_lab","home_pet"]) + block("夜世界 · Builder Base","🌙",["bb_builder","bb_lab"]);
+    var html = block("家乡 · Home Village","home",["home_builder","home_lab","home_pet"]) + block("夜世界 · Builder Base","moon",["bb_builder","bb_lab"]);
     $("vTimeOverview").innerHTML=html;
   }
 
@@ -175,12 +176,27 @@
     }catch(e){}
   }
 
-  function render(){
-    $("vResult").classList.add("show");
+  function render(options){
+    options=options||{};
+    var result=$("vResult");
+    result.classList.add("show");
     renderMetrics(); renderTimeOverview(); renderHome(); renderBB();
     saveToStorage();
-    $("vResult").scrollIntoView({behavior:"smooth",block:"start"});
-    $("vResult").focus({preventScroll:true});
+    if(options.reveal!==false){
+      result.setAttribute("tabindex","-1");
+      result.scrollIntoView({behavior:"smooth",block:"start"});
+      result.focus({preventScroll:true});
+      result.addEventListener("blur",function removeTemporaryResultTabIndex(){
+        result.removeAttribute("tabindex");
+      },{once:true});
+    }else{
+      result.removeAttribute("tabindex");
+      if(!location.hash){
+        requestAnimationFrame(function(){
+          window.scrollTo({top:0,left:0,behavior:"auto"});
+        });
+      }
+    }
   }
   function showError(msg){ var e=$("vError"); e.textContent=msg; e.classList.add("show"); $("vJsonInput").setAttribute("aria-invalid","true"); e.focus(); }
   function clearError(){ var e=$("vError"); e.textContent=""; e.classList.remove("show"); $("vJsonInput").removeAttribute("aria-invalid"); }
@@ -213,7 +229,7 @@
         if (saved && saved.village) {
           $("vJsonInput").value = typeof saved.village === "string" ? saved.village : JSON.stringify(saved.village);
           V = (typeof saved.village === "string") ? parseVillage(saved.village) : saved.village;
-          if (V) { TH = detectTH(V); BH = detectBH(V); GOB_WORKER = saved.gobWorker||0; GOB_LAB = saved.gobLab||0; $("vGobWorker").checked = !!GOB_WORKER; $("vGobLab").checked = !!GOB_LAB; computeTasks(); render(); }
+          if (V) { TH = detectTH(V); BH = detectBH(V); GOB_WORKER = saved.gobWorker||0; GOB_LAB = saved.gobLab||0; $("vGobWorker").checked = !!GOB_WORKER; $("vGobLab").checked = !!GOB_LAB; computeTasks(); render({reveal:false}); }
         }
       } catch (e) {}
     });

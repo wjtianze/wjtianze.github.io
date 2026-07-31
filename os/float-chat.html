@@ -4,13 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI 悬浮窗 · 天择OS</title>
-<link rel="stylesheet" href="https://wjtianze.github.io/os/assets/css/os.css">
+<link rel="stylesheet" href="https://wjtianze.github.io/os/assets/css/os.css?v=4.0.5-ui414">
 <style>
 /* 悬浮窗专用：隐藏 OS 桌面元素，让 AI 对话占满整个窗口 */
-body.tzos { position: relative; height: 100vh; overflow: hidden; background: #0c1230; }
+body.tzos { position: relative; height: 100vh; overflow: hidden; background-image: var(--os-wallpaper); background-size: cover; background-position: center; }
 #bootScreen { display: none !important; }
 #desktop, #taskbar, #mobileDock, #homeBar, #notifCenter, #ctxMenu, #startMenu, #floatingWidget, #fwReopen { display: none !important; }
 #floatRoot { position: absolute; inset: 0; display: flex; flex-direction: column; padding-top: 32px; }
+body.float-embedded #floatRoot { padding-top: 0; }
+body.float-embedded #floatTitleBar { display: none; }
+body.float-site #floatRoot .chat-toolbar { padding: 6px 9px; }
+body.float-site #floatRoot .chat-tabbar { min-height: 44px; padding: 6px 8px; }
+body.float-site #floatRoot .msg { animation-duration: .16s; }
+body.float-site #floatRoot .btn,
+body.float-site #floatRoot .chat-tab,
+body.float-site #floatRoot .chat-tab-new,
+body.float-site #floatRoot .chat-send { transition-duration: .14s; }
+body.float-site #floatRoot .site-ai-badge { white-space: nowrap; }
 #floatRoot .app-chat { flex: 1; min-height: 0; border: none; border-radius: 0; }
 #floatRoot .chat-toolbar { padding-left: 12px; }
 
@@ -20,12 +30,13 @@ body.tzos { position: relative; height: 100vh; overflow: hidden; background: #0c
 #floatTitleBar {
   position: absolute; top: 0; left: 0; right: 0; height: 32px;
   display: flex; align-items: center; padding: 0 10px; gap: 8px;
-  background: linear-gradient(135deg, rgba(var(--c-violet-rgb),0.25), rgba(var(--c-blue-rgb),0.15));
+  background-image: linear-gradient(rgba(9,15,34,.62),rgba(9,15,34,.62)), var(--os-surface);
+  background-size: cover;
   border-bottom: 1px solid rgba(255,255,255,0.08);
   cursor: move; user-select: none; z-index: 10;
   -webkit-app-region: drag;
 }
-#floatTitleBar .ficon { font-size: 14px; pointer-events: none; }
+#floatTitleBar .ficon { width: 16px; height: 16px; pointer-events: none; }
 #floatTitleBar .ftext { font-size: 12px; color: var(--c-violet-soft); flex: 1; pointer-events: none; }
 #floatTitleBar .fbtn {
   width: 22px; height: 22px; border-radius: 50%; border: none; cursor: pointer;
@@ -34,10 +45,23 @@ body.tzos { position: relative; height: 100vh; overflow: hidden; background: #0c
   -webkit-app-region: no-drag;
 }
 #floatTitleBar .fbtn:hover { filter: brightness(1.2); }
-#floatTitleBar .fbtn.close { background: #ff5f57; color: #5b0700; }
+#floatTitleBar .fbtn.close { background-image: linear-gradient(rgba(95,8,17,.58),rgba(95,8,17,.58)), var(--os-button); background-size: cover; color: #fff; }
 </style>
 </head>
 <body class="tzos">
+<script>
+var __tzFloatParams = new URLSearchParams(location.search);
+window.__tzSiteEmbedMode = __tzFloatParams.get('site') === '1';
+if (__tzFloatParams.get('embedded') === '1') document.body.classList.add('float-embedded');
+if (window.__tzSiteEmbedMode) document.body.classList.add('float-site');
+try {
+  var __tzBootState = JSON.parse(localStorage.getItem("tzos_state_v1") || "{}");
+  if (__tzBootState.theme === "light") document.body.classList.add("light");
+  if (__tzBootState.palette === "mid" || __tzBootState.palette === "warm") {
+    document.body.setAttribute("data-palette", __tzBootState.palette);
+  }
+} catch (_) {}
+</script>
 <!-- 占位元素：os.js 需要这些 DOM 节点才能正常初始化 -->
 <div id="bootScreen" class="boot-screen" hidden></div>
 <div id="desktop" hidden></div>
@@ -56,9 +80,9 @@ body.tzos { position: relative; height: 100vh; overflow: hidden; background: #0c
 
 <!-- 自定义拖拽标题栏 -->
 <div id="floatTitleBar">
-  <span class="ficon">💬</span>
-  <span class="ftext">AI 悬浮窗</span>
-  <button class="fbtn close" id="floatCloseBtn" title="关闭 (Esc)">✕</button>
+  <span class="ficon tz-icon" style="--tz-ix:5;--tz-iy:1"></span>
+  <span class="ftext">AI 悬浮窗 · 4.0</span>
+  <button class="fbtn close" id="floatCloseBtn" title="关闭 (Esc)" aria-label="关闭 AI 悬浮窗"><span class="tz-icon" style="--tz-ix:1;--tz-iy:4"></span></button>
 </div>
 
 <!-- 悬浮窗主体：完整的 AI 对话 -->
@@ -68,7 +92,7 @@ body.tzos { position: relative; height: 100vh; overflow: hidden; background: #0c
 // 标记为悬浮窗模式，os.js 的 boot() 会走轻量路径
 window.__tzFloatMode = true;
 </script>
-<script src="https://wjtianze.github.io/os/assets/js/os.js"></script>
+<script src="https://wjtianze.github.io/os/assets/js/os.js?v=4.0.5-ui414"></script>
 <script>
 (function() {
   'use strict';
@@ -82,14 +106,15 @@ window.__tzFloatMode = true;
   waitForTZOS(function() {
     var root = document.getElementById('floatRoot');
     var winId = 'float-chat-win';
-    // 复用完整的 renderAIChat（含工具栏、消息区、附件、输入框），floatMode 隐藏命令行指示器
-    root.innerHTML = window.TZOS.renderAIChat({ floatMode: true });
-    // 初始化事件绑定，disableAgent=true 禁用 tzcli
-    window.TZOS.initChat(winId, true);
+    var siteMode = !!window.__tzSiteEmbedMode;
+    // 复用完整的 renderAIChat（含工具栏、消息区、附件、输入框与 Agent 开关）
+    root.innerHTML = window.TZOS.renderAIChat({ floatMode: true, siteMode: siteMode, disableAgent: siteMode });
+    // Agent 命令由 preload 的受控 IPC 转交给天择OS主窗口执行
+    window.TZOS.initChat(winId, siteMode);
     // 关闭按钮只在顶栏（floatCloseBar），工具栏不再重复添加
     // Esc 关闭
     document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') window.close();
+      if (e.key === 'Escape' && !siteMode) window.close();
     });
 
     // 标题栏关闭按钮

@@ -165,7 +165,8 @@ body.gpa-page { background: #050812; display: flex; flex-direction: column; min-
   border-radius: 10px;
   background: rgba(2, 6, 23, .42);
 }
-.gpa-stat label {
+.gpa-stat label,
+.gpa-stat .gpa-stat-label {
   display: block;
   color: var(--ink-faint);
   font: 650 9px/1.2 ui-monospace, SFMono-Regular, Consolas, monospace;
@@ -458,4 +459,92 @@ body.gpa-page { background: #050812; display: flex; flex-direction: column; min-
 @media (prefers-reduced-motion: reduce) {
   .gpa-page *, .gpa-page *::before, .gpa-page *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
   .gpa-card:hover:not(.disabled), .gpa-shop-slot.has-card:hover:not(.disabled), .gpa-btn:hover:not(:disabled) { transform: none; }
+}
+
+/* Tianze UI v4 generated material bridge for GPA Battle. */
+body.gpa-page {
+  background-color: #09111f !important;
+  background-image: var(--tz-v4-wallpaper) !important;
+  background-position: center top !important;
+  background-size: cover !important;
+  background-attachment: fixed !important;
+}
+
+.gpa-page :where(
+  .gpa-side,
+  .gpa-phase-bar,
+  .gpa-log-panel,
+  .gpa-stat,
+  .gpa-card,
+  .gpa-card-back,
+  .gpa-shop-slot,
+  .gpa-skill-chip,
+  .gpa-overlay-card,
+  .gpa-skill-option,
+  .gpa-toast
+) {
+  background-color: var(--tz-v4-surface-color) !important;
+  background-image: var(--tz-v4-surface) !important;
+  background-position: center !important;
+  background-size: cover !important;
+  background-blend-mode: multiply !important;
+  border-color: var(--tz-v4-line) !important;
+}
+
+.gpa-page .gpa-btn {
+  background-color: rgba(var(--c-blue-rgb), 0.42) !important;
+  background-image: var(--tz-v4-button) !important;
+  background-position: center !important;
+  background-size: cover !important;
+  background-blend-mode: screen !important;
+  border-color: var(--tz-v4-line) !important;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+}
+
+.gpa-page .gpa-btn:hover:not(:disabled) {
+  background-color: rgba(var(--c-green-rgb), 0.54) !important;
+  background-image: var(--tz-v4-button) !important;
+  filter: brightness(1.1) saturate(1.08);
+}
+
+.gpa-page .gpa-btn-ghost {
+  background-color: var(--tz-v4-surface-color) !important;
+  background-blend-mode: multiply !important;
+}
+
+/* Preserve gameplay state cues above the generated material bridge. */
+.gpa-page .gpa-side.opponent-side {
+  border-color: rgba(251, 113, 133, .2) !important;
+}
+
+.gpa-page .gpa-side.active-turn {
+  border-color: rgba(var(--c-emerald-rgb), .5) !important;
+}
+
+.gpa-page .gpa-side.opponent-side.active-turn {
+  border-color: rgba(var(--c-violet-soft-rgb), .52) !important;
+}
+
+.gpa-page .gpa-card.selected,
+.gpa-page .gpa-skill-option.selected {
+  border-color: var(--gpa-ok) !important;
+}
+
+.gpa-page .gpa-skill-option.selected {
+  background-color: rgba(var(--c-green-rgb), .07) !important;
+  background-blend-mode: multiply !important;
+}
+
+.gpa-page .gpa-btn.gpa-btn-danger {
+  background-color: rgba(127, 29, 29, .72) !important;
+  background-blend-mode: multiply !important;
+  border-color: rgba(251, 113, 133, .58) !important;
+  color: #fecdd3;
+}
+
+.gpa-page .gpa-btn.gpa-btn-danger:hover:not(:disabled) {
+  background-color: rgba(153, 27, 27, .78) !important;
+  background-blend-mode: multiply !important;
+  border-color: rgba(251, 113, 133, .78) !important;
 }

@@ -5,16 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>COC 专区 · 村庄存档分析 · 天择网</title>
   <meta name="description" content="天择网 COC 专区 —— 粘贴部落冲突村庄 JSON，自动解析并按家乡/夜世界分类展示村庄完整数据，计算剩余升级时间（含墙钟时间），并可进入数据查询、升级规划与法术伤害计算。" />
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css" />
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css" />
+  <script>(function(){try{var p=localStorage.getItem("tz_site_palette");if(p==="mid"||p==="warm")document.documentElement.setAttribute("data-palette",p);}catch(e){}})();</script>
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260731-v4.13" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css?v=20260731-v4.13" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-workspace.css?v=20260731-v4.13" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
-  <style>
-    /* COC 首页：二级专区导航按钮 */
-    .coc-nav { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 4px; }
-    .coc-nav a { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 14px; border-radius: 12px; background: var(--glass); border: 1px solid var(--glass-border); text-decoration: none; font-weight: 600; font-size: 15px; color: var(--ink); transition: transform .16s, box-shadow .16s; }
-    .coc-nav a:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(var(--c-purple-rgb),.14); }
-    @media (max-width: 720px) { .coc-nav { grid-template-columns: 1fr; } }
-  </style>
 </head>
 <body class="coc-tool coc-village-tool">
   <div class="bg-mesh"></div>
@@ -25,28 +20,35 @@
         <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/></svg></span>
         <span class="logo-text">天择网</span>
       </a>
-      <button class="nav-toggle" aria-label="菜单">☰</button>
+      <button class="nav-toggle" type="button" aria-label="菜单" data-ui-icon="menu"></button>
       <nav class="nav"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html" class="active"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a><a href="https://wjtianze.github.io/contact/index.html"><span>联系开发者</span></a></nav>
     </div>
   </header>
 
-  <main>
-    <section class="page-head wrap">
+  <main class="coc-console">
+    <div class="coc-tool-layout wrap">
+    <section class="page-head coc-tool-brief" aria-labelledby="cocVillageTitle">
       <div class="coc-kicker reveal in d1">Village Intelligence · Local Analysis</div>
-      <h1 class="reveal in d1">COC 专区 · 村庄存档 <span class="grad">分析</span></h1>
+      <h1 class="reveal in d1" id="cocVillageTitle">COC 专区 · 村庄存档 <span class="grad">分析</span></h1>
       <p class="reveal in d2">粘贴你的部落冲突村庄 JSON 数据，自动解析并按「家乡」与「夜世界」分类展示完整村庄信息，计算各类单位到达当前大本营满级的剩余升级时间（含按工人数量折算的墙钟时间）。所有解析在浏览器本地完成，数据仅保存在你自己的设备上。</p>
-    </section>
-
-    <!-- 二级专区导航 -->
-    <section class="section wrap" style="padding-top:18px;">
-      <div class="coc-nav reveal d1">
-        <a href="https://wjtianze.github.io/coc/data/index.html"><span>📊</span><span>数据查询</span></a>
-        <a href="https://wjtianze.github.io/coc/planner/index.html"><span>📅</span><span>升级规划</span></a>
-        <a href="https://wjtianze.github.io/coc/dmg-calc/index.html"><span>💥</span><span>伤害计算</span></a>
+      <div class="coc-brief-notes reveal in d2" aria-label="工具特性">
+        <span data-ui-icon="shield">全程本地解析，不上传存档</span>
+        <span data-ui-icon="home">家乡与夜世界分别整理</span>
+        <span data-ui-icon="calendar">结果可直接接入升级规划</span>
       </div>
     </section>
 
-    <section class="section wrap" style="padding-top:10px;">
+    <div class="coc-tool-content">
+    <!-- 二级专区导航 -->
+    <section class="section" style="padding-top:18px;">
+      <div class="coc-nav reveal d1">
+        <a href="https://wjtianze.github.io/coc/data/index.html"><span data-ui-icon="search"></span><span><b>数据查询</b><small>DATA INDEX</small></span></a>
+        <a href="https://wjtianze.github.io/coc/planner/index.html"><span data-ui-icon="calendar"></span><span><b>升级规划</b><small>TIMELINE</small></span></a>
+        <a href="https://wjtianze.github.io/coc/dmg-calc/index.html"><span data-ui-icon="burst"></span><span><b>伤害计算</b><small>SIMULATOR</small></span></a>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:10px;">
       <div class="card reveal v-input-area" style="padding:24px 28px;">
         <div class="section-head" style="margin-bottom:12px;">
           <h2><span class="bar"></span>粘贴村庄 JSON</h2>
@@ -63,7 +65,7 @@
       </div>
     </section>
 
-    <section class="section wrap v-result" id="vResult" tabindex="-1" aria-label="村庄分析结果">
+    <section class="section v-result" id="vResult" aria-label="村庄分析结果">
       <!-- 概况 -->
       <div class="card reveal" style="padding:24px 28px; margin-bottom:22px;">
         <div class="section-head" style="margin-bottom:14px;">
@@ -89,36 +91,38 @@
 
       <!-- 家乡 -->
       <div class="v-world">
-        <div class="v-world-title">🏰 家乡 <span class="vw-badge">Home Village</span></div>
+        <div class="v-world-title" data-ui-icon="home">家乡 <span class="vw-badge">Home Village</span></div>
         <div id="vHome"></div>
       </div>
 
       <!-- 夜世界 -->
       <div class="v-world">
-        <div class="v-world-title">🌙 夜世界 <span class="vw-badge">Builder Base</span></div>
+        <div class="v-world-title" data-ui-icon="moon">夜世界 <span class="vw-badge">Builder Base</span></div>
         <div id="vBB"></div>
       </div>
 
       <!-- 前往规划器 -->
       <a class="card reveal" href="https://wjtianze.github.io/coc/planner/index.html" style="padding:20px 26px; display:flex; gap:16px; align-items:center; flex-wrap:wrap; text-decoration:none; margin-top:22px;">
-        <div style="font-size:30px; flex-shrink:0;">📅</div>
+        <div class="coc-link-icon" data-ui-icon="calendar" aria-hidden="true"></div>
         <div style="flex:1; min-width:200px;">
           <h3 style="font-size:16px; font-weight:600; margin-bottom:3px; color:var(--ink);">前往升级规划器</h3>
           <p style="font-size:13.5px; color:var(--ink-dim);">基于刚才解析的村庄数据，用甘特图规划升级排程。家乡与夜世界分开，支持稳本 / 速本两种模式，自动安排工人、可拖拽微调。</p>
         </div>
-        <span class="btn btn--sm" style="flex-shrink:0;"><span>打开规划器 →</span></span>
+        <span class="btn btn--sm" style="flex-shrink:0;"><span data-ui-icon="right">打开规划器</span></span>
       </a>
 
       <!-- 脚本开源 -->
       <a class="card reveal" href="https://wjtianze.github.io/coc/village/village_parser.py" download style="padding:20px 26px; display:flex; gap:16px; align-items:center; flex-wrap:wrap; text-decoration:none; margin-top:14px;">
-        <div style="font-size:30px; flex-shrink:0;">🐍</div>
+        <div class="coc-link-icon" data-ui-icon="terminal" aria-hidden="true"></div>
         <div style="flex:1; min-width:200px;">
           <h3 style="font-size:16px; font-weight:600; margin-bottom:3px; color:var(--ink);">本页解析脚本已开源</h3>
           <p style="font-size:13.5px; color:var(--ink-dim);">村庄 JSON 解析与升级时间计算的完整逻辑（Python 脚本），可独立运行，输入村庄 JSON 即可输出结构化中文报告。免费、不限用途。</p>
         </div>
-        <span class="btn btn--sm" style="flex-shrink:0;"><span>下载 village_parser.py ↓</span></span>
+        <span class="btn btn--sm" style="flex-shrink:0;"><span data-ui-icon="download">下载 village_parser.py</span></span>
       </a>
     </section>
+    </div>
+    </div>
   </main>
 
   <footer class="footer">
@@ -128,7 +132,7 @@
     </div>
   </footer>
 
-  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260725a"></script>
-  <script defer src="https://wjtianze.github.io/coc/app.js"></script>
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260731-v4.13"></script>
+  <script defer src="https://wjtianze.github.io/coc/app.js?v=20260731-v4.13"></script>
 </body>
 </html>

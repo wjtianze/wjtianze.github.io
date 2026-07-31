@@ -5,104 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>联系开发者 · 天择网</title>
   <meta name="description" content="联系天择网开发者：QQ 与邮箱，GitHub 与天择OS 社区入口。意见箱有计划开发。" />
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css" />
+  <script>(function(){try{var p=localStorage.getItem("tz_site_palette");if(p==="mid"||p==="warm")document.documentElement.setAttribute("data-palette",p);}catch(e){}})();</script>
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260731-v4.13" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/workspace-pages.css?v=20260731-v4.13" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
-  <style>
-    /* ============ 紧凑 hero（覆盖全屏 hero 基类：联系页不做大屏首屏） ============ */
-    .contact-hero { min-height: 0 !important; display: block !important; padding: 40px 20px 4px !important; text-align: center; }
-    .contact-hero::after { display: none !important; }
-    .contact-hero h1 { font-size: 30px; margin-bottom: 8px; letter-spacing: -.02em; }
-    .contact-hero .lead { font-size: 14.5px; max-width: 520px; margin: 0 auto; line-height: 1.75; }
-    .contact-hero .hero-eyebrow { display: inline-flex; margin-bottom: 12px; }
-
-    /* ============ 联系方式大卡 ============ */
-    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-    @media (max-width: 720px) { .contact-grid { grid-template-columns: 1fr; } }
-    .contact-card {
-      position: relative;
-      padding: 28px 26px 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      overflow: hidden;
-    }
-    .contact-card .ci-head { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
-    .contact-card .ci-icon {
-      width: 46px; height: 46px; border-radius: 13px;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-      color: #fff;
-      box-shadow: 0 6px 20px -8px rgba(var(--c-purple-rgb),.45);
-    }
-    .contact-card.qq .ci-icon { background: linear-gradient(135deg, #18a2ff 0%, #2a72ff 100%); box-shadow: 0 6px 20px -8px rgba(42,114,255,.6); }
-    .contact-card.mail .ci-icon { background: linear-gradient(135deg, var(--c-purple) 0%, var(--c-blue) 100%); box-shadow: 0 6px 20px -8px rgba(var(--c-purple-rgb),.55); }
-    .contact-card .ci-name { font-size: 17px; font-weight: 760; letter-spacing: -.01em; }
-    .contact-card .ci-sub { font-size: 12.5px; color: var(--ink-faint); margin-top: 2px; }
-    .contact-card .ci-value {
-      font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
-      font-size: 18px; font-weight: 700;
-      color: var(--ink); letter-spacing: .01em;
-      padding: 12px 14px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 12px;
-      margin: 6px 0 14px;
-      word-break: break-all;
-    }
-    .contact-card .ci-actions { display: flex; gap: 10px; }
-    .contact-card .ci-actions .btn { flex: 1; padding: 11px 14px; font-size: 13.5px; }
-    /* 提示气泡：复制成功 */
-    .copy-toast {
-      position: absolute; top: 22px; right: 22px;
-      padding: 5px 11px; font-size: 12px; font-weight: 600;
-      color: var(--c-green); background: rgba(var(--c-green-rgb),0.12);
-      border: 1px solid rgba(var(--c-green-rgb),0.3);
-      border-radius: 999px;
-      opacity: 0; transform: translateY(-4px);
-      transition: opacity .25s, transform .25s;
-      pointer-events: none;
-    }
-    .copy-toast.show { opacity: 1; transform: translateY(0); }
-
-    /* ============ 二级入口：GitHub + OS 社区 ============ */
-    .contact-mini {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px;
-    }
-    @media (max-width: 720px) { .contact-mini { grid-template-columns: 1fr; } }
-    .mini-card {
-      display: flex; align-items: center; gap: 14px;
-      padding: 18px 20px;
-      text-decoration: none; color: var(--ink);
-    }
-    .mini-card .mi-icon {
-      width: 38px; height: 38px; border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      background: rgba(var(--c-purple-rgb),0.12); color: var(--c-violet-soft);
-      flex-shrink: 0;
-    }
-    .mini-card.os .mi-icon { background: rgba(var(--c-green-rgb),0.12); color: var(--c-green-soft); }
-    .mini-card .mi-text { flex: 1; min-width: 0; }
-    .mini-card .mi-name { font-size: 14.5px; font-weight: 700; }
-    .mini-card .mi-sub { font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
-    .mini-card .mi-arrow { color: var(--ink-muted); font-size: 18px; transition: transform .25s; }
-    .mini-card:hover .mi-arrow { transform: translateX(4px); color: var(--ink); }
-
-    /* ============ 意见箱说明 ============ */
-    .note-card {
-      margin-top: 22px;
-      padding: 22px 26px;
-      border-left: 3px solid rgba(var(--c-purple-rgb),.35);
-    }
-    .note-card .note-title {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 14.5px; font-weight: 700; margin-bottom: 8px;
-    }
-    .note-card .note-title .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--grad-main); }
-    .note-card p { color: var(--ink-dim); font-size: 14px; line-height: 1.85; margin: 0; }
-    .note-card p + p { margin-top: 8px; }
-  </style>
 </head>
-<body>
+<body data-workspace-page="contact">
+  <a class="wp-skip" href="#main-content">跳到主要内容</a>
   <div class="bg-mesh"></div>
 
   <header class="topbar">
@@ -111,89 +20,75 @@
         <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/></svg></span>
         <span class="logo-text">天择网</span>
       </a>
-      <button class="nav-toggle" aria-label="菜单">☰</button>
+      <button class="nav-toggle" type="button" aria-label="菜单" data-ui-icon="menu"></button>
       <nav class="nav"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a><a href="https://wjtianze.github.io/contact/index.html" class="active"><span>联系开发者</span></a></nav>
     </div>
   </header>
 
-  <main>
-    <section class="hero contact-hero wrap">
-      <div class="hero-eyebrow reveal in"><span class="dot"></span> 联系开发者</div>
-      <h1 class="reveal in d1">找我<span class="grad">聊聊天</span></h1>
-      <p class="lead reveal in d2">有问题想反馈、想聊合作、或者只是想打个招呼——挑下面任何一种方式都行，我都会认真看。</p>
+  <main id="main-content" tabindex="-1">
+    <section class="wp-hero wrap" aria-labelledby="contact-title">
+      <div>
+        <div class="wp-kicker">CONTACT CONSOLE · ONLINE</div>
+        <h1 id="contact-title">找我<span class="grad">聊聊天</span></h1>
+        <p>有问题想反馈、想聊合作、或者只是想打个招呼——挑下面任何一种方式都行，我都会认真看。</p>
+        <div class="wp-commandbar"><span data-ui-icon="chat" aria-hidden="true"></span><span>建议附上页面地址、操作步骤与截图，能更快定位问题</span></div>
+      </div>
+      <div class="wp-hero-visual" aria-hidden="true"><span data-ui-icon="chat"></span></div>
     </section>
 
-    <section class="section wrap" style="padding-top:30px;">
-      <!-- 主联系方式：QQ + 邮箱 -->
-      <div class="contact-grid">
-        <div class="card contact-card qq reveal d1">
-          <div class="copy-toast" id="toast-qq">已复制 ✓</div>
-          <div class="ci-head">
-            <div class="ci-icon">
-              <!-- QQ 企鹅剪影 -->
-              <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M12 2c-3.5 0-6.2 2.5-6.2 5.7 0 1.4.5 2.7 1.3 3.7-.4.4-.9.7-1.4.9-.5.2-1 .3-1.5.3-.1 0-.2.1-.2.2 0 .6.4 1.5 1.3 2.2.7.6 1.7.9 2.7.9.2 0 .4 0 .6-.1-.2.4-.3.9-.3 1.4 0 .6.1 1.1.4 1.6-.5.4-1.1.7-1.7.9-.2.1-.3.3-.2.5.4.9 1.5 1.5 2.8 1.5 1.1 0 2.1-.4 2.7-1.1.5.1 1 .2 1.5.2.6 0 1.2-.1 1.7-.2.6.7 1.6 1.1 2.7 1.1 1.3 0 2.4-.6 2.8-1.5.1-.2 0-.4-.2-.5-.6-.2-1.2-.5-1.7-.9.3-.5.4-1 .4-1.6 0-.5-.1-1-.3-1.4.2.1.4.1.6.1 1 0 2-.3 2.7-.9.9-.7 1.3-1.6 1.3-2.2 0-.1-.1-.2-.2-.2-.5 0-1-.1-1.5-.3-.5-.2-1-.5-1.4-.9.8-1 1.3-2.3 1.3-3.7C18.2 4.5 15.5 2 12 2zm-2.5 4.3c.6 0 1 .5 1 1.1 0 .6-.5 1.1-1 1.1-.6 0-1-.5-1-1.1 0-.6.4-1.1 1-1.1zm5 0c.6 0 1 .5 1 1.1 0 .6-.5 1.1-1 1.1-.6 0-1-.5-1-1.1 0-.6.4-1.1 1-1.1z"/></svg>
-            </div>
-            <div>
-              <div class="ci-name">QQ</div>
-              <div class="ci-sub">添加好友时备注「天择网」</div>
-            </div>
-          </div>
-          <div class="ci-value">3233413314</div>
-          <div class="ci-actions">
-            <button class="btn" onclick="copyText('3233413314', 'toast-qq')">复制 QQ 号</button>
-            <a class="btn btn--ghost" href="https://wpa.qq.com/msgrd?v=3&uin=3233413314&site=qq&menu=yes" target="_blank" rel="noopener">唤起 QQ →</a>
-          </div>
-        </div>
-
-        <div class="card contact-card mail reveal d2">
-          <div class="copy-toast" id="toast-mail">已复制 ✓</div>
-          <div class="ci-head">
-            <div class="ci-icon">
-              <!-- 信封图标 -->
-              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M3 6.5l9 6.5 9-6.5"/></svg>
-            </div>
-            <div>
-              <div class="ci-name">邮箱</div>
-              <div class="ci-sub">邮件主题请包含「天择网」</div>
-            </div>
-          </div>
-          <div class="ci-value">3233413314@qq.com</div>
-          <div class="ci-actions">
-            <button class="btn" onclick="copyText('3233413314@qq.com', 'toast-mail')">复制邮箱</button>
-            <a class="btn btn--ghost" href="mailto:3233413314@qq.com?subject=%E5%85%B3%E4%BA%8E%E5%A4%A9%E6%8B%A9%E7%BD%91" target="_blank" rel="noopener">写邮件 →</a>
-          </div>
-        </div>
+    <section class="wp-section wrap" aria-labelledby="contact-methods">
+      <div class="wp-section-head reveal">
+        <div><div class="wp-kicker">DIRECT CHANNELS</div><h2 id="contact-methods">选择联系方式</h2></div>
+        <p>复制完成后会在当前卡片提示</p>
       </div>
+      <div class="wp-grid">
+        <article class="wp-card wp-contact-primary reveal d1">
+          <div class="copy-toast" id="toast-qq" role="status" aria-live="polite" data-success="QQ 号已复制">QQ 号已复制</div>
+          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="chat"></span></div>
+          <h3>QQ</h3>
+          <p>适合快速反馈与一般交流。添加好友时请备注「天择网」。</p>
+          <div class="wp-contact-value">3233413314</div>
+          <div class="wp-actions">
+            <button class="btn" type="button" data-copy="3233413314" data-toast="toast-qq" data-ui-icon="copy">复制 QQ 号</button>
+            <a class="btn btn--ghost" href="https://wpa.qq.com/msgrd?v=3&amp;uin=3233413314&amp;site=qq&amp;menu=yes" target="_blank" rel="noopener" data-ui-icon="chat">唤起 QQ</a>
+          </div>
+        </article>
 
-      <!-- 二级入口 -->
-      <div class="contact-mini">
-        <a class="card mini-card reveal d2" href="https://github.com/wjtianze" target="_blank" rel="noopener">
-          <div class="mi-icon">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.55v-1.93c-3.2.69-3.87-1.54-3.87-1.54-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.74 2.68 1.24 3.34.95.1-.74.4-1.24.73-1.53-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.51-1.46.11-3.04 0 0 .97-.31 3.18 1.18.92-.26 1.91-.39 2.89-.39.98 0 1.97.13 2.89.39 2.21-1.49 3.18-1.18 3.18-1.18.62 1.58.23 2.75.11 3.04.74.81 1.19 1.84 1.19 3.1 0 4.43-2.7 5.41-5.27 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.55C20.21 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z"/></svg>
+        <article class="wp-card wp-contact-secondary reveal d2">
+          <div class="copy-toast" id="toast-mail" role="status" aria-live="polite" data-success="邮箱已复制">邮箱已复制</div>
+          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="document"></span></div>
+          <h3>邮箱</h3>
+          <p>适合较长说明、附件与合作沟通。邮件主题请包含「天择网」。</p>
+          <div class="wp-contact-value">3233413314@qq.com</div>
+          <div class="wp-actions">
+            <button class="btn" type="button" data-copy="3233413314@qq.com" data-toast="toast-mail" data-ui-icon="copy">复制邮箱</button>
+            <a class="btn btn--ghost" href="mailto:3233413314@qq.com?subject=%E5%85%B3%E4%BA%8E%E5%A4%A9%E6%8B%A9%E7%BD%91" data-ui-icon="pen">写邮件</a>
           </div>
-          <div class="mi-text">
-            <div class="mi-name">GitHub · wjtianze</div>
-            <div class="mi-sub">源码、Issue 与版本发布</div>
-          </div>
-          <div class="mi-arrow">→</div>
-        </a>
-        <a class="card mini-card os reveal d3" href="https://wjtianze.github.io/os/index.html">
-          <div class="mi-icon">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-          </div>
-          <div class="mi-text">
-            <div class="mi-name">天择OS · 反馈与建议</div>
-            <div class="mi-sub">在桌面版/网页版里直接体验</div>
-          </div>
-          <div class="mi-arrow">→</div>
-        </a>
-      </div>
+        </article>
 
-      <!-- 意见箱说明 -->
-      <div class="card note-card reveal d3">
-        <div class="note-title"><span class="dot"></span>关于站内「意见箱」</div>
-        <p><b>已有开发计划</b>——站内意见箱可以让你直接在网站上提交反馈，无需跳转到外部应用。但目前需要购买服务器才能上线，会视天择网的<b>使用人数</b>决定是否开发与何时上线。</p>
-        <p>在那之前，请通过上方 QQ 或邮箱联系我，每一条反馈我都会认真看。</p>
+        <a class="wp-card wp-contact-primary reveal d2" href="https://github.com/wjtianze" target="_blank" rel="noopener">
+          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="globe"></span></div>
+          <h3>GitHub · wjtianze</h3>
+          <p>查看源码、Issue 与版本发布。打开后会离开本站。</p>
+          <span class="wp-action-link">打开 GitHub <span data-ui-icon="right" aria-hidden="true"></span></span>
+        </a>
+
+        <a class="wp-card wp-contact-secondary reveal d3" href="https://wjtianze.github.io/os/index.html">
+          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="monitor"></span></div>
+          <h3>天择OS · 反馈与建议</h3>
+          <p>先在桌面版或网页版复现问题，再把具体步骤告诉我。</p>
+          <span class="wp-action-link">打开天择OS 页面 <span data-ui-icon="right" aria-hidden="true"></span></span>
+        </a>
+
+        <aside class="wp-card wp-contact-wide reveal d3" aria-labelledby="feedback-box-title">
+          <div class="wp-notice">
+            <span class="wp-notice-icon" aria-hidden="true"><span data-ui-icon="info"></span></span>
+            <div>
+              <h3 id="feedback-box-title">关于站内「意见箱」</h3>
+              <p><b>已有开发计划。</b>站内意见箱未来可直接提交反馈，无需跳转到外部应用；目前仍需服务器支持，会视使用人数决定开发与上线时间。在那之前，请使用上方 QQ 或邮箱。</p>
+            </div>
+          </div>
+        </aside>
       </div>
     </section>
   </main>
@@ -209,8 +104,14 @@
   // 复制并显示气泡
   function copyText(t, toastId) {
     var toast = document.getElementById(toastId);
-    var onOk = function () { if (toast) { toast.classList.add('show'); setTimeout(function(){ toast.classList.remove('show'); }, 1600); } };
-    var onFail = function () { alert('复制失败，请手动选中复制'); };
+    var showToast = function (message) {
+      if (!toast) return;
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(function(){ toast.classList.remove('show'); }, 1800);
+    };
+    var onOk = function () { showToast(toast && toast.getAttribute('data-success') || '已复制'); };
+    var onFail = function () { showToast('复制失败，请手动复制'); };
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(t).then(onOk, function(){ fallback(t, onOk, onFail); });
     } else {
@@ -226,7 +127,12 @@
     try { document.execCommand('copy'); ok && ok(); } catch (e) { fail && fail(); }
     document.body.removeChild(i);
   }
+  document.querySelectorAll('[data-copy]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      copyText(button.getAttribute('data-copy') || '', button.getAttribute('data-toast') || '');
+    });
+  });
   </script>
-  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260725a"></script>
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260731-v4.13"></script>
 </body>
 </html>

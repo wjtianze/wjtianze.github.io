@@ -5,6 +5,10 @@
 (function () {
   "use strict";
 
+  function uiGlyph(key) {
+    return '<span class="tz-icon" data-icon="' + key + '" aria-hidden="true"></span>';
+  }
+
   // ===== 卡牌数据 =====
   var CARDS = [
     { id: "basic_q",     name: "基础题",   type: "攻击",   buyCost: 2, useCost: 1, weight: 14, target: "enemy", desc: "造成 8 伤害" },
@@ -33,6 +37,18 @@
   ];
   var SKILL_MAP = {};
   SKILLS.forEach(function (s) { SKILL_MAP[s.id] = s; });
+  var CARD_TYPE_ICON = {
+    "攻击": "swords",
+    "防御": "shield",
+    "治疗": "heart",
+    "过牌": "refresh",
+    "资源": "lightning",
+    "检索": "search",
+    "GPA": "trophy",
+    "干扰": "burst",
+    "逆风": "warning",
+    "连携": "sparkle"
+  };
 
   // ===== GPA 里程碑 =====
   var MILESTONES = [
@@ -48,10 +64,45 @@
   var G = null;
   var activeDialog = null;
   var dialogReturnFocus = null;
+  var toastTimer = 0;
 
   function getFocusable(container) {
     return Array.prototype.slice.call(container.querySelectorAll('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'))
       .filter(function (el) { return !el.hidden && el.offsetParent !== null; });
+  }
+
+  function focusWithoutScroll(element) {
+    if (!element) return;
+    var scrollX = window.scrollX;
+    var scrollY = window.scrollY;
+    try {
+      element.focus({ preventScroll: true });
+    } catch (error) {
+      element.focus();
+      window.scrollTo(scrollX, scrollY);
+    }
+  }
+
+  function keepBoardBelowTopbar(board) {
+    if (!board) return;
+    window.requestAnimationFrame(function () {
+      var topbar = document.querySelector(".topbar");
+      var safeTop = (topbar ? topbar.getBoundingClientRect().bottom : 64) + 14;
+      var boardTop = board.getBoundingClientRect().top;
+      if (boardTop < safeTop) {
+        var root = document.documentElement;
+        var previousScrollBehavior = root.style.scrollBehavior;
+        root.style.setProperty("scroll-behavior", "auto", "important");
+        window.scrollTo({
+          left: window.scrollX,
+          top: Math.max(0, window.scrollY + boardTop - safeTop),
+          behavior: "auto"
+        });
+        window.requestAnimationFrame(function () {
+          root.style.scrollBehavior = previousScrollBehavior;
+        });
+      }
+    });
   }
 
   function openDialog(dialog, preferredFocus) {
@@ -149,6 +200,7 @@
     G.phase = "action";
     log("system", "你的回合——行动阶段");
     render();
+    announce("你的回合。当前能量 " + p.energy + "，手牌 " + p.hand.length + " 张。");
   }
 
   function buildDeck(p) {
@@ -285,6 +337,7 @@
   // ===== AI 回合 =====
   function aiTurn() {
     if (G.ended) return;
+    if (activeDialog) { setTimeout(aiTurn, 250); return; }
     var ai = G.ai;
     var pl = G.player;
     // supply phase
@@ -303,6 +356,7 @@
     log("system", "AI 补给：能量 " + ai.energy + "，手牌 " + ai.hand.length);
     G.phase = "action";
     render();
+    announce("AI 回合，请稍候。");
 
     // AI decisions
     setTimeout(aiAction, 500);
@@ -360,6 +414,7 @@
 
   function aiAction() {
     if (G.ended) return;
+    if (activeDialog) { setTimeout(aiAction, 250); return; }
     var ai = G.ai;
     var pl = G.player;
 
@@ -548,12 +603,13 @@
     var title = document.getElementById("endTitle");
     var desc = document.getElementById("endDesc");
     if (winner === "player") {
-      icon.textContent = "🏆"; icon.className = "gpa-dialog-icon win-icon";
+      icon.textContent = ""; icon.className = "gpa-dialog-icon win-icon"; icon.setAttribute("data-ui-icon", "trophy");
       title.textContent = "胜利！";
     } else {
-      icon.textContent = "💀"; icon.className = "gpa-dialog-icon lose-icon";
+      icon.textContent = ""; icon.className = "gpa-dialog-icon lose-icon"; icon.setAttribute("data-ui-icon", "warning");
       title.textContent = "失败";
     }
+    if (window.TZUI && window.TZUI.setIcon) window.TZUI.setIcon(icon, winner === "player" ? "trophy" : "warning");
     desc.innerHTML = reason + "<br/>回合 " + G.turn + "　|　你的 GPA " + G.player.gpa.toFixed(1) + "　|　AI GPA " + G.ai.gpa.toFixed(1);
     announce(title.textContent + "。" + reason);
     openDialog(screen, document.getElementById("playAgainBtn"));
@@ -576,8 +632,12 @@
     // phase bar
     document.querySelectorAll(".gpa-phase-step").forEach(function (el) {
       el.classList.remove("active", "done");
+      el.removeAttribute("aria-current");
       var ph = el.getAttribute("data-phase");
-      if (ph === G.phase) el.classList.add("active");
+      if (ph === G.phase) {
+        el.classList.add("active");
+        el.setAttribute("aria-current", "step");
+      }
     });
 
     var isPlayerTurn = G.firstPlayer === "player";
@@ -620,16 +680,20 @@
     var hpPct = Math.max(0, Math.min(100, (p.hp / p.maxHp) * 100));
     var gpaPct = Math.max(0, Math.min(100, (p.gpa / 4.3) * 100));
     el.innerHTML =
-      '<div class="gpa-stat"><label>生命</label><span class="val hp">' + Math.max(0, p.hp) + '</span><div class="gpa-hp-bar"><div class="gpa-hp-bar-fill" style="width:' + hpPct + '%"></div></div></div>' +
-      '<div class="gpa-stat"><label>GPA</label><span class="val gpa">' + p.gpa.toFixed(1) + '</span><div class="gpa-gpa-bar"><div class="gpa-gpa-bar-fill" style="width:' + gpaPct + '%"></div></div></div>' +
-      '<div class="gpa-stat"><label>能量</label><span class="val energy">' + p.energy + '</span></div>' +
-      '<div class="gpa-stat"><label>护盾</label><span class="val shield">' + p.shield + '</span></div>';
+      '<div class="gpa-stat"><span class="gpa-stat-label">生命</span><span class="val hp">' + Math.max(0, p.hp) + '</span><div class="gpa-hp-bar" role="progressbar" aria-label="' + p.name + '生命值" aria-valuemin="0" aria-valuemax="' + p.maxHp + '" aria-valuenow="' + Math.max(0, p.hp) + '"><div class="gpa-hp-bar-fill" style="width:' + hpPct + '%"></div></div></div>' +
+      '<div class="gpa-stat"><span class="gpa-stat-label">GPA</span><span class="val gpa">' + p.gpa.toFixed(1) + '</span><div class="gpa-gpa-bar" role="progressbar" aria-label="' + p.name + ' GPA" aria-valuemin="0" aria-valuemax="4.3" aria-valuenow="' + p.gpa.toFixed(1) + '"><div class="gpa-gpa-bar-fill" style="width:' + gpaPct + '%"></div></div></div>' +
+      '<div class="gpa-stat"><span class="gpa-stat-label">能量</span><span class="val energy">' + p.energy + '</span></div>' +
+      '<div class="gpa-stat"><span class="gpa-stat-label">护盾</span><span class="val shield">' + p.shield + '</span></div>';
   }
 
   function renderPlayerHand() {
     var el = document.getElementById("playerHand");
     var p = G.player;
     var isMyTurn = G.firstPlayer === "player" && G.phase === "action";
+    if (!p.hand.length) {
+      el.innerHTML = '<div class="gpa-empty-state" role="status">' + uiGlyph("file") + '<span>手牌为空，下一次补给会自动抽牌</span></div>';
+      return;
+    }
     el.innerHTML = p.hand.map(function (id, i) {
       var c = CARD_MAP[id];
       var cost = c.useCost;
@@ -639,12 +703,12 @@
       var canPlay = isMyTurn && p.energy >= cost;
       return '<button type="button" class="gpa-card' + (canPlay ? "" : " disabled") + '" data-idx="' + i + '"' + (canPlay ? "" : " disabled") + ' aria-label="' + c.name + '，' + c.type + '，' + c.desc + '，使用能量 ' + cost + '">' +
         '<span class="gpa-card-name">' + c.name + '</span>' +
-        '<span class="gpa-card-type ' + c.type + '">' + c.type + '</span>' +
+        '<span class="gpa-card-type ' + c.type + '">' + uiGlyph(CARD_TYPE_ICON[c.type] || "file") + c.type + '</span>' +
         '<span class="gpa-card-desc">' + c.desc + '</span>' +
         '<span class="gpa-card-cost">' +
-          '<span class="cost-use">⚡' + cost + '</span>' +
-          '<span class="cost-buy">💰' + c.buyCost + '</span>' +
-          '<span class="cost-wt">⚖' + c.weight + '</span>' +
+          '<span class="cost-use">' + uiGlyph("lightning") + '<b>' + cost + '</b></span>' +
+          '<span class="cost-buy">' + uiGlyph("cart") + '<b>' + c.buyCost + '</b></span>' +
+          '<span class="cost-wt">' + uiGlyph("info") + '<b>' + c.weight + '</b></span>' +
         '</span></button>';
     }).join("");
     el.querySelectorAll(".gpa-card").forEach(function (card) {
@@ -657,8 +721,12 @@
 
   function renderAIHand() {
     var el = document.getElementById("aiHand");
+    if (!G.ai.hand.length) {
+      el.innerHTML = '<div class="gpa-empty-state">' + uiGlyph("file") + '<span>AI 手牌为空</span></div>';
+      return;
+    }
     el.innerHTML = G.ai.hand.map(function (_, i) {
-      return '<div class="gpa-card-back" aria-label="AI 手牌 ' + (i + 1) + '">🂠</div>';
+      return '<div class="gpa-card-back" role="img" aria-label="AI 手牌 ' + (i + 1) + '">' + uiGlyph("file") + '</div>';
     }).join("");
   }
 
@@ -673,9 +741,9 @@
       return '<button type="button" class="gpa-shop-slot has-card' + (canBuy ? "" : " disabled") + '" data-idx="' + i + '"' + (canBuy ? "" : " disabled") + ' aria-label="购买 ' + c.name + '，' + c.desc + '，需要能量 ' + c.buyCost + '">' +
         '<span class="gpa-shop-card-body">' +
         '<span class="gpa-card-name">' + c.name + '</span>' +
-        '<span class="gpa-card-type ' + c.type + '">' + c.type + '</span>' +
+        '<span class="gpa-card-type ' + c.type + '">' + uiGlyph(CARD_TYPE_ICON[c.type] || "file") + c.type + '</span>' +
         '<span class="gpa-card-desc">' + c.desc + '</span>' +
-        '<span class="gpa-card-cost"><span class="cost-buy">💰' + c.buyCost + '</span><span class="cost-wt">⚖' + c.weight + '</span></span>' +
+        '<span class="gpa-card-cost"><span class="cost-buy">' + uiGlyph("cart") + '<b>' + c.buyCost + '</b></span><span class="cost-wt">' + uiGlyph("info") + '<b>' + c.weight + '</b></span></span>' +
         '</span></button>';
     }).join("");
     el.querySelectorAll(".gpa-shop-slot.has-card").forEach(function (slot) {
@@ -691,10 +759,13 @@
     var p = G.player;
     el.innerHTML = p.skills.map(function (sk, i) {
       var def = SKILL_MAP[sk.id];
+      if (def.isPassive) {
+        return '<span class="gpa-skill-chip is-passive" role="note" aria-label="被动技能 ' + def.name + '，' + def.desc + '">' + uiGlyph("shield") + def.name + '</span>';
+      }
       var ready = !def.isPassive && sk.cooldown === 0 && p.energy >= (def.energyCost || 0) && G.firstPlayer === "player" && G.phase === "action";
       var cls = "gpa-skill-chip" + (ready ? " ready" : "") + (sk.cooldown > 0 ? " on-cd" : "");
       var cd = sk.cooldown > 0 ? ' <span class="cd-tag">CD' + sk.cooldown + '</span>' : "";
-      return '<button type="button" class="' + cls + '" data-idx="' + i + '"' + (ready ? "" : " disabled") + ' aria-label="技能 ' + def.name + '，' + def.desc + '">' + def.name + cd + '</button>';
+      return '<button type="button" class="' + cls + '" data-idx="' + i + '"' + (ready ? "" : " disabled") + ' aria-label="技能 ' + def.name + '，' + def.desc + '">' + uiGlyph("lightning") + def.name + cd + '</button>';
     }).join("");
     el.querySelectorAll(".gpa-skill-chip.ready").forEach(function (chip) {
       chip.addEventListener("click", function () {
@@ -709,58 +780,96 @@
     var el = document.getElementById("toast");
     el.textContent = msg;
     el.classList.add("show");
-    setTimeout(function () { el.classList.remove("show"); }, 2000);
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.remove("show"); }, 2000);
   }
 
   // ===== 开始界面 =====
   function initStartScreen() {
     var container = document.getElementById("skillPick");
-    var selected = { passive: null, active: null };
+    var startButton = document.getElementById("startBtn");
+    var status = document.getElementById("skillPickStatus");
     container.innerHTML = SKILLS.map(function (s) {
-      return '<button type="button" class="gpa-skill-option" data-id="' + s.id + '" aria-pressed="false">' +
-        '<span class="sk-name">' + s.name + '</span>' +
+      return '<button type="button" class="gpa-skill-option" data-id="' + s.id + '" data-kind="' + (s.isPassive ? "passive" : "active") + '" aria-pressed="false">' +
+        '<span class="sk-name">' + uiGlyph(s.isPassive ? "shield" : "lightning") + s.name + '</span>' +
         '<span class="sk-type">' + (s.isPassive ? "被动" : "主动") + (s.cooldown ? " · CD" + s.cooldown : "") + '</span>' +
         '<span class="sk-desc">' + s.desc + '</span>' +
         '<span class="sk-cost">生命成本 ' + s.hpCost + (s.energyCost ? " · 能量 " + s.energyCost : "") + '</span>' +
         '</button>';
     }).join("");
-    container.querySelectorAll(".gpa-skill-option").forEach(function (el) {
-      el.addEventListener("click", function () {
-        var id = this.getAttribute("data-id");
-        var skill = SKILL_MAP[id];
-        if (skill.isPassive) {
-          container.querySelectorAll(".gpa-skill-option").forEach(function (e) {
-            var sid = e.getAttribute("data-id");
-            if (SKILL_MAP[sid].isPassive) { e.classList.remove("selected"); e.setAttribute("aria-pressed", "false"); }
-          });
-          selected.passive = id;
-        } else {
-          container.querySelectorAll(".gpa-skill-option").forEach(function (e) {
-            var sid = e.getAttribute("data-id");
-            if (!SKILL_MAP[sid].isPassive) { e.classList.remove("selected"); e.setAttribute("aria-pressed", "false"); }
-          });
-          selected.active = id;
-        }
-        this.classList.add("selected");
-        this.setAttribute("aria-pressed", "true");
-        document.getElementById("startBtn").disabled = !(selected.passive && selected.active);
+
+    function selectedOption(kind) {
+      return container.querySelector('.gpa-skill-option.selected[data-kind="' + kind + '"]');
+    }
+
+    function syncSelectionState() {
+      var passive = selectedOption("passive");
+      var active = selectedOption("active");
+      startButton.disabled = !(passive && active);
+      if (passive && active) {
+        status.textContent = "已选：" + SKILL_MAP[passive.getAttribute("data-id")].name + " + " + SKILL_MAP[active.getAttribute("data-id")].name + "。可以启动对局。";
+      } else if (passive) {
+        status.textContent = "已选择被动技能，请再选择一项主动技能。";
+      } else if (active) {
+        status.textContent = "已选择主动技能，请再选择一项被动技能。";
+      } else {
+        status.textContent = "请选择一项被动技能和一项主动技能。";
+      }
+    }
+
+    container.addEventListener("click", function (event) {
+      var option = event.target.closest(".gpa-skill-option");
+      if (!option || !container.contains(option)) return;
+      var kind = option.getAttribute("data-kind");
+      container.querySelectorAll('.gpa-skill-option[data-kind="' + kind + '"]').forEach(function (item) {
+        item.classList.remove("selected");
+        item.setAttribute("aria-pressed", "false");
       });
+      option.classList.add("selected");
+      option.setAttribute("aria-pressed", "true");
+      syncSelectionState();
     });
-    document.getElementById("startBtn").addEventListener("click", function () {
-      if (!selected.passive || !selected.active) return;
-      var picked = [SKILL_MAP[selected.passive], SKILL_MAP[selected.active]];
-      closeDialog(document.getElementById("startScreen"), false);
-      document.getElementById("gameBoard").style.display = "";
-      newGame(picked);
+
+    startButton.addEventListener("click", function () {
+      var passive = selectedOption("passive");
+      var active = selectedOption("active");
+      if (!passive || !active) {
+        syncSelectionState();
+        return;
+      }
+      var picked = [
+        SKILL_MAP[passive.getAttribute("data-id")],
+        SKILL_MAP[active.getAttribute("data-id")]
+      ];
+      startButton.disabled = true;
+      try {
+        document.getElementById("gameBoard").style.display = "";
+        newGame(picked);
+        closeDialog(document.getElementById("startScreen"), false);
+      } catch (error) {
+        document.getElementById("gameBoard").style.display = "none";
+        startButton.disabled = false;
+        status.textContent = "对局启动失败，请重试。";
+        console.error("GPA game start failed", error);
+        return;
+      }
+      var board = document.getElementById("gameBoard");
       var focusTarget = G.firstPlayer === "player" ? getFocusable(document.getElementById("playerSide"))[0] : document.getElementById("helpBtn");
-      if (focusTarget) focusTarget.focus();
+      focusWithoutScroll(focusTarget);
+      keepBoardBelowTopbar(board);
     });
   }
 
   // ===== 事件绑定 =====
   document.getElementById("endTurnBtn").addEventListener("click", endTurn);
   document.getElementById("refreshBtn").addEventListener("click", refreshShopManual);
-  document.getElementById("restartBtn").addEventListener("click", function () { location.reload(); });
+  document.getElementById("restartBtn").addEventListener("click", function () {
+    openDialog(document.getElementById("restartScreen"), document.getElementById("cancelRestartBtn"));
+  });
+  document.getElementById("cancelRestartBtn").addEventListener("click", function () {
+    closeDialog(document.getElementById("restartScreen"));
+  });
+  document.getElementById("confirmRestartBtn").addEventListener("click", function () { location.reload(); });
   document.getElementById("playAgainBtn").addEventListener("click", function () { location.reload(); });
   document.getElementById("helpBtn").addEventListener("click", function () {
     openDialog(document.getElementById("helpScreen"), document.getElementById("closeHelpBtn"));
@@ -771,9 +880,12 @@
   document.getElementById("helpScreen").addEventListener("click", function (event) {
     if (event.target === this) closeDialog(this);
   });
+  document.getElementById("restartScreen").addEventListener("click", function (event) {
+    if (event.target === this) closeDialog(this);
+  });
   document.addEventListener("keydown", function (event) {
     if (!activeDialog) return;
-    if (event.key === "Escape" && activeDialog.id === "helpScreen") {
+    if (event.key === "Escape" && (activeDialog.id === "helpScreen" || activeDialog.id === "restartScreen")) {
       event.preventDefault();
       closeDialog(activeDialog);
       return;

@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>伤害计算器 · COC 专区 · 天择网</title>
   <meta name="description" content="部落冲突家乡伤害计算器：基于雷电法术、地震法术与英雄装备数据，计算给定法术空间内的最高伤害、摧毁建筑所需最少法术；新增建筑工人小屋回血量与法术方案容错时间计算，支持从村庄存档JSON一键导入等级。城墙固定规则：3 震不毁、4 震必毁。" />
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css" />
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css" />
+  <script>(function(){try{var p=localStorage.getItem("tz_site_palette");if(p==="mid"||p==="warm")document.documentElement.setAttribute("data-palette",p);}catch(e){}})();</script>
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260731-v4.13" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css?v=20260731-v4.13" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-workspace.css?v=20260731-v4.13" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
   <style>
     /* 伤害计算器专属样式，前缀 dm-*（damage-calc），不污染其他 COC 页 */
@@ -117,58 +119,65 @@
         <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/></svg></span>
         <span class="logo-text">天择网</span>
       </a>
-      <button class="nav-toggle" aria-label="菜单">☰</button>
+      <button class="nav-toggle" type="button" aria-label="菜单" data-ui-icon="menu"></button>
       <nav class="nav"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a><a href="https://wjtianze.github.io/contact/index.html"><span>联系开发者</span></a></nav>
     </div>
   </header>
 
-  <main>
-    <section class="page-head wrap">
+  <main class="coc-console">
+    <div class="coc-tool-layout wrap">
+    <section class="page-head coc-tool-brief" aria-labelledby="cocDamageTitle">
       <div class="crumb reveal in">
         <a href="https://wjtianze.github.io/index.html">主页</a> <span>›</span>
         <a href="https://wjtianze.github.io/coc/index.html">COC 专区</a> <span>›</span>
         <span>伤害计算器</span>
       </div>
       <div class="coc-kicker reveal in d1">Damage Calculator · Home Village Only</div>
-      <h1 class="reveal in d1">法术伤害 <span class="grad">计算器</span></h1>
+      <h1 class="reveal in d1" id="cocDamageTitle">法术伤害 <span class="grad">计算器</span></h1>
       <p class="reveal in d2">基于雷电法术、地震法术各等级伤害数据与英雄装备数据，计算给定法术空间内对家乡目标建筑能造成的<b style="color:var(--ink);">最高伤害</b>，以及<b style="color:var(--ink);">摧毁指定建筑所需的最少法术</b>。<b style="color:var(--ink);">新增</b>：建筑工人小屋回血量与当前方案<b style="color:var(--ink);">回血容错时间</b>——溢出伤害除以小屋总回复速度。支持从村庄存档一键导入等级、按大本营等级自动设定建筑等级。所有计算在浏览器本地完成。</p>
+      <div class="coc-brief-notes reveal in d2" aria-label="计算器特性">
+        <span data-ui-icon="lightning">闪震、装备与回血统一计算</span>
+        <span data-ui-icon="download">可从本地村庄存档导入等级</span>
+        <span data-ui-icon="globe">分享链接只读，不改本机数据</span>
+      </div>
     </section>
 
+    <div class="coc-tool-content">
     <!-- 分享查看模式横幅（默认隐藏，仅通过分享链接打开时显示） -->
-    <section class="section wrap" id="dmShareView" hidden style="padding-top:18px;">
+    <section class="section" id="dmShareView" hidden style="padding-top:18px;">
       <div class="card dm-share-banner">
         <div class="dm-share-banner-head">
           <div>
-            <div class="dm-share-badge">🔗 分享查看模式</div>
+            <div class="dm-share-badge" data-ui-icon="globe">分享查看模式</div>
             <h2 id="dmShareTitle">好友分享的计算结果</h2>
             <p class="dm-share-desc" id="dmShareDesc">你正在查看好友通过天择网伤害计算器分享的配置与计算结果。<b style="color:var(--ink);">此页面为只读</b>：不会读取、更不会改动你在本浏览器中保存的任何等级设置。看完点右侧按钮即可回到你自己的计算器。</p>
           </div>
-          <a class="btn dm-share-back" id="dmShareBack" href="#"><span>← 返回我的计算器</span></a>
+          <a class="btn dm-share-back" id="dmShareBack" href="#"><span data-ui-icon="left">返回我的计算器</span></a>
         </div>
         <div class="dm-share-config" id="dmShareConfig"></div>
       </div>
     </section>
 
     <!-- 法术机制说明 -->
-    <section class="section wrap" id="dmMechSection" style="padding-top:18px;">
+    <section class="section" id="dmMechSection" style="padding-top:18px;">
       <div class="card reveal dm-mech">
         <div class="section-head" style="margin-bottom:6px;">
           <h2><span class="bar"></span>法术机制说明</h2>
         </div>
         <div class="dm-mech-grid">
           <div class="dm-mech-card">
-            <h4>⚡ 雷电法术（固定伤害）</h4>
+            <h4 data-ui-icon="lightning">雷电法术（固定伤害）</h4>
             <p>每次施放对目标建筑造成<b style="color:var(--ink);">固定数值</b>的生命值扣除，伤害不随施放次数变化，等于该等级雷电法术的面板伤害值。</p>
             <div class="dm-formula">总伤害 = 数量 × 该等级面板伤害</div>
           </div>
           <div class="dm-mech-card">
-            <h4>🌍 地震法术（百分比伤害）</h4>
+            <h4 data-ui-icon="globe">地震法术（百分比伤害）</h4>
             <p>普通建筑按最大生命值造成百分比伤害，对同一建筑重复施放时递减。<b style="color:var(--ink);">城墙遵守固定规则：3 瓶地震无论等级都不能单独摧毁，4 瓶无论城墙和地震等级都必定摧毁。</b></p>
             <div class="dm-formula">普通建筑第 n 次 = 全额 × 1/(2n−1)；城墙第 4 瓶补足剩余 HP</div>
             <p style="font-size:12px; color:var(--ink-faint); margin-top:8px;">普通建筑第 2 次 = 1/3，第 3 次 = 1/5……参考：5 级地震全额为 29%，1 级为 14.5%。</p>
           </div>
           <div class="dm-mech-card">
-            <h4>🛡️ 英雄装备（技能伤害）</h4>
+            <h4 data-ui-icon="shield">英雄装备（技能伤害）</h4>
             <p>装备主动技能提供额外固定伤害，不占用法术空间。此处取数据中的 <b style="color:var(--ink);">技能伤害</b>（SkillDamage，来自装备 main/extra 技能的直接伤害值，非 DPS），已设定等级的装备伤害将自动累加。</p>
             <div class="dm-formula">装备总伤害 = Σ 各已设装备当前等级技能伤害</div>
           </div>
@@ -177,7 +186,7 @@
     </section>
 
     <!-- 等级设置 -->
-    <section class="section wrap" id="dmSetup">
+    <section class="section" id="dmSetup">
       <div class="card reveal" style="padding:24px 28px;">
         <div class="section-head" style="margin-bottom:6px;">
           <h2><span class="bar"></span>等级设置</h2>
@@ -198,7 +207,7 @@
 
         <!-- 装备等级（按英雄分组） -->
         <div class="section-head" style="margin:22px 0 10px;">
-          <h3 style="font-size:15px; font-weight:700; color:var(--ink);">🛡️ 英雄装备等级</h3>
+          <h3 class="dm-panel-title" data-ui-icon="shield">英雄装备等级</h3>
         </div>
         <p class="dm-subhead">仅列出技能带直接伤害的装备。设定等级后，<b style="color:var(--ink);">勾选</b>装备才会将其技能伤害计入总伤害（默认全不勾选）；取消勾选即不计入，无需把等级调回「未设」。</p>
         <div id="dmEquipGroups" class="dm-eq-groups"></div>
@@ -206,22 +215,22 @@
 
         <!-- 法术等级 -->
         <div class="section-head" style="margin:26px 0 10px;">
-          <h3 style="font-size:15px; font-weight:700; color:var(--ink);">✨ 法术等级</h3>
+          <h3 class="dm-panel-title" data-ui-icon="sparkle">法术等级</h3>
         </div>
         <div class="dm-calc-row" style="margin-bottom:0;">
           <div class="dm-field">
-            <label for="dmLightLvl">⚡ 雷电法术等级</label>
+            <label for="dmLightLvl" data-ui-icon="lightning">雷电法术等级</label>
             <select id="dmLightLvl" class="dm-lvl-select"></select>
           </div>
           <div class="dm-field">
-            <label for="dmQuakeLvl">🌍 地震法术等级</label>
+            <label for="dmQuakeLvl" data-ui-icon="globe">地震法术等级</label>
             <select id="dmQuakeLvl" class="dm-lvl-select"></select>
           </div>
         </div>
 
         <!-- 建筑等级 -->
         <div class="section-head" style="margin:26px 0 10px;">
-          <h3 style="font-size:15px; font-weight:700; color:var(--ink);">🏰 建筑等级</h3>
+          <h3 class="dm-panel-title" data-ui-icon="home">建筑等级</h3>
         </div>
         <div class="dm-th-fill">
           <label>大本营等级
@@ -233,7 +242,7 @@
         <div id="dmBuildGroups"></div>
 
         <div class="section-head" style="margin:26px 0 10px;">
-          <h3 style="font-size:15px; font-weight:700; color:var(--ink);">🔨 建筑工人小屋回血量计算</h3>
+          <h3 class="dm-panel-title" data-ui-icon="settings">建筑工人小屋回血量计算</h3>
         </div>
         <p class="dm-subhead">设置实际参与修复目标建筑的小屋数量与各自等级。每座小屋按自身等级读取数据中的<b style="color:var(--ink);">每秒回复量</b>（BuilderRepairPerSecond），求和得到总回复速度。然后用当前法术方案（默认 11 格法术 + 选定目标建筑）相对目标生命值的<b style="color:var(--ink);">溢出伤害</b>除以总回复速度，得到<b style="color:var(--ink);">回血容错时间</b>（秒）—— 即溢出伤害能"白嫖"这些建筑工人小屋回复多少秒。从 COC 专区首页一键导入时会自动填入实际的小屋数量与等级。</p>
         <div class="dm-builder-box">
@@ -247,7 +256,7 @@
     </section>
 
     <!-- 目标建筑选择（共享） -->
-    <section class="section wrap" id="dmTargetSection" style="padding-top:6px;">
+    <section class="section" id="dmTargetSection" style="padding-top:6px;">
       <div class="card reveal" style="padding:24px 28px;">
         <div class="section-head" style="margin-bottom:6px;">
           <h2><span class="bar"></span>目标建筑</h2>
@@ -265,16 +274,16 @@
     </section>
 
     <!-- 两个计算器（标签切换） -->
-    <section class="section wrap" style="padding-top:6px;">
+    <section class="section" style="padding-top:6px;">
       <div class="card reveal" style="padding:24px 28px;">
-        <div class="dm-tabs">
-          <button class="dm-tab active" data-tab="max"><span>① 最高伤害计算器</span></button>
-          <button class="dm-tab" data-tab="min"><span>② 摧毁建筑最少法术计算器</span></button>
-          <button class="dm-tab" data-tab="custom"><span>③ 自定义闪震数量计算伤害</span></button>
+        <div class="dm-tabs" role="tablist" aria-label="伤害计算模式" aria-orientation="horizontal">
+          <button type="button" class="dm-tab active" id="dmTabMax" data-tab="max" role="tab" aria-controls="dmPaneMax" aria-selected="true" tabindex="0"><span><b class="dm-tab-index">01</b>最高伤害</span></button>
+          <button type="button" class="dm-tab" id="dmTabMin" data-tab="min" role="tab" aria-controls="dmPaneMin" aria-selected="false" tabindex="-1"><span><b class="dm-tab-index">02</b>最少法术</span></button>
+          <button type="button" class="dm-tab" id="dmTabCustom" data-tab="custom" role="tab" aria-controls="dmPaneCustom" aria-selected="false" tabindex="-1"><span><b class="dm-tab-index">03</b>自定义闪震</span></button>
         </div>
 
         <!-- ① 最高伤害 -->
-        <div class="dm-tab-pane active" id="dmPaneMax">
+        <div class="dm-tab-pane active" id="dmPaneMax" role="tabpanel" aria-labelledby="dmTabMax" tabindex="0">
           <p class="dm-subhead">给定法术空间上限，计算在该空间内对目标建筑能造成的最高伤害及最优法术配置。</p>
           <div class="dm-calc-row">
             <div class="dm-field">
@@ -287,7 +296,7 @@
         </div>
 
         <!-- ② 最少法术 -->
-        <div class="dm-tab-pane" id="dmPaneMin">
+        <div class="dm-tab-pane" id="dmPaneMin" role="tabpanel" aria-labelledby="dmTabMin" tabindex="0" hidden>
           <p class="dm-subhead">给定目标建筑，计算将其彻底摧毁（总伤害 ≥ 生命值）所需的最少法术空间及搭配方案。</p>
           <div class="dm-calc-row">
             <button class="btn" id="dmCalcMinBtn"><span>计算最少法术</span></button>
@@ -296,15 +305,15 @@
         </div>
 
         <!-- ③ 自定义闪震数量 -->
-        <div class="dm-tab-pane" id="dmPaneCustom">
+        <div class="dm-tab-pane" id="dmPaneCustom" role="tabpanel" aria-labelledby="dmTabCustom" tabindex="0" hidden>
           <p class="dm-subhead">自定义雷电与地震的数量（不搜索最优解），按当前雷电/地震等级与目标建筑等级，精确给出总伤害、城墙规则细节和回血容错时间。</p>
           <div class="dm-calc-row">
             <div class="dm-field">
-              <label for="dmCustomLight">⚡ 雷电数量</label>
+              <label for="dmCustomLight" data-ui-icon="lightning">雷电数量</label>
               <input type="number" id="dmCustomLight" min="0" max="200" value="4" />
             </div>
             <div class="dm-field">
-              <label for="dmCustomQuake">🌍 地震数量</label>
+              <label for="dmCustomQuake" data-ui-icon="globe">地震数量</label>
               <input type="number" id="dmCustomQuake" min="0" max="80" value="4" />
             </div>
             <div class="dm-field">
@@ -317,6 +326,8 @@
         </div>
       </div>
     </section>
+    </div>
+    </div>
   </main>
 
   <footer class="footer">
@@ -326,7 +337,7 @@
     </div>
   </footer>
 
-  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260725a"></script>
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260731-v4.13"></script>
   <script defer src="https://wjtianze.github.io/coc/dmg-calc/app.js?v=20260730a"></script>
 </body>
 </html>

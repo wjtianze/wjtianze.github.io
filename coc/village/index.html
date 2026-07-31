@@ -6,15 +6,110 @@
   <title>村庄存档分析已并入 COC 专区首页 · 天择网</title>
   <meta name="description" content="村庄存档分析功能已并入 COC 专区首页，正在跳转…" />
   <meta http-equiv="refresh" content="0; url=../index.html" />
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css" />
+  <script>(function(){try{var p=localStorage.getItem("tz_site_palette");if(p==="mid"||p==="warm")document.documentElement.setAttribute("data-palette",p);}catch(e){}})();</script>
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260731-v4.13" />
+  <style>
+    .village-redirect-shell {
+      display:grid;
+      place-items:center;
+      min-height:100vh;
+      padding:24px;
+      font-family:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC","Noto Sans CJK SC",system-ui,sans-serif;
+    }
+    .village-redirect-card {
+      position:relative;
+      overflow:hidden;
+      width:min(620px,100%);
+      padding:clamp(26px,5vw,46px);
+      border:1px solid var(--tz-v4-line);
+      border-radius:22px;
+      color:var(--ink);
+      background-color:var(--tz-v4-surface-color-strong);
+      background-image:var(--tz-v4-surface);
+      background-position:center;
+      background-size:cover;
+      background-blend-mode:multiply;
+      box-shadow:0 30px 90px rgba(0,0,0,.36), inset 0 1px rgba(255,255,255,.05);
+      text-align:center;
+    }
+    .village-redirect-card::before {
+      content:"";
+      position:absolute;
+      inset:0 auto auto 50%;
+      width:72px;
+      height:2px;
+      transform:translateX(-50%);
+      background:var(--c-blue);
+    }
+    .village-redirect-icon {
+      display:grid;
+      place-items:center;
+      width:62px;
+      height:62px;
+      margin:0 auto 18px;
+      border:1px solid var(--tz-v4-line);
+      border-radius:17px;
+      background-color:var(--tz-v4-surface-color);
+      background-image:var(--tz-v4-icon-well);
+      background-position:center;
+      background-size:cover;
+      background-blend-mode:soft-light;
+    }
+    .village-redirect-icon .tz-icon { width:30px; height:30px; }
+    .village-redirect-card h1 {
+      margin:0;
+      font-family:"Supercell-Magic","Supercell Magic","Arial Rounded MT Bold","Trebuchet MS","Microsoft YaHei UI","Microsoft YaHei",sans-serif;
+      font-size:clamp(26px,5vw,38px);
+      font-weight:680;
+      line-height:1.2;
+      letter-spacing:-.025em;
+      -webkit-text-stroke:.2px rgba(255,255,255,.12);
+      text-shadow:0 2px 10px rgba(0,0,0,.2);
+    }
+    .village-redirect-card p { margin:14px auto 22px; max-width:480px; color:var(--ink-dim); font-size:14px; line-height:1.8; }
+    .village-redirect-link {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      min-height:42px;
+      padding:10px 18px;
+      border:1px solid var(--tz-v4-line);
+      border-radius:10px;
+      color:#fff;
+      background-color:rgba(var(--c-blue-rgb),.44);
+      background-image:var(--tz-v4-button);
+      background-position:center;
+      background-size:cover;
+      background-blend-mode:soft-light;
+      text-decoration:none;
+    }
+    .village-redirect-link:hover { border-color:rgba(var(--c-green-rgb),.62); color:#fff; }
+    .village-redirect-link .tz-icon { width:15px; height:15px; }
+    .village-redirect-card { animation:villageFallbackIn .5s cubic-bezier(.22,1,.36,1) both; }
+    @keyframes villageFallbackIn {
+      from { opacity:0; transform:translateY(12px) scale(.985); }
+      to { opacity:1; transform:translateY(0) scale(1); }
+    }
+    @media (max-width:520px) {
+      .village-redirect-shell { padding:14px; }
+      .village-redirect-card { padding:28px 18px; border-radius:18px; }
+      .village-redirect-link { width:100%; }
+    }
+    @media (prefers-reduced-motion:reduce) {
+      .village-redirect-card { animation:none; }
+    }
+  </style>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
 </head>
-<body>
+<body class="village-redirect-page">
   <div class="bg-mesh"></div>
-  <main>
-    <section class="page-head wrap">
-      <h1 class="reveal in">村庄存档分析已并入 <span class="grad">COC 专区首页</span></h1>
-      <p class="reveal in d1">正在跳转… 若未自动跳转，请<a href="https://wjtianze.github.io/coc/index.html" style="color:var(--accent);">点击这里进入 COC 专区首页</a>。</p>
+  <main class="village-redirect-shell">
+    <section class="village-redirect-card" aria-labelledby="redirectTitle" aria-describedby="redirectDesc">
+      <div class="village-redirect-icon" aria-hidden="true"><span class="tz-icon" data-icon="home"></span></div>
+      <h1 id="redirectTitle">村庄分析已并入<br /><span class="grad">COC 专区首页</span></h1>
+      <p id="redirectDesc" role="status">正在立即跳转。若浏览器没有自动前往，请使用下方入口继续。</p>
+      <a class="village-redirect-link" href="https://wjtianze.github.io/coc/index.html">进入 COC 专区 <span class="tz-icon" data-icon="right" aria-hidden="true"></span></a>
     </section>
   </main>
   <script>location.replace('../index.html');</script>

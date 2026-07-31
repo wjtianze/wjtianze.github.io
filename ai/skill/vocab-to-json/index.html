@@ -5,10 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>词库转 JSON · 天择网 AI 技能</title>
   <meta name="description" content="将 TXT、CSV、Excel、Word、PDF 或 Markdown 词库转化为天择背单词标准 JSON 格式。" />
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css" />
+  <script>(function(){try{var p=localStorage.getItem("tz_site_palette");if(p==="mid"||p==="warm")document.documentElement.setAttribute("data-palette",p);}catch(e){}})();</script>
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260731-v4.13" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/workspace-pages.css?v=20260731-v4.13" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Ctext x='16' y='22' font-size='14' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3EJSON%3C/text%3E%3C/svg%3E" />
 </head>
-<body>
+<body data-workspace-page="vocab-skill">
+  <a class="wp-skip" href="#main-content">跳到主要内容</a>
   <div class="bg-mesh"></div>
 
   <header class="topbar">
@@ -17,48 +20,51 @@
         <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/></svg></span>
         <span class="logo-text">天择网</span>
       </a>
-      <button class="nav-toggle" aria-label="菜单">☰</button>
+      <button class="nav-toggle" type="button" aria-label="菜单" data-ui-icon="menu"></button>
       <nav class="nav"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html" class="active"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a></nav>
     </div>
   </header>
 
-  <main>
-    <section class="skill-hero wrap vocab-hero">
-      <div class="crumb"><a href="https://wjtianze.github.io/index.html">首页</a><span>/</span><a href="https://wjtianze.github.io/ai/index.html">AI 专区</a><span>/</span><a href="https://wjtianze.github.io/ai/skill/index.html">技能</a><span>/</span><span>词库转 JSON</span></div>
-      <div class="sk-badge reveal in">AI SKILL · VOCABULARY DATA</div>
-      <h1 class="reveal in d1">把零散词库，整理成<br/><span class="grad">可直接导入的 JSON</span></h1>
-      <p class="reveal in d2">读取常见文档和表格中的单词、释义、音标与例句，统一为天择背单词使用的标准结构，并自动处理一词多义与重复项。</p>
-      <div class="sk-meta reveal in d3"><span class="chip"><b>6</b> 种输入格式</span><span class="chip">标准化输出</span><span class="chip">自动去重</span><span class="chip">WorkBuddy 技能</span></div>
+  <main id="main-content" tabindex="-1">
+    <section class="wp-hero wrap" aria-labelledby="vocab-title">
+      <div>
+        <div class="wp-kicker">AI SKILL · VOCABULARY DATA</div>
+        <h1 id="vocab-title">把零散词库整理成<br/><span class="grad">可直接导入的 JSON</span></h1>
+        <p>读取常见文档和表格中的单词、释义、音标与例句，统一为天择背单词使用的标准结构，并自动处理一词多义与重复项。</p>
+        <div class="wp-chip-row"><span class="wp-chip">6 种输入格式</span><span class="wp-chip">标准化输出</span><span class="wp-chip">自动去重</span><span class="wp-chip">Codex 工作流</span></div>
+      </div>
+      <div class="wp-hero-visual" aria-hidden="true"><span data-ui-icon="notes"></span></div>
     </section>
 
-    <section class="section wrap">
-      <div class="section-head reveal"><h2><span class="bar"></span>支持的输入格式</h2><span class="more">文档、表格与纯文本</span></div>
-      <div class="feature-grid vocab-format-grid">
-        <article class="card feature-item reveal d1"><div class="f-icon">TXT</div><h3>纯文本</h3><p>适合每行一个单词，或使用空格、制表符分隔的简洁词表。</p></article>
-        <article class="card feature-item reveal d2"><div class="f-icon">CSV</div><h3>CSV 表格</h3><p>识别逗号分隔的数据列，保留已有字段并整理标准结构。</p></article>
-        <article class="card feature-item reveal d3"><div class="f-icon">XLS</div><h3>Excel</h3><p>从 XLSX 工作表读取批量词汇、释义及附加信息。</p></article>
-        <article class="card feature-item reveal d1"><div class="f-icon">DOC</div><h3>Word</h3><p>解析 DOCX 文档中的列表或表格形式词库内容。</p></article>
-        <article class="card feature-item reveal d2"><div class="f-icon">PDF</div><h3>PDF</h3><p>提取 PDF 文档中可识别的词汇文本并进行结构化整理。</p></article>
-        <article class="card feature-item reveal d3"><div class="f-icon">MD</div><h3>Markdown</h3><p>支持 Markdown 列表与表格，适合维护在文本仓库中的词库。</p></article>
+    <section class="wp-section wrap" aria-labelledby="vocab-formats">
+      <div class="wp-section-head reveal"><div><div class="wp-kicker">INPUT ADAPTERS</div><h2 id="vocab-formats">支持的输入格式</h2></div><p>文档、表格与纯文本</p></div>
+      <div class="wp-grid">
+        <article class="wp-card wp-format-card reveal d1"><div class="wp-format-badge" aria-hidden="true"><span data-ui-icon="document"></span><small>TXT</small></div><h3>纯文本</h3><p>适合每行一个单词，或使用空格、制表符分隔的简洁词表。</p></article>
+        <article class="wp-card wp-format-card reveal d2"><div class="wp-format-badge" aria-hidden="true"><span data-ui-icon="document"></span><small>CSV</small></div><h3>CSV 表格</h3><p>识别逗号分隔的数据列，保留已有字段并整理标准结构。</p></article>
+        <article class="wp-card wp-format-card reveal d3"><div class="wp-format-badge" aria-hidden="true"><span data-ui-icon="document"></span><small>XLS</small></div><h3>Excel</h3><p>从 XLSX 工作表读取批量词汇、释义及附加信息。</p></article>
+        <article class="wp-card wp-format-card reveal d1"><div class="wp-format-badge" aria-hidden="true"><span data-ui-icon="document"></span><small>DOC</small></div><h3>Word</h3><p>解析 DOCX 文档中的列表或表格形式词库内容。</p></article>
+        <article class="wp-card wp-format-card reveal d2"><div class="wp-format-badge" aria-hidden="true"><span data-ui-icon="file"></span><small>PDF</small></div><h3>PDF</h3><p>提取 PDF 文档中可识别的词汇文本并进行结构化整理。</p></article>
+        <article class="wp-card wp-format-card reveal d3"><div class="wp-format-badge" aria-hidden="true"><span data-ui-icon="notes"></span><small>MD</small></div><h3>Markdown</h3><p>支持 Markdown 列表与表格，适合维护在文本仓库中的词库。</p></article>
       </div>
     </section>
 
-    <section class="section wrap vocab-workflow-section">
-      <div class="section-head reveal"><h2><span class="bar"></span>四步完成转换</h2><span class="more">在 WorkBuddy 对话中使用</span></div>
-      <div class="scenario-list">
-        <div class="card sc-row reveal d1"><span class="sc-no">01</span><div class="sc-tx"><b>提供词库</b><br/>上传文档，或直接在对话中粘贴词库内容。</div></div>
-        <div class="card sc-row reveal d2"><span class="sc-no">02</span><div class="sc-tx"><b>触发技能</b><br/>说“转换词库”“词库转 JSON”或“格式化单词表”。</div></div>
-        <div class="card sc-row reveal d3"><span class="sc-no">03</span><div class="sc-tx"><b>检查结构</b><br/>AI 解析字段、拆分多义、保留特殊音标字符并自动去重。</div></div>
-        <div class="card sc-row reveal d4"><span class="sc-no">04</span><div class="sc-tx"><b>导入学习</b><br/>下载标准 JSON，在天择背单词的词库管理中完成导入。</div></div>
+    <section class="wp-section wrap" aria-labelledby="vocab-workflow">
+      <div class="wp-section-head reveal"><div><div class="wp-kicker">WORKFLOW</div><h2 id="vocab-workflow">四步完成转换</h2></div><p>在 Codex 对话中使用</p></div>
+      <div class="wp-step-list">
+        <article class="wp-step reveal d1"><div><h3>提供词库</h3><p>上传文档，或直接在对话中粘贴词库内容。</p></div></article>
+        <article class="wp-step reveal d2"><div><h3>触发技能</h3><p>说“转换词库”“词库转 JSON”或“格式化单词表”。</p></div></article>
+        <article class="wp-step reveal d3"><div><h3>检查结构</h3><p>AI 解析字段、拆分多义、保留特殊音标字符并自动去重。</p></div></article>
+        <article class="wp-step reveal d4"><div><h3>导入学习</h3><p>下载标准 JSON，在天择背单词的词库管理中完成导入。</p></div></article>
       </div>
     </section>
 
-    <section class="section wrap">
-      <div class="section-head reveal"><h2><span class="bar"></span>标准输出结构</h2><span class="more">清晰、可读、可导入</span></div>
-      <div class="vocab-output-layout">
-        <div class="card vocab-code-card reveal">
-          <div class="vocab-code-head"><span>vocabulary.json</span><b>JSON</b></div>
-          <pre><code>[
+    <section class="wp-section wrap" aria-labelledby="vocab-output">
+      <div class="wp-section-head reveal"><div><div class="wp-kicker">OUTPUT SCHEMA</div><h2 id="vocab-output">标准输出结构</h2></div><p>清晰、可读、可导入</p></div>
+      <div class="wp-grid">
+        <div class="wp-card wp-output-code reveal">
+          <div class="wp-code-panel">
+            <div class="wp-code-head"><span>vocabulary.json · JSON</span><button class="btn wp-copy" type="button" data-copy-target="vocab-json-example" data-ui-icon="copy"><span data-copy-label>复制示例</span></button></div>
+            <pre id="vocab-json-example"><code>[
   {
     "word": "accommodate",
     "phonetic": "/əˈkɒmədeɪt/",
@@ -74,21 +80,24 @@
     "tags": ["CET-6"]
   }
 ]</code></pre>
+          </div>
         </div>
-        <div class="vocab-rules reveal d2">
-          <article class="card vocab-rule"><span>01</span><div><h3>数组作为顶层</h3><p>输出使用 <code>[...]</code>，每个单词对应一个对象。</p></div></article>
-          <article class="card vocab-rule"><span>02</span><div><h3>多义保持独立</h3><p><code>meaning</code> 始终为数组，每条释义单独保存。</p></div></article>
-          <article class="card vocab-rule"><span>03</span><div><h3>内容原样保留</h3><p>音标中的 ə、ˈ、ɒ 等特殊字符不会被替换。</p></div></article>
-          <article class="card vocab-rule"><span>04</span><div><h3>重复自动合并</h3><p>同一单词只保留一条有效记录，避免重复学习项。</p></div></article>
+        <div class="wp-card wp-output-rules reveal d2">
+          <div class="wp-step-list">
+            <article class="wp-step"><div><h3>数组作为顶层</h3><p>输出使用 <code>[...]</code>，每个单词对应一个对象。</p></div></article>
+            <article class="wp-step"><div><h3>多义保持独立</h3><p><code>meaning</code> 始终为数组，每条释义单独保存。</p></div></article>
+            <article class="wp-step"><div><h3>内容原样保留</h3><p>音标中的 ə、ˈ、ɒ 等特殊字符不会被替换。</p></div></article>
+            <article class="wp-step"><div><h3>重复自动合并</h3><p>同一单词只保留一条有效记录，避免重复学习项。</p></div></article>
+          </div>
         </div>
       </div>
     </section>
 
-    <section class="section wrap">
-      <a class="card dl-card vocab-import-card reveal" href="https://wjtianze.github.io/english/words/index.html">
-        <div class="dl-icon">Aa</div>
-        <div class="dl-info"><h3>转换完成后，进入天择背单词</h3><p>在“词库管理”中导入生成的 JSON，即可开始四阶段词汇训练。</p><div class="dl-meta">VOCABULARY TRAINER · BROWSER APP</div></div>
-        <span class="btn btn--sm">打开应用 →</span>
+    <section class="wp-section wrap" aria-labelledby="vocab-next">
+      <a class="wp-card wp-download-card reveal" href="https://wjtianze.github.io/english/words/index.html">
+        <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="book"></span></div>
+        <div><div class="wp-kicker">NEXT STEP</div><h2 id="vocab-next">转换完成后，进入天择背单词</h2><p>在“词库管理”中导入生成的 JSON，即可开始四阶段词汇训练。</p></div>
+        <span class="wp-action-link">打开词汇训练应用 <span data-ui-icon="right" aria-hidden="true"></span></span>
       </a>
     </section>
   </main>
@@ -100,6 +109,38 @@
     </div>
   </footer>
 
-  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260725a"></script>
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260731-v4.13"></script>
+  <script>
+  document.querySelectorAll('[data-copy-target]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      var target = document.getElementById(button.getAttribute('data-copy-target'));
+      if (!target) return;
+      var text = target.textContent || '';
+      var done = function () {
+        var label = button.querySelector('[data-copy-label]');
+        if (!label) return;
+        var old = label.textContent;
+        label.textContent = '已复制';
+        setTimeout(function () { label.textContent = old; }, 1400);
+      };
+      var fallbackCopy = function () {
+        var area = document.createElement('textarea');
+        area.value = text;
+        area.setAttribute('readonly', '');
+        area.style.position = 'fixed';
+        area.style.left = '-9999px';
+        document.body.appendChild(area);
+        area.select();
+        try { document.execCommand('copy'); done(); } catch (e) {}
+        area.remove();
+      };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(done, fallbackCopy);
+      } else {
+        fallbackCopy();
+      }
+    });
+  });
+  </script>
 </body>
 </html>

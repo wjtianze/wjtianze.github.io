@@ -6,6 +6,9 @@
 (function () {
 'use strict';
 
+// 用户授权随站点提供，仅用于两个免费的智谱 GLM 预设。
+const BUNDLED_GLM_API_KEY = '6cec7915b15e44359c2f429e4df0ee4e.DiFqD4e5XMFiVHaI';
+
 /* ============================================================
    工具函数
    ============================================================ */
@@ -15,6 +18,12 @@ const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
 const escapeHtml = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
 }[c]));
+
+const uiGlyph = (key, extraClass) =>
+  `<span class="tz-icon${extraClass ? ` ${extraClass}` : ''}" data-icon="${escapeHtml(key)}" aria-hidden="true"></span>`;
+
+const uiLabel = (key, label) =>
+  `<span class="tz-icon-label">${uiGlyph(key)}<span>${escapeHtml(label)}</span></span>`;
 
 const uid = () => 'w_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
@@ -290,7 +299,7 @@ const Store = {
       aiConfig: {
         url: 'https://api.deepseek.com/v1/chat/completions',
         key: '',
-        model: 'deepseek-chat',
+        model: 'deepseek-v4-flash',
         temperature: 0.6
       },
       settings: {
@@ -704,7 +713,7 @@ const Quiz = {
           const distractors = AI.parseDistractorsJson(res.content, words);
           if (distractors && Object.keys(distractors).length) {
             this.session.distractors = distractors;
-            UI.toast('✅ AI 干扰项已生成', 'success');
+            UI.toast('AI 干扰项已生成', 'success');
           } else {
             UI.toast('AI 干扰项格式异常，使用本地干扰项', 'warn');
           }
@@ -917,7 +926,7 @@ const Study = {
         try {
           const res = await AI.generateDistractors(words, (delta, full) => UI.updateStudyLoading(full));
           const distractors = AI.parseDistractorsJson(res.content, words);
-          if (distractors && Object.keys(distractors).length) { this.session.distractors = distractors; UI.toast('✅ AI 干扰项已生成', 'success'); }
+          if (distractors && Object.keys(distractors).length) { this.session.distractors = distractors; UI.toast('AI 干扰项已生成', 'success'); }
           else UI.toast('AI 干扰项格式异常，使用本地干扰项', 'warn');
         } catch (e) { UI.toast('AI 干扰项失败：' + e.message + '，使用本地', 'warn'); }
       }
@@ -1200,7 +1209,7 @@ const Stats = {
     if (!el) return;
     const list = WrongBook.list();
     if (!list.length) {
-      el.innerHTML = '<div class="empty-state"><div class="es-icon">✨</div><div>暂无错词，继续保持！</div></div>';
+      el.innerHTML = `<div class="empty-state"><div class="es-icon">${uiGlyph('sparkle')}</div><div>暂无错词，继续保持！</div></div>`;
       return;
     }
     el.innerHTML = list.map(item => {
@@ -1211,8 +1220,8 @@ const Stats = {
         <div class="wi-meaning">${escapeHtml((w.meaning || []).slice(0, 2).join('；'))}</div>
         <span class="wi-count">×${item.wrong}</span>
         <div class="wi-actions">
-          <button data-act="analyze" data-id="${w.id}">🔍</button>
-          <button data-act="practice" data-id="${w.id}">▶</button>
+          <button type="button" data-act="analyze" data-id="${w.id}" title="AI 解析" aria-label="AI 解析 ${escapeHtml(w.word)}">${uiGlyph('ai')}</button>
+          <button type="button" data-act="practice" data-id="${w.id}" title="练习此词" aria-label="练习 ${escapeHtml(w.word)}">${uiGlyph('play')}</button>
         </div>
       </div>`;
     }).join('');
@@ -1258,8 +1267,8 @@ const AI = {
     const c = this.config();
     if (!this.isReady()) {
       throw new Error(this._inOS()
-        ? 'AI 未配置：天择OS 通用配置中尚未设置 API Key，请在天择OS 的「🔑 AI 配置」中设置'
-        : 'AI 未配置，请先在「🔑 AI 配置」中设置 URL、Key 和模型');
+        ? 'AI 未配置：天择OS 通用配置中尚未设置 API Key，请在天择OS 的「AI 配置」中设置'
+        : 'AI 未配置，请先在「AI 配置」中设置 URL、Key 和模型');
     }
     const reqBody = {
       model: c.model,
@@ -1579,10 +1588,25 @@ const UI = {
   _vocabList: [],
   _vocabRendered: 0,
   _vocabObserver: null,
+  _activeModal: null,
+  _modalReturnFocus: null,
+  _focusableSelector: [
+    'a[href]',
+    'button:not([disabled])',
+    'input:not([disabled])',
+    'select:not([disabled])',
+    'textarea:not([disabled])',
+    '[tabindex]:not([tabindex="-1"])'
+  ].join(','),
 
   switchView(name) {
     this.currentView = name;
-    $$('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+    $$('.nav-item').forEach(b => {
+      const active = b.dataset.view === name;
+      b.classList.toggle('active', active);
+      if (active) b.setAttribute('aria-current', 'page');
+      else b.removeAttribute('aria-current');
+    });
     $$('.panel').forEach(p => {
       const active = p.id === 'view-' + name;
       p.classList.toggle('active', active);
@@ -1608,11 +1632,69 @@ const UI = {
 
   openModal(id) {
     const m = $('#' + id);
-    if (m) m.removeAttribute('hidden');
+    if (!m) return;
+    if (this._activeModal && this._activeModal !== m) {
+      this.closeModal(this._activeModal.id, false);
+    }
+    this._modalReturnFocus = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+    m.removeAttribute('hidden');
+    this._activeModal = m;
+    document.body.classList.add('words-modal-open');
+    requestAnimationFrame(() => {
+      const focusables = this._modalFocusables(m);
+      const target = m.querySelector('[autofocus]') || focusables[0] || m.querySelector('.modal-card');
+      if (target && typeof target.focus === 'function') target.focus();
+    });
   },
-  closeModal(id) {
+  closeModal(id, restoreFocus) {
     const m = $('#' + id);
-    if (m) m.setAttribute('hidden', '');
+    if (!m || m.hasAttribute('hidden')) return;
+    m.setAttribute('hidden', '');
+    if (this._activeModal === m) this._activeModal = null;
+    document.body.classList.remove('words-modal-open');
+    const returnTarget = this._modalReturnFocus;
+    this._modalReturnFocus = null;
+    if (restoreFocus !== false && returnTarget && returnTarget.isConnected && typeof returnTarget.focus === 'function') {
+      requestAnimationFrame(() => returnTarget.focus());
+    }
+  },
+
+  _modalFocusables(modal) {
+    return $$(this._focusableSelector, modal).filter(el =>
+      !el.hasAttribute('hidden') &&
+      el.getAttribute('aria-hidden') !== 'true' &&
+      el.getClientRects().length > 0
+    );
+  },
+
+  handleModalKeydown(e) {
+    const modal = this._activeModal;
+    if (!modal || modal.hasAttribute('hidden')) return false;
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      this.closeModal(modal.id);
+      return true;
+    }
+    if (e.key !== 'Tab') return false;
+    const focusables = this._modalFocusables(modal);
+    if (!focusables.length) {
+      e.preventDefault();
+      const card = modal.querySelector('.modal-card');
+      if (card) card.focus();
+      return true;
+    }
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (e.shiftKey && (document.activeElement === first || !modal.contains(document.activeElement))) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && (document.activeElement === last || !modal.contains(document.activeElement))) {
+      e.preventDefault();
+      first.focus();
+    }
+    return true;
   },
 
   renderTopStats() {
@@ -1643,8 +1725,9 @@ const UI = {
     if (this._vocabObserver) this._vocabObserver.disconnect();
     if (!this._vocabList.length) {
       el.innerHTML = `<div class="empty-state">
-        <div class="es-icon">${filter ? '🔍' : '📚'}</div>
-        <div>${filter ? '未找到匹配的单词' : '词库为空，点击「导入 JSON」开始'}</div>
+        <div class="es-icon">${uiGlyph(filter ? 'search' : 'book')}</div>
+        <strong>${filter ? '没有匹配的词条' : '还没有词条'}</strong>
+        <span>${filter ? '换一个单词、释义或标签继续检索。' : '从上方装载 JSON 词库后，这里会成为你的学习索引。'}</span>
       </div>`;
       return;
     }
@@ -1671,8 +1754,8 @@ const UI = {
         <div class="vi-meaning">${escapeHtml((w.meaning || []).join('；'))}</div>
         <div class="vi-mastery" title="掌握度 ${mastery}/5">${dots}</div>
         <div class="vi-actions">
-          <button class="vi-btn" data-act="examples" data-id="${w.id}" title="AI 例句">📖</button>
-          <button class="vi-btn" data-act="analyze" data-id="${w.id}" title="AI 解析">🤖</button>
+          <button class="vi-btn" data-act="examples" data-id="${w.id}" title="AI 例句">${uiGlyph('book')}</button>
+          <button class="vi-btn" data-act="analyze" data-id="${w.id}" title="AI 解析">${uiGlyph('ai')}</button>
         </div>
       </div>`;
     }).join('');
@@ -1723,8 +1806,11 @@ const UI = {
       var cls = "si-step";
       if (i < stageIdx) cls += " done";
       else if (i === stageIdx) cls += " active";
-      var icon = i < stageIdx ? "\u2713" : (i + 1);
-      return "<span class=\"" + cls + "\">" + icon + " " + escapeHtml(st.name) + "</span>" + (i < stages.length - 1 ? "<span class=\"si-arrow\">\u2192</span>" : "");
+      var marker = i < stageIdx
+        ? uiGlyph('check')
+        : "<span class=\"si-number\">" + (i + 1) + "</span>";
+      return "<span class=\"" + cls + "\">" + marker + "<span>" + escapeHtml(st.name) + "</span></span>" +
+        (i < stages.length - 1 ? "<span class=\"si-arrow\">" + uiGlyph('right') + "</span>" : "");
     }).join("");
     $("#stIndicator").innerHTML = html;
     $("#stStageTitle").textContent = "\u9636\u6bb5 " + (stageIdx + 1) + "/" + stages.length + "\uff1a" + stages[stageIdx].name;
@@ -1734,20 +1820,20 @@ const UI = {
       var pct = prevResult.total ? Math.round(prevResult.correct / prevResult.total * 100) : 0;
       sr.innerHTML = "<div class=\"sr-row\"><span>\u4e0a\u4e00\u9636\u6bb5\u6210\u7ee9</span><b>" + prevResult.correct + " / " + prevResult.total + "\uff08" + pct + "%\uff09</b></div>";
       sr.classList.add("show");
-      $("#btnStageStart").textContent = "\u8fdb\u5165\u4e0b\u4e00\u9636\u6bb5 \u2192";
+      $("#btnStageStart").innerHTML = uiLabel('right', '进入下一阶段');
     } else {
       sr.classList.remove("show");
       sr.innerHTML = "";
-      $("#btnStageStart").textContent = "\u5f00\u59cb\u672c\u9636\u6bb5 \u2192";
+      $("#btnStageStart").innerHTML = uiLabel('play', '开始本阶段');
     }
   },
   showStudyLoading() {
     this._showStudyState("studyLoading");
-    $("#stLoadingText").textContent = "\ud83e\udd16 AI \u6b63\u5728\u751f\u6210\u5e72\u6270\u9879\u2026";
+    $("#stLoadingText").innerHTML = uiLabel('ai', 'AI 正在生成干扰项…');
   },
   updateStudyLoading(full) {
     var el = $("#stLoadingText");
-    if (el && full) el.textContent = "\ud83e\udd16 AI \u6b63\u5728\u751f\u6210\u5e72\u6270\u9879\u2026\uff08\u5df2\u751f\u6210 " + full.length + " \u5b57\u7b26\uff09";
+    if (el && full) el.innerHTML = uiLabel('ai', "AI 正在生成干扰项（已生成 " + full.length + " 字符）");
   },
   showStudyPlay() { this._showStudyState("studyPlay"); },
   _showStudyState(state) {
@@ -1761,7 +1847,11 @@ const UI = {
     var html = stages.map(function(st, i) {
       var cls = "si-step";
       if (i < stageIdx) cls += " done"; else if (i === stageIdx) cls += " active";
-      return "<span class=\"" + cls + "\">" + (i < stageIdx ? "\u2713" : (i + 1)) + "</span>" + (i < stages.length - 1 ? "<span class=\"si-arrow\">\u2192</span>" : "");
+      var marker = i < stageIdx
+        ? uiGlyph('check')
+        : "<span class=\"si-number\">" + (i + 1) + "</span>";
+      return "<span class=\"" + cls + "\">" + marker + "</span>" +
+        (i < stages.length - 1 ? "<span class=\"si-arrow\">" + uiGlyph('right') + "</span>" : "");
     }).join("");
     $("#stIndicator2").innerHTML = html;
     $("#stProg").textContent = idx + " / " + total;
@@ -1782,7 +1872,7 @@ const UI = {
       spellExtra.removeAttribute("hidden");
       TTS.disableBtn($("#stTts"));
       inputEl.focus();
-      $("#stSubmit").removeAttribute("hidden"); $("#stSubmit").textContent = "\u2713 \u63d0\u4ea4\u62fc\u5199";
+      $("#stSubmit").removeAttribute("hidden"); $("#stSubmit").innerHTML = uiLabel('check', '提交拼写');
     } else {
       optsEl.style.display = ""; inputEl.setAttribute("hidden", ""); spellExtra.setAttribute("hidden", "");
       promptEl.className = "q-prompt";
@@ -1794,7 +1884,7 @@ const UI = {
         if (_exEn && _exEn.en) {
           var _re = new RegExp('(' + q.word.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
           var _exHtml = escapeHtml(_exEn.en).replace(_re, '<span class="ex-hl">$1</span>');
-          promptEl.innerHTML = '<div class="q-word">' + escapeHtml(q.prompt) + '</div><div class="q-example-en" title="例句语境">💬 ' + _exHtml + '</div>';
+          promptEl.innerHTML = '<div class="q-word">' + escapeHtml(q.prompt) + '</div><div class="q-example-en tz-icon-label" title="例句语境">' + uiGlyph('chat') + '<span>' + _exHtml + '</span></div>';
         } else {
           promptEl.textContent = q.prompt;
         }
@@ -1809,8 +1899,8 @@ const UI = {
           var letter = String.fromCharCode(65 + i);
           return "<button class=\"opt checkable\" data-idx=\"" + i + "\" data-correct=\"" + o.correct + "\" data-text=\"" + escapeHtml(o.text) + "\"><span style=\"color:var(--ink-faint);margin-right:8px;font-weight:600;\">" + letter + ".</span>" + escapeHtml(o.text) + "</button>";
         }).join("");
-        subEl.innerHTML = (q.sub || "") + (q.sub ? " \u00b7 " : "") + "<span class=\"quiz-hint\">\ud83d\udccc \u4e0d\u5b9a\u9879\u9009\u62e9\uff0c\u9009\u51fa\u6240\u6709\u7b26\u5408\u7684\u91ca\u4e49</span>";
-        $("#stSubmit").removeAttribute("hidden"); $("#stSubmit").textContent = "\u2713 \u63d0\u4ea4\u7b54\u6848";
+        subEl.innerHTML = (q.sub || "") + (q.sub ? " \u00b7 " : "") + "<span class=\"quiz-hint tz-icon-label\">" + uiGlyph('pin') + "<span>\u4e0d\u5b9a\u9879\u9009\u62e9\uff0c\u9009\u51fa\u6240\u6709\u7b26\u5408\u7684\u91ca\u4e49</span></span>";
+        $("#stSubmit").removeAttribute("hidden"); $("#stSubmit").innerHTML = uiLabel('check', '提交答案');
       } else {
         optsEl.innerHTML = q.options.map(function(o, i) {
           var letter = String.fromCharCode(65 + i);
@@ -1827,7 +1917,9 @@ const UI = {
     var fb = $("#stFeedback");
     var isSpell = q.type === "spell";
     fb.className = (isSpell ? "spell-feedback " : "quiz-feedback ") + (correct ? "ok" : "bad");
-    var html = correct ? "<div>\u2705 \u7b54\u5bf9\u4e86\uff01</div>" : "<div>\u274c \u7b54\u9519\u4e86</div>";
+    var html = correct
+      ? "<div class=\"tz-icon-label\">" + uiGlyph('check') + "<span>\u7b54\u5bf9\u4e86\uff01</span></div>"
+      : "<div class=\"tz-icon-label\">" + uiGlyph('close') + "<span>\u7b54\u9519\u4e86</span></div>";
     if (isSpell) {
       var diffHtml = UI._diffHtml(typeof userSelection === "string" ? userSelection : "", q.word.word);
       html += "<div class=\"diff\">" + diffHtml + "</div>";
@@ -1859,7 +1951,7 @@ const UI = {
       var cachedEx = Store.get().examples[q.word.id];
       if (cachedEx && cachedEx.length) exs = exs.concat(cachedEx);
       exs = exs.slice(0, 3);
-      html += "<div class=\"pv-examples\" id=\"stPvExamples\"><div class=\"pv-examples-title\">📖 例句</div>";
+      html += "<div class=\"pv-examples\" id=\"stPvExamples\"><div class=\"pv-examples-title\">" + uiLabel('book', '例句') + "</div>";
       if (exs.length) {
         exs.forEach(function(example) {
           html += "<div class=\"pv-example\">";
@@ -1874,7 +1966,11 @@ const UI = {
     } else {
       html += "<div class=\"ans\" style=\"color:var(--ink-dim);margin-top:4px;\">" + escapeHtml(q.word.word) + " \u2014 " + escapeHtml((q.word.meaning || []).join("\uff1b")) + "</div>";
     }
-    html += "<div class=\"feedback-actions\"><button class=\"btn btn--ghost btn--sm\" id=\"stExamples\" data-wid=\"" + q.word.id + "\">\ud83d\udcd6 AI \u4f8b\u53e5</button><button class=\"btn btn--ghost btn--sm\" id=\"stAiAnalyze\" data-wid=\"" + q.word.id + "\">\ud83e\udd16 AI \u89e3\u6790</button></div>";
+    html += "<div class=\"feedback-actions\"><button class=\"btn btn--secondary btn--sm\" id=\"stExamples\" data-wid=\"" + q.word.id + "\">" +
+      uiLabel('book', 'AI 例句') +
+      "</button><button class=\"btn btn--secondary btn--sm\" id=\"stAiAnalyze\" data-wid=\"" + q.word.id + "\">" +
+      uiLabel('ai', 'AI 解析') +
+      "</button></div>";
     fb.innerHTML = html;
     fb.removeAttribute("hidden");
     if (!isSpell) {
@@ -1909,7 +2005,7 @@ const UI = {
   async _autoGenStudyExample(word) {
     var box = document.getElementById('stPvExamples');
     if (!box) return;
-    box.innerHTML = '<div class="pv-examples-title">📖 例句</div><div class="pv-example-empty">🤖 AI 正在生成例句…</div>';
+    box.innerHTML = '<div class="pv-examples-title">' + uiLabel('book', '例句') + '</div><div class="pv-example-empty">' + uiLabel('ai', 'AI 正在生成例句…') + '</div>';
     try {
       var res = await AI.generateExamples(word, function(){});
       var items = null;
@@ -1921,14 +2017,14 @@ const UI = {
         var clean = items.filter(function(i){return i && i.en;}).slice(0, 3).map(function(i){return {en:String(i.en),zh:String(i.zh||'')};});
         Store.get().examples[word.id] = clean;
         Store.commit();
-        var html2 = '<div class="pv-examples-title">📖 例句</div>';
+        var html2 = '<div class="pv-examples-title">' + uiLabel('book', '例句') + '</div>';
         clean.forEach(function(ex){ html2 += '<div class="pv-example"><div class="pv-example-en">' + escapeHtml(ex.en) + '</div>' + (ex.zh ? '<div class="pv-example-zh">' + escapeHtml(ex.zh) + '</div>' : '') + '</div>'; });
         box.innerHTML = html2;
       } else {
-        box.innerHTML = '<div class="pv-examples-title">📖 例句</div><div class="pv-example-empty">生成失败，可点下方「AI 例句」重试</div>';
+        box.innerHTML = '<div class="pv-examples-title">' + uiLabel('book', '例句') + '</div><div class="pv-example-empty">生成失败，可点下方「AI 例句」重试</div>';
       }
     } catch (e) {
-      box.innerHTML = '<div class="pv-examples-title">📖 例句</div><div class="pv-example-empty">生成失败：' + escapeHtml(e.message) + '</div>';
+      box.innerHTML = '<div class="pv-examples-title">' + uiLabel('book', '例句') + '</div><div class="pv-example-empty">生成失败：' + escapeHtml(e.message) + '</div>';
     }
   },
   showStudyResult(data) {
@@ -1956,7 +2052,7 @@ const UI = {
     $('#qProg').textContent = '准备中…';
     $('#qBar').style.width = '0%';
     $('#qPrompt').className = 'q-prompt';
-    $('#qPrompt').innerHTML = '<div class="ai-loading"><div class="spinner"></div><span>🤖 AI 正在生成高质量干扰项，请稍候…</span></div>';
+    $('#qPrompt').innerHTML = '<div class="ai-loading"><div class="spinner"></div>' + uiLabel('ai', 'AI 正在生成高质量干扰项，请稍候…') + '</div>';
     $('#qSub').textContent = '';
     $('#qOptions').innerHTML = '';
     $('#qFeedback').setAttribute('hidden', '');
@@ -1967,7 +2063,7 @@ const UI = {
   updateQuizLoading(full) {
     // 流式输出预览（可选）
     const el = $('#qPrompt .ai-loading span');
-    if (el && full) el.textContent = '🤖 AI 正在生成干扰项…' + (full.length > 50 ? '（已生成 ' + full.length + ' 字符）' : '');
+    if (el && full) el.textContent = 'AI 正在生成干扰项…' + (full.length > 50 ? '（已生成 ' + full.length + ' 字符）' : '');
   },
 
   renderQuizQuestion(q, idx, total) {
@@ -1993,7 +2089,7 @@ const UI = {
         </button>`;
       }).join('');
       subEl.innerHTML = (q.sub || '') + (q.sub ? ' · ' : '') +
-        `<span class="quiz-hint">📌 不定项选择，选出所有符合的释义</span>`;
+        `<span class="quiz-hint tz-icon-label">${uiGlyph('pin')}<span>不定项选择，选出所有符合的释义</span></span>`;
       $('#qSubmit').removeAttribute('hidden');
     } else {
       // 四选一
@@ -2016,7 +2112,9 @@ const UI = {
   showQuizFeedback(correct, q, userSelection) {
     const fb = $('#qFeedback');
     fb.className = 'quiz-feedback ' + (correct ? 'ok' : 'bad');
-    let html = correct ? `<div>✅ 答对了！</div>` : `<div>❌ 答错了</div>`;
+    let html = correct
+      ? `<div class="tz-icon-label">${uiGlyph('check')}<span>答对了！</span></div>`
+      : `<div class="tz-icon-label">${uiGlyph('close')}<span>答错了</span></div>`;
 
     if (q.mode === 'cn2en') {
       if (!correct) {
@@ -2036,8 +2134,8 @@ const UI = {
     }
     html += `<div class="ans" style="color:var(--ink-dim);margin-top:4px;">${escapeHtml(q.word.word)} — ${escapeHtml((q.word.meaning || []).join('；'))}</div>`;
     html += `<div class="feedback-actions">
-      <button class="btn btn--ghost btn--sm" id="fbExamples" data-wid="${q.word.id}">📖 AI 例句</button>
-      <button class="btn btn--ghost btn--sm" id="fbAiAnalyze" data-wid="${q.word.id}">🤖 AI 解析</button>
+      <button class="btn btn--ghost btn--sm" id="fbExamples" data-wid="${q.word.id}">${uiLabel('book', 'AI 例句')}</button>
+      <button class="btn btn--ghost btn--sm" id="fbAiAnalyze" data-wid="${q.word.id}">${uiLabel('ai', 'AI 解析')}</button>
     </div>`;
     fb.innerHTML = html;
     fb.removeAttribute('hidden');
@@ -2084,7 +2182,7 @@ const UI = {
       });
       html += `</div>`;
     } else {
-      html += `<div style="color:var(--c-emerald);margin:14px 0;">🎉 全部答对！</div>`;
+      html += `<div class="result-celebration">${uiLabel('sparkle', '全部答对！')}</div>`;
     }
     html += `<div class="actions" style="justify-content:center;margin-top:20px;">`;
     if (wrongList && wrongList.length) {
@@ -2135,8 +2233,8 @@ const UI = {
     const fb = $('#spFeedback');
     fb.className = 'spell-feedback ' + (correct ? 'ok' : 'bad');
     let html = correct
-      ? `<div>✅ 拼写正确！</div>`
-      : `<div>❌ 拼写错误</div>`;
+      ? `<div class="tz-icon-label">${uiGlyph('check')}<span>拼写正确！</span></div>`
+      : `<div class="tz-icon-label">${uiGlyph('close')}<span>拼写错误</span></div>`;
     // diff 高亮
     const diffHtml = this._diffHtml(user, right);
     html += `<div class="diff">${diffHtml}</div>`;
@@ -2145,8 +2243,8 @@ const UI = {
     }
     if (word) {
       html += `<div class="feedback-actions">
-        <button class="btn btn--ghost btn--sm" id="spExamples" data-wid="${word.id}">📖 AI 例句</button>
-        <button class="btn btn--ghost btn--sm" id="spAiAnalyze" data-wid="${word.id}">🤖 AI 解析</button>
+        <button class="btn btn--ghost btn--sm" id="spExamples" data-wid="${word.id}">${uiLabel('book', 'AI 例句')}</button>
+        <button class="btn btn--ghost btn--sm" id="spAiAnalyze" data-wid="${word.id}">${uiLabel('ai', 'AI 解析')}</button>
       </div>`;
     }
     fb.innerHTML = html;
@@ -2198,7 +2296,7 @@ const UI = {
       });
       html += `</div>`;
     } else {
-      html += `<div style="color:var(--c-emerald);margin:14px 0;">🎉 全部拼写正确！</div>`;
+      html += `<div class="result-celebration">${uiLabel('sparkle', '全部拼写正确！')}</div>`;
     }
     html += `<div class="actions" style="justify-content:center;margin-top:20px;">
       <button class="btn btn--ghost" id="spRestart">再来一轮</button>
@@ -2229,13 +2327,13 @@ const UI = {
 
   showAiError(elId, e) {
     const msg = escapeHtml(e.message || String(e));
-    this.setAiStatus(elId, 'error', '⚠️ ' + msg);
+    this.setAiStatus(elId, 'error', msg);
   },
 
   // 通用 AI 解析弹层（词库/答题反馈/错词本共用）
   showAiAnalyze(word) {
     if (!AI.isReady()) {
-      UI.toast('请先配置 AI（点右上角 🔑）', 'warn');
+      UI.toast('请先配置 AI（点右上角 AI 配置）', 'warn');
       App._loadAIConfigToForm();
       UI.openModal('aiConfigModal');
       return;
@@ -2243,10 +2341,10 @@ const UI = {
     const title = $('#aiAnTitle');
     const stream = $('#aiAnStream');
     const status = $('#aiAnStatus');
-    title.textContent = '🤖 ' + word.word + ' · AI 深度解析';
+    title.innerHTML = uiLabel('ai', word.word + ' · AI 深度解析');
     status.className = 'ai-status';
     stream.removeAttribute('hidden');
-    stream.innerHTML = '<div class="muted small">⏳ AI 正在解析「' + escapeHtml(word.word) + '」…</div>';
+    stream.innerHTML = '<div class="muted small">' + uiLabel('ai', 'AI 正在解析「' + word.word + '」…') + '</div>';
     UI.openModal('aiAnalyzeModal');
 
     let reasoningEl = null;
@@ -2255,7 +2353,7 @@ const UI = {
       if (!bodyEl) {
         stream.innerHTML = '';
         const det = document.createElement('details');
-        det.innerHTML = '<summary>🧠 AI 思考过程（点击展开）</summary>';
+        det.innerHTML = '<summary>' + uiLabel('ai', 'AI 思考过程（点击展开）') + '</summary>';
         reasoningEl = document.createElement('div');
         reasoningEl.style.cssText = 'margin-top:8px;font-size:12px;color:var(--ink-faint);white-space:pre-wrap;';
         det.appendChild(reasoningEl);
@@ -2270,7 +2368,7 @@ const UI = {
       if (!reasoningEl) {
         stream.innerHTML = '';
         const det = document.createElement('details');
-        det.innerHTML = '<summary>🧠 AI 思考过程（点击展开）</summary>';
+        det.innerHTML = '<summary>' + uiLabel('ai', 'AI 思考过程（点击展开）') + '</summary>';
         reasoningEl = document.createElement('div');
         reasoningEl.style.cssText = 'margin-top:8px;font-size:12px;color:var(--ink-faint);white-space:pre-wrap;';
         det.appendChild(reasoningEl);
@@ -2282,17 +2380,17 @@ const UI = {
       if (reasoningEl) reasoningEl.textContent = r;
     }).then(res => {
       if (bodyEl) bodyEl.innerHTML = renderMd(res.content);
-      UI.setAiStatus('aiAnStatus', 'ok', '✅ 解析完成');
+      UI.setAiStatus('aiAnStatus', 'ok', '解析完成');
     }).catch(e => {
       UI.showAiError('aiAnStatus', e);
-      stream.innerHTML = '<div class="muted small">⚠️ 解析失败：' + escapeHtml(e.message) + '</div>';
+      stream.innerHTML = '<div class="muted small">' + uiLabel('warning', '解析失败：' + e.message) + '</div>';
     });
   },
 
   // 通用例句弹层（词库/答题反馈共用）
   async showExamples(word) {
     if (!AI.isReady()) {
-      UI.toast('请先配置 AI（点右上角 🔑）', 'warn');
+      UI.toast('请先配置 AI（点右上角 AI 配置）', 'warn');
       App._loadAIConfigToForm();
       UI.openModal('aiConfigModal');
       return;
@@ -2300,7 +2398,7 @@ const UI = {
     const title = $('#exTitle');
     const content = $('#exContent');
     const status = $('#exStatus');
-    title.textContent = '📖 ' + word.word + ' · 例句';
+    title.innerHTML = uiLabel('book', word.word + ' · 例句');
     status.className = 'ai-status';
 
     // 检查已有例句
@@ -2320,11 +2418,11 @@ const UI = {
     const content = $('#exContent');
     const status = $('#exStatus');
     status.className = 'ai-status';
-    content.innerHTML = '<div class="ai-loading"><div class="spinner"></div>🤖 AI 正在为例句「' + escapeHtml(word.word) + '」生成…</div>';
+    content.innerHTML = '<div class="ai-loading"><div class="spinner"></div>' + uiLabel('ai', 'AI 正在为例句「' + word.word + '」生成…') + '</div>';
     $('#exRegen').setAttribute('disabled', '');
     try {
       const res = await AI.generateExamples(word, (delta, full) => {
-        content.innerHTML = '<div class="ai-loading"><div class="spinner"></div>🤖 生成中…</div><pre style="white-space:pre-wrap;font-size:12px;color:var(--ink-faint);margin-top:8px;">' + escapeHtml(full) + '</pre>';
+        content.innerHTML = '<div class="ai-loading"><div class="spinner"></div>' + uiLabel('ai', '生成中…') + '</div><pre style="white-space:pre-wrap;font-size:12px;color:var(--ink-faint);margin-top:8px;">' + escapeHtml(full) + '</pre>';
       });
       let items = null;
       try { items = JSON.parse(res.content.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '')); }
@@ -2334,14 +2432,14 @@ const UI = {
         Store.get().examples[word.id] = clean;
         Store.commit();
         content.innerHTML = this._renderExamplesHtml(clean, word.word);
-        UI.setAiStatus('exStatus', 'ok', '✅ 已生成 ' + clean.length + ' 个例句');
+        UI.setAiStatus('exStatus', 'ok', '已生成 ' + clean.length + ' 个例句');
       } else {
-        content.innerHTML = '<div class="muted small">⚠️ AI 返回格式异常，原始内容：</div><pre style="white-space:pre-wrap;font-size:12px;color:var(--ink-faint);margin-top:8px;">' + escapeHtml(res.content) + '</pre>';
-        UI.setAiStatus('exStatus', 'error', '⚠️ 例句格式异常，可点「重新生成」重试');
+        content.innerHTML = '<div class="muted small">' + uiLabel('warning', 'AI 返回格式异常，原始内容：') + '</div><pre style="white-space:pre-wrap;font-size:12px;color:var(--ink-faint);margin-top:8px;">' + escapeHtml(res.content) + '</pre>';
+        UI.setAiStatus('exStatus', 'error', '例句格式异常，可点「重新生成」重试');
       }
     } catch (e) {
-      content.innerHTML = '<div class="muted small">⚠️ 生成失败：' + escapeHtml(e.message) + '</div>';
-      UI.setAiStatus('exStatus', 'error', '⚠️ ' + escapeHtml(e.message));
+      content.innerHTML = '<div class="muted small">' + uiLabel('warning', '生成失败：' + e.message) + '</div>';
+      UI.setAiStatus('exStatus', 'error', escapeHtml(e.message));
     }
     $('#exRegen').removeAttribute('disabled');
   },
@@ -2373,7 +2471,7 @@ const UI = {
         <div class="qi-word">单词：${escapeHtml(q.word || '')}</div>
         <div class="qi-stem">${escapeHtml(q.stem || '')}</div>
         <div class="qi-opts">${opts}</div>
-        <div class="qi-explain" hidden>💡 ${escapeHtml(q.explain || '')}</div>
+        <div class="qi-explain tz-icon-label" hidden>${uiGlyph('bulb')}<span>${escapeHtml(q.explain || '')}</span></div>
       </div>`;
     }).join('');
     // 绑定点击
@@ -2424,11 +2522,9 @@ const App = {
     this.bindAI();
     this.bindModal();
     this.bindSample();
-    // 全局键盘：Enter 提交
+    // 弹层键盘：Escape 关闭，Tab 保持在当前弹层内。
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        $$('.modal').forEach(m => m.setAttribute('hidden', ''));
-      }
+      UI.handleModalKeydown(e);
     });
   },
 
@@ -2535,7 +2631,7 @@ const App = {
         UI.toast('已清空词库与记录', 'success');
       } else {
         clearConfirmTimer = setTimeout(() => { clearConfirmTimer = null; }, 3000);
-        UI.toast('⚠️ 再次点击确认清空（3秒内有效）', 'warn');
+        UI.toast('再次点击确认清空（3秒内有效）', 'warn');
       }
     });
 
@@ -2718,15 +2814,19 @@ const App = {
       chip.addEventListener('click', () => {
         $('#cfgUrl').value = chip.dataset.url;
         $('#cfgModel').value = chip.dataset.model;
+        const keyInput = $('#cfgKey');
+        if (chip.dataset.bundledKey === 'glm') keyInput.value = BUNDLED_GLM_API_KEY;
+        else if (keyInput.value === BUNDLED_GLM_API_KEY) keyInput.value = '';
       });
     });
 
     $('#cfgSave').addEventListener('click', () => {
+      const parsedTemperature = Number.parseFloat($('#cfgTemp').value);
       const c = {
         url: $('#cfgUrl').value.trim(),
         key: $('#cfgKey').value.trim(),
         model: $('#cfgModel').value.trim(),
-        temperature: parseFloat($('#cfgTemp').value) || 0.6
+        temperature: Number.isFinite(parsedTemperature) ? parsedTemperature : 0.6
       };
       Store.setAIConfig(c);
       UI.toast('AI 配置已保存', 'success');
@@ -2746,20 +2846,20 @@ const App = {
       }
       const btn = $('#cfgTest');
       btn.setAttribute('disabled', '');
-      btn.textContent = '🧪 测试中…';
+      btn.innerHTML = uiLabel('network', '测试中…');
       // 临时保存测试配置
       const old = Store.aiConfig();
       Store.setAIConfig(c);
       try {
         await AI.test();
-        UI.toast('✅ 连接成功', 'success');
+        UI.toast('连接成功', 'success');
       } catch (e) {
-        UI.toast('❌ ' + e.message, 'error');
+        UI.toast(e.message, 'error');
         // 恢复旧配置
         Store.setAIConfig(old);
       } finally {
         btn.removeAttribute('disabled');
-        btn.textContent = '🧪 测试连接';
+        btn.innerHTML = uiLabel('network', '测试连接');
       }
     });
   },

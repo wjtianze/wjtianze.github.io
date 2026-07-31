@@ -1,8 +1,9 @@
 /* ===== 天择网 · COC 升级规划器 · app.js ===== */
-/* 单级拆分+前置依赖 · 英雄优先专用槽 · 缩放自适应日期 · 滑块鼠标拖动+拖出 */
+/* 单级拆分+前置依赖 · 英雄优先专用槽 · 缩放自适应日期 · 滑块指针拖动+拖出 */
 (function () {
   "use strict";
   function $(id){ return document.getElementById(id); }
+  function uiGlyph(key){ return '<span data-ui-icon="'+key+'" aria-hidden="true"></span>'; }
   function fmtDur(sec){ sec=Math.max(0,Math.round(sec)); var d=Math.floor(sec/86400),h=Math.floor(sec%86400/3600),m=Math.floor(sec%3600/60),s=sec%60,p=[]; if(d)p.push(d+"天"); if(h)p.push(h+"时"); if(m)p.push(m+"分"); if(!p.length)p.push(s+"秒"); return p.join(""); }
   function num(v){ v=parseInt(v,10); return isNaN(v)?0:v; }
 
@@ -157,21 +158,88 @@
     lanes.forEach(function(l,i){ var n=laneRows[i].rows,y0=laneStartY[l.key]; s+='<rect x="0" y="'+y0+'" width="'+svgW+'" height="'+(n*rowH)+'" fill="'+(i%2?'rgba(255,255,255,0.015)':'transparent')+'"/>'; s+='<text class="vg-lane-label" x="10" y="'+(y0+12)+'" dominant-baseline="central">'+l.label+'('+slots[l.key]+'槽)</text>'; for(var r=0;r<n;r++)s+='<line class="vg-grid" x1="'+padL+'" y1="'+(y0+(r+1)*rowH)+'" x2="'+svgW+'" y2="'+(y0+(r+1)*rowH)+'"/>'; });
     var laneColor={}; lanes.forEach(function(l){laneColor[l.key]=l.color;});
     var self=this;
-    this.planList.forEach(function(p){ var t=BUILD.taskMap[p.id]; if(!t)return; var y0=laneStartY[p.lane]; if(y0==null)return; var y=y0+p.slot*rowH+4, x=padL+p.start*pxPerSec, w=Math.max(p.dur*pxPerSec,3); var col=laneColor[p.lane]||"#7c3aed"; if(p.locked)col="#64748b"; var barLabel=t.name+" "+t.fromLvl+"到"+t.toLvl+(p.locked?"，升级进行中":"，按 Delete 移回待规划区"); s+='<g class="vg-bar" data-tid="'+p.id+'" role="button" tabindex="'+(p.locked?'-1':'0')+'" aria-label="'+barLabel+'"><rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+(rowH-8)+'" rx="4" fill="'+col+'"'+(p.locked?' stroke="#fbbf24" stroke-width="1.5"':'')+'/>'; var lbl=t.name; if(lbl.length>7)lbl=lbl.slice(0,6)+"…"; if(w>40)s+='<text x="'+(x+4)+'" y="'+(y+(rowH-8)/2)+'" dominant-baseline="central">'+lbl+' '+t.fromLvl+'→'+t.toLvl+'</text>'; if(p.locked&&w>20)s+='<text x="'+(x+w-14)+'" y="'+(y+10)+'" font-size="9" fill="#fbbf24">🔒</text>'; s+='</g>'; });
+    this.planList.forEach(function(p){ var t=BUILD.taskMap[p.id]; if(!t)return; var y0=laneStartY[p.lane]; if(y0==null)return; var y=y0+p.slot*rowH+4, x=padL+p.start*pxPerSec, w=Math.max(p.dur*pxPerSec,3); var col=laneColor[p.lane]||"#7c3aed"; if(p.locked)col="#64748b"; var barLabel=t.name+" "+t.fromLvl+"到"+t.toLvl+(p.locked?"，升级进行中":"，拖动或用左右方向键调整，按 Enter 或 Delete 移回待规划区"); s+='<g class="vg-bar" data-tid="'+p.id+'" role="button" tabindex="'+(p.locked?'-1':'0')+'" aria-label="'+barLabel+'"'+(p.locked?' aria-disabled="true"':' aria-keyshortcuts="ArrowLeft ArrowRight Enter Delete"')+'><rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+(rowH-8)+'" rx="4" fill="'+col+'"'+(p.locked?' stroke="#fbbf24" stroke-width="1.5"':'')+'/>'; var lbl=t.name; if(lbl.length>7)lbl=lbl.slice(0,6)+"…"; if(w>40)s+='<text x="'+(x+4)+'" y="'+(y+(rowH-8)/2)+'" dominant-baseline="central">'+lbl+' '+t.fromLvl+'→'+t.toLvl+'</text>'; if(p.locked&&w>24)s+='<foreignObject x="'+(x+w-18)+'" y="'+(y+2)+'" width="16" height="16"><span xmlns="http://www.w3.org/1999/xhtml" data-ui-icon="key" aria-hidden="true" style="display:grid;place-items:center;width:16px;height:16px;font-size:12px"></span></foreignObject>'; s+='</g>'; });
     svg.innerHTML=s;
-    svg.querySelectorAll(".vg-bar").forEach(function(g){ var tid=g.getAttribute("data-tid"),p=self.planned[tid]; if(p&&p.locked)return; g.addEventListener("mousedown",function(e){ self.onBarDown(e); }); g.addEventListener("keydown",function(e){ if(e.key==="Delete"||e.key==="Backspace"){ e.preventDefault(); self.removeWithDeps(tid); self.redraw(); $(self.pendingGridId).focus(); } }); });
+    svg.querySelectorAll(".vg-bar").forEach(function(g){
+      var tid=g.getAttribute("data-tid"),p=self.planned[tid];
+      if(!p||p.locked)return;
+      g.addEventListener("pointerdown",function(e){ self.onBarDown(e); });
+      g.addEventListener("keydown",function(e){
+        if(e.key==="Delete"||e.key==="Backspace"||e.key==="Enter"||e.key===" "){
+          e.preventDefault();
+          self.removeWithDeps(tid);
+          self.redraw();
+          $(self.pendingGridId).focus();
+          return;
+        }
+        if(e.key!=="ArrowLeft"&&e.key!=="ArrowRight")return;
+        e.preventDefault();
+        var step=e.shiftKey?86400:3600;
+        p.start=self.snapValid(p,Math.max(0,p.start+(e.key==="ArrowRight"?step:-step)));
+        self.redraw();
+        self.focusBar(tid);
+      });
+    });
   };
   Planner.prototype.svgPoint=function(svg,e){ var pt=svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); };
-  Planner.prototype.onBarDown=function(e){ e.preventDefault(); var g=e.currentTarget, tid=g.getAttribute("data-tid"), p=this.planned[tid]; if(!p||p.locked)return; var svg=$(this.svgId), pt=this.svgPoint(svg,e); this._drag={tid:tid,p:p,svg:svg,ptStart:pt,start0:p.start}; var self=this; this._move=function(ev){ self.onBarMove(ev); }; this._up=function(ev){ self.onBarUp(ev); }; window.addEventListener("mousemove",this._move); window.addEventListener("mouseup",this._up); };
-  Planner.prototype.onBarMove=function(e){ var d=this._drag; if(!d)return; var pt=this.svgPoint(d.svg,e), dx=pt.x-d.ptStart.x; var baseW=1000,zoom=STATE.zoom[this.world],padL=140,padR=20,svgW=baseW*zoom,chartW=svgW-padL-padR; var end=this.planList.reduce(function(m,p){return Math.max(m,p.start+p.dur);},0); var days=Math.ceil(Math.max(end,86400)/86400)+1; var pxPerSec=chartW/(days*86400); var dsec=dx/pxPerSec; d.newStart=Math.max(0,d.start0+dsec); var g=d.svg.querySelector('.vg-bar[data-tid="'+d.tid+'"]'); if(g){ g.querySelector("rect").setAttribute("x",padL+d.newStart*pxPerSec); } };
-  Planner.prototype.onBarUp=function(e){ var d=this._drag; if(!d)return; window.removeEventListener("mousemove",this._move); window.removeEventListener("mouseup",this._up); this._drag=null; // 判断是否拖到待规划区
+  Planner.prototype.focusBar=function(tid){ var bars=$(this.svgId).querySelectorAll(".vg-bar"); for(var i=0;i<bars.length;i++){ if(bars[i].getAttribute("data-tid")===tid){ bars[i].focus(); return; } } };
+  Planner.prototype.stopBarTracking=function(d){
+    window.removeEventListener("pointermove",this._move);
+    window.removeEventListener("pointerup",this._up);
+    window.removeEventListener("pointercancel",this._cancel);
+    if(d&&d.captureTarget&&d.captureTarget.releasePointerCapture){
+      try{ if(d.captureTarget.hasPointerCapture(d.pointerId))d.captureTarget.releasePointerCapture(d.pointerId); }catch(err){}
+    }
+    this._move=null; this._up=null; this._cancel=null;
+  };
+  Planner.prototype.onBarDown=function(e){
+    if((e.button!=null&&e.button!==0)||e.isPrimary===false)return;
+    e.preventDefault();
+    var g=e.currentTarget, tid=g.getAttribute("data-tid"), p=this.planned[tid];
+    if(!p||p.locked)return;
+    var svg=$(this.svgId), pt=this.svgPoint(svg,e);
+    this._drag={tid:tid,p:p,svg:svg,ptStart:pt,start0:p.start,newStart:p.start,pointerId:e.pointerId,captureTarget:g};
+    if(g.setPointerCapture){ try{ g.setPointerCapture(e.pointerId); }catch(err){} }
+    var self=this;
+    this._move=function(ev){ self.onBarMove(ev); };
+    this._up=function(ev){ self.onBarUp(ev); };
+    this._cancel=function(ev){ self.onBarCancel(ev); };
+    window.addEventListener("pointermove",this._move,{passive:false});
+    window.addEventListener("pointerup",this._up);
+    window.addEventListener("pointercancel",this._cancel);
+  };
+  Planner.prototype.onBarMove=function(e){
+    var d=this._drag;
+    if(!d||(e.pointerId!=null&&e.pointerId!==d.pointerId))return;
+    e.preventDefault();
+    var pt=this.svgPoint(d.svg,e), dx=pt.x-d.ptStart.x;
+    var baseW=1000,zoom=STATE.zoom[this.world],padL=140,padR=20,svgW=baseW*zoom,chartW=svgW-padL-padR;
+    var end=this.planList.reduce(function(m,p){return Math.max(m,p.start+p.dur);},0);
+    var days=Math.ceil(Math.max(end,86400)/86400)+1;
+    var pxPerSec=chartW/(days*86400), dsec=dx/pxPerSec;
+    d.newStart=Math.max(0,d.start0+dsec);
+    var g=d.svg.querySelector('.vg-bar[data-tid="'+d.tid+'"]');
+    if(g)g.setAttribute("transform","translate("+dx+" 0)");
+  };
+  Planner.prototype.onBarUp=function(e){
+    var d=this._drag;
+    if(!d||(e.pointerId!=null&&e.pointerId!==d.pointerId))return;
+    this.stopBarTracking(d);
+    this._drag=null; // 判断是否拖到待规划区
     var pend=$(this.pendingGridId).parentElement, rect=pend.getBoundingClientRect();
     if(e.clientX>=rect.left&&e.clientX<=rect.right&&e.clientY>=rect.top&&e.clientY<=rect.bottom){ this.removeWithDeps(d.tid); }
-    else { d.p.start=this.snapValid(d.p,d.newStart||d.p.start); }
+    else { d.p.start=this.snapValid(d.p,d.newStart!=null?d.newStart:d.p.start); }
     this.redraw();
   };
+  Planner.prototype.onBarCancel=function(e){
+    var d=this._drag;
+    if(!d||(e.pointerId!=null&&e.pointerId!==d.pointerId))return;
+    this.stopBarTracking(d);
+    this._drag=null;
+    this.drawGantt();
+  };
   Planner.prototype.snapValid=function(p,newStart){ var task=BUILD.taskMap[p.id],depMin=task?this.depEnd(task):0; newStart=Math.max(depMin,newStart||0); var laneTasks=this.planList.filter(function(x){return x.lane===p.lane&&x.slot===p.slot&&x.id!==p.id;}).sort(function(a,b){return a.start-b.start;}); function conflict(s2){ return laneTasks.some(function(q){ return s2<q.start+q.dur&&s2+p.dur>q.start; }); } if(!conflict(newStart))return newStart; var t=newStart; for(var i=0;i<laneTasks.length;i++){ var q=laneTasks[i]; if(t+p.dur<=q.start)return t; t=Math.max(t,q.start+q.dur); } return t; };
-  Planner.prototype.drawPending=function(){ var self=this,grid=$(this.pendingGridId); var up=this.unplanned(); $(this.pendingCountId).textContent=up.length+" 项"; grid.setAttribute("tabindex","-1"); if(!up.length){ grid.innerHTML='<div class="vp-pending-empty">全部任务已安排</div>'; return; } var h=""; up.forEach(function(t){ var lockTag=t.locked?' 🔒':''; h+='<button type="button" class="vp-pending-item" draggable="true" data-tid="'+t.id+'" aria-label="安排 '+t.name+' '+t.fromLvl+' 到 '+t.toLvl+' 级">'+t.name+' '+t.fromLvl+'→'+t.toLvl+' · '+fmtDur(t.sec)+lockTag+'</button>'; }); grid.innerHTML=h; grid.querySelectorAll(".vp-pending-item").forEach(function(el){ el.addEventListener("click",function(){ var t=BUILD.taskMap[el.getAttribute("data-tid")]; if(t){ self.scheduleWithDeps(t); self.redraw(); } }); el.addEventListener("dragstart",function(e){ e.dataTransfer.setData("text/plain","add:"+el.getAttribute("data-tid")); e.dataTransfer.effectAllowed="move"; el.classList.add("dragging"); }); el.addEventListener("dragend",function(){ el.classList.remove("dragging"); }); }); };
+  Planner.prototype.drawPending=function(){ var self=this,grid=$(this.pendingGridId); var up=this.unplanned(); $(this.pendingCountId).textContent=up.length+" 项"; grid.setAttribute("tabindex","-1"); if(!up.length){ grid.innerHTML='<div class="vp-pending-empty">全部任务已安排</div>'; return; } var h=""; up.forEach(function(t){ var lockTag=t.locked?' '+uiGlyph("key"):''; var lockLabel=t.locked?'，升级进行中':''; h+='<button type="button" class="vp-pending-item" draggable="true" data-tid="'+t.id+'" aria-label="安排 '+t.name+' '+t.fromLvl+' 到 '+t.toLvl+' 级'+lockLabel+'">'+t.name+' '+t.fromLvl+'→'+t.toLvl+' · '+fmtDur(t.sec)+lockTag+'</button>'; }); grid.innerHTML=h; grid.querySelectorAll(".vp-pending-item").forEach(function(el){ el.addEventListener("click",function(){ var t=BUILD.taskMap[el.getAttribute("data-tid")]; if(t){ self.scheduleWithDeps(t); self.redraw(); } }); el.addEventListener("dragstart",function(e){ e.dataTransfer.setData("text/plain","add:"+el.getAttribute("data-tid")); e.dataTransfer.effectAllowed="move"; el.classList.add("dragging"); }); el.addEventListener("dragend",function(){ el.classList.remove("dragging"); }); }); };
 
   var BUILD=null, homeP=null, bbP=null;
   function modeDesc(){ if(STATE.mode==="steady")return "稳本模式：升级所有内容，每级一个滑块。建筑工人优先英雄（每个英雄占一个专用槽连续升级），英雄升完再升其他；研究员与战宠研究员按时间短→长。"; return "速本模式：忽略防御建筑、建筑工人小屋升级、陷阱、资源采集器与英雄，集中资源冲大本营。"; }

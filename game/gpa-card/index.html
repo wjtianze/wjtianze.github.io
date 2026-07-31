@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>绩点战争：GPA 4.3 · 内测版 — 天择网</title>
   <meta name="description" content="绩点战争内测版——在攻击、防守与学习成长间分配能量，击倒对手或率先把 GPA 推到 4.3。" />
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css" />
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/gpa-card.css" />
+  <script>(function(){try{var p=localStorage.getItem("tz_site_palette");if(p==="mid"||p==="warm")document.documentElement.setAttribute("data-palette",p);}catch(e){}})();</script>
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260731-v4.13" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/gpa-card.css?v=20260731-v4.13" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/gpa-workspace.css?v=20260731-v4.13" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M8 17h5v-5h6v5h5v6h-5v-3h-6v3H8z' fill='white'/%3E%3C/svg%3E" />
 </head>
 <body class="gpa-page">
@@ -17,45 +19,54 @@
         <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/></svg></span>
         <span class="logo-text">天择网</span>
       </a>
-      <button class="nav-toggle" type="button" aria-label="菜单">☰</button>
+      <button class="nav-toggle" type="button" aria-label="菜单" data-ui-icon="menu"></button>
       <nav class="nav" aria-label="主导航"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html" class="active"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a></nav>
     </div>
   </header>
 
   <main class="gpa-game">
+    <div class="gpa-workspace-shell">
     <header class="gpa-hero">
       <div>
         <div class="crumb"><a href="https://wjtianze.github.io/index.html">首页</a><span>/</span><a href="https://wjtianze.github.io/game/index.html">游戏专区</a><span>/</span><span>绩点战争</span></div>
         <div class="gpa-kicker">ACADEMIC COMBAT SYSTEM</div>
         <h1 class="gpa-title">绩点战争：<span class="grad">GPA 4.3</span><span class="gpa-version">BETA v0.1</span></h1>
+        <p class="gpa-hero-intro">在攻击、防守与学习成长之间分配有限能量。左侧掌握目标与状态，右侧完成配卡、行动和结算。</p>
+        <div class="gpa-hero-notes" aria-label="游戏信息">
+          <span><span class="tz-icon" data-icon="file" aria-hidden="true"></span>12 张战术卡</span>
+          <span><span class="tz-icon" data-icon="lightning" aria-hidden="true"></span>4 项技能</span>
+          <span><span class="tz-icon" data-icon="ai" aria-hidden="true"></span>本地 AI 对战</span>
+        </div>
       </div>
       <div class="gpa-hero-status">TACTICAL LINK ONLINE</div>
     </header>
 
-    <div class="gpa-overlay" id="startScreen" role="dialog" aria-modal="true" aria-labelledby="startTitle" aria-describedby="startDesc">
+    <div class="gpa-overlay" id="startScreen" role="dialog" aria-modal="true" aria-labelledby="startTitle" aria-describedby="startDesc" aria-hidden="false">
       <div class="gpa-overlay-card" tabindex="-1">
-        <div class="gpa-dialog-icon" aria-hidden="true">🎓</div>
+        <div class="gpa-dialog-icon" data-ui-icon="trophy" aria-hidden="true"></div>
         <h2 id="startTitle">绩点战争</h2>
         <p class="gpa-start-copy" id="startDesc">用能量打出卡牌：攻击对手、防守自保，或专注学习提升 GPA。<br />把 GPA 推到 <strong class="gpa-goal">4.3</strong> 直接获胜，或把对手生命打到 <strong class="gpa-danger-copy">0</strong>。<br /><span class="gpa-start-note">内测版含 12 张基础牌与 4 个技能，用于验证核心循环。</span></p>
         <section class="gpa-skill-section" aria-labelledby="skillPickTitle">
           <h3 id="skillPickTitle">选择技能（1 主动 + 1 被动）</h3>
-          <div class="gpa-skill-pick" id="skillPick"></div>
+          <div class="gpa-skill-pick" id="skillPick" role="group" aria-label="技能选择"></div>
+          <p class="gpa-skill-status" id="skillPickStatus" role="status" aria-live="polite">请选择一项被动技能和一项主动技能。</p>
         </section>
         <button class="gpa-btn gpa-btn-primary" id="startBtn" type="button" disabled>启动对局</button>
       </div>
     </div>
 
+    <div class="gpa-play-column">
     <div class="gpa-board" id="gameBoard" style="display:none;">
-      <div class="gpa-phase-bar" id="phaseBar" aria-label="回合阶段">
-        <div class="gpa-phase-step" data-phase="config">01 配卡</div>
-        <div class="gpa-phase-step" data-phase="supply">02 补给</div>
-        <div class="gpa-phase-step" data-phase="action">03 行动</div>
-        <div class="gpa-phase-step" data-phase="end">04 结束</div>
+      <div class="gpa-phase-bar" id="phaseBar" role="list" aria-label="回合阶段">
+        <div class="gpa-phase-step" data-phase="config" role="listitem">01 配卡</div>
+        <div class="gpa-phase-step" data-phase="supply" role="listitem">02 补给</div>
+        <div class="gpa-phase-step" data-phase="action" role="listitem">03 行动</div>
+        <div class="gpa-phase-step" data-phase="end" role="listitem">04 结束</div>
       </div>
 
       <section class="gpa-side opponent-side" id="opponentSide" aria-labelledby="opponentName">
         <div class="gpa-player-row">
-          <div class="gpa-avatar ai" aria-hidden="true">🤖</div>
+          <div class="gpa-avatar ai" data-ui-icon="ai" aria-hidden="true"></div>
           <div class="gpa-player-data">
             <div class="gpa-name" id="opponentName">AI 对手 <span class="turn-tag" id="aiTurnTag"></span></div>
             <div class="gpa-stats" id="aiStats"></div>
@@ -72,7 +83,7 @@
 
       <section class="gpa-side active-turn" id="playerSide" aria-labelledby="playerName">
         <div class="gpa-player-row">
-          <div class="gpa-avatar" aria-hidden="true">🎓</div>
+          <div class="gpa-avatar" data-ui-icon="trophy" aria-hidden="true"></div>
           <div class="gpa-player-data">
             <div class="gpa-name" id="playerName">你 <span class="turn-tag" id="playerTurnTag"></span></div>
             <div class="gpa-stats" id="playerStats"></div>
@@ -82,29 +93,32 @@
         <div class="gpa-hand-label">手牌 <span id="playerHandCount"></span><span class="gpa-label-meta gpa-label-end" id="deckInfo"></span></div>
         <div class="gpa-hand" id="playerHand" aria-label="玩家手牌"></div>
 
-        <div class="gpa-hand-label">战术商店 <span class="gpa-label-meta">花费能量购买，永久解锁</span><button class="gpa-btn gpa-btn-ghost gpa-refresh" id="refreshBtn" type="button">刷新 (1⚡)</button></div>
+        <div class="gpa-hand-label">战术商店 <span class="gpa-label-meta">花费能量购买，永久解锁</span><button class="gpa-btn gpa-btn-ghost gpa-refresh" id="refreshBtn" type="button" data-ui-icon="refresh">刷新 · 消耗 1 能量</button></div>
         <div class="gpa-shop" id="shopArea" aria-label="卡牌商店"></div>
 
         <div class="gpa-controls">
-          <button class="gpa-btn gpa-btn-primary" id="endTurnBtn" type="button">结束回合 →</button>
+          <button class="gpa-btn gpa-btn-primary" id="endTurnBtn" type="button">结束回合 <span class="tz-icon" data-icon="right" aria-hidden="true"></span></button>
           <button class="gpa-btn gpa-btn-ghost" id="helpBtn" type="button" aria-haspopup="dialog">规则速查</button>
           <button class="gpa-btn gpa-btn-danger" id="restartBtn" type="button">重新开始</button>
         </div>
       </section>
     </div>
+    </div>
+    </div>
 
     <div class="gpa-overlay hidden" id="endScreen" role="dialog" aria-modal="true" aria-labelledby="endTitle" aria-describedby="endDesc" aria-hidden="true">
       <div class="gpa-overlay-card" tabindex="-1">
-        <div id="endIcon" class="win-icon gpa-dialog-icon" aria-hidden="true">🏆</div>
+        <div id="endIcon" class="win-icon gpa-dialog-icon" data-ui-icon="trophy" aria-hidden="true"></div>
         <h2 id="endTitle">胜利！</h2>
         <p id="endDesc"></p>
         <div class="gpa-dialog-actions"><button class="gpa-btn gpa-btn-primary" id="playAgainBtn" type="button">再来一局</button><a class="gpa-btn gpa-btn-ghost" href="https://wjtianze.github.io/game/index.html">返回专区</a></div>
       </div>
     </div>
 
-    <div class="gpa-overlay hidden" id="helpScreen" role="dialog" aria-modal="true" aria-labelledby="helpTitle" aria-hidden="true">
+    <div class="gpa-overlay hidden" id="helpScreen" role="dialog" aria-modal="true" aria-labelledby="helpTitle" aria-describedby="helpSummary" aria-hidden="true">
       <div class="gpa-overlay-card gpa-help-card" tabindex="-1">
         <h2 class="gpa-help-title" id="helpTitle">规则速查</h2>
+        <p class="gpa-help-summary" id="helpSummary">核心目标、资源、卡牌与回合规则。</p>
         <div class="gpa-rules">
           <p><strong>目标：</strong>GPA 达到 4.3 直接获胜，或把对手生命降到 0。</p>
           <p><strong>能量：</strong>初始 3，每回合 +3，上限 10。用于打出和购买卡牌。</p>
@@ -112,10 +126,22 @@
           <p><strong>护盾：</strong>伤害先扣护盾；护盾在你的回合开始时清空。</p>
           <p><strong>GPA：</strong>每回合最多 +0.3。造成 ≥8 伤害、获得 ≥8 护盾/治疗、购买卡牌各可 +0.1。</p>
           <p><strong>里程碑：</strong>GPA 到达 1.5 / 2.0 / 2.5 / 3.0 / 3.5 / 4.0 时获得一次性奖励。</p>
-          <p><strong>回合：</strong>配卡 → 补给 → 行动 → 结束。</p>
+          <p><strong>回合：</strong>依次经过配卡、补给、行动与结束阶段。</p>
           <p><strong>先后手：</strong>首回合随机先手，之后交替；后手首回合额外 +1 能量。</p>
         </div>
         <button class="gpa-btn gpa-btn-ghost gpa-help-close" id="closeHelpBtn" type="button">关闭</button>
+      </div>
+    </div>
+
+    <div class="gpa-overlay hidden" id="restartScreen" role="dialog" aria-modal="true" aria-labelledby="restartTitle" aria-describedby="restartDesc" aria-hidden="true">
+      <div class="gpa-overlay-card gpa-confirm-card" tabindex="-1">
+        <div class="gpa-dialog-icon" data-ui-icon="warning" aria-hidden="true"></div>
+        <h2 id="restartTitle">重新开始对局？</h2>
+        <p id="restartDesc">当前对局进度不会保留。你将返回技能选择界面。</p>
+        <div class="gpa-dialog-actions">
+          <button class="gpa-btn gpa-btn-ghost" id="cancelRestartBtn" type="button">继续当前对局</button>
+          <button class="gpa-btn gpa-btn-danger" id="confirmRestartBtn" type="button">确认重新开始</button>
+        </div>
       </div>
     </div>
 
@@ -125,7 +151,7 @@
 
   <footer class="footer"><div class="wrap footer-inner"><div>© 2026 天择网 · 物竞天择，适者生存</div><div class="links"><a href="https://wjtianze.github.io/index.html">主页</a><a href="https://wjtianze.github.io/news/index.html">新闻</a><a href="https://wjtianze.github.io/blog/index.html">博客</a><a href="https://wjtianze.github.io/open/index.html">数据开源</a><a href="https://wjtianze.github.io/ai/index.html">AI 专区</a><a href="https://wjtianze.github.io/coc/index.html">COC 专区</a><a href="https://wjtianze.github.io/game/index.html">游戏专区</a><a href="https://wjtianze.github.io/english/index.html">英语专区</a><a href="https://wjtianze.github.io/os/index.html">天择OS</a></div></div></footer>
 
-  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260725a"></script>
-  <script defer src="https://wjtianze.github.io/assets/js/gpa-card.js"></script>
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260731-v4.13"></script>
+  <script defer src="https://wjtianze.github.io/assets/js/gpa-card.js?v=20260731-v4.13"></script>
 </body>
 </html>
