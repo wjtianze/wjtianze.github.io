@@ -479,7 +479,7 @@ img { max-width: 100%; display: block; }
   --tz-safe-bottom: env(safe-area-inset-bottom, 0px);
   --tz-safe-left: env(safe-area-inset-left, 0px);
 }
-html[data-zone="ai"] { --tz-section-bg-image: url("../img/section-bg/source/ai.webp"); --tz-section-bg-mobile-image: url("../img/section-bg/mobile/ai.webp"); --tz-section-bg-position: center calc(100% + 52px); --tz-section-bg-size: 100% auto; }
+html[data-zone="ai"] { --tz-section-bg-image: url("../img/section-bg/source/ai.webp?v=20260802-ai3"); --tz-section-bg-mobile-image: url("../img/section-bg/mobile/ai.webp?v=20260802-ai3"); --tz-section-bg-position: center calc(100% + 52px); --tz-section-bg-size: 100% auto; }
 html[data-zone="coc"] { --tz-section-bg-image: url("../img/section-bg/source/coc.webp"); --tz-section-bg-mobile-image: url("../img/section-bg/mobile/coc.webp"); }
 html[data-zone="english"] { --tz-section-bg-image: url("../img/section-bg/source/english.webp"); --tz-section-bg-mobile-image: url("../img/section-bg/mobile/english.webp"); }
 html[data-zone="game"] { --tz-section-bg-image: url("../img/section-bg/source/game.webp"); --tz-section-bg-mobile-image: url("../img/section-bg/mobile/game.webp"); }

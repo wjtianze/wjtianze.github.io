@@ -7,7 +7,7 @@
 | 专区 | 文件 | 标志性元素 |
 | --- | --- | --- |
 | 主页 | `home.png` | 明亮的蓝青渐变、稀疏网络节点与克制的紫色边缘光，中心安静 |
-| AI | `ai.png` | OpenAI/GPT、Claude、Gemini、Kimi、GLM、DeepSeek 六个标志；桌面版集中在底部安全区，移动版使用 2×3 居中布局 |
+| AI | `ai.png` | 按当前综合性能分级的 LLM 模型标志星图；Claude、GPT、Kimi 为最大三档，Gemini、Grok 等次之，GLM、Qwen、DeepSeek、MiniMax、豆包居中，其余模型作为边缘节点；Z.ai 使用官方黑底白 Z，Grok 使用黑洞标志，Meta/Muse 仅作第四梯队小节点 |
 | COC | `coc.png` | 可辨识的野蛮人、石墙、火把、村庄防御轮廓 |
 | 英语 | `english.png` | 书本、纸页、语言线条与字母意象 |
 | 游戏 | `game.png` | 卡牌、奖杯与轻量竞技场轮廓 |
