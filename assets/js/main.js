@@ -2603,13 +2603,11 @@
   /* 被 iframe 嵌入（如天择OS 浏览器）时：把"新窗口/外站链接"交给父窗口在系统内打开，
      并主动上报当前网址供地址栏同步。直接访问天择网时（parent===window）不生效。 */
   if (window.parent !== window) {
-    /* nochrome=1 时隐藏页眉页脚，让天择网应用在 OS 内呈现为原生应用观感（首页除外） */
+    /* nochrome=1 时隐藏页眉，让天择网应用在 OS 内呈现为原生应用观感（首页除外） */
     if (new URLSearchParams(location.search).get('nochrome') === '1') {
       var hideChrome = function () {
         var topbar = document.querySelector('.topbar');
-        var footer = document.querySelector('.footer');
         if (topbar) topbar.style.display = 'none';
-        if (footer) footer.style.display = 'none';
         document.body.classList.add('nochrome');
         var main = document.querySelector('main');
         if (main) main.style.paddingTop = '0';

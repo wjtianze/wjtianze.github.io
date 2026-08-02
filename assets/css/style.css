@@ -425,48 +425,6 @@ img { max-width: 100%; display: block; }
 .btn--sm { padding: 10px 20px; font-size: 14px; }
 
 /* ============================================================
-   页脚
-   ============================================================ */
-.footer {
-  margin-top: 100px;
-  border-top: 1px solid var(--line);
-  background: rgba(11, 16, 32, 0.55);
-  backdrop-filter: blur(12px);
-}
-.footer-inner {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  align-items: center;
-  justify-content: space-between;
-  padding: 34px 0;
-  color: var(--ink-faint);
-  font-size: 14px;
-}
-.footer a {
-  color: var(--ink-dim);
-  position: relative;
-  transition: color var(--t-fast) var(--ease-out);
-}
-.footer a::after {
-  content: "";
-  position: absolute;
-  left: 0; bottom: -2px;
-  width: 100%;
-  height: 1px;
-  background: var(--grad-main);
-  transform: scaleX(0);
-  transform-origin: right;
-  transition: transform var(--t-base) var(--ease-out);
-}
-.footer a:hover { color: var(--ink); }
-.footer a:hover::after {
-  transform: scaleX(1);
-  transform-origin: left;
-}
-.footer .links { display: flex; gap: 20px; flex-wrap: wrap; }
-
-/* ============================================================
    进场动画与滚动揭示
    ============================================================ */
 .reveal {
@@ -2348,10 +2306,6 @@ main { isolation: isolate; }
 .article-body figcaption { color: var(--ink-faint) !important; }
 .article-body blockquote { background: rgba(16, 23, 42, .88) !important; color: var(--ink-dim) !important; }
 
-.footer { margin-top: 72px; background: rgba(5, 7, 15, .74); }
-.footer-inner { min-height: 100px; font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; font-size: 12px; }
-.footer .links { gap: 16px; }
-
 .empty-state { min-height: 430px; display: grid; place-content: center; }
 .err-wrap { min-height: calc(100vh - 172px); }
 .err-code { font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; letter-spacing: -.08em; }
@@ -2443,7 +2397,6 @@ main { isolation: isolate; }
   .article-body { font-size: 16px; line-height: 1.9; }
   .article-body table,
   .tutorial-body table { display: block; overflow-x: auto; white-space: nowrap; }
-  .footer-inner { align-items: flex-start; flex-direction: column; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2785,7 +2738,6 @@ body::after {
 
 :where(
   .topbar,
-  .footer,
   .card,
   .game-feature,
   .english-word-stage,
@@ -2807,7 +2759,6 @@ body::after {
 }
 
 .topbar.scrolled,
-.footer,
 .tzpal-panel,
 .tzpal-tip,
 .dq-modal {
@@ -3541,8 +3492,7 @@ body.tz-site-shell .nav a.active {
 }
 
 @media (min-width: 1101px) {
-  body.tz-site-shell main,
-  body.tz-site-shell > .footer {
+  body.tz-site-shell main {
     padding-left: var(--tz-shell-rail);
   }
 }
@@ -3557,8 +3507,7 @@ body.nochrome .tzpal-tip {
   display: none !important;
 }
 
-body.tz-site-shell.nochrome main,
-body.tz-site-shell.nochrome > .footer {
+body.tz-site-shell.nochrome main {
   padding-left: 0;
 }
 
@@ -4929,25 +4878,6 @@ body.tz-site-shell .article-body {
 .tz-side-module--manifest > a .tz-icon {
   width: 12px;
   height: 12px;
-}
-
-.tz-homepage .footer {
-  border-top: 1px solid var(--tz-v4-line);
-}
-
-.tz-homepage .footer-inner > div:first-child {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.tz-homepage .footer-inner > div:first-child strong {
-  color: var(--ink);
-}
-
-.tz-homepage .footer-inner > div:first-child span {
-  color: var(--ink-faint);
-  font-size: 11px;
 }
 
 @media (max-width: 1380px) {
@@ -7053,7 +6983,7 @@ body.tz-site-shell {
 }
 body::before,
 body::after { background-image: none !important; opacity: .12 !important; animation: none !important; }
-:where(.card, .topbar, .footer, .tz-network-panel, .tz-domain-card, .tz-feed-panel, .article-body) {
+:where(.card, .topbar, .tz-network-panel, .tz-domain-card, .tz-feed-panel, .article-body) {
   border-color: var(--tz-v4-line) !important;
   background-color: var(--tz-skin-surface) !important;
   background-image: var(--tz-v4-surface) !important;
@@ -7110,7 +7040,7 @@ body.tz-internal-v41 :is(
     background-position: var(--tz-section-bg-position-mobile) !important;
     background-repeat: no-repeat !important;
   }
-  :where(.card, .topbar, .footer, .tz-network-panel, .tz-domain-card, .tz-feed-panel, .article-body) {
+  :where(.card, .topbar, .tz-network-panel, .tz-domain-card, .tz-feed-panel, .article-body) {
     background-color: var(--tz-skin-surface-mobile) !important;
     background-image: var(--tz-v4-surface) !important;
     background-blend-mode: var(--tz-skin-surface-blend) !important;
