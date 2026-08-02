@@ -1849,6 +1849,9 @@ const WM = {
       ? closedWindow.returnFocus
       : ($('#btnStart') || $('#shellSearch') || $('#desktop'));
     settleFocus(fallback);
+    // 最后一个可见窗口关闭或最小化时没有后继窗口触发 focus()，
+    // 因此必须在这里立即同步任务栏，避免残留“仍在运行/仍为活动窗口”的旧状态。
+    Taskbar.render();
   },
   close(id) {
     const idx = this.windows.findIndex(w => w.id === id);
