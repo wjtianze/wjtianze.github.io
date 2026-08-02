@@ -865,8 +865,12 @@ body[data-workspace-page="os"] .os-card.cl { grid-column: 1 / -1; }
 
 body[data-workspace-page="os"] .changelog {
   display: grid;
+  grid-template-columns: 1fr;
   gap: 10px;
   margin-top: 16px;
+  max-height: none;
+  padding: 0;
+  overflow: visible;
 }
 
 body[data-workspace-page="os"] .cl-item {
@@ -877,6 +881,8 @@ body[data-workspace-page="os"] .cl-item {
   border: 1px solid rgba(var(--wp-accent), .15);
   border-radius: 14px;
 }
+
+body[data-workspace-page="os"] .cl-item::before { display: none; }
 
 .cl-toggle {
   display: grid;
@@ -889,10 +895,7 @@ body[data-workspace-page="os"] .cl-item {
   color: var(--ink);
   text-align: left;
   background-color: rgba(var(--wp-accent), .08);
-  background-image: var(--tz-v4-button);
-  background-position: center;
-  background-size: cover;
-  background-blend-mode: multiply;
+  background-image: none;
   border: 0;
   cursor: pointer;
 }
@@ -914,9 +917,18 @@ body[data-workspace-page="os"] .cl-item {
 .cl-toggle .cl-date { color: var(--ink-faint); font-size: 12px; }
 
 body[data-workspace-page="os"] .cl-item > ul {
+  flex: none;
   margin: 0;
   padding: 18px 24px 22px 42px;
+  list-style: disc;
 }
+
+body[data-workspace-page="os"] .cl-item > ul > li {
+  padding-left: 0;
+  overflow-wrap: anywhere;
+}
+
+body[data-workspace-page="os"] .cl-item > ul > li::before { display: none; }
 
 body[data-workspace-page="os"] .cl-item > ul[hidden] { display: none; }
 
@@ -968,6 +980,13 @@ body[data-workspace-page="os"] .cl-item > ul[hidden] { display: none; }
   .wp-demo-shell .exp-placeholder { min-height: 360px; }
   .wp-demo-shell .exp-placeholder { padding: 24px 18px; }
   body[data-workspace-page="os"] .tz-os-landing-hero { min-height: 0; padding: 28px 20px; border-radius: 22px; }
+  body[data-workspace-page="os"] main#main-content,
+  body[data-workspace-page="os"] main#main-content > .tz-split-stack,
+  body[data-workspace-page="os"] .tz-workspace-section,
+  body[data-workspace-page="os"] .os-pick,
+  body[data-workspace-page="os"] .os-card { width: 100%; max-width: 100%; min-width: 0; }
+  body[data-workspace-page="os"] .section-head { align-items: flex-start; }
+  body[data-workspace-page="os"] .section-head :where(h2, .more) { max-width: 100%; overflow-wrap: anywhere; }
   .cl-toggle { grid-template-columns: minmax(0, 1fr) auto; }
   .cl-toggle .cl-date { grid-column: 1 / -1; }
   body[data-workspace-page="os"] .cl-item > ul { padding: 15px 18px 20px 34px; }

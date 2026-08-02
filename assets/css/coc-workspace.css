@@ -691,6 +691,22 @@ html[data-palette="warm"] .coc-tool {
 }
 
 @media (max-width: 680px) {
+  .coc-tool {
+    --coc-canvas: rgba(7, 25, 50, .44);
+    --coc-panel: rgba(9, 32, 61, .48);
+    --coc-panel-raised: rgba(12, 39, 70, .58);
+    --coc-control: rgba(17, 49, 82, .66);
+    --coc-input: rgba(7, 27, 54, .64);
+  }
+
+  .coc-tool .coc-tool-layout > .coc-tool-brief,
+  .coc-tool .card,
+  .coc-tool .coc-nav a {
+    background-image: none !important;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
   .coc-tool .coc-tool-layout {
     gap: 14px;
     margin-top: 14px;

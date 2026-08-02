@@ -498,6 +498,132 @@ img { max-width: 100%; display: block; }
   .reveal { opacity: 1; transform: none; }
 }
 
+/* ============================================================
+   Tianze Web 4.1 · Calm section identity and mobile hardening
+   Each first-level zone owns one generated background with a
+   recognizable subject. Central content remains deliberately quiet.
+   ============================================================ */
+:root {
+  /* A theme may tint these images, but must never replace them. Keeping the
+     image and focal-point tokens separate makes new first-level zones safe to
+     register without coupling them to a particular visual skin. */
+  --tz-section-bg-image: url("../img/section-bg/source/home.webp");
+  --tz-section-bg-mobile-image: url("../img/section-bg/mobile/home.webp");
+  --tz-section-bg: var(--tz-section-bg-image);
+  --tz-section-bg-mobile: var(--tz-section-bg-mobile-image);
+  --tz-section-overlay: linear-gradient(180deg, rgba(9, 28, 52, .18), rgba(7, 21, 42, .38));
+  --tz-section-bg-position: center top;
+  --tz-section-bg-position-mobile: center center;
+  --tz-section-bg-size: cover;
+  --tz-section-bg-size-mobile: cover;
+  --tz-safe-top: env(safe-area-inset-top, 0px);
+  --tz-safe-right: env(safe-area-inset-right, 0px);
+  --tz-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --tz-safe-left: env(safe-area-inset-left, 0px);
+}
+html[data-zone="ai"] { --tz-section-bg-image: url("../img/section-bg/source/ai.webp"); --tz-section-bg-mobile-image: url("../img/section-bg/mobile/ai.webp"); --tz-section-bg-position: center calc(100% + 52px); --tz-section-bg-size: 100% auto; }
+html[data-zone="coc"] { --tz-section-bg-image: url("../img/section-bg/source/coc.webp"); --tz-section-bg-mobile-image: url("../img/section-bg/mobile/coc.webp"); }
+html[data-zone="english"] { --tz-section-bg-image: url("../img/section-bg/source/english.webp"); --tz-section-bg-mobile-image: url("../img/section-bg/mobile/english.webp"); }
+html[data-zone="game"] { --tz-section-bg-image: url("../img/section-bg/source/game.webp"); --tz-section-bg-mobile-image: url("../img/section-bg/mobile/game.webp"); }
+html[data-zone="os"] { --tz-section-bg-image: url("../img/section-bg/source/os.webp"); --tz-section-bg-mobile-image: url("../img/section-bg/mobile/os.webp"); }
+
+@media (max-width: 680px) {
+  html,
+  body { width: 100%; max-width: 100%; overflow-x: clip; }
+
+  body,
+  body.tz-site-shell,
+  .bg-mesh {
+    background-attachment: scroll !important;
+    background-position: var(--tz-section-bg-position-mobile) !important;
+  }
+
+  body.tz-site-shell { padding-bottom: 76px; }
+  body.tz-site-shell .wrap,
+  .wrap { width: 100%; max-width: 100%; padding-inline: 14px; }
+
+  body.tz-site-shell .topbar {
+    top: 4px;
+    width: calc(100% - 8px);
+    margin: 4px 4px 0;
+    border-radius: 16px;
+  }
+
+  body.tz-site-shell .topbar-inner {
+    height: 58px;
+    padding-inline: 10px;
+    gap: 8px;
+  }
+
+  body.tz-site-shell .nav {
+    inset: 66px 6px auto;
+    max-height: calc(100dvh - 78px);
+    padding: 10px;
+    overflow-y: auto;
+    border: 1px solid var(--tz-v4-line);
+    border-radius: 16px;
+  }
+
+  body.tz-site-shell .nav a { min-height: 44px; padding: 11px 14px; }
+  .nav-toggle { width: 42px; height: 42px; flex: 0 0 42px; }
+
+  main,
+  main > *,
+  section,
+  .card,
+  .tz-split-stack,
+  .tz-split-content { min-width: 0; max-width: 100%; }
+
+  .section { padding-block: 46px; }
+  .card:hover { transform: none; }
+  .btn,
+  button,
+  input,
+  select,
+  textarea { max-width: 100%; }
+  .btn { min-height: 44px; padding-inline: 16px; }
+
+  table { max-width: 100%; }
+  pre,
+  code { overflow-wrap: anywhere; }
+  .dm-table-wrap,
+  .tutorial-body,
+  .kb-table-wrap { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  .tz-home-network-workspace { width: 100%; padding-inline: 6px !important; }
+  .tz-network-panel { min-height: 0; padding: 12px; border-radius: 20px; }
+  .tz-network-map.is-site-orbit {
+    width: 100%;
+    min-height: 390px;
+    max-height: 560px;
+    margin-block: 12px;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .tz-orbit-node__label { width: 108px; font-size: 12px; line-height: 1.2; }
+  .tz-orbit-node--depth-1 .tz-orbit-node__label { width: 120px; font-size: 13px; }
+  .tz-orbit-node__count { font-size: 10px; }
+
+  .tz-home-hero { padding-top: 38px; }
+  .tz-home-metrics { gap: 4px; }
+  .tz-home-metrics div { padding-inline: 9px; }
+  .tz-panel-foot { display: none; }
+
+  .tzpal-btn { left: 10px; bottom: 76px; }
+  .tzpal-panel,
+  .tzpal-tip { right: 10px !important; left: 10px !important; width: auto; max-width: none; }
+}
+
+@media (max-width: 420px) {
+  .brand-copy strong { font-size: 14px; }
+  .tz-home-hero h1 { font-size: clamp(29px, 10vw, 40px); }
+  .tz-home-lead { font-size: 14px; line-height: 1.7; }
+  .tz-home-metrics dd { font-size: 19px; }
+  .tz-panel-head h2 { font-size: 19px; }
+  .tz-status-chip { font-size: 9px; }
+  .tz-network-map.is-site-orbit { min-height: 410px; }
+}
+
 @media (hover: none) {
   .card,
   .btn,
@@ -2518,11 +2644,8 @@ main { isolation: isolate; }
   .vocab-import-card .btn { width: 100%; margin-left: 0; justify-content: center; }
 }
 
-/* ============================================================
-   界面配色皮肤（v4.0）：默认冷色（紫·蓝·绿）；
-   html[data-palette="mid"|"warm"] 由 main.js 依本地选择设置。
-   mid 标准：蓝·绿·黄；warm 暖色：绿·黄·橙。与天择OS同源同步。
-   ============================================================ */
+/* Legacy v4 accent mappings. The complete five-skin token contract near EOF
+   supersedes these values while preserving old mid/warm component fallbacks. */
 html[data-palette="mid"] {
   --c-purple: #3b82f6; --c-violet: #60a5fa; --c-indigo: #0ea5e9; --c-blue: #10b981;
   --c-sky: #34d399; --c-cyan: #4ade80; --c-green: #eab308; --c-emerald: #facc15;
@@ -2568,7 +2691,8 @@ html[data-palette="warm"] {
   display: none; flex-direction: column; gap: 2px;
 }
 .tzpal-panel.open { display: flex; }
-.tzpal-opt {
+.tzpal-opt,
+.tzpal-opt:not(.active) {
   display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 9px;
   cursor: pointer; font-size: 13px; color: var(--ink-dim, #c3c8e4); border: none; background: none;
   font-family: inherit; text-align: left; width: 100%;
@@ -2997,19 +3121,19 @@ body.tz-site-shell :where(
 }
 
 /* ============================================================
-   Tianze Web 4.0 · Evolution Network Shell
+   Tianze Web 4.1 · Evolution Network Shell
    A shared operating shell for all static pages. Every structural
    surface and actionable control uses the generated v4 image set.
    ============================================================ */
 :root {
-  --tz-shell-rail: 80px;
+  --tz-shell-rail: 0px;
   --tz-shell-status: 36px;
   --tz-shell-sticky-top: 86px;
 }
 
 body.tz-site-shell {
   min-height: 100vh;
-  padding-bottom: calc(var(--tz-shell-status) + 16px);
+  padding-bottom: calc(var(--tz-shell-status) + 16px + var(--tz-safe-bottom));
 }
 
 /* Always available before the optional motion stylesheet finishes loading. */
@@ -3201,117 +3325,6 @@ body.tz-site-shell .nav a {
 
 body.tz-site-shell .nav a.active {
   border: 1px solid var(--tz-v4-line);
-}
-
-.tz-site-rail {
-  position: fixed;
-  z-index: 46;
-  left: 14px;
-  top: 94px;
-  bottom: calc(var(--tz-shell-status) + 12px);
-  width: 68px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 8px;
-  border: 1px solid var(--tz-v4-line);
-  border-radius: 22px;
-  background-color: var(--tz-v4-surface-color-strong);
-  background-image: var(--tz-v4-surface);
-  background-position: center;
-  background-size: cover;
-  background-blend-mode: multiply;
-  box-shadow: 0 22px 60px rgba(0, 0, 0, .28), inset 0 1px rgba(255, 255, 255, .08);
-  overflow: hidden;
-}
-
-.tz-site-rail__head {
-  display: grid;
-  place-items: center;
-  min-height: 48px;
-  border: 1px solid var(--tz-v4-line);
-  border-radius: 15px;
-  background-color: rgba(var(--c-blue-rgb), .3);
-  background-image: var(--tz-v4-button);
-  background-position: center;
-  background-size: cover;
-  background-blend-mode: screen;
-  color: #fff;
-}
-
-.tz-site-rail__head .tz-icon {
-  width: 22px;
-  height: 22px;
-}
-
-.tz-site-rail__head > span:last-child {
-  display: none;
-}
-
-.tz-site-rail nav {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-  flex-direction: column;
-  gap: 4px;
-  overflow-y: auto;
-  scrollbar-width: none;
-}
-
-.tz-site-rail nav::-webkit-scrollbar {
-  display: none;
-}
-
-.tz-site-rail__item {
-  position: relative;
-  display: flex;
-  min-height: 46px;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  border: 1px solid transparent;
-  border-radius: 13px;
-  color: var(--ink-faint);
-  transition: transform .2s var(--ease-out), border-color .2s var(--ease-out), color .2s var(--ease-out);
-}
-
-.tz-site-rail__item .tz-icon {
-  width: 19px;
-  height: 19px;
-}
-
-.tz-site-rail__item > span:last-child {
-  max-width: 52px;
-  overflow: hidden;
-  color: inherit;
-  font-size: 9px;
-  line-height: 1.1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.tz-site-rail__item:hover,
-.tz-site-rail__item.active {
-  color: #fff;
-  border-color: var(--tz-v4-line);
-  background-color: rgba(var(--c-blue-rgb), .28);
-  background-image: var(--tz-v4-button);
-  background-position: center;
-  background-size: cover;
-  background-blend-mode: screen;
-  transform: translateY(-1px);
-}
-
-.tz-site-rail__item.active::after {
-  content: "";
-  position: absolute;
-  left: -6px;
-  width: 3px;
-  height: 18px;
-  border-radius: 99px;
-  background: var(--c-green-soft);
-  box-shadow: 0 0 12px rgba(var(--c-green-rgb), .72);
 }
 
 .tz-site-statusbar {
@@ -3534,7 +3547,6 @@ body.tz-site-shell .nav a.active {
   }
 }
 
-body.tz-site-shell.nochrome .tz-site-rail,
 body.tz-site-shell.nochrome .tz-site-statusbar {
   display: none;
 }
@@ -4285,30 +4297,9 @@ body.tz-site-shell .article-body {
   min-height: 0;
   max-height: 720px;
   padding: 0;
-  overflow: auto;
-  overscroll-behavior: contain;
-  scrollbar-color: color-mix(in srgb, var(--c-blue) 72%, transparent)
-    color-mix(in srgb, var(--tz-v4-surface-color) 84%, transparent);
-  scrollbar-width: thin;
-  scroll-behavior: auto;
-}
-
-.tz-network-map.is-site-orbit::-webkit-scrollbar {
-  height: 10px;
-}
-
-.tz-network-map.is-site-orbit::-webkit-scrollbar-track {
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--tz-v4-surface-color) 82%, transparent);
-}
-
-.tz-network-map.is-site-orbit::-webkit-scrollbar-thumb {
-  border: 2px solid transparent;
-  border-radius: 999px;
-  background:
-    var(--tz-v4-button) center / cover padding-box,
-    color-mix(in srgb, var(--c-blue) 72%, transparent) padding-box;
-  background-blend-mode: screen;
+  overflow: hidden;
+  overscroll-behavior: none;
+  scrollbar-width: none;
 }
 
 .tz-network-map.is-site-orbit::before,
@@ -4317,10 +4308,14 @@ body.tz-site-shell .article-body {
 }
 
 .tz-site-orbit {
-  position: relative;
+  position: absolute;
+  left: 50%;
+  top: 50%;
   isolation: isolate;
   flex: none;
   margin: 0;
+  transform: translate(-50%, -50%) scale(var(--tz-orbit-fit, .72));
+  transform-origin: center;
   background:
     radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--c-green) 13%, transparent), transparent 17%),
     radial-gradient(circle at 50% 50%, transparent 0 22%, color-mix(in srgb, var(--tz-v4-line) 50%, transparent) 22.1% 22.25%, transparent 22.4% 39%, color-mix(in srgb, var(--tz-v4-line) 38%, transparent) 39.1% 39.22%, transparent 39.35%);
@@ -4977,48 +4972,13 @@ body.tz-site-shell .article-body {
   }
 
   body.tz-site-shell {
-    padding-bottom: 86px;
+    padding-bottom: max(18px, var(--tz-safe-bottom));
   }
 
   body.tz-site-shell .topbar {
     top: 6px;
     width: calc(100% - 12px);
     margin: 6px 6px 0;
-  }
-
-  .tz-site-rail {
-    top: auto;
-    left: 8px;
-    right: 8px;
-    bottom: 8px;
-    width: auto;
-    height: 68px;
-    flex-direction: row;
-    padding: 7px;
-    border-radius: 21px;
-  }
-
-  .tz-site-rail__head {
-    display: none;
-  }
-
-  .tz-site-rail nav {
-    flex-direction: row;
-    overflow-x: auto;
-    overflow-y: hidden;
-  }
-
-  .tz-site-rail__item {
-    min-width: 54px;
-    min-height: 50px;
-  }
-
-  .tz-site-rail__item.active::after {
-    left: 50%;
-    bottom: -5px;
-    width: 18px;
-    height: 3px;
-    transform: translateX(-50%);
   }
 
   .tz-site-statusbar {
@@ -5163,14 +5123,6 @@ body.tz-site-shell .article-body {
 
   .brand-copy small {
     display: none;
-  }
-
-  .tz-site-rail__item {
-    min-width: 50px;
-  }
-
-  .tz-site-rail__item > span:last-child {
-    font-size: 8px;
   }
 
   .tz-home-hero {
@@ -5321,7 +5273,6 @@ body.tz-site-shell .article-body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tz-site-rail__item,
   .tz-domain-card,
   .tz-network-node {
     transition: none !important;
@@ -6811,4 +6762,891 @@ body.tz-internal-v41 .tz-workspace-section {
     color-mix(in srgb, var(--tz-v41-canvas) 24%, transparent) 22%,
     transparent
   );
+}
+
+/* ============================================================
+   Tianze Web 4.1 · complete free appearance system
+   Palette tokens own colour and material. Section-image tokens above own
+   subject matter and focal points; the two systems intentionally stay
+   orthogonal so every new zone keeps its own visual identity in every skin.
+   ============================================================ */
+:root,
+html[data-palette="cold"] {
+  color-scheme: dark;
+  --tz-accent-purple: #7c3aed;
+  --tz-accent-violet: #8b5cf6;
+  --tz-accent-indigo: #6366f1;
+  --tz-accent-blue: #3b82f6;
+  --tz-accent-sky: #0ea5e9;
+  --tz-accent-cyan: #06b6d4;
+  --tz-accent-green: #10b981;
+  --tz-accent-emerald: #34d399;
+  --tz-accent-violet-soft: #a78bfa;
+  --tz-accent-blue-soft: #60a5fa;
+  --tz-accent-green-soft: #6ee7b7;
+  --tz-accent-purple-rgb: 124,58,237;
+  --tz-accent-violet-rgb: 139,92,246;
+  --tz-accent-indigo-rgb: 99,102,241;
+  --tz-accent-blue-rgb: 59,130,246;
+  --tz-accent-sky-rgb: 14,165,233;
+  --tz-accent-cyan-rgb: 6,182,212;
+  --tz-accent-green-rgb: 16,185,129;
+  --tz-accent-emerald-rgb: 52,211,153;
+  --tz-accent-violet-soft-rgb: 167,139,250;
+  --tz-accent-blue-soft-rgb: 96,165,250;
+  --tz-accent-green-soft-rgb: 110,231,183;
+  --tz-theme-grad-main: linear-gradient(135deg, #7c3aed 0%, #3b82f6 52%, #10b981 100%);
+  --tz-theme-grad-soft: linear-gradient(135deg, #a78bfa 0%, #60a5fa 50%, #6ee7b7 100%);
+  --tz-theme-grad-text: linear-gradient(120deg, #a78bfa, #60a5fa 45%, #6ee7b7);
+  --tz-theme-bg-base: #081629;
+  --tz-theme-bg: #0d2340;
+  --tz-theme-bg-soft: #112b4a;
+  --tz-theme-bg-elevated: rgba(165, 198, 255, .08);
+  --tz-theme-bg-elevated-hover: rgba(165, 206, 255, .14);
+  --tz-theme-ink: #f5f8ff;
+  --tz-theme-ink-dim: #cad8eb;
+  --tz-theme-ink-faint: #91a8c2;
+  --tz-theme-ink-muted: #6e829d;
+  --tz-theme-line: rgba(184, 211, 246, .14);
+  --tz-theme-line-strong: rgba(184, 219, 255, .25);
+  --tz-theme-glass: rgba(14, 38, 68, .7);
+  --tz-theme-glass-strong: rgba(10, 30, 56, .88);
+  --tz-theme-glass-border: rgba(180, 214, 255, .22);
+  --tz-theme-shadow-sm: 0 8px 26px rgba(1, 9, 24, .22);
+  --tz-theme-shadow-md: 0 20px 58px rgba(1, 9, 24, .3);
+  --tz-theme-shadow-lg: 0 34px 96px rgba(1, 9, 24, .4);
+  --tz-theme-shadow-glow: 0 16px 52px rgba(76, 112, 232, .25);
+  /* Cold image assets stay on the low-specificity :root declaration above.
+     Nested apps can then replace their relative URLs safely. */
+  --tz-v4-surface-color: rgba(10, 30, 55, .78);
+  --tz-v4-surface-color-strong: rgba(7, 23, 45, .92);
+  --tz-v4-line: rgba(184, 211, 246, .23);
+  --tz-skin-canvas: #102947;
+  --tz-skin-scene:
+    linear-gradient(180deg, rgba(9, 31, 59, .07), rgba(5, 19, 40, .34)),
+    radial-gradient(circle at 82% 10%, rgba(82, 128, 226, .08), transparent 38%);
+  --tz-skin-scene-mobile:
+    linear-gradient(180deg, rgba(8, 28, 56, .13), rgba(5, 19, 42, .32)),
+    radial-gradient(circle at 76% 8%, rgba(92, 150, 238, .1), transparent 42%);
+  --tz-skin-mesh: linear-gradient(180deg, rgba(13, 41, 73, .04), rgba(8, 27, 52, .2));
+  --tz-skin-grid: rgba(192, 211, 255, .035);
+  --tz-skin-surface: rgba(10, 29, 54, .75);
+  --tz-skin-surface-mobile: rgba(10, 31, 59, .64);
+  --tz-skin-surface-internal: rgba(11, 35, 66, .7);
+  --tz-skin-surface-internal-mobile: rgba(10, 31, 59, .64);
+  --tz-skin-surface-raised: rgba(18, 49, 84, .84);
+  --tz-skin-surface-blend: soft-light;
+  --tz-skin-network-canvas: rgba(3, 10, 22, .82);
+  --tz-skin-network-overlay: linear-gradient(180deg, rgba(3, 9, 20, .3), rgba(3, 9, 20, .72));
+  --tz-skin-control: rgba(27, 62, 102, .76);
+  --tz-skin-input: rgba(8, 27, 51, .88);
+  --tz-skin-backdrop: rgba(3, 8, 20, .72);
+  --tz-skin-focus: #7dd3fc;
+  --tz-skin-focus-halo: rgba(96, 165, 250, .24);
+  --tz-skin-selection: rgba(99, 102, 241, .64);
+  --tz-skin-map-label-shadow: 0 2px 7px rgba(0, 0, 0, .78);
+  --tz-status-online: #6ee7b7;
+  --tz-status-online-rgb: 110,231,183;
+  --tz-skin-letter-spacing: .01em;
+}
+
+html[data-palette="mid"] {
+  color-scheme: dark;
+  --tz-accent-purple: #3b82f6; --tz-accent-violet: #60a5fa; --tz-accent-indigo: #0ea5e9;
+  --tz-accent-blue: #10b981; --tz-accent-sky: #34d399; --tz-accent-cyan: #4ade80;
+  --tz-accent-green: #eab308; --tz-accent-emerald: #facc15;
+  --tz-accent-violet-soft: #60a5fa; --tz-accent-blue-soft: #6ee7b7; --tz-accent-green-soft: #fde047;
+  --tz-accent-purple-rgb: 59,130,246; --tz-accent-violet-rgb: 96,165,250; --tz-accent-indigo-rgb: 14,165,233;
+  --tz-accent-blue-rgb: 16,185,129; --tz-accent-sky-rgb: 52,211,153; --tz-accent-cyan-rgb: 74,222,128;
+  --tz-accent-green-rgb: 234,179,8; --tz-accent-emerald-rgb: 250,204,21;
+  --tz-accent-violet-soft-rgb: 96,165,250; --tz-accent-blue-soft-rgb: 110,231,183; --tz-accent-green-soft-rgb: 253,224,71;
+  --tz-theme-grad-main: linear-gradient(135deg, #3b82f6 0%, #10b981 52%, #eab308 100%);
+  --tz-theme-grad-soft: linear-gradient(135deg, #60a5fa 0%, #6ee7b7 50%, #fde047 100%);
+  --tz-theme-grad-text: linear-gradient(120deg, #60a5fa, #6ee7b7 45%, #fde047);
+  --tz-theme-bg-base: #0b2228; --tz-theme-bg: #103238; --tz-theme-bg-soft: #164148;
+  --tz-theme-bg-elevated: rgba(133, 226, 211, .08); --tz-theme-bg-elevated-hover: rgba(133, 226, 211, .14);
+  --tz-theme-ink: #f3fbfa; --tz-theme-ink-dim: #c9dedb; --tz-theme-ink-faint: #8faeab; --tz-theme-ink-muted: #698884;
+  --tz-theme-line: rgba(170, 231, 220, .14); --tz-theme-line-strong: rgba(170, 238, 224, .25);
+  --tz-theme-glass: rgba(11, 48, 53, .7); --tz-theme-glass-strong: rgba(7, 39, 45, .9); --tz-theme-glass-border: rgba(156, 231, 215, .22);
+  --tz-theme-shadow-sm: 0 8px 26px rgba(1, 17, 20, .22); --tz-theme-shadow-md: 0 20px 58px rgba(1, 17, 20, .3);
+  --tz-theme-shadow-lg: 0 34px 96px rgba(1, 17, 20, .4); --tz-theme-shadow-glow: 0 16px 52px rgba(16, 185, 129, .22);
+  --tz-v4-wallpaper: url("../img/ui-v4/wallpaper-mid.webp"); --tz-v4-button: url("../img/ui-v4/button-mid.webp");
+  --tz-v4-surface: url("../img/ui-v4/surface-mid.webp"); --tz-v4-icon-atlas: url("../img/ui-v4/icon-atlas-mid.png");
+  --tz-v4-icon-well: url("../img/ui-v4/icon-well-mid.webp"); --tz-v4-surface-color: rgba(7, 42, 47, .78);
+  --tz-v4-surface-color-strong: rgba(5, 32, 38, .92); --tz-v4-line: rgba(164, 238, 210, .24);
+  --tz-skin-canvas: #123136;
+  --tz-skin-scene: linear-gradient(180deg, rgba(7, 42, 48, .08), rgba(4, 28, 34, .4)), radial-gradient(circle at 82% 9%, rgba(46, 198, 177, .1), transparent 40%);
+  --tz-skin-scene-mobile: linear-gradient(180deg, rgba(7, 43, 48, .14), rgba(4, 28, 34, .38)), radial-gradient(circle at 76% 8%, rgba(61, 211, 180, .12), transparent 44%);
+  --tz-skin-mesh: linear-gradient(180deg, rgba(15, 69, 72, .04), rgba(7, 39, 44, .22)); --tz-skin-grid: rgba(181, 239, 223, .035);
+  --tz-skin-surface: rgba(8, 43, 49, .75); --tz-skin-surface-mobile: rgba(9, 47, 52, .65);
+  --tz-skin-surface-internal: rgba(10, 50, 56, .72); --tz-skin-surface-internal-mobile: rgba(9, 47, 52, .65);
+  --tz-skin-surface-raised: rgba(18, 67, 71, .85); --tz-skin-surface-blend: soft-light;
+  --tz-skin-network-canvas: rgba(3, 24, 29, .84); --tz-skin-network-overlay: linear-gradient(180deg, rgba(3, 28, 32, .3), rgba(2, 20, 25, .74));
+  --tz-skin-control: rgba(25, 80, 82, .78); --tz-skin-input: rgba(7, 38, 43, .9); --tz-skin-backdrop: rgba(2, 19, 23, .74);
+  --tz-skin-focus: #6ee7d0; --tz-skin-focus-halo: rgba(52, 211, 153, .24); --tz-skin-selection: rgba(16, 185, 129, .58);
+  --tz-skin-map-label-shadow: 0 2px 7px rgba(0, 12, 14, .82); --tz-status-online: #67e8b7; --tz-status-online-rgb: 103,232,183;
+  --tz-skin-letter-spacing: .012em;
+}
+
+html[data-palette="warm"] {
+  color-scheme: dark;
+  --tz-accent-purple: #10b981; --tz-accent-violet: #34d399; --tz-accent-indigo: #eab308;
+  --tz-accent-blue: #eab308; --tz-accent-sky: #fbbf24; --tz-accent-cyan: #fb923c;
+  --tz-accent-green: #f97316; --tz-accent-emerald: #fdba74;
+  --tz-accent-violet-soft: #6ee7b7; --tz-accent-blue-soft: #fde047; --tz-accent-green-soft: #fdba74;
+  --tz-accent-purple-rgb: 16,185,129; --tz-accent-violet-rgb: 52,211,153; --tz-accent-indigo-rgb: 234,179,8;
+  --tz-accent-blue-rgb: 234,179,8; --tz-accent-sky-rgb: 251,191,36; --tz-accent-cyan-rgb: 251,146,60;
+  --tz-accent-green-rgb: 249,115,22; --tz-accent-emerald-rgb: 253,186,116;
+  --tz-accent-violet-soft-rgb: 110,231,183; --tz-accent-blue-soft-rgb: 253,224,71; --tz-accent-green-soft-rgb: 253,186,116;
+  --tz-theme-grad-main: linear-gradient(135deg, #10b981 0%, #eab308 52%, #f97316 100%);
+  --tz-theme-grad-soft: linear-gradient(135deg, #6ee7b7 0%, #fde047 50%, #fdba74 100%);
+  --tz-theme-grad-text: linear-gradient(120deg, #6ee7b7, #fde047 45%, #fdba74);
+  --tz-theme-bg-base: #261d12; --tz-theme-bg: #382a18; --tz-theme-bg-soft: #49371e;
+  --tz-theme-bg-elevated: rgba(255, 211, 128, .08); --tz-theme-bg-elevated-hover: rgba(255, 211, 128, .14);
+  --tz-theme-ink: #fff8e8; --tz-theme-ink-dim: #e8d9bc; --tz-theme-ink-faint: #b7a382; --tz-theme-ink-muted: #8c795e;
+  --tz-theme-line: rgba(255, 221, 159, .14); --tz-theme-line-strong: rgba(255, 224, 166, .26);
+  --tz-theme-glass: rgba(58, 42, 22, .72); --tz-theme-glass-strong: rgba(43, 30, 14, .9); --tz-theme-glass-border: rgba(255, 218, 147, .22);
+  --tz-theme-shadow-sm: 0 8px 26px rgba(20, 10, 1, .22); --tz-theme-shadow-md: 0 20px 58px rgba(20, 10, 1, .31);
+  --tz-theme-shadow-lg: 0 34px 96px rgba(20, 10, 1, .42); --tz-theme-shadow-glow: 0 16px 52px rgba(249, 115, 22, .23);
+  --tz-v4-wallpaper: url("../img/ui-v4/wallpaper-warm.webp"); --tz-v4-button: url("../img/ui-v4/button-warm.webp");
+  --tz-v4-surface: url("../img/ui-v4/surface-warm.webp"); --tz-v4-icon-atlas: url("../img/ui-v4/icon-atlas-warm.png");
+  --tz-v4-icon-well: url("../img/ui-v4/icon-well-warm.webp"); --tz-v4-surface-color: rgba(55, 39, 18, .79);
+  --tz-v4-surface-color-strong: rgba(42, 28, 11, .93); --tz-v4-line: rgba(255, 222, 153, .25);
+  --tz-skin-canvas: #3a2918;
+  --tz-skin-scene: linear-gradient(180deg, rgba(56, 37, 15, .08), rgba(38, 24, 9, .42)), radial-gradient(circle at 82% 9%, rgba(245, 174, 55, .1), transparent 40%);
+  --tz-skin-scene-mobile: linear-gradient(180deg, rgba(61, 41, 17, .14), rgba(38, 24, 9, .4)), radial-gradient(circle at 76% 8%, rgba(249, 184, 67, .12), transparent 44%);
+  --tz-skin-mesh: linear-gradient(180deg, rgba(84, 58, 24, .04), rgba(53, 35, 15, .24)); --tz-skin-grid: rgba(255, 224, 169, .035);
+  --tz-skin-surface: rgba(56, 40, 20, .76); --tz-skin-surface-mobile: rgba(58, 42, 22, .66);
+  --tz-skin-surface-internal: rgba(64, 45, 22, .72); --tz-skin-surface-internal-mobile: rgba(58, 42, 22, .66);
+  --tz-skin-surface-raised: rgba(83, 58, 26, .86); --tz-skin-surface-blend: soft-light;
+  --tz-skin-network-canvas: rgba(29, 19, 8, .84); --tz-skin-network-overlay: linear-gradient(180deg, rgba(38, 25, 9, .28), rgba(24, 15, 5, .76));
+  --tz-skin-control: rgba(96, 68, 30, .78); --tz-skin-input: rgba(44, 30, 13, .9); --tz-skin-backdrop: rgba(22, 13, 4, .75);
+  --tz-skin-focus: #fde68a; --tz-skin-focus-halo: rgba(251, 191, 36, .25); --tz-skin-selection: rgba(234, 179, 8, .58);
+  --tz-skin-map-label-shadow: 0 2px 7px rgba(20, 10, 0, .84); --tz-status-online: #6ee7b7; --tz-status-online-rgb: 110,231,183;
+  --tz-skin-letter-spacing: .012em;
+}
+
+html[data-palette="porcelain"] {
+  color-scheme: light;
+  --tz-accent-purple: #6552b8; --tz-accent-violet: #7561c8; --tz-accent-indigo: #4669ad;
+  --tz-accent-blue: #2563a8; --tz-accent-sky: #277ca4; --tz-accent-cyan: #178e98;
+  --tz-accent-green: #167d69; --tz-accent-emerald: #218b70;
+  --tz-accent-violet-soft: #7967bd; --tz-accent-blue-soft: #3476af; --tz-accent-green-soft: #1c806d;
+  --tz-accent-purple-rgb: 101,82,184; --tz-accent-violet-rgb: 117,97,200; --tz-accent-indigo-rgb: 70,105,173;
+  --tz-accent-blue-rgb: 37,99,168; --tz-accent-sky-rgb: 39,124,164; --tz-accent-cyan-rgb: 23,142,152;
+  --tz-accent-green-rgb: 22,125,105; --tz-accent-emerald-rgb: 33,139,112;
+  --tz-accent-violet-soft-rgb: 121,103,189; --tz-accent-blue-soft-rgb: 52,118,175; --tz-accent-green-soft-rgb: 28,128,109;
+  --tz-theme-grad-main: linear-gradient(135deg, #6552b8 0%, #2563a8 50%, #167d69 100%);
+  --tz-theme-grad-soft: linear-gradient(135deg, #c9c4eb 0%, #b8d5ea 50%, #b9ddd3 100%);
+  --tz-theme-grad-text: linear-gradient(120deg, #5946a9, #2563a8 48%, #126b5a);
+  --tz-theme-bg-base: #edf3f7; --tz-theme-bg: #f7fafc; --tz-theme-bg-soft: #e3edf2;
+  --tz-theme-bg-elevated: rgba(255, 255, 255, .68); --tz-theme-bg-elevated-hover: rgba(255, 255, 255, .92);
+  --tz-theme-ink: #172536; --tz-theme-ink-dim: #3d5368; --tz-theme-ink-faint: #596e82; --tz-theme-ink-muted: #788999;
+  --tz-theme-line: rgba(38, 75, 101, .14); --tz-theme-line-strong: rgba(38, 75, 101, .25);
+  --tz-theme-glass: rgba(250, 253, 255, .72); --tz-theme-glass-strong: rgba(250, 253, 255, .9); --tz-theme-glass-border: rgba(55, 91, 117, .2);
+  --tz-theme-shadow-sm: 0 8px 25px rgba(48, 73, 91, .12); --tz-theme-shadow-md: 0 20px 55px rgba(48, 73, 91, .16);
+  --tz-theme-shadow-lg: 0 32px 90px rgba(48, 73, 91, .2); --tz-theme-shadow-glow: 0 14px 46px rgba(37, 99, 168, .16);
+  --tz-v4-wallpaper: radial-gradient(circle at 16% 8%, rgba(101,82,184,.12), transparent 34%), linear-gradient(145deg, #f9fbfc, #dfeaf0 62%, #edf5f3);
+  --tz-v4-button: linear-gradient(145deg, rgba(255,255,255,.94), rgba(207,224,234,.82));
+  --tz-v4-surface: linear-gradient(145deg, rgba(255,255,255,.88), rgba(218,231,239,.72)), repeating-linear-gradient(90deg, rgba(44,78,104,.025) 0 1px, transparent 1px 7px);
+  --tz-v4-icon-well: radial-gradient(circle at 36% 24%, rgba(70,132,162,.7), transparent 36%), linear-gradient(145deg, #2e5870, #19374e);
+  --tz-v4-surface-color: rgba(248, 251, 253, .82); --tz-v4-surface-color-strong: rgba(247, 251, 253, .95); --tz-v4-line: rgba(43, 82, 108, .22);
+  --tz-skin-canvas: #edf3f7;
+  --tz-skin-scene: linear-gradient(180deg, rgba(248, 251, 253, .4), rgba(224, 235, 242, .58)), radial-gradient(circle at 82% 9%, rgba(64, 126, 171, .09), transparent 40%);
+  --tz-skin-scene-mobile: linear-gradient(180deg, rgba(249, 252, 253, .5), rgba(226, 237, 243, .64)), radial-gradient(circle at 76% 8%, rgba(63, 123, 165, .09), transparent 44%);
+  --tz-skin-mesh: linear-gradient(180deg, rgba(255, 255, 255, .12), rgba(211, 226, 235, .26)); --tz-skin-grid: rgba(44, 78, 104, .055);
+  --tz-skin-surface: rgba(249, 252, 253, .78); --tz-skin-surface-mobile: rgba(250, 253, 254, .86);
+  --tz-skin-surface-internal: rgba(247, 251, 253, .78); --tz-skin-surface-internal-mobile: rgba(250, 253, 254, .88);
+  --tz-skin-surface-raised: rgba(255, 255, 255, .94); --tz-skin-surface-blend: soft-light;
+  --tz-skin-network-canvas: rgba(230, 239, 245, .88); --tz-skin-network-overlay: linear-gradient(180deg, rgba(248, 252, 253, .5), rgba(218, 231, 239, .72));
+  --tz-skin-control: rgba(220, 233, 241, .92); --tz-skin-input: rgba(251, 253, 254, .96); --tz-skin-backdrop: rgba(38, 55, 69, .42);
+  --tz-skin-focus: #174f8c; --tz-skin-focus-halo: rgba(37, 99, 168, .2); --tz-skin-selection: rgba(37, 99, 168, .72);
+  --tz-skin-map-label-shadow: 0 1px 2px rgba(255, 255, 255, .98), 0 0 7px rgba(255, 255, 255, .9);
+  --tz-status-online: #08765e; --tz-status-online-rgb: 8,118,94;
+  --tz-skin-letter-spacing: .008em;
+}
+
+html[data-palette="ink"] {
+  color-scheme: dark;
+  --tz-accent-purple: #4856a8; --tz-accent-violet: #5967b7; --tz-accent-indigo: #4f66a8;
+  --tz-accent-blue: #327b99; --tz-accent-sky: #258699; --tz-accent-cyan: #158a91;
+  --tz-accent-green: #527f69; --tz-accent-emerald: #6c8d72;
+  --tz-accent-violet-soft: #8791d0; --tz-accent-blue-soft: #6aa4ba; --tz-accent-green-soft: #8ab39a;
+  --tz-accent-purple-rgb: 72,86,168; --tz-accent-violet-rgb: 89,103,183; --tz-accent-indigo-rgb: 79,102,168;
+  --tz-accent-blue-rgb: 50,123,153; --tz-accent-sky-rgb: 37,134,153; --tz-accent-cyan-rgb: 21,138,145;
+  --tz-accent-green-rgb: 82,127,105; --tz-accent-emerald-rgb: 108,141,114;
+  --tz-accent-violet-soft-rgb: 135,145,208; --tz-accent-blue-soft-rgb: 106,164,186; --tz-accent-green-soft-rgb: 138,179,154;
+  --tz-theme-grad-main: linear-gradient(135deg, #4856a8 0%, #327b99 50%, #527f69 100%);
+  --tz-theme-grad-soft: linear-gradient(135deg, #8791d0 0%, #6aa4ba 50%, #8ab39a 100%);
+  --tz-theme-grad-text: linear-gradient(120deg, #98a1d8, #77b3c6 48%, #94b9a1);
+  --tz-theme-bg-base: #061013; --tz-theme-bg: #09171b; --tz-theme-bg-soft: #0d2227;
+  --tz-theme-bg-elevated: rgba(126, 169, 171, .065); --tz-theme-bg-elevated-hover: rgba(126, 169, 171, .11);
+  --tz-theme-ink: #edf6f3; --tz-theme-ink-dim: #c2d1cc; --tz-theme-ink-faint: #849a94; --tz-theme-ink-muted: #60746f;
+  --tz-theme-line: rgba(154, 190, 181, .12); --tz-theme-line-strong: rgba(154, 190, 181, .22);
+  --tz-theme-glass: rgba(8, 25, 29, .76); --tz-theme-glass-strong: rgba(5, 19, 22, .92); --tz-theme-glass-border: rgba(139, 181, 171, .19);
+  --tz-theme-shadow-sm: 0 8px 26px rgba(0, 7, 8, .26); --tz-theme-shadow-md: 0 20px 58px rgba(0, 7, 8, .36);
+  --tz-theme-shadow-lg: 0 34px 96px rgba(0, 7, 8, .48); --tz-theme-shadow-glow: 0 16px 52px rgba(21, 138, 145, .16);
+  --tz-v4-wallpaper: radial-gradient(circle at 84% 10%, rgba(50,123,153,.1), transparent 34%), repeating-linear-gradient(101deg, rgba(139,176,169,.018) 0 1px, transparent 1px 9px), linear-gradient(160deg, #071417, #081d21 56%, #071215);
+  --tz-v4-button: linear-gradient(145deg, rgba(37, 69, 75, .9), rgba(12, 36, 41, .94));
+  --tz-v4-surface: repeating-linear-gradient(101deg, rgba(152,188,178,.022) 0 1px, transparent 1px 8px), linear-gradient(145deg, rgba(19,49,54,.9), rgba(8,28,32,.94));
+  --tz-v4-icon-well: radial-gradient(circle at 35% 25%, rgba(82,128,137,.46), transparent 36%), linear-gradient(145deg, #1d3e45, #0c252a);
+  --tz-v4-surface-color: rgba(9, 31, 35, .82); --tz-v4-surface-color-strong: rgba(5, 22, 25, .94); --tz-v4-line: rgba(139, 181, 171, .2);
+  --tz-skin-canvas: #071417;
+  --tz-skin-scene: linear-gradient(180deg, rgba(5, 20, 23, .2), rgba(3, 13, 15, .66)), radial-gradient(circle at 82% 9%, rgba(46, 117, 137, .08), transparent 40%);
+  --tz-skin-scene-mobile: linear-gradient(180deg, rgba(5, 20, 23, .28), rgba(3, 13, 15, .66)), radial-gradient(circle at 76% 8%, rgba(54, 128, 143, .09), transparent 44%);
+  --tz-skin-mesh: linear-gradient(180deg, rgba(13, 44, 47, .04), rgba(3, 19, 22, .3)); --tz-skin-grid: rgba(150, 184, 176, .025);
+  --tz-skin-surface: rgba(8, 28, 32, .8); --tz-skin-surface-mobile: rgba(8, 29, 33, .72);
+  --tz-skin-surface-internal: rgba(9, 32, 36, .78); --tz-skin-surface-internal-mobile: rgba(8, 29, 33, .72);
+  --tz-skin-surface-raised: rgba(16, 46, 50, .88); --tz-skin-surface-blend: soft-light;
+  --tz-skin-network-canvas: rgba(2, 12, 14, .88); --tz-skin-network-overlay: linear-gradient(180deg, rgba(4, 18, 21, .42), rgba(2, 10, 12, .8));
+  --tz-skin-control: rgba(24, 58, 63, .82); --tz-skin-input: rgba(5, 23, 27, .94); --tz-skin-backdrop: rgba(1, 8, 9, .78);
+  --tz-skin-focus: #91c8c1; --tz-skin-focus-halo: rgba(106, 164, 186, .2); --tz-skin-selection: rgba(50, 123, 153, .68);
+  --tz-skin-map-label-shadow: 0 2px 7px rgba(0, 5, 6, .9); --tz-status-online: #8ab39a; --tz-status-online-rgb: 138,179,154;
+  --tz-skin-letter-spacing: .014em;
+}
+
+:root,
+html[data-palette] {
+  --c-purple: var(--tz-accent-purple); --c-violet: var(--tz-accent-violet); --c-indigo: var(--tz-accent-indigo);
+  --c-blue: var(--tz-accent-blue); --c-sky: var(--tz-accent-sky); --c-cyan: var(--tz-accent-cyan);
+  --c-green: var(--tz-accent-green); --c-emerald: var(--tz-accent-emerald);
+  --c-violet-soft: var(--tz-accent-violet-soft); --c-blue-soft: var(--tz-accent-blue-soft); --c-green-soft: var(--tz-accent-green-soft);
+  --c-purple-rgb: var(--tz-accent-purple-rgb); --c-violet-rgb: var(--tz-accent-violet-rgb); --c-indigo-rgb: var(--tz-accent-indigo-rgb);
+  --c-blue-rgb: var(--tz-accent-blue-rgb); --c-sky-rgb: var(--tz-accent-sky-rgb); --c-cyan-rgb: var(--tz-accent-cyan-rgb);
+  --c-green-rgb: var(--tz-accent-green-rgb); --c-emerald-rgb: var(--tz-accent-emerald-rgb);
+  --c-violet-soft-rgb: var(--tz-accent-violet-soft-rgb); --c-blue-soft-rgb: var(--tz-accent-blue-soft-rgb); --c-green-soft-rgb: var(--tz-accent-green-soft-rgb);
+  --grad-main: var(--tz-theme-grad-main); --grad-soft: var(--tz-theme-grad-soft); --grad-text: var(--tz-theme-grad-text);
+  --bg-base: var(--tz-theme-bg-base); --bg: var(--tz-theme-bg); --bg-soft: var(--tz-theme-bg-soft);
+  --bg-elevated: var(--tz-theme-bg-elevated); --bg-elevated-hover: var(--tz-theme-bg-elevated-hover);
+  --ink: var(--tz-theme-ink); --ink-dim: var(--tz-theme-ink-dim); --ink-faint: var(--tz-theme-ink-faint); --ink-muted: var(--tz-theme-ink-muted);
+  --line: var(--tz-theme-line); --line-strong: var(--tz-theme-line-strong);
+  --glass: var(--tz-theme-glass); --glass-strong: var(--tz-theme-glass-strong); --glass-border: var(--tz-theme-glass-border);
+  --shadow-sm: var(--tz-theme-shadow-sm); --shadow-md: var(--tz-theme-shadow-md); --shadow-lg: var(--tz-theme-shadow-lg); --shadow-glow: var(--tz-theme-shadow-glow);
+  --c-bg: var(--tz-theme-bg-base); --c-bg-card: var(--tz-theme-bg-soft); --c-border: var(--tz-skin-focus);
+  --tz-ui-card-image: var(--tz-v4-surface);
+}
+
+/* Final cascade for the 4.1 calm backgrounds. Kept at EOF so legacy
+   compatibility rules cannot restore the former ornate full-screen wallpaper. */
+body,
+body.tz-site-shell {
+  background-color: var(--tz-skin-canvas) !important;
+  background-image: var(--tz-skin-scene), var(--tz-section-bg-image) !important;
+  background-position: var(--tz-section-bg-position) !important;
+  background-size: var(--tz-section-bg-size) !important;
+  background-repeat: no-repeat !important;
+  color: var(--ink);
+  caret-color: var(--tz-skin-focus);
+  letter-spacing: var(--tz-skin-letter-spacing);
+}
+.bg-mesh {
+  background-color: var(--tz-skin-canvas) !important;
+  background-image: var(--tz-skin-mesh), var(--tz-section-bg-image) !important;
+  background-position: var(--tz-section-bg-position) !important;
+  background-size: var(--tz-section-bg-size) !important;
+  opacity: 1 !important;
+}
+.bg-mesh::after {
+  background-image: linear-gradient(var(--tz-skin-grid) 1px, transparent 1px) !important;
+  background-size: 96px 96px !important;
+  opacity: .14 !important;
+}
+body::before,
+body::after { background-image: none !important; opacity: .12 !important; animation: none !important; }
+:where(.card, .topbar, .footer, .tz-network-panel, .tz-domain-card, .tz-feed-panel, .article-body) {
+  border-color: var(--tz-v4-line) !important;
+  background-color: var(--tz-skin-surface) !important;
+  background-image: var(--tz-v4-surface) !important;
+  background-position: center !important;
+  background-size: cover !important;
+  background-blend-mode: var(--tz-skin-surface-blend) !important;
+  backdrop-filter: blur(8px) saturate(118%);
+  -webkit-backdrop-filter: blur(8px) saturate(118%);
+}
+body.tz-internal-v41 :is(
+  .tz-page-hero,
+  .tz-workspace-card,
+  .tz-workspace-list__item,
+  .tz-workspace-section__head,
+  .english-ledger,
+  .contact-card,
+  .contact-mini,
+  .os-card,
+  .os-note,
+  .tz-reader__body
+) {
+  border-color: var(--tz-v4-line) !important;
+  background-color: var(--tz-skin-surface-internal) !important;
+  background-image: var(--tz-v4-surface) !important;
+  background-position: center !important;
+  background-size: cover !important;
+  background-blend-mode: var(--tz-skin-surface-blend) !important;
+  backdrop-filter: blur(7px) saturate(116%);
+  -webkit-backdrop-filter: blur(7px) saturate(116%);
+}
+.tz-network-map,
+.tz-network-map.is-site-orbit {
+  background-color: var(--tz-skin-network-canvas) !important;
+  background-image: var(--tz-skin-network-overlay), var(--tz-section-bg-image) !important;
+  background-position: center !important;
+  background-size: cover !important;
+}
+.tz-network-map.is-site-orbit { overflow: hidden !important; scrollbar-width: none !important; }
+
+@media (min-width: 681px) {
+  html[data-zone="ai"] { --tz-section-bg-position: center calc(100% + 52px); --tz-section-bg-size: 100% auto; }
+  html[data-zone="ai"] :is(body, body.tz-site-shell, .bg-mesh) { background-color: var(--tz-skin-canvas) !important; }
+}
+
+@media (max-width: 680px) {
+  html, body { width: 100%; max-width: 100%; overflow-x: clip; }
+  body, body.tz-site-shell { background-attachment: scroll !important; }
+  body,
+  body.tz-site-shell,
+  .bg-mesh {
+    background-color: var(--tz-skin-canvas) !important;
+    background-image: var(--tz-skin-scene-mobile), var(--tz-section-bg-mobile-image) !important;
+    background-size: var(--tz-section-bg-size-mobile) !important;
+    background-position: var(--tz-section-bg-position-mobile) !important;
+    background-repeat: no-repeat !important;
+  }
+  :where(.card, .topbar, .footer, .tz-network-panel, .tz-domain-card, .tz-feed-panel, .article-body) {
+    background-color: var(--tz-skin-surface-mobile) !important;
+    background-image: var(--tz-v4-surface) !important;
+    background-blend-mode: var(--tz-skin-surface-blend) !important;
+    backdrop-filter: blur(2px) saturate(108%);
+    -webkit-backdrop-filter: blur(2px) saturate(108%);
+  }
+  body.tz-internal-v41 :is(.tz-page-hero, .tz-workspace-card, .tz-workspace-list__item, .tz-workspace-section__head, .english-ledger, .contact-card, .contact-mini, .os-card, .os-note, .tz-reader__body) {
+    background-color: var(--tz-skin-surface-internal-mobile) !important;
+    background-image: var(--tz-v4-surface) !important;
+    background-blend-mode: var(--tz-skin-surface-blend) !important;
+    backdrop-filter: blur(2px) saturate(108%);
+    -webkit-backdrop-filter: blur(2px) saturate(108%);
+  }
+  body.tz-site-shell { padding-bottom: max(18px, var(--tz-safe-bottom)); }
+  body.tz-site-shell .wrap, .wrap { width: 100%; max-width: 100%; padding-inline: 14px; }
+  body.tz-site-shell .topbar {
+    top: max(4px, var(--tz-safe-top));
+    width: calc(100% - 8px - var(--tz-safe-left) - var(--tz-safe-right));
+    margin: 4px calc(4px + var(--tz-safe-right)) 0 calc(4px + var(--tz-safe-left));
+    border-radius: 16px;
+  }
+  body.tz-site-shell .topbar-inner { height: 58px; padding-inline: 10px; gap: 8px; }
+  body.tz-site-shell .nav { inset: 66px 6px auto; max-height: calc(100dvh - 78px); overflow-y: auto; border-radius: 16px; }
+  main, main > *, section, .card, .tz-split-stack, .tz-split-content { min-width: 0; max-width: 100%; }
+  .tz-home-network-workspace { width: 100%; padding-inline: 6px !important; }
+  .tz-network-panel { min-height: 0; padding: 12px; border-radius: 20px; }
+  .tz-network-map.is-site-orbit { width: 100%; margin-block: 12px; border-radius: 16px; }
+  .tz-panel-foot { display: none; }
+  .tzpal-btn { left: calc(10px + var(--tz-safe-left)); bottom: calc(10px + var(--tz-safe-bottom)); }
+}
+
+/* Tianze Web 4.1 mobile navigation and full-site discovery. */
+.tz-command-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  scrollbar-color: rgba(148, 184, 225, .48) transparent;
+  scrollbar-width: thin;
+}
+
+.tz-command-list::-webkit-scrollbar { display: block; width: 8px; }
+.tz-command-list::-webkit-scrollbar-thumb { border-radius: 99px; background: rgba(148, 184, 225, .42); }
+
+.tz-command-list a {
+  min-height: 70px;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  grid-template-rows: 1fr;
+  gap: 10px;
+}
+
+.tz-command-list a .tz-icon { grid-row: auto; }
+.tz-command-copy { display: grid; gap: 3px; min-width: 0; }
+.tz-command-copy strong { overflow: hidden; color: var(--ink); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.tz-command-copy small {
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: 10px;
+  font-weight: 500 !important;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tz-command-section {
+  max-width: 74px;
+  padding: 3px 7px;
+  overflow: hidden;
+  border: 1px solid var(--tz-v4-line);
+  border-radius: 999px;
+  color: var(--ink-faint);
+  font: 650 9px/1.2 ui-monospace, "SFMono-Regular", Consolas, monospace !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tz-command-empty {
+  grid-column: 1 / -1;
+  min-height: 150px;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  color: var(--ink-faint);
+  text-align: center;
+}
+
+.tz-network-map.is-site-mobile-tree {
+  display: block;
+  width: 100%;
+  height: auto !important;
+  min-height: 0;
+  max-height: none;
+  margin-block: 12px;
+  padding: 12px;
+  overflow: visible;
+  border-radius: 18px;
+  overscroll-behavior: auto;
+}
+
+.tz-mobile-tree { display: grid; gap: 12px; width: 100%; }
+.tz-mobile-tree__root,
+.tz-mobile-tree__section-link,
+.tz-mobile-tree__child {
+  color: var(--ink);
+  text-decoration: none;
+}
+.tz-mobile-tree__root {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 12px;
+  border: 1px solid var(--tz-v4-line);
+  border-radius: 15px;
+  background-color: var(--tz-skin-surface-raised);
+  background-image: var(--tz-v4-surface);
+  background-blend-mode: var(--tz-skin-surface-blend);
+}
+.tz-mobile-tree__root > .tz-icon { width: 34px; height: 34px; flex: 0 0 34px; }
+.tz-mobile-tree__root > span { display: grid; gap: 2px; }
+.tz-mobile-tree__root strong { font-size: 14px; }
+.tz-mobile-tree__root small { color: var(--ink-faint); font-size: 10px; }
+
+.tz-mobile-tree__zones {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+.tz-mobile-tree__zone {
+  position: relative;
+  min-width: 0;
+  min-height: 68px;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-content: center;
+  align-items: center;
+  gap: 2px 7px;
+  padding: 8px;
+  border: 1px solid var(--tz-v4-line);
+  border-radius: 14px;
+  background-color: var(--tz-skin-control);
+  background-image: var(--tz-v4-button);
+  background-blend-mode: var(--tz-skin-surface-blend);
+  color: var(--ink-dim);
+  text-align: left;
+}
+.tz-mobile-tree__zone > .tz-icon { width: 27px; height: 27px; grid-row: 1 / 3; }
+.tz-mobile-tree__zone > span {
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 720;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tz-mobile-tree__zone > small { color: var(--ink-faint); font: 700 9px/1 ui-monospace, Consolas, monospace; }
+.tz-mobile-tree__zone.active {
+  border-color: color-mix(in srgb, var(--c-green) 62%, var(--tz-v4-line));
+  background-color: color-mix(in srgb, var(--tz-skin-surface-raised) 82%, var(--c-green) 18%);
+  background-image: var(--tz-v4-button);
+  color: var(--ink);
+  box-shadow: 0 9px 24px rgba(0, 0, 0, .22);
+}
+
+.tz-mobile-tree__panel {
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--c-blue) 36%, var(--tz-v4-line));
+  border-radius: 16px;
+  background-color: var(--tz-skin-surface-internal);
+  background-image: var(--tz-v4-surface);
+  background-blend-mode: var(--tz-skin-surface-blend);
+}
+.tz-mobile-tree__panel:focus-visible { outline: 2px solid var(--c-blue-soft); outline-offset: 2px; }
+.tz-mobile-tree__section-link {
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border-radius: 13px;
+  background-color: color-mix(in srgb, var(--tz-skin-control) 82%, var(--c-blue) 18%);
+  background-image: var(--tz-v4-button);
+  background-blend-mode: var(--tz-skin-surface-blend);
+}
+.tz-mobile-tree__section-link > .tz-icon:first-child { width: 32px; height: 32px; }
+.tz-mobile-tree__section-link > .tz-icon:last-child { width: 16px; height: 16px; }
+.tz-mobile-tree__section-link > span { display: grid; gap: 2px; min-width: 0; }
+.tz-mobile-tree__section-link strong { overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.tz-mobile-tree__section-link small { color: var(--ink-faint); font-size: 10px; }
+.tz-mobile-tree__children { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+.tz-mobile-tree__child {
+  min-width: 0;
+  min-height: 50px;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 8px 9px;
+  border: 1px solid var(--tz-v4-line);
+  border-radius: 12px;
+  background-color: var(--tz-skin-surface);
+  background-image: var(--tz-v4-surface);
+  background-blend-mode: var(--tz-skin-surface-blend);
+}
+.tz-mobile-tree__child > .tz-icon { width: 23px; height: 23px; }
+.tz-mobile-tree__child > span {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 10.5px;
+  font-weight: 650;
+  line-height: 1.25;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.tz-mobile-tree :is(a, button):focus-visible { outline: 2px solid var(--c-green-soft); outline-offset: 2px; }
+
+@media (min-width: 600px) {
+  .tz-network-map.is-site-mobile-tree .tz-mobile-tree__zones { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .tz-network-map.is-site-mobile-tree .tz-mobile-tree__children { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 1100px) {
+  body.tz-site-shell .topbar {
+    top: max(6px, var(--tz-safe-top));
+    width: calc(100% - 12px - var(--tz-safe-left) - var(--tz-safe-right));
+    margin-right: calc(6px + var(--tz-safe-right));
+    margin-left: calc(6px + var(--tz-safe-left));
+  }
+  body.tz-site-shell .nav-toggle { display: grid !important; }
+  body.tz-site-shell .nav {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    left: 0;
+    max-height: calc(100dvh - 90px - var(--tz-safe-top) - var(--tz-safe-bottom));
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+    padding: 10px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    border: 1px solid var(--tz-v4-line);
+    border-radius: 16px;
+    background-color: var(--tz-v4-surface-color-strong);
+    background-image: var(--tz-v4-surface);
+    visibility: hidden;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: transform .2s var(--ease-out), opacity .16s ease, visibility 0s linear .2s;
+    scrollbar-width: thin;
+  }
+  body.tz-site-shell .nav.open {
+    visibility: visible;
+    pointer-events: auto;
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0s;
+  }
+  body.tz-site-shell .nav a { min-width: 0; min-height: 44px; padding: 11px 13px; }
+  body.tz-site-shell .nav::-webkit-scrollbar { display: block; width: 8px; }
+  body.tz-site-shell .nav::-webkit-scrollbar-thumb { border-radius: 99px; background: rgba(148, 184, 225, .42); }
+}
+
+@media (max-width: 820px) {
+  .tz-homepage .tz-network-panel { min-height: 0; }
+  .tz-command-list { grid-template-columns: 1fr; }
+  .tz-command-dialog { max-height: calc(100dvh - 84px - var(--tz-safe-top) - var(--tz-safe-bottom)); }
+}
+
+/* Complete-skin component integration and accessible appearance chooser. */
+::selection { background: var(--tz-skin-selection); color: #fff; }
+html { scrollbar-color: color-mix(in srgb, var(--tz-skin-focus) 62%, transparent) var(--tz-theme-bg-base); }
+::-webkit-scrollbar-track { background: var(--tz-theme-bg-base); }
+::-webkit-scrollbar-thumb { border-color: var(--tz-theme-bg-base); background: var(--grad-main); }
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--tz-skin-focus) !important;
+  outline-offset: 3px !important;
+}
+
+.tz-live-dot,
+.tz-status-chip i,
+.tz-site-statusbar__left > i {
+  background: var(--tz-status-online) !important;
+  box-shadow: 0 0 12px rgba(var(--tz-status-online-rgb), .72) !important;
+}
+
+:where(.tz-command-trigger, .tz-status-command, .nav-toggle, .tz-command-head button) {
+  border-color: var(--tz-v4-line) !important;
+  background-color: var(--tz-skin-control) !important;
+  background-image: var(--tz-v4-button) !important;
+  background-blend-mode: var(--tz-skin-surface-blend) !important;
+  color: var(--ink) !important;
+}
+
+:where(input:not([type="checkbox"]):not([type="radio"]), textarea, select) {
+  border-color: var(--tz-v4-line) !important;
+  background-color: var(--tz-skin-input) !important;
+  background-image: var(--tz-v4-surface) !important;
+  background-blend-mode: var(--tz-skin-surface-blend) !important;
+  color: var(--ink) !important;
+}
+
+:where(input, textarea)::placeholder { color: var(--ink-faint) !important; opacity: .86; }
+
+.tz-command-palette {
+  background-color: var(--tz-skin-backdrop) !important;
+  background-image: var(--tz-v4-wallpaper) !important;
+  background-blend-mode: soft-light !important;
+}
+
+.tz-command-dialog,
+.tz-site-statusbar {
+  border-color: var(--tz-v4-line) !important;
+  background-color: var(--tz-v4-surface-color-strong) !important;
+  background-image: var(--tz-v4-surface) !important;
+  background-blend-mode: var(--tz-skin-surface-blend) !important;
+}
+
+.tz-orbit-node__label { text-shadow: var(--tz-skin-map-label-shadow); }
+.tz-orbit-node__count { background-color: var(--tz-v4-surface-color-strong); }
+
+html[data-palette="porcelain"] :is(
+  .hero,
+  .page-head,
+  .ai-hero,
+  .skill-hero,
+  .coc-hero,
+  .english-hero,
+  .game-zone-hero,
+  .tz-page-hero
+) {
+  color: var(--ink) !important;
+  text-shadow: none !important;
+}
+
+html[data-palette="porcelain"] :is(
+  .tz-orbit-node.is-orbit-focus,
+  .tz-site-orbit .tz-orbit-core.is-orbit-focus
+) { color: var(--ink) !important; }
+
+html[data-palette="porcelain"] :is(.tz-command-trigger kbd, .tz-status-command kbd) {
+  border-color: rgba(30, 65, 91, .18);
+  background: rgba(255, 255, 255, .46);
+  color: var(--ink-dim);
+}
+
+html[data-palette="porcelain"] .tz-icon,
+html[data-palette="porcelain"] .brand .logo-mark::before {
+  filter: brightness(0) saturate(100%) invert(22%) sepia(21%) saturate(1047%) hue-rotate(163deg) brightness(88%) contrast(91%);
+}
+
+html[data-palette="porcelain"] :is(
+  .z-icon,
+  .f-icon,
+  .sz-icon,
+  .dl-icon,
+  .oc-icon,
+  .e-icon,
+  .es-icon,
+  .ph-icon,
+  .orbit-core,
+  .tz-network-core,
+  .tz-network-node,
+  .tz-tree-node__icon,
+  .tz-orbit-node__icon,
+  .tz-signal-icon,
+  .tz-domain-icon,
+  .tz-side-module__icon,
+  .ci-icon,
+  .mi-icon,
+  .tz-os-hero-icon
+) .tz-icon,
+html[data-palette="porcelain"] .btn:not(.btn--ghost) .tz-icon {
+  filter: none;
+}
+
+.tzpal-btn {
+  border-color: var(--tz-v4-line) !important;
+  background-color: var(--tz-skin-control) !important;
+  background-image: var(--tz-v4-button) !important;
+  background-position: center !important;
+  background-size: cover !important;
+  background-blend-mode: var(--tz-skin-surface-blend) !important;
+  color: var(--ink) !important;
+}
+
+.tzpal-panel {
+  left: calc(18px + var(--tz-safe-left));
+  bottom: calc(70px + var(--tz-safe-bottom));
+  width: min(430px, calc(100vw - 32px - var(--tz-safe-left) - var(--tz-safe-right)));
+  min-width: 0;
+  max-height: calc(100dvh - 96px - var(--tz-safe-top) - var(--tz-safe-bottom));
+  padding: 12px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border: 1px solid var(--tz-v4-line) !important;
+  border-radius: 20px;
+  background-color: var(--tz-v4-surface-color-strong) !important;
+  background-image: var(--tz-v4-surface) !important;
+  background-position: center !important;
+  background-size: cover !important;
+  background-blend-mode: var(--tz-skin-surface-blend) !important;
+  box-shadow: var(--shadow-lg);
+  scrollbar-width: thin;
+}
+
+.tzpal-panel[hidden] { display: none !important; }
+.tzpal-panel.open { display: grid; gap: 10px; }
+
+body.tz-site-shell .tzpal-panel {
+  top: max(84px, calc(72px + var(--tz-safe-top)));
+  right: calc(14px + var(--tz-safe-right));
+  bottom: auto;
+  left: auto;
+}
+
+.tzpal-panel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 4px 4px 9px;
+  border-bottom: 1px solid var(--tz-v4-line);
+}
+
+.tzpal-panel__head > span { display: grid; gap: 3px; min-width: 0; }
+.tzpal-panel__head strong { color: var(--ink); font-size: 14px; line-height: 1.3; }
+.tzpal-panel__head small { color: var(--ink-faint); font-size: 10px; line-height: 1.45; }
+.tzpal-free-badge {
+  flex: 0 0 auto;
+  padding: 4px 8px;
+  border: 1px solid color-mix(in srgb, var(--tz-status-online) 44%, var(--tz-v4-line));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tz-status-online) 12%, transparent);
+  color: var(--tz-status-online);
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.tzpal-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tzpal-opt {
+  min-width: 0;
+  min-height: 68px;
+  display: grid;
+  grid-template-columns: 37px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  border: 1px solid var(--tz-v4-line) !important;
+  border-radius: 14px;
+  background-color: var(--tz-skin-surface) !important;
+  background-image: var(--tz-v4-surface) !important;
+  background-blend-mode: var(--tz-skin-surface-blend) !important;
+  color: var(--ink-dim) !important;
+}
+
+.tzpal-opt:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--tz-skin-focus) 52%, var(--tz-v4-line)) !important;
+  background-color: var(--tz-skin-surface-raised) !important;
+  background-image: var(--tz-v4-button) !important;
+}
+
+.tzpal-opt.active {
+  border-color: color-mix(in srgb, var(--tz-skin-focus) 68%, var(--tz-v4-line)) !important;
+  background-color: color-mix(in srgb, var(--tz-skin-surface-raised) 84%, var(--tz-skin-focus) 16%) !important;
+  background-image: var(--tz-v4-button) !important;
+  color: var(--ink) !important;
+}
+
+.tzpal-dots {
+  width: 37px;
+  height: 37px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--tz-v4-line);
+  border-radius: 12px;
+  background: var(--tz-v4-icon-well);
+  background-position: center;
+  background-size: cover;
+}
+
+.tzpal-dots i { width: auto; height: auto; min-width: 0; border-radius: 7px; box-shadow: inset 0 1px rgba(255, 255, 255, .28); }
+.tzpal-opt__copy { display: grid; gap: 2px; min-width: 0; }
+.tzpal-opt__copy strong { overflow: hidden; color: currentColor; font-size: 12px; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+.tzpal-opt__copy small { overflow: hidden; color: var(--ink-faint); font-size: 9px; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+.tzpal-cost {
+  margin-left: 0;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tz-status-online) 11%, transparent);
+  color: var(--tz-status-online);
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.tzpal-status {
+  min-height: 15px;
+  margin: 0;
+  padding-inline: 4px;
+  color: var(--ink-faint);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+@media (max-width: 820px) {
+  .tz-network-map.is-site-mobile-tree {
+    background-image: var(--tz-skin-network-overlay), var(--tz-section-bg-mobile-image) !important;
+    background-position: var(--tz-section-bg-position-mobile) !important;
+  }
+}
+
+@media (max-width: 520px) {
+  body.tz-site-shell .tzpal-panel,
+  .tzpal-panel {
+    top: calc(68px + var(--tz-safe-top)) !important;
+    right: calc(8px + var(--tz-safe-right)) !important;
+    bottom: auto !important;
+    left: calc(8px + var(--tz-safe-left)) !important;
+    width: auto;
+    max-height: calc(100dvh - 80px - var(--tz-safe-top) - var(--tz-safe-bottom));
+    border-radius: 17px;
+  }
+  .tzpal-options { grid-template-columns: 1fr; }
+  .tzpal-opt { min-height: 62px; }
+  .tzpal-panel__head small { max-width: 220px; }
+}
+
+@media (forced-colors: active) {
+  .tzpal-dots { forced-color-adjust: none; }
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible { outline-color: Highlight !important; }
 }

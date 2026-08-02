@@ -7,7 +7,6 @@
 'use strict';
 
 // 用户授权随站点提供，仅用于两个免费的智谱 GLM 预设。
-const BUNDLED_GLM_API_KEY = '6cec7915b15e44359c2f429e4df0ee4e.DiFqD4e5XMFiVHaI';
 
 /* ============================================================
    工具函数
@@ -2815,8 +2814,7 @@ const App = {
         $('#cfgUrl').value = chip.dataset.url;
         $('#cfgModel').value = chip.dataset.model;
         const keyInput = $('#cfgKey');
-        if (chip.dataset.bundledKey === 'glm') keyInput.value = BUNDLED_GLM_API_KEY;
-        else if (keyInput.value === BUNDLED_GLM_API_KEY) keyInput.value = '';
+        keyInput.value = '';
       });
     });
 
@@ -2904,6 +2902,12 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') { Store.flush(); DB.flushRecords(); }
 });
 window.addEventListener('pagehide', () => { Store.flush(); DB.flushRecords(); });
-document.addEventListener('DOMContentLoaded', () => App.init());
+// 规范脚本也可能由旧版 /words/words.js 兼容入口异步装载；此时
+// DOMContentLoaded 可能已经触发，需立即启动，避免旧静态资源 URL 失效。
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => App.init(), { once: true });
+} else {
+  App.init();
+}
 
 })();

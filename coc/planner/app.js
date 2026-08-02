@@ -39,26 +39,32 @@
   function isRushExcluded(cat,name){ if(/防御建筑/.test(cat))return true; if(/陷阱/.test(cat))return true; if(/英雄/.test(cat))return true; if(/金矿|圣水收集器|暗黑重油钻井/.test(name))return true; if(/建筑工人小屋/.test(name))return true; return false; }
 
   function buildTasks(){
-    var tasks=[],taskMap={}, v=STORE.village;
+    var tasks=[],taskMap={},taskByStep={},dependents={},instanceCounts={},v=STORE.village;
+    function stepKey(world,gid,inst,fromLvl,toLvl){ return world+"|"+gid+"|"+inst+"|"+fromLvl+"|"+toLvl; }
     function split(item,isBuilding,world){
       var unit=unitOf(item.data); if(!unit||!unit.levels||!unit.levels.length)return;
       var cur=item.lvl, maxL=maxLevelForTH(unit, world==="bb"?BH:TH);
       if(maxL<=0||cur>=maxL)return;
       var lmap={}; unit.levels.forEach(function(r){ lmap[num(r.level)]=r; });
       var cat=catOf(item.data);
-      var cnt=item.cnt||1;
-      for(var inst=0;inst<cnt;inst++){
+      var cnt=Math.max(1,num(item.cnt)||1), countKey=world+"|"+item.data;
+      var firstInst=instanceCounts[countKey]||0;
+      instanceCounts[countKey]=firstInst+cnt;
+      for(var offset=0;offset<cnt;offset++){
+        var inst=firstInst+offset;
         for(var L=cur;L<maxL;L++){
-          var toLvl=L+1, row=lmap[toLvl]; if(!row)continue;
+          // 建筑建造时间记在目标级；兵种/法术/英雄等研究时间记在当前级。
+          var toLvl=L+1, targetRow=lmap[toLvl],timeRow=isBuilding?targetRow:lmap[L]; if(!targetRow||!timeRow)continue;
           var locked=false, sec;
-          if(item.timer&&L===cur&&inst===0){ locked=true; sec=num(item.timer); } else { sec=isBuilding?buildTimeSec(row):upgradeTimeSec(row); }
+          if(num(item.timer)>0&&L===cur&&offset===0){ locked=true; sec=num(item.timer); } else { sec=isBuilding?buildTimeSec(timeRow):upgradeTimeSec(timeRow); }
           if(sec<=0&&!locked)continue;
           var reqLab=null, reqTavern=null;
-          if(/兵|法术|攻城机器|战宠/.test(cat)) reqLab=num(row.LaboratoryLevel);
-          if(/英雄/.test(cat)) reqTavern=num(row.RequiredHeroTavernLevel);
-          var id=item.data+"_"+inst+"_"+L+"_"+toLvl;
-          var t={id:id,unitKey:String(item.data)+"_"+inst,name:nameOf(item.data)+(cnt>1?("#"+(inst+1)):""),fromLvl:L,toLvl:toLvl,sec:sec,cat:cat,world:world,locked:locked,reqLab:reqLab,reqTavern:reqTavern,deps:[]};
-          tasks.push(t); taskMap[id]=t;
+          if(/兵|法术|攻城机器|战宠/.test(cat)) reqLab=num(targetRow.LaboratoryLevel);
+          if(/英雄/.test(cat)) reqTavern=num(targetRow.RequiredHeroTavernLevel);
+          var unitKey=world+"_"+item.data+"_"+inst;
+          var id=unitKey+"_"+L+"_"+toLvl;
+          var t={id:id,unitKey:unitKey,gid:String(item.data),instance:inst,name:nameOf(item.data)+((cnt>1||firstInst>0)?("#"+(inst+1)):""),fromLvl:L,toLvl:toLvl,sec:sec,cat:cat,world:world,locked:locked,reqLab:reqLab,reqTavern:reqTavern,deps:[]};
+          tasks.push(t); taskMap[id]=t; taskByStep[stepKey(world,String(item.data),inst,L,toLvl)]=t;
         }
       }
     }
@@ -74,68 +80,109 @@
     (v.buildings2||[]).forEach(function(it){split(it,true,"bb");});
     (v.traps2||[]).forEach(function(it){split(it,true,"bb");});
     tasks.forEach(function(t){
-      var prev=t.unitKey+"_"+(t.fromLvl-1)+"_"+t.fromLvl; if(taskMap[prev])t.deps.push(prev);
-      if(t.reqLab){ var bg=/战宠/.test(t.cat)?PETHOUSE_GID:LAB_GID; var cb=currentBuildingLvl(bg,t.world); if(t.reqLab>cb){ var d=bg+"_0_"+(t.reqLab-1)+"_"+t.reqLab; if(taskMap[d])t.deps.push(d); } }
-      if(t.reqTavern){ var ct=currentBuildingLvl(TAVERN_GID,"home"); if(t.reqTavern>ct){ var d2=TAVERN_GID+"_0_"+(t.reqTavern-1)+"_"+t.reqTavern; if(taskMap[d2])t.deps.push(d2); } }
+      var prev=taskByStep[stepKey(t.world,t.gid,t.instance,t.fromLvl-1,t.fromLvl)]; if(prev)t.deps.push(prev.id);
+      if(t.reqLab){ var bg=/战宠/.test(t.cat)?PETHOUSE_GID:LAB_GID; var cb=currentBuildingLvl(bg,t.world); if(t.reqLab>cb){ var d=taskByStep[stepKey(t.world,bg,0,t.reqLab-1,t.reqLab)]; if(d)t.deps.push(d.id); } }
+      if(t.reqTavern){ var ct=currentBuildingLvl(TAVERN_GID,"home"); if(t.reqTavern>ct){ var d2=taskByStep[stepKey("home",TAVERN_GID,0,t.reqTavern-1,t.reqTavern)]; if(d2)t.deps.push(d2.id); } }
+      t.deps.forEach(function(dep){ (dependents[dep]||(dependents[dep]=[])).push(t.id); });
     });
-    return {tasks:tasks, taskMap:taskMap};
+    return {tasks:tasks, taskMap:taskMap, dependents:dependents};
   }
   function sortCmp(a,b){ var ka=laneKey(a),kb=laneKey(b); var ab=isBuilderKey(ka),bb=isBuilderKey(kb); if(ab&&bb){ var ah=/英雄/.test(a.cat)?0:1,bh=/英雄/.test(b.cat)?0:1; if(ah!==bh)return ah-bh; return a.sec-b.sec; } return a.sec-b.sec; }
-  function topoSort(tasks,taskMap){ var map={}; tasks.forEach(function(t){map[t.id]=1;}); tasks.forEach(function(t){ t._deps=t.deps.filter(function(d){return map[d];}); t._indeg=t._deps.length; }); var q=tasks.filter(function(t){return t._indeg===0;}).sort(sortCmp); var r=[]; while(q.length){ var t=q.shift(); r.push(t); tasks.forEach(function(u){ if(u._deps.indexOf(t.id)>=0){ u._indeg--; if(u._indeg===0)q.push(u); q.sort(sortCmp); } }); } return r; }
+  function taskCmp(a,b){ var c=sortCmp(a,b); if(c)return c; return a.id<b.id?-1:(a.id>b.id?1:0); }
+  // Kahn 邻接表 + 最小堆：避免旧实现每弹出一个节点都扫描全部任务并重排整个队列。
+  function TaskHeap(cmp){ this.items=[]; this.cmp=cmp; }
+  TaskHeap.prototype.push=function(item){ var a=this.items,i=a.length;a.push(item);while(i>0){var p=(i-1)>>1;if(this.cmp(a[p],item)<=0)break;a[i]=a[p];i=p;}a[i]=item; };
+  TaskHeap.prototype.pop=function(){ var a=this.items;if(!a.length)return null;var first=a[0],last=a.pop();if(a.length){var i=0;while(true){var l=i*2+1;if(l>=a.length)break;var r=l+1,c=r<a.length&&this.cmp(a[r],a[l])<0?r:l;if(this.cmp(last,a[c])<=0)break;a[i]=a[c];i=c;}a[i]=last;}return first; };
+  function topoSort(tasks,dependents){
+    var selected={},indegree={},emitted={},heap=new TaskHeap(taskCmp),ordered=[];
+    tasks.forEach(function(t){selected[t.id]=1;});
+    tasks.forEach(function(t){var n=0;t.deps.forEach(function(dep){if(selected[dep])n++;});indegree[t.id]=n;if(!n)heap.push(t);});
+    while(heap.items.length){
+      var t=heap.pop();if(emitted[t.id])continue;emitted[t.id]=1;ordered.push(t);
+      (dependents[t.id]||[]).forEach(function(id){if(!selected[id]||emitted[id])return;indegree[id]--;if(indegree[id]===0)heap.push(BUILD.taskMap[id]);});
+    }
+    // 数据异常形成环时仍把剩余任务交给排程器；scheduleWithDeps 自身还有访问集保护。
+    if(ordered.length<tasks.length)tasks.filter(function(t){return !emitted[t.id];}).sort(taskCmp).forEach(function(t){ordered.push(t);});
+    return ordered;
+  }
 
   function Planner(world,opts){
     this.world=world; this.lanes=opts.lanes;
     this.svgId=opts.svgId; this.wrapId=opts.wrapId; this.pendingGridId=opts.pendingGridId; this.pendingCountId=opts.pendingCountId;
     this.infoId=opts.infoId; this.statsId=opts.statsId; this.zoomLabelId=opts.zoomLabelId;
-    this.planned={}; this.planList=[]; this._drag=null;
+    this.planned={}; this.planList=[]; this._slotPlans={}; this._slotEnds={}; this._drag=null;
   }
+  // 每个资源槽维护有序区间和结束时间；自动排程 O(槽数)，手工插入才扫描该槽自身区间。
+  Planner.prototype.slotKey=function(lane,slot){return lane+"|"+slot;};
+  Planner.prototype.indexPlan=function(p){
+    var key=this.slotKey(p.lane,p.slot),arr=this._slotPlans[key]||(this._slotPlans[key]=[]),lo=0,hi=arr.length;
+    while(lo<hi){var mid=(lo+hi)>>1;if(arr[mid].start<=p.start)lo=mid+1;else hi=mid;}arr.splice(lo,0,p);
+    this._slotEnds[key]=Math.max(this._slotEnds[key]||0,p.start+p.dur);
+  };
+  Planner.prototype.addPlan=function(p){if(this.planned[p.id])return this.planned[p.id];this.planned[p.id]=p;this.planList.push(p);this.indexPlan(p);return p;};
+  Planner.prototype.rebuildPlanIndex=function(){var self=this;this._slotPlans={};this._slotEnds={};this.planList.forEach(function(p){self.indexPlan(p);});};
+  Planner.prototype.resetPlan=function(){this.planned={};this.planList=[];this._slotPlans={};this._slotEnds={};};
   Planner.prototype.slots=function(){ var wc=workerCounts(),s={}; this.lanes.forEach(function(l){s[l.key]=wc[l.key]||0;}); return s; };
   Planner.prototype.activeLanes=function(){ var s=this.slots(); return this.lanes.filter(function(l){return (s[l.key]||0)>0;}); };
   Planner.prototype.allTasks=function(){ var all=BUILD.tasks.filter(function(t){return t.world===this.world;},this); if(STATE.mode==="rush")all=all.filter(function(t){return !isRushExcluded(t.cat,t.name);}); return all; };
   Planner.prototype.unplanned=function(){ var self=this; return this.allTasks().filter(function(t){return !self.planned[t.id];}).sort(sortCmp); };
-  Planner.prototype.placeInLane=function(lane,earliest,dur){ var slots=this.slots()[lane]||0; if(slots<=0)return null; var laneTasks=this.planList.filter(function(p){return p.lane===lane;}).sort(function(a,b){return a.start-b.start;}); var best=null; for(var s=0;s<slots;s++){ var stasks=laneTasks.filter(function(p){return p.slot===s;}).sort(function(a,b){return a.start-b.start;}); var t0=earliest; for(var i=0;i<stasks.length;i++){ var p=stasks[i]; if(t0+dur<=p.start)break; t0=Math.max(t0,p.start+p.dur); } if(best===null||t0<best.start)best={slot:s,start:t0}; } return best; };
+  Planner.prototype.placeInLane=function(lane,earliest,dur){ var slots=this.slots()[lane]||0;if(slots<=0)return null;var best=null;for(var s=0;s<slots;s++){var stasks=this._slotPlans[this.slotKey(lane,s)]||[],t0=earliest;for(var i=0;i<stasks.length;i++){var p=stasks[i];if(t0+dur<=p.start)break;t0=Math.max(t0,p.start+p.dur);}if(best===null||t0<best.start)best={slot:s,start:t0};}return best; };
+  Planner.prototype.placeAtLaneEnd=function(lane,earliest){var slots=this.slots()[lane]||0;if(slots<=0)return null;var best=null;for(var s=0;s<slots;s++){var start=Math.max(earliest,this._slotEnds[this.slotKey(lane,s)]||0);if(best===null||start<best.start)best={slot:s,start:start};}return best;};
   Planner.prototype.depEnd=function(t){ var end=0,self=this; t.deps.forEach(function(did){ var p=self.planned[did]; if(p)end=Math.max(end,p.start+p.dur); }); return end; };
-  Planner.prototype.scheduleWithDeps=function(t){ if(this.planned[t.id])return; var self=this; t.deps.forEach(function(did){ var dt=BUILD.taskMap[did]; if(dt&&!self.planned[did]&&dt.world===this.world)this.scheduleWithDeps(dt); },this); if(this.planned[t.id])return; if(t.locked){ var pl=this.placeInLane(laneKey(t),0,t.sec); this.planned[t.id]={id:t.id,start:0,dur:t.sec,lane:laneKey(t),slot:pl?pl.slot:0,locked:true}; } else { var e=this.depEnd(t); var pl2=this.placeInLane(laneKey(t),e,t.sec); this.planned[t.id]={id:t.id,start:pl2?pl2.start:e,dur:t.sec,lane:laneKey(t),slot:pl2?pl2.slot:0,locked:false}; } this.planList.push(this.planned[t.id]); };
-  Planner.prototype.removeWithDeps=function(tid){ var self=this,entry=this.planned[tid]; if(!entry||entry.locked)return; delete this.planned[tid]; this.planList=this.planList.filter(function(p){return p.id!==tid;}); this.allTasks().forEach(function(t){ if(t.deps.indexOf(tid)>=0&&self.planned[t.id])self.removeWithDeps(t.id); }); };
+  Planner.prototype.scheduleWithDeps=function(t,appendOnly,visiting){
+    if(this.planned[t.id])return;visiting=visiting||{};if(visiting[t.id])return;visiting[t.id]=1;
+    var self=this;t.deps.forEach(function(did){var dt=BUILD.taskMap[did];if(dt&&!self.planned[did]&&dt.world===self.world)self.scheduleWithDeps(dt,appendOnly,visiting);});
+    delete visiting[t.id];if(this.planned[t.id])return;
+    var lane=laneKey(t),entry;
+    if(t.locked){var pl=this.placeInLane(lane,0,t.sec);entry={id:t.id,start:0,dur:t.sec,lane:lane,slot:pl?pl.slot:0,locked:true};}
+    else{var earliest=this.depEnd(t),pl2=appendOnly?this.placeAtLaneEnd(lane,earliest):this.placeInLane(lane,earliest,t.sec);entry={id:t.id,start:pl2?pl2.start:earliest,dur:t.sec,lane:lane,slot:pl2?pl2.slot:0,locked:false};}
+    this.addPlan(entry);
+  };
+  Planner.prototype.removeWithDeps=function(tid){
+    var stack=[tid],remove={};
+    while(stack.length){var id=stack.pop(),entry=this.planned[id];if(!entry||entry.locked||remove[id])continue;remove[id]=1;(BUILD.dependents[id]||[]).forEach(function(next){stack.push(next);});}
+    if(!Object.keys(remove).length)return;Object.keys(remove).forEach(function(id){delete this.planned[id];},this);this.planList=this.planList.filter(function(p){return !remove[p.id];});this.rebuildPlanIndex();
+  };
 
   /* 英雄优先排程：locked先排(英雄locked排专用槽) → 英雄专用槽串行 → 其他拓扑贪心 */
   Planner.prototype.autoFill=function(){
-    this.planned={}; this.planList=[];
+    this.resetPlan();
     var all=this.allTasks(), self=this;
     var builderLane=this.world==="bb"?"bb_builder":"home_builder";
     var bSlots=this.slots()[builderLane]||0;
-    var heroKeys=[]; all.forEach(function(t){ if(/英雄/.test(t.cat)&&laneKey(t)===builderLane&&heroKeys.indexOf(t.unitKey)<0)heroKeys.push(t.unitKey); });
+    var heroKeys=[],heroGroups={}; all.forEach(function(t){if(!/英雄/.test(t.cat)||laneKey(t)!==builderLane)return;if(!heroGroups[t.unitKey]){heroGroups[t.unitKey]=[];heroKeys.push(t.unitKey);}heroGroups[t.unitKey].push(t);});
+    var heroSlot={};heroKeys.forEach(function(key,index){heroSlot[key]=index%Math.max(bSlots,1);});
     // 1. locked：英雄locked排专用槽，其他locked贪心
     all.filter(function(t){return t.locked;}).forEach(function(t){
       if(self.planned[t.id])return;
       var slot;
-      if(/英雄/.test(t.cat)&&laneKey(t)===builderLane){ slot=heroKeys.indexOf(t.unitKey)%Math.max(bSlots,1); }
+      if(/英雄/.test(t.cat)&&laneKey(t)===builderLane){ slot=heroSlot[t.unitKey]; }
       else { var pl=self.placeInLane(laneKey(t),0,t.sec); slot=pl?pl.slot:0; }
-      self.planned[t.id]={id:t.id,start:0,dur:t.sec,lane:laneKey(t),slot:slot,locked:true}; self.planList.push(self.planned[t.id]);
+      self.addPlan({id:t.id,start:0,dur:t.sec,lane:laneKey(t),slot:slot,locked:true});
     });
     // 2. 英雄非locked专用槽串行；英雄多于槽位时，同槽英雄链继续排在已有链尾部
     var heroSlotEnd=[];
     for(var hs=0;hs<Math.max(bSlots,1);hs++)heroSlotEnd[hs]=0;
     this.planList.forEach(function(p){ if(p.lane===builderLane)heroSlotEnd[p.slot]=Math.max(heroSlotEnd[p.slot]||0,p.start+p.dur); });
     heroKeys.forEach(function(key,idx){
-      var slot=idx%Math.max(bSlots,1);
+      var slot=heroSlot[key];
       var prevEnd=heroSlotEnd[slot]||0;
-      var lt=all.filter(function(t){return t.unitKey===key&&t.locked;})[0];
+      var group=heroGroups[key],lt=group.filter(function(t){return t.locked;})[0];
       if(lt&&self.planned[lt.id]) prevEnd=Math.max(prevEnd,self.planned[lt.id].start+self.planned[lt.id].dur);
-      all.filter(function(t){return t.unitKey===key&&!t.locked;}).sort(function(a,b){return a.fromLvl-b.fromLvl;}).forEach(function(t){
+      group.filter(function(t){return !t.locked;}).sort(function(a,b){return a.fromLvl-b.fromLvl;}).forEach(function(t){
         if(self.planned[t.id])return;
         var e=self.depEnd(t); var start=Math.max(prevEnd,e);
-        self.planned[t.id]={id:t.id,start:start,dur:t.sec,lane:builderLane,slot:slot,locked:false}; self.planList.push(self.planned[t.id]);
+        self.addPlan({id:t.id,start:start,dur:t.sec,lane:builderLane,slot:slot,locked:false});
         prevEnd=start+t.sec;
       });
       heroSlotEnd[slot]=prevEnd;
     });
     // 3. 其他任务拓扑贪心
     var others=all.filter(function(t){return !self.planned[t.id]&&!t.locked;});
-    topoSort(others,BUILD.taskMap).forEach(function(t){ if(!self.planned[t.id])self.scheduleWithDeps(t); });
+    topoSort(others,BUILD.dependents).forEach(function(t){ if(!self.planned[t.id])self.scheduleWithDeps(t,true); });
     this.redraw();
   };
-  Planner.prototype.clearPlan=function(){ var self=this; Object.keys(this.planned).forEach(function(id){ if(!self.planned[id].locked)delete self.planned[id]; }); this.planList=this.planList.filter(function(p){return p.locked;}); this.redraw(); };
+  Planner.prototype.clearPlan=function(){ var self=this; Object.keys(this.planned).forEach(function(id){ if(!self.planned[id].locked)delete self.planned[id]; }); this.planList=this.planList.filter(function(p){return p.locked;});this.rebuildPlanIndex();this.redraw(); };
   Planner.prototype.redraw=function(){ this.drawGantt(); this.drawPending(); this.updateInfo(); };
   Planner.prototype.updateInfo=function(){ var end=this.planList.reduce(function(m,p){return Math.max(m,p.start+p.dur);},0); $(this.infoId).textContent="已规划 "+this.planList.length+" 项 · 总跨度 "+fmtDur(end); var byLane={}; this.planList.forEach(function(p){byLane[p.lane]=(byLane[p.lane]||0)+1;}); var stxt="",self=this,s=this.slots(); this.activeLanes().forEach(function(l){ stxt+='<span class="vps">'+l.label+'('+s[l.key]+'槽)：'+(byLane[l.lane]||byLane[l.key]||0)+'项</span>'; }); stxt+='<span class="vps">总时长：'+fmtDur(end)+'</span>'; $(this.statsId).innerHTML=stxt; };
 
@@ -176,6 +223,7 @@
         e.preventDefault();
         var step=e.shiftKey?86400:3600;
         p.start=self.snapValid(p,Math.max(0,p.start+(e.key==="ArrowRight"?step:-step)));
+        self.rebuildPlanIndex();
         self.redraw();
         self.focusBar(tid);
       });
@@ -228,7 +276,7 @@
     this._drag=null; // 判断是否拖到待规划区
     var pend=$(this.pendingGridId).parentElement, rect=pend.getBoundingClientRect();
     if(e.clientX>=rect.left&&e.clientX<=rect.right&&e.clientY>=rect.top&&e.clientY<=rect.bottom){ this.removeWithDeps(d.tid); }
-    else { d.p.start=this.snapValid(d.p,d.newStart!=null?d.newStart:d.p.start); }
+    else { d.p.start=this.snapValid(d.p,d.newStart!=null?d.newStart:d.p.start); this.rebuildPlanIndex(); }
     this.redraw();
   };
   Planner.prototype.onBarCancel=function(e){
@@ -238,7 +286,7 @@
     this._drag=null;
     this.drawGantt();
   };
-  Planner.prototype.snapValid=function(p,newStart){ var task=BUILD.taskMap[p.id],depMin=task?this.depEnd(task):0; newStart=Math.max(depMin,newStart||0); var laneTasks=this.planList.filter(function(x){return x.lane===p.lane&&x.slot===p.slot&&x.id!==p.id;}).sort(function(a,b){return a.start-b.start;}); function conflict(s2){ return laneTasks.some(function(q){ return s2<q.start+q.dur&&s2+p.dur>q.start; }); } if(!conflict(newStart))return newStart; var t=newStart; for(var i=0;i<laneTasks.length;i++){ var q=laneTasks[i]; if(t+p.dur<=q.start)return t; t=Math.max(t,q.start+q.dur); } return t; };
+  Planner.prototype.snapValid=function(p,newStart){ var task=BUILD.taskMap[p.id],depMin=task?this.depEnd(task):0,t=Math.max(depMin,newStart||0),laneTasks=this._slotPlans[this.slotKey(p.lane,p.slot)]||[];for(var i=0;i<laneTasks.length;i++){var q=laneTasks[i];if(q.id===p.id)continue;if(t+p.dur<=q.start)return t;if(t<q.start+q.dur)t=q.start+q.dur;}return t; };
   Planner.prototype.drawPending=function(){ var self=this,grid=$(this.pendingGridId); var up=this.unplanned(); $(this.pendingCountId).textContent=up.length+" 项"; grid.setAttribute("tabindex","-1"); if(!up.length){ grid.innerHTML='<div class="vp-pending-empty">全部任务已安排</div>'; return; } var h=""; up.forEach(function(t){ var lockTag=t.locked?' '+uiGlyph("key"):''; var lockLabel=t.locked?'，升级进行中':''; h+='<button type="button" class="vp-pending-item" draggable="true" data-tid="'+t.id+'" aria-label="安排 '+t.name+' '+t.fromLvl+' 到 '+t.toLvl+' 级'+lockLabel+'">'+t.name+' '+t.fromLvl+'→'+t.toLvl+' · '+fmtDur(t.sec)+lockTag+'</button>'; }); grid.innerHTML=h; grid.querySelectorAll(".vp-pending-item").forEach(function(el){ el.addEventListener("click",function(){ var t=BUILD.taskMap[el.getAttribute("data-tid")]; if(t){ self.scheduleWithDeps(t); self.redraw(); } }); el.addEventListener("dragstart",function(e){ e.dataTransfer.setData("text/plain","add:"+el.getAttribute("data-tid")); e.dataTransfer.effectAllowed="move"; el.classList.add("dragging"); }); el.addEventListener("dragend",function(){ el.classList.remove("dragging"); }); }); };
 
   var BUILD=null, homeP=null, bbP=null;

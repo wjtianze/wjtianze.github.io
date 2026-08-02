@@ -33,6 +33,21 @@
     }
   };
 
+  /* 一级专区背景路由。新增专区时必须同时在 section-bg 中提供专属背景，
+     并在这里登记；页面本身无需重复写 class。 */
+  function initTzSectionIdentity() {
+    if (!document.body) return;
+    var path = String(location.pathname || "/").toLowerCase();
+    var zone = "home";
+    if (/^\/ai(?:\/|$)/.test(path)) zone = "ai";
+    else if (/^\/coc(?:\/|$)/.test(path)) zone = "coc";
+    else if (/^\/(?:english|words)(?:\/|$)/.test(path)) zone = "english";
+    else if (/^\/game(?:\/|$)/.test(path)) zone = "game";
+    else if (/^\/os(?:\/|$)/.test(path)) zone = "os";
+    document.documentElement.setAttribute("data-zone", zone);
+    document.body.setAttribute("data-zone", zone);
+  }
+
   /* ============================================================
      TZUI v4 generated icon atlas
      Only explicit interface containers are upgraded. Body copy,
@@ -223,17 +238,34 @@
   };
 
   /* ============================================================
-     Tianze Web 4.0 · Evolution Shell
-     The shared rail, status line and command palette are generated
+     Tianze Web 4.1 · Evolution Shell
+     The shared status line and command palette are generated
      once here so all existing static pages inherit the same shell.
      ============================================================ */
-  var TZ_SITE_VERSION = "4.0";
+  var TZ_SITE_VERSION = "4.1";
 
   function getTzSiteRoot() {
     var scripts = document.querySelectorAll('script[src*="assets/js/main.js"]');
     var source = scripts.length ? scripts[scripts.length - 1].src : "";
     try { return new URL("../../", source || location.href); }
     catch (e) { return new URL("./", location.href); }
+  }
+
+  var tzSiteIndexPromise = null;
+  function loadTzSiteIndex(rootUrl) {
+    if (!tzSiteIndexPromise) {
+      tzSiteIndexPromise = fetch(new URL("assets/data/site-ai-index.json", rootUrl || getTzSiteRoot()).href, {
+        credentials: "same-origin",
+        cache: "no-cache"
+      }).then(function (response) {
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        return response.json();
+      }).catch(function (error) {
+        tzSiteIndexPromise = null;
+        throw error;
+      });
+    }
+    return tzSiteIndexPromise;
   }
 
   function getTzZone(rootUrl, items) {
@@ -287,74 +319,6 @@
       topGuard.setAttribute("aria-hidden", "true");
       document.body.insertBefore(topGuard, document.body.firstChild);
     }
-
-    if (!document.querySelector(".tz-site-rail")) {
-      var rail = document.createElement("aside");
-      rail.className = "tz-site-rail";
-      rail.setAttribute("aria-label", "天择网板块导航");
-
-      var railHead = document.createElement("a");
-      railHead.className = "tz-site-rail__head";
-      railHead.href = new URL("index.html", rootUrl).href;
-      railHead.setAttribute("aria-label", "天择网 " + TZ_SITE_VERSION + " 首页");
-      appendTzIcon(railHead, "crystal");
-      var railVersion = document.createElement("span");
-      railVersion.textContent = TZ_SITE_VERSION;
-      railHead.appendChild(railVersion);
-      rail.appendChild(railHead);
-
-      var railNav = document.createElement("nav");
-      items.forEach(function (item) {
-        var link = document.createElement("a");
-        link.className = "tz-site-rail__item" + (item.id === active.id ? " active" : "");
-        link.href = new URL(item.href, rootUrl).href;
-        link.title = item.label;
-        link.setAttribute("aria-label", item.label);
-        if (item.id === active.id) link.setAttribute("aria-current", "page");
-        appendTzIcon(link, item.icon);
-        var label = document.createElement("span");
-        label.textContent = item.label;
-        link.appendChild(label);
-        railNav.appendChild(link);
-      });
-      rail.appendChild(railNav);
-      document.body.insertBefore(rail, document.body.firstChild);
-    }
-
-    var shellRail = document.querySelector(".tz-site-rail");
-    var railMode = window.matchMedia("(max-width: 1100px)");
-    var railScrollFrame = 0;
-    function revealActiveRailItem() {
-      if (!shellRail || !railMode.matches) return;
-      var shellRailNav = shellRail.querySelector("nav");
-      var activeRailItem = shellRail.querySelector(".tz-site-rail__item.active");
-      if (!shellRailNav || !activeRailItem) return;
-      var navRect = shellRailNav.getBoundingClientRect();
-      var itemRect = activeRailItem.getBoundingClientRect();
-      if (itemRect.left >= navRect.left + 4 && itemRect.right <= navRect.right - 4) return;
-      var nextLeft = shellRailNav.scrollLeft + itemRect.left - navRect.left -
-        (navRect.width - itemRect.width) / 2;
-      shellRailNav.scrollTo({ left: Math.max(0, nextLeft), behavior: "auto" });
-    }
-    function syncRailAccess() {
-      if (!shellRail) return;
-      shellRail.querySelectorAll("a").forEach(function (link) {
-        if (railMode.matches) link.removeAttribute("tabindex");
-        else link.tabIndex = -1;
-      });
-      window.requestAnimationFrame(revealActiveRailItem);
-    }
-    function scheduleRailReveal() {
-      if (railScrollFrame) return;
-      railScrollFrame = window.requestAnimationFrame(function () {
-        railScrollFrame = 0;
-        revealActiveRailItem();
-      });
-    }
-    if (railMode.addEventListener) railMode.addEventListener("change", syncRailAccess);
-    else railMode.addListener(syncRailAccess);
-    window.addEventListener("resize", scheduleRailReveal, { passive: true });
-    syncRailAccess();
 
     var mainContent = document.querySelector("main, [role='main']");
     if (mainContent && !document.querySelector(".tz-skip-link, .wp-skip")) {
@@ -416,7 +380,7 @@
         var commandTrigger = document.createElement("button");
         commandTrigger.className = "tz-command-trigger";
         commandTrigger.type = "button";
-        commandTrigger.setAttribute("aria-label", "搜索站点板块");
+        commandTrigger.setAttribute("aria-label", "搜索全站内容");
         commandTrigger.setAttribute("aria-haspopup", "dialog");
         appendTzIcon(commandTrigger, "search");
         var triggerText = document.createElement("span");
@@ -468,7 +432,7 @@
       statusCenter.type = "button";
       appendTzIcon(statusCenter, "search");
       var centerText = document.createElement("span");
-      centerText.textContent = "快速导航";
+      centerText.textContent = "全站搜索";
       statusCenter.appendChild(centerText);
       var centerKey = document.createElement("kbd");
       centerKey.textContent = "Ctrl K";
@@ -511,41 +475,32 @@
       dialog.className = "tz-command-dialog";
       dialog.setAttribute("role", "dialog");
       dialog.setAttribute("aria-modal", "true");
-      dialog.setAttribute("aria-label", "快速导航");
+      dialog.setAttribute("aria-label", "全站搜索");
 
       var commandHead = document.createElement("div");
       commandHead.className = "tz-command-head";
       appendTzIcon(commandHead, "search");
       var input = document.createElement("input");
       input.type = "search";
-      input.placeholder = "搜索板块或输入入口名称…";
-      input.setAttribute("aria-label", "搜索站点板块");
+      input.placeholder = "搜索页面、文章、工具或专区…";
+      input.setAttribute("aria-label", "搜索天择网全部内容");
+      input.setAttribute("autocomplete", "off");
       commandHead.appendChild(input);
       var close = document.createElement("button");
       close.type = "button";
-      close.setAttribute("aria-label", "关闭快速导航");
+      close.setAttribute("aria-label", "关闭全站搜索");
       appendTzIcon(close, "close");
       commandHead.appendChild(close);
 
       var commandList = document.createElement("div");
       commandList.className = "tz-command-list";
-      items.forEach(function (item, index) {
-        var command = document.createElement("a");
-        command.href = new URL(item.href, rootUrl).href;
-        command.setAttribute("data-command-label", item.label.toLowerCase());
-        appendTzIcon(command, item.icon);
-        var commandName = document.createElement("span");
-        commandName.textContent = item.label;
-        command.appendChild(commandName);
-        var commandIndex = document.createElement("kbd");
-        commandIndex.textContent = String(index + 1).padStart(2, "0");
-        command.appendChild(commandIndex);
-        commandList.appendChild(command);
-      });
+      commandList.setAttribute("role", "list");
+      commandList.setAttribute("aria-label", "搜索结果");
 
       var commandFoot = document.createElement("div");
       commandFoot.className = "tz-command-foot";
-      commandFoot.textContent = "Enter 打开 · Esc 关闭 · 天择网 " + TZ_SITE_VERSION;
+      commandFoot.setAttribute("role", "status");
+      commandFoot.setAttribute("aria-live", "polite");
 
       dialog.appendChild(commandHead);
       dialog.appendChild(commandList);
@@ -553,14 +508,169 @@
       overlay.appendChild(dialog);
       document.body.appendChild(overlay);
 
+      function normalizedSearchText(value) {
+        return String(value || "").toLocaleLowerCase("zh-CN").replace(/\s+/g, " ").trim();
+      }
+
+      function searchIconFor(url) {
+        var path = String(url || "/").toLowerCase();
+        if (/^\/news\//.test(path)) return "newspaper";
+        if (/^\/blog\//.test(path)) return "pen";
+        if (/^\/open\//.test(path)) return "unlock";
+        if (/^\/ai\//.test(path)) return /skill/.test(path) ? "sparkle" : "ai";
+        if (/^\/coc\//.test(path)) return /planner/.test(path) ? "calendar" : "shield";
+        if (/^\/game\//.test(path)) return "gamepad";
+        if (/^\/(?:english|words)\//.test(path)) return "book";
+        if (/^\/os\//.test(path)) return "monitor";
+        if (/^\/contact\//.test(path)) return "user";
+        return path === "/" ? "home" : "document";
+      }
+
+      function searchSectionFor(url) {
+        var first = String(url || "/").split("/").filter(Boolean)[0] || "home";
+        var item = items.filter(function (candidate) { return candidate.id === first; })[0];
+        if (first === "words") item = items.filter(function (candidate) { return candidate.id === "english"; })[0];
+        return item ? item.label : "天择网";
+      }
+
+      function indexedRecord(entry) {
+        var path = String(entry && entry.url || "/");
+        var title = String(entry && entry.title || path);
+        var description = String(entry && entry.description || "");
+        var headings = Array.isArray(entry && entry.headings) ? entry.headings.join(" ") : "";
+        var body = String(entry && entry.text || "");
+        return {
+          href: new URL(path.replace(/^\/+/, ""), rootUrl).href,
+          path: path,
+          title: title,
+          description: description,
+          section: searchSectionFor(path),
+          icon: searchIconFor(path),
+          titleSearch: normalizedSearchText(title),
+          headingSearch: normalizedSearchText(headings),
+          descriptionSearch: normalizedSearchText(description),
+          pathSearch: normalizedSearchText(path),
+          bodySearch: normalizedSearchText(body)
+        };
+      }
+
+      var featuredRecords = items.map(function (item) {
+        return indexedRecord({
+          url: "/" + (item.id === "home" ? "" : item.id + "/"),
+          title: item.label,
+          description: "天择网一级板块"
+        });
+      });
+      var searchRecords = featuredRecords.slice();
+      var searchIndexState = "loading";
+
+      function scoreSearchRecord(record, tokens) {
+        var total = 0;
+        for (var i = 0; i < tokens.length; i += 1) {
+          var token = tokens[i];
+          var score = Infinity;
+          if (record.titleSearch === token) score = 0;
+          else if (record.titleSearch.indexOf(token) === 0) score = 2;
+          else if (record.titleSearch.indexOf(token) !== -1) score = 6;
+          if (record.headingSearch.indexOf(token) !== -1) score = Math.min(score, 12);
+          if (record.descriptionSearch.indexOf(token) !== -1) score = Math.min(score, 18);
+          if (record.pathSearch.indexOf(token) !== -1) score = Math.min(score, 24);
+          if (record.bodySearch.indexOf(token) !== -1) score = Math.min(score, 80);
+          if (!Number.isFinite(score)) return Infinity;
+          total += score;
+        }
+        var depth = record.path.split("/").filter(Boolean).length;
+        return total + Math.min(depth * 2, 10);
+      }
+
+      function createSearchResult(record) {
+        var command = document.createElement("a");
+        command.href = record.href;
+        command.setAttribute("role", "listitem");
+        appendTzIcon(command, record.icon);
+
+        var copy = document.createElement("span");
+        copy.className = "tz-command-copy";
+        var name = document.createElement("strong");
+        name.textContent = record.title;
+        var detail = document.createElement("small");
+        detail.textContent = record.description || record.path;
+        copy.appendChild(name);
+        copy.appendChild(detail);
+        command.appendChild(copy);
+
+        var section = document.createElement("span");
+        section.className = "tz-command-section";
+        section.textContent = record.section;
+        command.appendChild(section);
+        return command;
+      }
+
+      function renderCommandList(query) {
+        var normalized = normalizedSearchText(query);
+        var tokens = normalized ? normalized.split(" ").filter(Boolean) : [];
+        var records = tokens.length ? searchRecords.map(function (record) {
+          return { record: record, score: scoreSearchRecord(record, tokens) };
+        }).filter(function (result) {
+          return Number.isFinite(result.score);
+        }).sort(function (a, b) {
+          return a.score - b.score || a.record.title.localeCompare(b.record.title, "zh-CN");
+        }).slice(0, 18).map(function (result) {
+          return result.record;
+        }) : featuredRecords;
+
+        commandList.replaceChildren();
+        if (!records.length) {
+          var empty = document.createElement("div");
+          empty.className = "tz-command-empty";
+          empty.textContent = "没有找到匹配内容，试试更短的关键词。";
+          commandList.appendChild(empty);
+        } else {
+          records.forEach(function (record) { commandList.appendChild(createSearchResult(record)); });
+        }
+
+        if (!normalized && searchIndexState === "loading") {
+          commandFoot.textContent = "正在载入全站索引 · Enter 打开 · Esc 关闭";
+        } else if (searchIndexState === "error") {
+          commandFoot.textContent = "索引暂不可用，当前可搜索一级板块 · 天择网 " + TZ_SITE_VERSION;
+        } else {
+          commandFoot.textContent = records.length + " 个结果 · Enter 打开 · ↑↓ 选择 · Esc 关闭";
+        }
+      }
+
+      var searchIndexStarted = false;
+      function ensureSearchIndex() {
+        if (searchIndexStarted) return;
+        searchIndexStarted = true;
+        searchIndexState = "loading";
+        loadTzSiteIndex(rootUrl).then(function (payload) {
+          var seen = Object.create(null);
+          searchRecords = (Array.isArray(payload && payload.entries) ? payload.entries : [])
+            .filter(function (entry) {
+              var path = String(entry && entry.url || "");
+              return path && path !== "/404.html" && path !== "/words/" && !seen[path] && (seen[path] = true);
+            })
+            .map(indexedRecord);
+          if (!searchRecords.length) searchRecords = featuredRecords.slice();
+          searchIndexState = "ready";
+          renderCommandList(input.value);
+        }).catch(function () {
+          searchIndexStarted = false;
+          searchIndexState = "error";
+          searchRecords = featuredRecords.slice();
+          renderCommandList(input.value);
+        });
+      }
+
       var lastFocus = null;
       function setCommandOpen(open) {
         if (open) {
+          ensureSearchIndex();
           lastFocus = document.activeElement;
           overlay.hidden = false;
           document.body.classList.add("tz-command-open");
           input.value = "";
-          commandList.querySelectorAll("a").forEach(function (link) { link.hidden = false; });
+          renderCommandList("");
           window.requestAnimationFrame(function () { input.focus(); });
         } else {
           overlay.hidden = true;
@@ -577,15 +687,24 @@
         if (event.target === overlay) setCommandOpen(false);
       });
       input.addEventListener("input", function () {
-        var query = input.value.trim().toLowerCase();
-        commandList.querySelectorAll("a").forEach(function (link) {
-          link.hidden = Boolean(query && link.getAttribute("data-command-label").indexOf(query) === -1);
-        });
+        renderCommandList(input.value);
       });
       input.addEventListener("keydown", function (event) {
-        if (event.key !== "Enter") return;
-        var firstVisible = Array.prototype.filter.call(commandList.querySelectorAll("a"), function (link) { return !link.hidden; })[0];
-        if (firstVisible) location.href = firstVisible.href;
+        var firstResult = commandList.querySelector("a[href]");
+        if (event.key === "Enter" && firstResult) location.href = firstResult.href;
+        if (event.key === "ArrowDown" && firstResult) {
+          event.preventDefault();
+          firstResult.focus();
+        }
+      });
+      commandList.addEventListener("keydown", function (event) {
+        var activeResult = event.target.closest && event.target.closest("a[href]");
+        if (!activeResult || (event.key !== "ArrowDown" && event.key !== "ArrowUp")) return;
+        event.preventDefault();
+        var results = Array.prototype.slice.call(commandList.querySelectorAll("a[href]"));
+        var index = results.indexOf(activeResult);
+        if (event.key === "ArrowUp" && index === 0) input.focus();
+        else results[(index + (event.key === "ArrowDown" ? 1 : -1) + results.length) % results.length].focus();
       });
       document.addEventListener("keydown", function (event) {
         if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
@@ -615,7 +734,7 @@
   }
 
   /* ============================================================
-     Tianze Web 4.0 · shared internal-page primitives
+     Tianze Web 4.1 · shared internal-page primitives
      Existing static pages keep their content and URLs. This pass
      promotes their internal hierarchy into four shared structures:
      page hero, workspace cards, workspace lists and readers.
@@ -922,7 +1041,7 @@
   }
 
   /* ============================================================
-     Tianze Web 4.0 / one-third narrative workspace
+     Tianze Web 4.1 / one-third narrative workspace
      Every regular site page presents its title and introduction in
      a stable left rail, with actionable or editorial content on the
      right. Complex applications opt into their own equivalent grid.
@@ -934,7 +1053,7 @@
     if (!source) return;
     var link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = new URL("../css/split-motion.css?v=20260731-v4.13", source).href;
+    link.href = new URL("../css/split-motion.css?v=20260802-v4.1.8", source).href;
     link.setAttribute("data-tz-split-motion", "true");
     document.head.appendChild(link);
   }
@@ -1048,7 +1167,9 @@
     if (!map || map.getAttribute("data-site-tree-ready") === "true") return;
 
     var rootUrl = getTzSiteRoot();
-    var indexUrl = new URL("assets/data/site-ai-index.json", rootUrl);
+    var mobileTreeMedia = window.matchMedia ?
+      window.matchMedia("(max-width: 820px), (pointer: coarse) and (max-width: 980px)") :
+      { matches: false };
     var topOrder = {
       "/news/": 10,
       "/blog/": 20,
@@ -1083,7 +1204,7 @@
       "/english/words/": "英语学习控制台",
       "/words/": "背单词兼容入口",
       "/os/": "天择OS",
-      "/os/webos.html": "天择OS 4.0",
+      "/os/webos.html": "天择OS 4.1",
       "/contact/": "联系开发者"
     };
     var iconByRoot = {
@@ -1205,8 +1326,134 @@
       return link;
     }
 
+    function mobileDescendants(node, output) {
+      var result = output || [];
+      node.children.slice().sort(sortNodes).forEach(function (child) {
+        result.push(child);
+        mobileDescendants(child, result);
+      });
+      return result;
+    }
+
+    function buildMobileTree(rootNode) {
+      var tree = document.createElement("div");
+      tree.className = "tz-mobile-tree";
+      tree.setAttribute("aria-label", "天择网站点分层导航");
+
+      var rootLink = document.createElement("a");
+      rootLink.className = "tz-mobile-tree__root";
+      rootLink.href = rootNode.href;
+      appendTzIcon(rootLink, "crystal");
+      var rootCopy = document.createElement("span");
+      var rootTitle = document.createElement("strong");
+      rootTitle.textContent = "天择网内容导航";
+      var rootHint = document.createElement("small");
+      rootHint.textContent = "先选专区，再打开具体节点";
+      rootCopy.appendChild(rootTitle);
+      rootCopy.appendChild(rootHint);
+      rootLink.appendChild(rootCopy);
+
+      var tabs = document.createElement("div");
+      tabs.className = "tz-mobile-tree__zones";
+      tabs.setAttribute("role", "tablist");
+      tabs.setAttribute("aria-label", "选择内容专区");
+
+      var panel = document.createElement("div");
+      panel.className = "tz-mobile-tree__panel";
+      panel.id = "tz-mobile-tree-panel";
+      panel.setAttribute("role", "tabpanel");
+      panel.tabIndex = 0;
+
+      var topNodes = rootNode.children.slice().sort(sortNodes);
+      var buttons = [];
+
+      function renderPanel(node, activeButton) {
+        buttons.forEach(function (button) {
+          var selected = button === activeButton;
+          button.classList.toggle("active", selected);
+          button.setAttribute("aria-selected", String(selected));
+          button.tabIndex = selected ? 0 : -1;
+        });
+        panel.setAttribute("aria-labelledby", activeButton.id);
+        panel.replaceChildren();
+
+        var sectionLink = document.createElement("a");
+        sectionLink.className = "tz-mobile-tree__section-link";
+        sectionLink.href = node.href;
+        appendTzIcon(sectionLink, node.icon);
+        var sectionCopy = document.createElement("span");
+        var sectionTitle = document.createElement("strong");
+        sectionTitle.textContent = node.label;
+        var descendants = mobileDescendants(node);
+        var sectionHint = document.createElement("small");
+        sectionHint.textContent = descendants.length ? descendants.length + " 个具体节点" : "直接进入专区";
+        sectionCopy.appendChild(sectionTitle);
+        sectionCopy.appendChild(sectionHint);
+        sectionLink.appendChild(sectionCopy);
+        appendTzIcon(sectionLink, "right");
+        panel.appendChild(sectionLink);
+
+        if (descendants.length) {
+          var childGrid = document.createElement("div");
+          childGrid.className = "tz-mobile-tree__children";
+          descendants.forEach(function (child) {
+            var link = document.createElement("a");
+            link.href = child.href;
+            link.className = "tz-mobile-tree__child";
+            appendTzIcon(link, child.icon);
+            var label = document.createElement("span");
+            label.textContent = child.label;
+            link.appendChild(label);
+            childGrid.appendChild(link);
+          });
+          panel.appendChild(childGrid);
+        }
+      }
+
+      topNodes.forEach(function (node, index) {
+        var button = document.createElement("button");
+        button.type = "button";
+        button.className = "tz-mobile-tree__zone";
+        button.id = "tz-mobile-tree-zone-" + index;
+        button.setAttribute("role", "tab");
+        button.setAttribute("aria-controls", panel.id);
+        button.setAttribute("aria-selected", "false");
+        button.setAttribute("aria-label", node.label + "，" + mobileDescendants(node).length + " 个具体节点");
+        appendTzIcon(button, node.icon);
+        var label = document.createElement("span");
+        label.textContent = node.label;
+        button.appendChild(label);
+        var count = document.createElement("small");
+        count.textContent = String(mobileDescendants(node).length);
+        button.appendChild(count);
+        button.addEventListener("click", function () { renderPanel(node, button); });
+        button.addEventListener("keydown", function (event) {
+          var next = -1;
+          if (event.key === "ArrowRight") next = (index + 1) % buttons.length;
+          if (event.key === "ArrowLeft") next = (index - 1 + buttons.length) % buttons.length;
+          if (event.key === "ArrowDown") next = Math.min(buttons.length - 1, index + 3);
+          if (event.key === "ArrowUp") next = Math.max(0, index - 3);
+          if (event.key === "Home") next = 0;
+          if (event.key === "End") next = buttons.length - 1;
+          if (next < 0) return;
+          event.preventDefault();
+          renderPanel(topNodes[next], buttons[next]);
+          buttons[next].focus();
+        });
+        buttons.push(button);
+        tabs.appendChild(button);
+      });
+
+      tree.appendChild(rootLink);
+      tree.appendChild(tabs);
+      tree.appendChild(panel);
+      if (topNodes.length) renderPanel(topNodes[0], buttons[0]);
+      return tree;
+    }
+
     function buildOrbitMap(rootNode) {
-      var width = 1500;
+      var compact = window.matchMedia && window.matchMedia("(max-width: 680px)").matches;
+      var width = compact ? 760 : 1500;
       var height = 1080;
       var center = { x: width / 2, y: height / 2 };
       var orbit = document.createElement("div");
@@ -1262,7 +1509,11 @@
         var children = parent.children.slice().sort(sortNodes);
         if (!children.length) return;
         var count = children.length;
-        var radiusByDepth = {
+        var radiusByDepth = compact ? {
+          2: { x: 270, y: 360 },
+          3: { x: 330, y: 450 },
+          4: { x: 350, y: 500 }
+        } : {
           2: { x: 470, y: 330 },
           3: { x: 600, y: 420 },
           4: { x: 690, y: 480 }
@@ -1285,7 +1536,7 @@
         children.forEach(function (child, index) {
           var ratio = children.length === 1 ? .5 : index / (children.length - 1);
           var angle = parentAngle + (children.length === 1 ? 0 : -spread + ratio * spread * 2);
-          var point = pointAt(angle, 470, 330);
+          var point = compact ? pointAt(angle, 270, 360) : pointAt(angle, 470, 330);
           connect(parentPoint, point, 2);
           orbit.appendChild(buildOrbitNode(child, 2, point));
         });
@@ -1294,7 +1545,7 @@
       var topNodes = rootNode.children.slice().sort(sortNodes);
       topNodes.forEach(function (node, index) {
         var angle = -90 + index * (360 / topNodes.length);
-        var point = pointAt(angle, 290, 200);
+        var point = compact ? pointAt(angle, 190, 250) : pointAt(angle, 290, 200);
         connect(center, point, 1);
         orbit.appendChild(buildOrbitNode(node, 1, point));
         if (node.path === "/news/") placeNewsChildren(node, point, angle);
@@ -1375,15 +1626,11 @@
           else magnifyAround(active);
         });
       });
-      return { element: orbit, center: center };
+      return { element: orbit, center: center, width: width, height: height };
     }
 
     map.setAttribute("aria-busy", "true");
-    fetch(indexUrl.href, { credentials: "same-origin", cache: "no-cache" })
-      .then(function (response) {
-        if (!response.ok) throw new Error("HTTP " + response.status);
-        return response.json();
-      })
+    loadTzSiteIndex(rootUrl)
       .then(function (payload) {
         var entries = Array.isArray(payload && payload.entries) ? payload.entries : [];
         var hiddenRoutes = {
@@ -1431,27 +1678,58 @@
         }
         var displayedCount = countReachable(known["/"]);
 
-        var radial = buildOrbitMap(known["/"]);
-        map.replaceChildren(radial.element);
-        map.classList.remove("is-site-tree");
-        map.classList.add("is-site-orbit");
-        map.setAttribute("data-site-tree-ready", "true");
-        map.setAttribute("aria-busy", "false");
-        function centerOrbitMap() {
-          map.scrollLeft = Math.max(0, radial.center.x - map.clientWidth / 2);
-          map.scrollTop = Math.max(0, radial.center.y - map.clientHeight / 2);
+        var renderedMobile = null;
+        var topologyObserver = null;
+        var topologyResizeFrame = 0;
+
+        function renderTopology() {
+          var useMobileTree = Boolean(mobileTreeMedia.matches);
+          if (renderedMobile === useMobileTree && map.getAttribute("data-site-tree-ready") === "true") return;
+          renderedMobile = useMobileTree;
+          if (topologyObserver) {
+            topologyObserver.disconnect();
+            topologyObserver = null;
+          }
+          map.style.removeProperty("height");
+          map.classList.remove("is-site-tree", "is-site-orbit", "is-site-mobile-tree");
+
+          if (useMobileTree) {
+            map.replaceChildren(buildMobileTree(known["/"]));
+            map.classList.add("is-site-mobile-tree");
+          } else {
+            var radial = buildOrbitMap(known["/"]);
+            map.replaceChildren(radial.element);
+            map.classList.add("is-site-orbit");
+            var fitOrbitMap = function () {
+              if (renderedMobile || !map.contains(radial.element)) return;
+              var viewportBudget = Math.max(500, window.innerHeight - 230);
+              var targetHeight = Math.min(720, viewportBudget);
+              map.style.height = targetHeight + "px";
+              var scale = Math.min(
+                Math.max(0.1, (map.clientWidth - 12) / radial.width),
+                Math.max(0.1, (targetHeight - 12) / radial.height)
+              );
+              radial.element.style.setProperty("--tz-orbit-fit", scale.toFixed(4));
+            };
+            window.requestAnimationFrame(function () { window.requestAnimationFrame(fitOrbitMap); });
+            window.setTimeout(fitOrbitMap, 160);
+            if ("ResizeObserver" in window) {
+              topologyObserver = new ResizeObserver(fitOrbitMap);
+              topologyObserver.observe(map);
+            }
+          }
+          map.setAttribute("data-site-tree-ready", "true");
+          map.setAttribute("aria-busy", "false");
         }
-        window.requestAnimationFrame(function () {
-          window.requestAnimationFrame(centerOrbitMap);
-        });
-        window.setTimeout(centerOrbitMap, 160);
-        window.addEventListener("load", centerOrbitMap, { once: true });
-        var splitMotionLink = document.querySelector("link[data-tz-split-motion]");
-        if (splitMotionLink) splitMotionLink.addEventListener("load", centerOrbitMap, { once: true });
-        if ("ResizeObserver" in window) {
-          var orbitResizeObserver = new ResizeObserver(centerOrbitMap);
-          orbitResizeObserver.observe(map);
-        }
+
+        renderTopology();
+        window.addEventListener("resize", function () {
+          if (topologyResizeFrame) return;
+          topologyResizeFrame = window.requestAnimationFrame(function () {
+            topologyResizeFrame = 0;
+            if (renderedMobile !== Boolean(mobileTreeMedia.matches)) renderTopology();
+          });
+        }, { passive: true });
 
         var chip = map.closest(".tz-network-panel") &&
           map.closest(".tz-network-panel").querySelector(".tz-status-chip");
@@ -1481,7 +1759,7 @@
     document.body.classList.add("tz-motion-enabled");
 
     var candidates = document.querySelectorAll([
-      "main > :not(script):not(style)",
+      "main > :not(script):not(style):not(.tz-split-stack)",
       ".tz-split-stack > .tz-split-content",
       ".tz-split-content > *",
       ".tz-workspace-card",
@@ -1533,20 +1811,6 @@
     }, { passive: true });
     updateScrollMotion();
 
-    document.addEventListener("click", function (event) {
-      if (reducedMotion || event.defaultPrevented || event.button !== 0 ||
-          event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-      var link = event.target.closest && event.target.closest("a[href]");
-      if (!link || link.hasAttribute("download") || link.target || link.hasAttribute("data-back")) return;
-      var raw = link.getAttribute("href") || "";
-      if (!raw || raw.charAt(0) === "#" || /^(mailto:|tel:|javascript:)/i.test(raw)) return;
-      var target;
-      try { target = new URL(link.href, location.href); } catch (e) { return; }
-      if (target.origin !== location.origin || target.href === location.href) return;
-      event.preventDefault();
-      document.body.classList.add("tz-page-leaving");
-      window.setTimeout(function () { location.href = target.href; }, 150);
-    });
   }
 
   function initTzSiteAssistant() {
@@ -1565,6 +1829,7 @@
     launcher.setAttribute("aria-label", "打开天择网 AI 对话");
     launcher.setAttribute("aria-haspopup", "dialog");
     launcher.setAttribute("aria-expanded", "false");
+    launcher.setAttribute("aria-controls", "tz-site-ai-dock");
     appendTzIcon(launcher, "ai");
     var launcherCopy = document.createElement("span");
     launcherCopy.appendChild(makeTzText("b", "", "问天择网"));
@@ -1573,6 +1838,7 @@
 
     var dock = document.createElement("section");
     dock.className = "tz-site-ai-dock";
+    dock.id = "tz-site-ai-dock";
     dock.hidden = true;
     dock.setAttribute("role", "dialog");
     dock.setAttribute("aria-modal", "false");
@@ -1596,6 +1862,30 @@
     dockBar.appendChild(close);
     dock.appendChild(dockBar);
 
+    var setup = document.createElement("aside");
+    setup.className = "tz-site-ai-setup";
+    setup.setAttribute("aria-label", "AI 首次配置");
+    appendTzIcon(setup, "key");
+    var setupCopy = document.createElement("span");
+    setupCopy.appendChild(makeTzText("strong", "", "尚未配置 AI"));
+    setupCopy.appendChild(makeTzText("small", "", "可先搜索本站，或进入天择OS填写 API Key。"));
+    setup.appendChild(setupCopy);
+    var setupActions = document.createElement("span");
+    setupActions.className = "tz-site-ai-setup__actions";
+    var localSearch = document.createElement("button");
+    localSearch.type = "button";
+    localSearch.textContent = "搜索本站";
+    var configLink = document.createElement("a");
+    configLink.href = new URL("os/webos.html", rootUrl).href;
+    configLink.target = "_blank";
+    configLink.rel = "noopener";
+    configLink.textContent = "进入天择OS配置";
+    configLink.setAttribute("aria-label", "在新标签页打开天择OS，随后选择 AI 配置");
+    setupActions.appendChild(localSearch);
+    setupActions.appendChild(configLink);
+    setup.appendChild(setupActions);
+    dock.appendChild(setup);
+
     var frame = document.createElement("iframe");
     frame.className = "tz-site-ai-dock__frame";
     frame.title = "天择网 AI 对话";
@@ -1603,6 +1893,50 @@
     frame.setAttribute("allow", "clipboard-read; clipboard-write; display-capture");
     frame.src = new URL("os/float-chat.html?embedded=1&site=1", rootUrl).href;
     dock.appendChild(frame);
+
+    var backdrop = document.createElement("div");
+    backdrop.className = "tz-site-ai-backdrop";
+    backdrop.hidden = true;
+    backdrop.setAttribute("aria-hidden", "true");
+    var aiModalMedia = window.matchMedia ? window.matchMedia("(max-width: 900px)") : { matches: false };
+    var lastConfigured = null;
+
+    function hasAIConfig() {
+      return Boolean(window.TZAI && typeof window.TZAI.osConfig === "function" && window.TZAI.osConfig());
+    }
+
+    function syncAISetup() {
+      var configured = hasAIConfig();
+      setup.hidden = configured;
+      dock.classList.toggle("needs-setup", !configured);
+      if (lastConfigured === false && configured) {
+        frame.src = frame.src;
+      }
+      lastConfigured = configured;
+    }
+
+    function setBackgroundInert(inert) {
+      Array.prototype.forEach.call(document.body.children, function (child) {
+        if (child === dock || child === backdrop || /^(SCRIPT|STYLE|LINK)$/i.test(child.tagName)) return;
+        if (inert) {
+          if (!child.hasAttribute("inert")) {
+            child.setAttribute("inert", "");
+            child.setAttribute("data-tz-ai-inert", "true");
+          }
+        } else if (child.getAttribute("data-tz-ai-inert") === "true") {
+          child.removeAttribute("inert");
+          child.removeAttribute("data-tz-ai-inert");
+        }
+      });
+    }
+
+    function syncAIModalMode(open) {
+      var modal = Boolean(open && aiModalMedia.matches);
+      dock.setAttribute("aria-modal", String(modal));
+      backdrop.hidden = !modal;
+      document.body.classList.toggle("tz-site-ai-modal", modal);
+      setBackgroundInert(modal);
+    }
 
     function currentPageContext() {
       var main = document.querySelector("main");
@@ -1648,8 +1982,10 @@
     function setOpen(open) {
       launcher.setAttribute("aria-expanded", open ? "true" : "false");
       if (open) {
+        syncAISetup();
         dock.hidden = false;
         dock.setAttribute("aria-hidden", "false");
+        syncAIModalMode(true);
         window.requestAnimationFrame(function () {
           dock.classList.add("open");
           document.body.classList.add("tz-site-ai-open");
@@ -1660,6 +1996,7 @@
         dock.classList.remove("open");
         dock.setAttribute("aria-hidden", "true");
         document.body.classList.remove("tz-site-ai-open");
+        syncAIModalMode(false);
         window.setTimeout(function () {
           dock.hidden = true;
           launcher.focus({ preventScroll: true });
@@ -1669,12 +2006,42 @@
 
     launcher.addEventListener("click", function () { setOpen(dock.hidden); });
     close.addEventListener("click", function () { setOpen(false); });
+    backdrop.addEventListener("click", function () { setOpen(false); });
+    localSearch.addEventListener("click", function () {
+      setOpen(false);
+      window.setTimeout(function () {
+        var trigger = document.querySelector(".tz-command-trigger, .tz-status-command");
+        if (trigger) trigger.click();
+      }, 210);
+    });
     frame.addEventListener("load", sendContext);
     document.addEventListener("keydown", function (event) {
       if (event.key === "Escape" && !dock.hidden) {
         event.preventDefault();
         setOpen(false);
+      } else if (event.key === "Tab" && !dock.hidden && aiModalMedia.matches) {
+        var focusable = Array.prototype.filter.call(
+          dock.querySelectorAll('a[href], button:not([disabled]), iframe, [tabindex]:not([tabindex="-1"])'),
+          function (element) { return !element.hidden && element.offsetParent !== null; }
+        );
+        if (!focusable.length) return;
+        var first = focusable[0];
+        var last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
       }
+    });
+    var syncOpenAIMode = function () { if (!dock.hidden) syncAIModalMode(true); };
+    if (aiModalMedia.addEventListener) aiModalMedia.addEventListener("change", syncOpenAIMode);
+    else if (aiModalMedia.addListener) aiModalMedia.addListener(syncOpenAIMode);
+    window.addEventListener("storage", syncAISetup);
+    document.addEventListener("visibilitychange", function () {
+      if (!document.hidden) syncAISetup();
     });
     window.addEventListener("popstate", sendContext);
     var screenshotInProgress = false;
@@ -1752,12 +2119,15 @@
       location.href = requested.href;
     });
 
+    syncAISetup();
     document.body.appendChild(launcher);
+    document.body.appendChild(backdrop);
     document.body.appendChild(dock);
   }
 
   function bootTzUiV4() {
     ensureTzSplitMotionStyles();
+    initTzSectionIdentity();
     initTzEvolutionShell();
     initTzInternalPagePrimitives();
     initTzSplitArchitecture();
@@ -1771,99 +2141,294 @@
   else document.addEventListener("DOMContentLoaded", bootTzUiV4);
 
   /* ============================================================
-     配色皮肤（v4.0）
-     天择网：冷 / 中 / 暖三色【全部免费】，左下角 🎨 随时切换，
-       选择存于本站专用键 tz_site_palette，全站页面加载时自动应用。
-     天择OS：配色独立（tzos_state_v1.palette），冷色默认解锁，
-       中/暖色用 OS 积分兑换——两边互不干扰。
+     天择网免费外观（v4.1）
+     五套完整皮肤只改变色调与材质，不会替换各专区自己的背景图。
+     站点选择独立保存在 tz_site_palette，不影响天择OS的配色状态。
      ============================================================ */
   var TZPAL = {
     KEY: "tz_site_palette",
+    LEGACY_KEYS: ["tz_site_theme", "tz_palette", "tianze_site_palette"],
+    ORDER: ["cold", "mid", "warm", "porcelain", "ink"],
     SKINS: {
-      cold: { name: "冷色", css: ["#7c3aed", "#3b82f6", "#10b981"] },
-      mid: { name: "标准", css: ["#3b82f6", "#10b981", "#eab308"] },
-      warm: { name: "暖色", css: ["#10b981", "#eab308", "#f97316"] }
+      cold: {
+        name: "冷色星图", description: "紫蓝绿 · 深夜玻璃",
+        css: ["#7c3aed", "#3b82f6", "#10b981"], themeColor: "#102947", scheme: "dark"
+      },
+      mid: {
+        name: "标准平衡", description: "澄蓝青绿 · 清晰均衡",
+        css: ["#3b82f6", "#10b981", "#eab308"], themeColor: "#123133", scheme: "dark"
+      },
+      warm: {
+        name: "暖光原野", description: "青绿金橙 · 温暖材质",
+        css: ["#10b981", "#eab308", "#f97316"], themeColor: "#3a2918", scheme: "dark"
+      },
+      porcelain: {
+        name: "明亮云瓷", description: "云白雾蓝 · 轻盈瓷面",
+        css: ["#6552b8", "#2563a8", "#167d69"], themeColor: "#edf3f7", scheme: "light"
+      },
+      ink: {
+        name: "墨潮", description: "墨黑青黛 · 克制纸纹",
+        css: ["#4856a8", "#158a91", "#6c8d72"], themeColor: "#071417", scheme: "dark"
+      }
+    },
+    LEGACY_VALUES: {
+      "": "cold", "default": "cold", "classic": "cold", "cool": "cold",
+      "blue": "cold", "purple": "cold", "冷色": "cold",
+      "standard": "mid", "middle": "mid", "neutral": "mid", "green": "mid",
+      "标准": "mid", "标准色": "mid",
+      "orange": "warm", "gold": "warm", "amber": "warm", "暖色": "warm",
+      "light": "porcelain", "white": "porcelain", "cloud": "porcelain",
+      "porcelain-light": "porcelain", "明亮": "porcelain", "云瓷": "porcelain",
+      "dark": "ink", "black": "ink", "ink-dark": "ink", "墨色": "ink", "墨潮": "ink"
+    },
+    memory: "",
+    normalize: function (value) {
+      if (value === null || typeof value === "undefined") return "";
+      var raw = String(value).trim();
+      if (!raw) return "cold";
+      if (raw.charAt(0) === "{" || raw.charAt(0) === "\"") {
+        try {
+          var parsed = JSON.parse(raw);
+          raw = typeof parsed === "string" ? parsed :
+            (parsed && (parsed.palette || parsed.theme || parsed.id || parsed.value)) || raw;
+        } catch (e) {}
+      }
+      var normalized = String(raw).trim().toLowerCase()
+        .replace(/^(?:theme|palette)[\s:_-]+/, "");
+      if (this.SKINS[normalized]) return normalized;
+      return this.LEGACY_VALUES[normalized] || "";
+    },
+    readStored: function () {
+      if (this.memory && this.SKINS[this.memory]) return this.memory;
+      try {
+        var keys = [this.KEY].concat(this.LEGACY_KEYS);
+        var sawStoredValue = false;
+        for (var i = 0; i < keys.length; i += 1) {
+          var raw = localStorage.getItem(keys[i]);
+          if (raw === null) continue;
+          sawStoredValue = true;
+          var normalized = this.normalize(raw);
+          if (!normalized) continue;
+          this.memory = normalized;
+          if (keys[i] !== this.KEY || raw !== normalized) {
+            try { localStorage.setItem(this.KEY, normalized); } catch (e) {}
+          }
+          return normalized;
+        }
+        if (sawStoredValue) {
+          try { localStorage.setItem(this.KEY, "cold"); } catch (e) {}
+        }
+      } catch (e) {}
+      var prepaint = document.documentElement && document.documentElement.getAttribute ?
+        this.normalize(document.documentElement.getAttribute("data-palette")) : "";
+      return prepaint || "cold";
     },
     current: function () {
-      try {
-        var p = localStorage.getItem(this.KEY);
-        return (p === "mid" || p === "warm") ? p : "cold";
-      } catch (e) { return "cold"; }
+      return this.readStored();
     },
-    apply: function () {
-      var p = this.current();
-      if (p === "cold") document.documentElement.removeAttribute("data-palette");
-      else document.documentElement.setAttribute("data-palette", p);
+    apply: function (requested) {
+      var p = this.normalize(requested) || this.current();
+      var skin = this.SKINS[p] || this.SKINS.cold;
+      this.memory = p;
+      document.documentElement.setAttribute("data-palette", p);
+      document.documentElement.style.colorScheme = skin.scheme;
+      var themeMeta = document.querySelector('meta[name="theme-color"]');
+      if (!themeMeta && document.head) {
+        themeMeta = document.createElement("meta");
+        themeMeta.name = "theme-color";
+        document.head.appendChild(themeMeta);
+      }
+      if (themeMeta) themeMeta.content = skin.themeColor;
       return p;
     },
     select: function (p) {
+      p = this.normalize(p);
       if (!this.SKINS[p]) return false;
-      try { localStorage.setItem(this.KEY, p); } catch (e) { return false; }
-      this.apply();
-      return true;
+      this.memory = p;
+      var persisted = true;
+      try { localStorage.setItem(this.KEY, p); } catch (e) { persisted = false; }
+      this.apply(p);
+      try {
+        document.dispatchEvent(new CustomEvent("tzpalettechange", {
+          detail: { palette: p, persisted: persisted }
+        }));
+      } catch (e) {}
+      return persisted;
     }
   };
+  window.TZPAL = TZPAL;
   TZPAL.apply();
-  // 左下角配色切换浮钮（全站注入，无需改动各页面；三色全部免费）
+  // 全站外观切换器：五套主题全部免费，支持 roving focus 与跨标签页同步。
   (function initPaletteSwitcher() {
     function build() {
       if (document.querySelector(".tzpal-btn")) return;
       var btn = document.createElement("button");
       btn.className = "tzpal-btn";
       btn.type = "button";
-      btn.title = "界面配色（冷 / 中 / 暖，全部免费）";
-      btn.setAttribute("aria-label", "切换界面配色");
+      btn.title = "选择网站外观（全部免费）";
+      btn.setAttribute("aria-label", "选择网站外观，全部免费");
       btn.setAttribute("aria-expanded", "false");
       btn.setAttribute("aria-controls", "tz-palette-panel");
+      btn.setAttribute("aria-haspopup", "dialog");
       btn.setAttribute("data-ui-icon", "palette");
       window.TZUI.setIcon(btn, "palette");
-      var panel = document.createElement("div");
+
+      var panel = document.createElement("section");
       panel.className = "tzpal-panel";
       panel.id = "tz-palette-panel";
-      panel.setAttribute("role", "group");
-      panel.setAttribute("aria-label", "界面配色");
+      panel.hidden = true;
+      panel.setAttribute("role", "dialog");
+      panel.setAttribute("aria-modal", "false");
+      panel.setAttribute("aria-labelledby", "tz-palette-title");
+      panel.setAttribute("aria-describedby", "tz-palette-description");
       panel.setAttribute("aria-hidden", "true");
-      function renderPanel() {
+
+      var panelHead = document.createElement("header");
+      panelHead.className = "tzpal-panel__head";
+      var headCopy = document.createElement("span");
+      var panelTitle = document.createElement("strong");
+      panelTitle.id = "tz-palette-title";
+      panelTitle.textContent = "网站外观";
+      var panelDescription = document.createElement("small");
+      panelDescription.id = "tz-palette-description";
+      panelDescription.textContent = "5 套完整皮肤，不改变各专区专属背景";
+      headCopy.appendChild(panelTitle);
+      headCopy.appendChild(panelDescription);
+      var freeBadge = document.createElement("b");
+      freeBadge.className = "tzpal-free-badge";
+      freeBadge.textContent = "全部免费";
+      panelHead.appendChild(headCopy);
+      panelHead.appendChild(freeBadge);
+
+      var optionList = document.createElement("div");
+      optionList.className = "tzpal-options";
+      optionList.setAttribute("role", "radiogroup");
+      optionList.setAttribute("aria-label", "选择网站外观");
+
+      var liveStatus = document.createElement("p");
+      liveStatus.className = "tzpal-status";
+      liveStatus.setAttribute("role", "status");
+      liveStatus.setAttribute("aria-live", "polite");
+
+      panel.appendChild(panelHead);
+      panel.appendChild(optionList);
+      panel.appendChild(liveStatus);
+
+      function updateButton(cur) {
+        var skin = TZPAL.SKINS[cur] || TZPAL.SKINS.cold;
+        btn.title = "当前外观：" + skin.name + "（全部免费）";
+        btn.setAttribute("aria-label", "当前外观：" + skin.name + "。打开网站外观选择，全部免费");
+      }
+
+      function renderPanel(focusId) {
         var cur = TZPAL.apply();
-        panel.innerHTML = "";
-        Object.keys(TZPAL.SKINS).forEach(function (id) {
+        optionList.replaceChildren();
+        TZPAL.ORDER.forEach(function (id) {
           var s = TZPAL.SKINS[id];
           var o = document.createElement("button");
           o.type = "button";
           o.className = "tzpal-opt" + (cur === id ? " active" : "");
-          o.setAttribute("aria-pressed", String(cur === id));
-          o.innerHTML = '<span class="tzpal-dots">' + s.css.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join("") + "</span>" +
-            "<span>" + s.name + "</span>" +
-            '<span class="tzpal-cost">' + (cur === id ? "使用中" : "") + "</span>";
-          o.onclick = function () {
-            TZPAL.select(id);
-            renderPanel();
-          };
-          panel.appendChild(o);
+          o.dataset.paletteOption = id;
+          o.setAttribute("role", "radio");
+          o.setAttribute("aria-checked", String(cur === id));
+          o.setAttribute("aria-label", s.name + "，" + s.description + "，免费" + (cur === id ? "，当前使用" : ""));
+          o.tabIndex = cur === id ? 0 : -1;
+
+          var dots = document.createElement("span");
+          dots.className = "tzpal-dots";
+          dots.setAttribute("aria-hidden", "true");
+          s.css.forEach(function (color) {
+            var dot = document.createElement("i");
+            dot.style.background = color;
+            dots.appendChild(dot);
+          });
+          var copy = document.createElement("span");
+          copy.className = "tzpal-opt__copy";
+          var name = document.createElement("strong");
+          name.textContent = s.name;
+          var description = document.createElement("small");
+          description.textContent = s.description;
+          copy.appendChild(name);
+          copy.appendChild(description);
+          var cost = document.createElement("span");
+          cost.className = "tzpal-cost";
+          cost.textContent = cur === id ? "使用中" : "免费";
+          cost.setAttribute("aria-hidden", "true");
+          o.appendChild(dots);
+          o.appendChild(copy);
+          o.appendChild(cost);
+          o.addEventListener("click", function () {
+            var persisted = TZPAL.select(id);
+            liveStatus.textContent = "已切换到“" + s.name + "”" + (persisted ? "" : "；本次浏览有效，浏览器未允许持久保存");
+            renderPanel(id);
+          });
+          optionList.appendChild(o);
         });
+        updateButton(cur);
+        if (focusId) {
+          window.requestAnimationFrame(function () {
+            var target = optionList.querySelector('[data-palette-option="' + focusId + '"]');
+            if (target) target.focus({ preventScroll: true });
+          });
+        }
       }
-      btn.onclick = function (e) {
-        e.stopPropagation();
-        renderPanel();
-        var open = panel.classList.toggle("open");
+
+      function setPanelOpen(open, restoreFocus) {
+        panel.hidden = !open;
+        panel.classList.toggle("open", open);
         btn.setAttribute("aria-expanded", String(open));
         panel.setAttribute("aria-hidden", String(!open));
-      };
-      document.addEventListener("click", function (e) {
-        if (!panel.contains(e.target) && !btn.contains(e.target)) {
-          panel.classList.remove("open");
-          btn.setAttribute("aria-expanded", "false");
-          panel.setAttribute("aria-hidden", "true");
+        if (open) {
+          var current = TZPAL.current();
+          renderPanel();
+          window.requestAnimationFrame(function () {
+            var activeOption = optionList.querySelector('[data-palette-option="' + current + '"]');
+            if (activeOption) activeOption.focus({ preventScroll: true });
+          });
+        } else if (restoreFocus) {
+          btn.focus({ preventScroll: true });
+        }
+      }
+
+      btn.addEventListener("click", function (event) {
+        event.stopPropagation();
+        setPanelOpen(panel.hidden);
+      });
+      panel.addEventListener("keydown", function (event) {
+        var activeOption = event.target.closest && event.target.closest("[data-palette-option]");
+        if (!activeOption) return;
+        var options = Array.prototype.slice.call(optionList.querySelectorAll("[data-palette-option]"));
+        var index = options.indexOf(activeOption);
+        var next = -1;
+        if (event.key === "ArrowRight" || event.key === "ArrowDown") next = (index + 1) % options.length;
+        if (event.key === "ArrowLeft" || event.key === "ArrowUp") next = (index - 1 + options.length) % options.length;
+        if (event.key === "Home") next = 0;
+        if (event.key === "End") next = options.length - 1;
+        if (next < 0) return;
+        event.preventDefault();
+        options[next].click();
+      });
+      document.addEventListener("click", function (event) {
+        if (!panel.hidden && !panel.contains(event.target) && !btn.contains(event.target)) {
+          setPanelOpen(false, false);
         }
       });
-      document.addEventListener("keydown", function (e) {
-        if (e.key === "Escape" && panel.classList.contains("open")) {
-          panel.classList.remove("open");
-          btn.setAttribute("aria-expanded", "false");
-          panel.setAttribute("aria-hidden", "true");
-          btn.focus();
+      document.addEventListener("keydown", function (event) {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k" && !panel.hidden) {
+          setPanelOpen(false, false);
+        } else if (event.key === "Escape" && !panel.hidden) {
+          event.preventDefault();
+          setPanelOpen(false, true);
         }
       });
+      window.addEventListener("storage", function (event) {
+        if (event.key !== TZPAL.KEY && TZPAL.LEGACY_KEYS.indexOf(event.key) === -1) return;
+        TZPAL.memory = "";
+        var current = TZPAL.apply();
+        updateButton(current);
+        if (!panel.hidden) renderPanel();
+      });
+
       var shellTopbar = document.querySelector("body.tz-site-shell .topbar-inner");
       if (shellTopbar) {
         btn.classList.add("tzpal-btn--shell");
@@ -1875,13 +2440,14 @@
         document.body.appendChild(btn);
       }
       document.body.appendChild(panel);
+      renderPanel();
     }
     if (document.body) build();
     else document.addEventListener("DOMContentLoaded", build);
   })();
 
   var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-  var mobileNav = window.matchMedia("(max-width: 680px)");
+  var mobileNav = window.matchMedia("(max-width: 1100px)");
   var topbar = document.querySelector(".topbar");
   var toggle = document.querySelector(".nav-toggle");
   var nav = document.querySelector(".nav");

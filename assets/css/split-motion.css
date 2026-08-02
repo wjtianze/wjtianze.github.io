@@ -1,4 +1,4 @@
-/* Tianze Web 4.0 — one-third narrative workspace and restrained motion */
+/* Tianze Web 4.1 — one-third narrative workspace and restrained motion */
 
 :root {
   --tz-type-sans: "Noto Sans SC", "Source Han Sans SC", "PingFang SC",
@@ -359,7 +359,6 @@ body.tz-motion-enabled .bg-mesh {
 }
 
 body.tz-motion-enabled .topbar,
-body.tz-motion-enabled .tz-site-rail,
 body.tz-motion-enabled .tz-site-statusbar {
   opacity: 0;
   transition:
@@ -368,10 +367,9 @@ body.tz-motion-enabled .tz-site-statusbar {
 }
 
 body.tz-motion-enabled .topbar { transform: translate3d(0, -12px, 0); }
-body.tz-motion-enabled .tz-site-rail { transform: translate3d(-12px, 0, 0); }
 body.tz-motion-enabled .tz-site-statusbar { transform: translate3d(0, 10px, 0); }
 
-body.tz-motion-enabled.tz-motion-ready :is(.topbar, .tz-site-rail, .tz-site-statusbar) {
+body.tz-motion-enabled.tz-motion-ready :is(.topbar, .tz-site-statusbar) {
   opacity: 1;
   transform: translate3d(0, 0, 0);
 }
@@ -393,6 +391,15 @@ body.tz-motion-enabled .tz-motion-item.tz-motion-visible {
   filter: saturate(1);
 }
 
+/* The split stack is a structural wrapper, not an animated content card.
+   Keeping it visible prevents an IntersectionObserver timing race from
+   hiding the entire right-hand workspace on initial navigation. */
+body.tz-motion-enabled main.tz-split-main > .tz-split-stack {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
 body.tz-motion-enabled :is(
   .tz-workspace-card,
   .tz-workspace-list__item,
@@ -402,8 +409,7 @@ body.tz-motion-enabled :is(
   .card,
   .btn,
   button,
-  .nav a,
-  .tz-site-rail a
+  .nav a
 ) {
   transition:
     transform .24s var(--tz-motion-spring),
@@ -429,30 +435,9 @@ body.tz-motion-enabled :is(
     filter: saturate(1.08);
   }
 
-  body.tz-motion-enabled :is(.btn, button, .nav a, .tz-site-rail a):hover {
+  body.tz-motion-enabled :is(.btn, button, .nav a):hover {
     transform: translate3d(0, -2px, 0);
   }
-}
-
-body.tz-motion-enabled.tz-page-leaving {
-  pointer-events: none;
-}
-
-body.tz-motion-enabled.tz-page-leaving main,
-body.tz-motion-enabled.tz-page-leaving .topbar,
-body.tz-motion-enabled.tz-page-leaving .tz-site-rail,
-body.tz-motion-enabled.tz-page-leaving .tz-site-statusbar {
-  opacity: 0;
-  transform: translate3d(0, 8px, 0) scale(.995);
-  filter: blur(2px);
-  transition:
-    opacity .15s ease,
-    transform .15s var(--tz-motion-ease),
-    filter .15s ease;
-}
-
-body.tz-motion-enabled.tz-page-leaving .topbar {
-  transform: none;
 }
 
 /* Shared Tianze Web AI assistant. It reuses the OS model configuration. */
@@ -503,6 +488,18 @@ body.tz-motion-enabled.tz-page-leaving .topbar {
   letter-spacing: .04em;
 }
 
+/* AI 专区的六个模型标志占据底部安全带；桌面端将助手入口收成图标，
+   避免右下角的文字胶囊盖住 DeepSeek 标志。可访问名称仍保留在按钮上。 */
+@media (min-width: 681px) {
+  html[data-zone="ai"] .tz-site-ai-launcher {
+    width: 54px;
+    min-width: 54px;
+    padding: 8px;
+    justify-content: center;
+  }
+  html[data-zone="ai"] .tz-site-ai-launcher > span:last-child { display: none; }
+}
+
 .tz-site-ai-dock {
   position: fixed;
   z-index: 190;
@@ -510,6 +507,8 @@ body.tz-motion-enabled.tz-page-leaving .topbar {
   bottom: calc(var(--tz-shell-status, 36px) + 86px);
   width: min(520px, calc(100vw - 48px));
   height: min(720px, calc(100vh - 126px));
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--c-green, #5eead4) 58%, transparent);
   border-radius: 24px;
@@ -536,6 +535,7 @@ body.tz-motion-enabled.tz-page-leaving .topbar {
 
 .tz-site-ai-dock__bar {
   height: 56px;
+  flex: 0 0 56px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -597,10 +597,58 @@ body.tz-motion-enabled.tz-page-leaving .topbar {
   height: 22px;
 }
 
+.tz-site-ai-setup {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--c-border, #5eead4) 32%, transparent);
+  background: color-mix(in srgb, var(--c-blue, #38bdf8) 10%, var(--c-bg-card, #071923));
+}
+
+.tz-site-ai-setup[hidden] { display: none; }
+.tz-site-ai-setup > .tz-icon { width: 30px; height: 30px; }
+.tz-site-ai-setup > span:not(.tz-site-ai-setup__actions) { display: grid; gap: 2px; min-width: 0; }
+.tz-site-ai-setup strong { font-size: 12px; }
+.tz-site-ai-setup small { color: var(--ink-dim, #b6c3cf); font-size: 10px; line-height: 1.35; }
+.tz-site-ai-setup__actions { display: flex; align-items: center; gap: 6px; }
+.tz-site-ai-setup__actions :is(button, a) {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--c-green, #5eead4) 42%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--c-blue, #38bdf8) 14%, var(--c-bg-card, #071923));
+  color: var(--ink, #f4f7fb);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tz-site-ai-backdrop {
+  position: fixed;
+  z-index: 189;
+  inset: 0;
+  background: var(--tz-skin-backdrop, rgba(2, 8, 20, .7));
+  -webkit-backdrop-filter: blur(7px);
+  backdrop-filter: blur(7px);
+}
+.tz-site-ai-backdrop[hidden] { display: none; }
+body.tz-site-ai-modal { overflow: hidden; }
+
 .tz-site-ai-dock__frame {
   display: block;
   width: 100%;
-  height: calc(100% - 56px);
+  height: auto;
+  flex: 1 1 auto;
+  min-height: 0;
   border: 0;
   background: transparent;
 }
@@ -642,8 +690,8 @@ body.tz-motion-enabled.tz-page-leaving .topbar {
   }
 
   .tz-site-ai-launcher {
-    right: 14px;
-    bottom: calc(var(--tz-shell-status, 36px) + 76px);
+    right: calc(var(--tz-safe-right, 0px) + 14px);
+    bottom: calc(var(--tz-safe-bottom, 0px) + 14px);
     min-width: 52px;
     min-height: 52px;
     padding: 8px;
@@ -655,10 +703,23 @@ body.tz-motion-enabled.tz-page-leaving .topbar {
   }
 
   .tz-site-ai-dock {
-    inset: 8px 8px calc(var(--tz-shell-status, 36px) + 8px);
+    top: max(8px, var(--tz-safe-top, 0px));
+    right: max(8px, var(--tz-safe-right, 0px));
+    bottom: max(8px, var(--tz-safe-bottom, 0px));
+    left: max(8px, var(--tz-safe-left, 0px));
     width: auto;
     height: auto;
     border-radius: 20px;
+  }
+
+  .tz-site-ai-setup {
+    grid-template-columns: 28px minmax(0, 1fr);
+  }
+
+  .tz-site-ai-setup__actions {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
   }
 }
 
@@ -697,12 +758,124 @@ body.tz-motion-enabled.tz-page-leaving .topbar {
 
   body.tz-motion-enabled :is(
     .topbar,
-    .tz-site-rail,
     .tz-site-statusbar,
     .tz-motion-item
   ) {
     opacity: 1 !important;
     transform: none !important;
     filter: none !important;
+  }
+}
+
+/* The shared skin loads after page-specific workspaces. Rebind their local
+   tokens here so porcelain/ink and the upgraded legacy skins cover the whole
+   application instead of stopping at the site chrome. */
+body[data-workspace-page] {
+  --wp-panel: var(--tz-skin-surface-internal);
+  --wp-panel-strong: var(--tz-v4-surface-color-strong);
+  --wp-panel-soft: var(--tz-skin-surface);
+  --wp-accent: var(--tz-accent-blue-rgb);
+  --wp-success: var(--tz-status-online-rgb);
+  --wp-warning: 217, 150, 31;
+  --wp-danger: 210, 73, 93;
+  --wp-shadow: var(--shadow-md);
+}
+
+.coc-tool {
+  --coc-canvas: var(--tz-skin-surface-internal);
+  --coc-panel: var(--tz-skin-surface);
+  --coc-panel-raised: var(--tz-skin-surface-raised);
+  --coc-control: var(--tz-skin-control);
+  --coc-input: var(--tz-skin-input);
+  --coc-line: color-mix(in srgb, var(--tz-v4-line) 82%, transparent);
+  --coc-accent: var(--c-blue);
+  --coc-positive: var(--tz-status-online);
+  background-color: var(--tz-skin-canvas) !important;
+}
+
+body.gpa-page {
+  --gpa-canvas: var(--tz-skin-surface-internal);
+  --gpa-panel: var(--tz-skin-surface);
+  --gpa-raised: var(--tz-skin-surface-raised);
+  --gpa-control: var(--tz-skin-control);
+  --gpa-line: color-mix(in srgb, var(--tz-v4-line) 82%, transparent);
+  --gpa-accent: var(--c-blue);
+  background-color: var(--tz-skin-canvas) !important;
+  background-image: var(--tz-skin-scene), var(--tz-section-bg-image) !important;
+  background-position: var(--tz-section-bg-position) !important;
+  background-size: var(--tz-section-bg-size) !important;
+  background-blend-mode: normal !important;
+}
+
+.words-app {
+  --c-purple: var(--tz-accent-purple);
+  --c-violet: var(--tz-accent-violet);
+  --c-indigo: var(--tz-accent-indigo);
+  --c-blue: var(--tz-accent-blue);
+  --c-sky: var(--tz-accent-sky);
+  --c-cyan: var(--tz-accent-cyan);
+  --c-green: var(--tz-accent-green);
+  --c-emerald: var(--tz-accent-emerald);
+  --grad-main: var(--tz-theme-grad-main);
+  --grad-soft: var(--tz-theme-grad-soft);
+  --grad-text: var(--tz-theme-grad-text);
+  --bg-base: var(--tz-theme-bg-base);
+  --bg: var(--tz-theme-bg);
+  --bg-soft: var(--tz-theme-bg-soft);
+  --bg-elevated: var(--tz-theme-bg-elevated);
+  --bg-elevated-hover: var(--tz-theme-bg-elevated-hover);
+  --ink: var(--tz-theme-ink);
+  --ink-dim: var(--tz-theme-ink-dim);
+  --ink-faint: var(--tz-theme-ink-faint);
+  --ink-muted: var(--tz-theme-ink-muted);
+  --line: var(--tz-theme-line);
+  --line-strong: var(--tz-theme-line-strong);
+}
+
+.words-workspace {
+  --words-canvas: var(--tz-skin-surface-internal);
+  --words-panel: var(--tz-skin-surface);
+  --words-panel-raised: var(--tz-skin-surface-raised);
+  --words-control: var(--tz-skin-control);
+  --words-input: var(--tz-skin-input);
+  --words-line: color-mix(in srgb, var(--tz-v4-line) 82%, transparent);
+  --words-accent: var(--c-blue);
+  --words-positive: var(--tz-status-online);
+  --words-blue: var(--c-blue-soft);
+  --words-violet: var(--c-violet-soft);
+  --words-green: var(--tz-status-online);
+  --words-amber: #d99b2b;
+  --words-danger: #d85269;
+  --words-action-primary: color-mix(in srgb, var(--tz-skin-control) 68%, var(--c-blue) 32%);
+  --words-action-secondary: var(--tz-skin-control);
+  --words-action-quiet: var(--tz-skin-input);
+  background: color-mix(in srgb, var(--tz-skin-canvas) 68%, transparent);
+}
+
+.coc-tool > .bg-mesh,
+.gpa-page .bg-mesh,
+.words-app .bg-mesh,
+.words-workspace > .bg-mesh {
+  background-color: var(--tz-skin-canvas) !important;
+  background-image: var(--tz-skin-mesh), var(--tz-section-bg-image) !important;
+  background-position: var(--tz-section-bg-position) !important;
+  background-size: var(--tz-section-bg-size) !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+@media (max-width: 680px) {
+  body.gpa-page {
+    background-image: var(--tz-skin-scene-mobile), var(--tz-section-bg-mobile-image) !important;
+    background-position: var(--tz-section-bg-position-mobile) !important;
+    background-size: var(--tz-section-bg-size-mobile) !important;
+  }
+  .coc-tool > .bg-mesh,
+  .gpa-page .bg-mesh,
+  .words-app .bg-mesh,
+  .words-workspace > .bg-mesh {
+    background-image: var(--tz-skin-mesh), var(--tz-section-bg-mobile-image) !important;
+    background-position: var(--tz-section-bg-position-mobile) !important;
+    background-size: var(--tz-section-bg-size-mobile) !important;
   }
 }

@@ -24,6 +24,12 @@
   function thOf(r){ if(!r)return 99; var v=r.requiredTownHallLevel!=null?r.requiredTownHallLevel:(r.RequiredTownHallLevel!=null?r.RequiredTownHallLevel:(r.TownHallLevel!=null?r.TownHallLevel:99)); return num(v); }
   function maxLevelForTH(unit,th){ if(!unit||!unit.levels||!unit.levels.length)return 0; var m=0; unit.levels.forEach(function(r){ var t=thOf(r); if(t<=th&&num(r.level)>m)m=num(r.level); }); return m; }
   function upgradeSec(unit,cur,tgt,isBuilding){ if(!unit||!unit.levels)return 0; var lmap={}; unit.levels.forEach(function(r){ var lv=num(r.level); if(lv)lmap[lv]=r; }); var t=0; if(isBuilding){ for(var L=cur+1;L<=tgt;L++){ var r=lmap[L]; if(!r)break; t+=buildTimeSec(r); } } else { for(var L2=cur;L2<tgt;L2++){ var r2=lmap[L2]; if(!r2)break; t+=upgradeTimeSec(r2); } } return t; }
+  // timer 是当前这一级升级的剩余秒数：替换首级完整时长，后续级别仍按表累加。
+  function remainingUpgradeSec(unit,cur,tgt,isBuilding,timer){
+    var left=num(timer);
+    if(left>0&&cur<tgt)return left+upgradeSec(unit,cur+1,tgt,isBuilding);
+    return upgradeSec(unit,cur,tgt,isBuilding);
+  }
 
   /* 新分工：研究员=兵种/法术/攻城机器，战宠研究员=战宠，建筑工人=英雄/建筑/陷阱/其他 */
   function laneOf(cat, world){
@@ -120,26 +126,31 @@
 
   function computeTasks(){
     TASKS=[]; var bid=0;
-    function push(item, isBuilding, world, upgrading){
+    function push(item, isBuilding, world){
       var unit=unitOf(item.data);
       if(!unit||!unit.levels||!unit.levels.length)return;
       var cur=item.lvl;
       var maxL=maxLevelForTH(unit, world==="bb"?BH:TH);
       if(maxL<=0||cur>=maxL)return;
-      var sec=upgradeSec(unit,cur,maxL,isBuilding);
-      if(sec<=0)return;
-      bid++; TASKS.push({id:bid,name:nameOf(item.data),curLvl:cur,maxLvl:maxL,sec:sec,isBuilding:isBuilding,cat:catOf(item.data),world:world,upgrading:!!upgrading});
+      // 官方存档会把同级实体压成 cnt；时间总览必须按实体展开，timer 只属于其中第一个。
+      var cnt=Math.max(1,num(item.cnt)||1), timer=num(item.timer);
+      for(var inst=0;inst<cnt;inst++){
+        var upgrading=timer>0&&inst===0;
+        // 城墙等即时升级也属于待升级实体；保留 0 秒任务，数量统计才不会再次漏掉 cnt。
+        var sec=Math.max(0,remainingUpgradeSec(unit,cur,maxL,isBuilding,upgrading?timer:0));
+        bid++; TASKS.push({id:bid,name:nameOf(item.data),curLvl:cur,maxLvl:maxL,sec:sec,isBuilding:isBuilding,cat:catOf(item.data),world:world,upgrading:upgrading,instance:inst,count:cnt});
+      }
     }
     (V.units||[]).forEach(function(it){ push(it,false,"home"); });
     (V.siege_machines||[]).forEach(function(it){ push(it,false,"home"); });
     (V.spells||[]).forEach(function(it){ push(it,false,"home"); });
-    (V.heroes||[]).forEach(function(it){ push(it,false,"home",it.timer); });
+    (V.heroes||[]).forEach(function(it){ push(it,false,"home"); });
     (V.pets||[]).forEach(function(it){ push(it,false,"home"); });
-    (V.buildings||[]).forEach(function(it){ push(it,true,"home",it.timer); });
+    (V.buildings||[]).forEach(function(it){ push(it,true,"home"); });
     (V.traps||[]).forEach(function(it){ push(it,true,"home"); });
     (V.units2||[]).forEach(function(it){ push(it,false,"bb"); });
-    (V.heroes2||[]).forEach(function(it){ push(it,false,"bb",it.timer); });
-    (V.buildings2||[]).forEach(function(it){ push(it,true,"bb",it.timer); });
+    (V.heroes2||[]).forEach(function(it){ push(it,false,"bb"); });
+    (V.buildings2||[]).forEach(function(it){ push(it,true,"bb"); });
     (V.traps2||[]).forEach(function(it){ push(it,true,"bb"); });
   }
 
