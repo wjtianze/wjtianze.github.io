@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>天择OS · 天择网</title>
-  <meta name="description" content="天择OS 4.1 —— 简洁的本地优先工作台，新增 AI 对话归档与完整命令行 Agent；桌面下载始终指向仓库中实际存在的最新安装包。" />
+  <meta name="description" content="天择OS 5.0 —— 本地优先的网页与 Windows 工作台，提供 Responses API、原生浏览器、内部文件空间、本地模型、应用管理器、Python 与 AI Agent。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260802-v4.1.8" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260807-v5.0.0" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/workspace-pages.css?v=20260802-v4.1.7" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cpath d='M10 14h12v8a2 2 0 0 1-2 2H12a2 2 0 0 1-2-2v-8zm2-4a4 4 0 0 1 8 0v4h-8v-4z' fill='white'/%3E%3C/svg%3E" />
 </head>
@@ -29,8 +29,8 @@
     <section class="tz-page-hero tz-os-landing-hero wrap">
       <div class="tz-os-hero-copy reveal in">
         <span class="tz-os-kicker">EVOLUTION SHELL · GENERATIVE WORKSPACE</span>
-        <h1><span class="grad">天择OS</span><span class="tz-os-version">v4.1.0</span></h1>
-        <p>一套在浏览器与 Windows 桌面运行的本地优先工作台。4.1 使用更简洁的视觉背景，加入对话归档、六档 VIP 专属皮肤与加密存档，并开放包括 <code>ask</code> 与 <code>agent</code> 子智能体在内的完整命令行能力；循环与滥用由系统实时监管。</p>
+        <h1><span class="grad">天择OS</span><span class="tz-os-version">v5.0.0</span></h1>
+        <p>一套在浏览器与 Windows 桌面运行的本地优先工作台。5.0 引入真实 Chromium 网页视图、内部文件与知识库一体化管理、本地模型与上下文压缩、Windows 应用管理器和内置 Python，并把 DeepSeek V4 Flash 升级到 Responses API。</p>
         <div class="tz-os-hero-actions">
           <a class="btn" href="https://wjtianze.github.io/os/webos.html"><span>进入网页版</span><span data-ui-icon="right" aria-hidden="true"></span></a>
           <a class="btn btn--ghost" href="#downloads"><span>查看桌面版本</span><span data-ui-icon="download" aria-hidden="true"></span></a>
@@ -38,46 +38,46 @@
       </div>
       <div class="tz-os-hero-node reveal in d2" aria-hidden="true">
         <div class="tz-os-hero-icon" data-ui-icon="monitor"></div>
-        <div class="tz-os-node-meta"><span>WEB / READY</span><span>DESKTOP / 4.1</span><span>ARCHIVE / ON</span><span>SHELL / 4.1</span></div>
+        <div class="tz-os-node-meta"><span>WEB / READY</span><span>DESKTOP / 5.0</span><span>FILES / NATIVE</span><span>SHELL / 5.0</span></div>
       </div>
     </section>
 
     <section class="section wrap tz-workspace-section" id="downloads">
       <div class="section-head reveal">
         <h2><span class="bar"></span>运行方式与版本演进</h2>
-        <span class="more">网页端 4.1 · Windows 安装包 4.1</span>
+        <span class="more">网页端 5.0 · Windows 安装包 5.0</span>
       </div>
       <div class="os-pick">
         <div class="card os-card tz-workspace-card d reveal d1">
           <div class="oc-icon" data-ui-icon="windows" aria-hidden="true"></div>
           <h3>电脑端</h3>
-          <p class="oc-tag">Windows 原生应用 · 当前安装包 v4.1.0</p>
+          <p class="oc-tag">Windows 原生应用 · 当前安装包 v5.0.0</p>
           <ul>
             <li>独立窗口运行，不占浏览器标签</li>
-            <li>可设为系统默认浏览器，外部链接自动接管</li>
-            <li>AI 接口免跨域，调用更稳定</li>
-            <li>桌面快捷方式、开机自启一应俱全</li>
-            <li>4.1 安装包已公开发布，可直接下载并覆盖安装旧版本</li>
+            <li>真实 Chromium 网页视图兼容拒绝 iframe 的网站</li>
+            <li>内部文件空间统一浏览器下载、知识库与 Agent 文件工具</li>
+            <li>内置 Python 3.13，并支持 Ollama 等本地部署模型</li>
+            <li>5.0 安装包已公开发布，可直接下载并覆盖安装旧版本</li>
           </ul>
           <a class="btn" id="os-dl-btn"
-             href="https://github.com/wjtianze/wjtianze.github.io/releases/download/v4.1.0/tianze-os-setup-4.1.0.exe"
+             href="https://github.com/wjtianze/wjtianze.github.io/releases/download/v5.0.0/tianze-os-setup-5.0.0.exe"
              download
-             data-fallback-url="https://github.com/wjtianze/wjtianze.github.io/releases/download/v4.1.0/tianze-os-setup-4.1.0.exe"
-             data-fallback-ver="v4.1.0">
-            <span id="os-dl-text">下载 Windows 安装包（v4.1.0）</span><span data-ui-icon="download" aria-hidden="true"></span>
+             data-fallback-url="https://github.com/wjtianze/wjtianze.github.io/releases/download/v5.0.0/tianze-os-setup-5.0.0.exe"
+             data-fallback-ver="v5.0.0">
+            <span id="os-dl-text">下载 Windows 安装包（v5.0.0）</span><span data-ui-icon="download" aria-hidden="true"></span>
           </a>
           <div class="dl-meta" id="os-dl-meta">正在检测实际已发布的桌面安装包…</div>
         </div>
         <div class="card os-card tz-workspace-card w reveal d2">
           <div class="oc-icon" data-ui-icon="globe" aria-hidden="true"></div>
-          <h3>网页端 4.1</h3>
+          <h3>网页端 5.0</h3>
           <p class="oc-tag">免安装 · 本次更新的完整体验</p>
           <ul>
             <li>无需下载，打开网页即可使用</li>
             <li>跨平台，手机/平板/电脑都能跑</li>
             <li>数据存浏览器本地，隐私可控</li>
-            <li>三套积分基础皮肤与六档 VIP 专属壁纸、按钮和表面材质</li>
-            <li>系统存档默认使用密码加密，API Key 不再裸露在导出文件中</li>
+            <li>完整 AI 对话、命令行、COC 与站内应用体验</li>
+            <li>Windows 文件、原生应用与内置 Python 仅桌面版可用</li>
           </ul>
           <a class="btn btn--ghost" href="https://wjtianze.github.io/os/webos.html">
             <span>进入网页版</span><span data-ui-icon="right" aria-hidden="true"></span>
@@ -88,7 +88,23 @@
           <p class="oc-tag">自 1.0 至今的版本演进</p>
           <div class="changelog">
             <div class="cl-item">
-              <div class="cl-ver">v4.1.0 <span class="cl-badge">最新</span></div>
+              <div class="cl-ver">v5.0.0 <span class="cl-badge">最新</span></div>
+              <div class="cl-date">2026-08-07</div>
+              <ul>
+                <li>DeepSeek V4 Flash 预设升级为 <b>Responses API</b>，支持语义化流式响应、用量统计和服务端联网搜索</li>
+                <li>桌面浏览器与网页版 AI 使用真实 Chromium 网页视图，兼容拒绝 iframe 的站点；可选豆包、千问、DeepSeek、Kimi、智谱、ChatGPT、Claude、Gemini 与 Grok，国际站加载前提示 VPN</li>
+                <li>新增<b>内部文件资源管理器</b>，与知识库、浏览器下载和 Agent 文件工具合并，支持导入导出、创建、预览、编辑、重命名、复制、移动、搜索与回收站删除</li>
+                <li>新增 Windows 应用管理器、EXE 安装包归档与受确认启动；原生软件遵循 Windows 安全边界，以独立顶层窗口运行</li>
+                <li>安装包内置官方 Python 3.13，支持内部脚本、参数、大输出记录、停止任务及 Agent 逐次授权</li>
+                <li>AI 新增始终 API、始终本地、API 连接错误自动回退本地三档路由；支持 Ollama 自动读取模型、上下文长度与能力，并持久显示错误码与降级模型</li>
+                <li>新增按模型安全窗口自动或手动执行的上下文压缩；只压缩发给模型的较早上下文，不删除界面中的完整聊天记录</li>
+                <li>天择网站点助手恢复流式输出与深度思考开关，跨页面保持展开状态和当前对话，Markdown 与完整 LaTeX 公式随生成持续渲染</li>
+                <li>COC 伤害计算分享配置可一键复制回主页；新增可从博客和 COC 专区进入的 COC教程入口</li>
+                <li>命令行完成 166 条命令、47 个兼容别名、213 条可达路径的运行时审计；Windows 任务栏、窗口、安装包和快捷方式统一使用天择OS图标</li>
+              </ul>
+            </div>
+            <div class="cl-item">
+              <div class="cl-ver">v4.1.0</div>
               <div class="cl-date">2026-08-01</div>
               <ul>
                 <li>主页与天择OS采用更简洁的图片背景，各专区使用带标志性元素的专属背景</li>
@@ -215,11 +231,11 @@
         </div>
       </div>
 
-      <p class="os-note">网页端与桌面版数据各自独立，可分别使用。<b>当前网页端、桌面工程与公开安装包均为 4.1.0</b>，下载按钮会自动校验 GitHub Releases 中实际存在的最新版本。<br/>首次使用桌面版需在「AI 配置」中单独填入 API Key；不再提供历史版本下载。</p>
+      <p class="os-note">网页端与桌面版数据各自独立，可分别使用。<b>当前网页端、桌面工程与公开安装包均为 5.0.0</b>，下载按钮会自动校验 GitHub Releases 中实际存在的最新版本。<br/>安装包未进行商业代码签名，Windows 可能显示 SmartScreen 提示；Python 和 Agent 的高权限操作需要逐次确认。首次使用云端模型仍需在「AI 配置」中填写自己的 API Key。</p>
     </section>
   </main>
 
-  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260802-v4.1.8"></script>
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260807-v5.0.0"></script>
   <script>
   // 自动检测 GitHub Release 已发布的最新安装包
   // 修复（v3.2）：旧版用 fetch(HEAD) 直接探测 github.com 的 release download URL，

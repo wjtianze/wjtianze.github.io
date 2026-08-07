@@ -21,8 +21,24 @@
     osConfig: function () {
       try {
         var s = JSON.parse(localStorage.getItem("tzos_state_v1") || "{}");
-        var c = s.aiConfig;
-        if (c && c.url && c.key && c.model) return { url: c.url, key: c.key, model: c.model, maxTokens: c.maxTokens || 0 };
+        var c = s.aiConfig || {};
+        var local = s.aiLocalConfig || { url: "http://127.0.0.1:11434", model: "qwen3.5:4b", api: "ollama", provider: "ollama" };
+        var mode = ["api", "local", "auto"].indexOf(s.aiRoutingMode) >= 0 ? s.aiRoutingMode : "api";
+        var apiReady = Boolean(c.url && c.key && c.model);
+        var localReady = Boolean(local.url && local.model);
+        if ((mode === "api" && !apiReady) || (mode === "local" && !localReady) || (mode === "auto" && !(apiReady && localReady))) return null;
+        var active = mode === "local" ? local : c;
+        return {
+          url: active.url,
+          key: mode === "local" ? "" : (active.key || ""),
+          model: active.model,
+          maxTokens: active.maxTokens || 0,
+          api: active.api || (/\/responses\/?(?:[?#].*)?$/i.test(active.url) ? "responses" : "chat-completions"),
+          routeMode: mode,
+          apiConfig: c,
+          localConfig: local,
+          ready: true
+        };
       } catch (e) {}
       return null;
     },
@@ -238,11 +254,11 @@
   };
 
   /* ============================================================
-     Tianze Web 4.1 · Evolution Shell
+     Tianze Web 5.0 · Evolution Shell
      The shared status line and command palette are generated
      once here so all existing static pages inherit the same shell.
      ============================================================ */
-  var TZ_SITE_VERSION = "4.1";
+  var TZ_SITE_VERSION = "5.0";
 
   function getTzSiteRoot() {
     var scripts = document.querySelectorAll('script[src*="assets/js/main.js"]');
@@ -1197,6 +1213,7 @@
       "/coc/data/": "游戏数据查询",
       "/coc/dmg-calc/": "伤害计算器",
       "/coc/planner/": "升级规划器",
+      "/coc/tutorial/": "COC 教程",
       "/coc/village/": "村庄分析旧入口",
       "/game/": "游戏专区",
       "/game/gpa-card/": "绩点战争",
@@ -1204,7 +1221,7 @@
       "/english/words/": "英语学习控制台",
       "/words/": "背单词兼容入口",
       "/os/": "天择OS",
-      "/os/webos.html": "天择OS 4.1",
+      "/os/webos.html": "天择OS 5.0",
       "/contact/": "联系开发者"
     };
     var iconByRoot = {
@@ -1273,6 +1290,7 @@
       if (/\/coc\/data\/$/i.test(path)) return "search";
       if (/\/coc\/planner\/$/i.test(path)) return "calendar";
       if (/\/coc\/dmg-calc\/$/i.test(path)) return "burst";
+      if (/\/coc\/tutorial\/$/i.test(path)) return "book";
       if (/\/coc\/village\/$/i.test(path)) return "home";
       if (/\/game\/gpa-card\/$/i.test(path)) return "trophy";
       if (/\/os\/webos\.html$/i.test(path)) return "rocket";
@@ -1813,6 +1831,27 @@
 
   }
 
+  var TZ_SITE_AI_UI_KEY = "tz_site_ai_ui_v1";
+  function readTzSiteAssistantUiState() {
+    try {
+      var parsed = JSON.parse(sessionStorage.getItem(TZ_SITE_AI_UI_KEY) || "{}");
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch (e) {
+      return {};
+    }
+  }
+  function writeTzSiteAssistantUiState(patch) {
+    try {
+      var state = readTzSiteAssistantUiState();
+      Object.keys(patch || {}).forEach(function (key) { state[key] = patch[key]; });
+      state.updatedAt = Date.now();
+      sessionStorage.setItem(TZ_SITE_AI_UI_KEY, JSON.stringify(state));
+      return state;
+    } catch (e) {
+      return {};
+    }
+  }
+
   function initTzSiteAssistant() {
     if (!document.body ||
         /\/ai\/skill\/tlh\/relativity-demo\.html$/i.test(location.pathname) ||
@@ -1823,6 +1862,7 @@
     } catch (e) {}
 
     var rootUrl = getTzSiteRoot();
+    var restoredUiState = readTzSiteAssistantUiState();
     var launcher = document.createElement("button");
     launcher.className = "tz-site-ai-launcher";
     launcher.type = "button";
@@ -1868,7 +1908,7 @@
     appendTzIcon(setup, "key");
     var setupCopy = document.createElement("span");
     setupCopy.appendChild(makeTzText("strong", "", "尚未配置 AI"));
-    setupCopy.appendChild(makeTzText("small", "", "可先搜索本站，或进入天择OS填写 API Key。"));
+    setupCopy.appendChild(makeTzText("small", "", "可先搜索本站，或进入天择OS配置 API 或本地模型。"));
     setup.appendChild(setupCopy);
     var setupActions = document.createElement("span");
     setupActions.className = "tz-site-ai-setup__actions";
@@ -1979,7 +2019,10 @@
       }, location.origin);
     }
 
-    function setOpen(open) {
+    function setOpen(open, options) {
+      options = options || {};
+      open = !!open;
+      if (!options.restoring) writeTzSiteAssistantUiState({ open: open });
       launcher.setAttribute("aria-expanded", open ? "true" : "false");
       if (open) {
         syncAISetup();
@@ -1990,7 +2033,7 @@
           dock.classList.add("open");
           document.body.classList.add("tz-site-ai-open");
           sendContext();
-          close.focus({ preventScroll: true });
+          if (!options.restoring) close.focus({ preventScroll: true });
         });
       } else {
         dock.classList.remove("open");
@@ -1999,7 +2042,7 @@
         syncAIModalMode(false);
         window.setTimeout(function () {
           dock.hidden = true;
-          launcher.focus({ preventScroll: true });
+          if (!options.restoring) launcher.focus({ preventScroll: true });
         }, 190);
       }
     }
@@ -2044,6 +2087,9 @@
       if (!document.hidden) syncAISetup();
     });
     window.addEventListener("popstate", sendContext);
+    window.addEventListener("pagehide", function () {
+      writeTzSiteAssistantUiState({ open: dock.getAttribute("aria-hidden") === "false" });
+    });
     var screenshotInProgress = false;
     async function captureCurrentSiteView() {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
@@ -2123,6 +2169,7 @@
     document.body.appendChild(launcher);
     document.body.appendChild(backdrop);
     document.body.appendChild(dock);
+    if (restoredUiState.open === true) setOpen(true, { restoring: true });
   }
 
   function bootTzUiV4() {

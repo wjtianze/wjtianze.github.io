@@ -447,6 +447,7 @@ input, textarea { font-family: inherit; }
 .msg.ai .msg-avatar { background: var(--grad-main); }
 .msg.user .msg-avatar { background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); }
 .msg-bubble { padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.65; word-break: break-word; }
+.msg-fallback-notice { margin: 0 0 4px 2px; color: var(--ink-muted); font-size: 11px; line-height: 1.45; word-break: break-word; }
 .msg.ai .msg-bubble { background: var(--surface); border: 1px solid var(--glass-border); border-top-left-radius: 4px; }
 .msg.user .msg-bubble { background: var(--grad-main); border-top-right-radius: 4px; color: #fff; }
 .msg-bubble pre { background: rgba(0,0,0,0.4); padding: 10px; border-radius: 6px; overflow-x: auto; margin: 6px 0; font-size: 12px; }
@@ -1468,6 +1469,11 @@ body.tzos.light[data-palette="warm"] .desktop.mac-style {
   display: flex;
   flex-direction: column;
   gap: 7px;
+  max-height: calc(100vh - 150px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--c-violet-rgb),.38) transparent;
   border: 1px solid rgba(255,255,255,.14);
   border-radius: 22px;
   background-image: var(--os-surface-layer);
@@ -1760,6 +1766,197 @@ body.mobile .system-rail { display: none; }
     color: ButtonText !important;
     forced-color-adjust: auto;
   }
+}
+
+/* ============================================================
+   天择OS 5.0：内部文件、应用管理、Python 与原生浏览器状态
+   ============================================================ */
+.app-workspace--native { min-width: 0; min-height: 0; }
+.workspace-tabs { display: inline-flex; align-items: center; gap: 5px; }
+.file-workspace-panel,
+.app-manager-panel { display: flex; flex: 1; min-width: 0; min-height: 0; overflow: hidden; }
+.file-workspace-panel[hidden],
+.app-manager-panel[hidden] { display: none !important; }
+.file-workspace-panel > .kb-manager-app { flex: 1; border-radius: 0; }
+.file-workspace-panel > .kb-manager-app > .app-workspace__header { display: none; }
+
+.native-files-layout {
+  display: grid;
+  grid-template-columns: 176px minmax(0, 1fr);
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.native-files-places {
+  min-width: 0;
+  padding: 12px 9px;
+  overflow-y: auto;
+  border-right: 1px solid var(--app-line);
+  background: var(--app-neutral);
+}
+.native-pane-title { padding: 2px 9px 8px; color: var(--ink-muted); font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.native-files-places .app-nav__item { width: 100%; }
+.native-security-note {
+  margin: 14px 5px 0;
+  padding: 10px;
+  border: 1px solid rgba(var(--c-green-rgb), .28);
+  border-radius: 10px;
+  color: var(--ink-muted);
+  background: rgba(var(--c-green-rgb), .055);
+  font-size: 10px;
+  line-height: 1.55;
+}
+.native-files-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.native-pathbar { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; padding: 8px; border-bottom: 1px solid var(--app-line); background: var(--app-neutral); }
+.native-path-input { flex: 1; min-width: 100px; height: 32px; padding: 6px 9px; font: 11px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace; }
+.file-search { flex: 0 1 260px; min-width: 150px; }
+.file-actionbar { flex: 0 0 auto; margin: 0; border-width: 0 0 1px; border-radius: 0; }
+.file-actionbar .tz-icon { width: 14px; height: 14px; }
+.native-files-split { display: grid; grid-template-columns: minmax(300px, .92fr) minmax(320px, 1.08fr); flex: 1; min-width: 0; min-height: 0; }
+.native-file-browser { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-right: 1px solid var(--app-line); }
+.native-file-columns,
+.native-file-row { display: grid; grid-template-columns: minmax(150px, 1fr) 132px 74px; align-items: center; gap: 9px; }
+.native-file-columns { flex: 0 0 auto; padding: 7px 10px; color: var(--ink-muted); border-bottom: 1px solid var(--app-line); font-size: 9.5px; text-transform: uppercase; letter-spacing: .06em; }
+.native-file-list { flex: 1; min-height: 0; overflow: auto; padding: 5px; }
+.native-file-row { width: 100%; min-height: 37px; padding: 6px; border: 1px solid transparent; border-radius: 8px; color: var(--ink-faint); background: transparent; text-align: left; font: inherit; font-size: 10.5px; cursor: pointer; }
+.native-file-row:hover,
+.native-file-row.selected { color: var(--ink); border-color: rgba(var(--c-blue-rgb), .28); background: rgba(var(--c-blue-rgb), .1); }
+.native-file-name { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.native-file-name .tz-icon { flex: 0 0 auto; width: 17px; height: 17px; }
+.native-file-name > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.native-file-status,
+.windows-apps-note { flex: 0 0 auto; min-height: 27px; padding: 6px 10px; border-top: 1px solid var(--app-line); color: var(--ink-muted); background: var(--app-neutral); font-size: 9.5px; }
+.native-file-status.is-error,
+.windows-apps-note.is-error { color: #fca5a5; }
+.native-preview { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; background: rgba(5, 11, 26, .18); }
+.native-preview-empty,
+.native-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 130px; padding: 24px; color: var(--ink-muted); text-align: center; font-size: 11px; line-height: 1.55; }
+.native-preview-empty { flex: 1; }
+.native-preview-empty > .tz-icon { width: 38px; height: 38px; opacity: .75; }
+.native-preview-empty strong { color: var(--ink); font-size: 13px; }
+.native-preview-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex: 0 0 auto; min-height: 54px; padding: 8px 10px; border-bottom: 1px solid var(--app-line); background: var(--app-neutral); }
+.native-preview-head > span:first-child { display: flex; flex-direction: column; min-width: 0; }
+.native-preview-head strong { overflow: hidden; color: var(--ink); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.native-preview-head small { margin-top: 2px; color: var(--ink-muted); font-size: 9px; }
+.native-preview-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
+.native-text-editor { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.native-text-editor textarea { flex: 1; min-height: 0; width: 100%; resize: none; padding: 13px; border: 0; outline: 0; color: var(--ink-dim); background: rgba(3, 8, 20, .36); font: 11.5px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace; tab-size: 2; }
+body.tzos.light .native-text-editor textarea { background: rgba(255,255,255,.45); }
+.native-text-editor footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex: 0 0 auto; padding: 7px 9px; border-top: 1px solid var(--app-line); color: var(--ink-muted); background: var(--app-neutral); font-size: 9.5px; }
+.native-text-editor footer > span:last-child { display: flex; gap: 6px; }
+.native-media-preview { display: grid; place-items: center; flex: 1; min-height: 0; overflow: auto; padding: 14px; }
+.native-media-preview img,
+.native-media-preview video { display: block; max-width: 100%; max-height: 100%; border-radius: 8px; object-fit: contain; }
+.native-media-preview audio { width: min(360px, 100%); }
+.native-pdf-preview { flex: 1; min-width: 0; min-height: 0; border: 0; background: #fff; }
+
+.app-manager-app .app-manager-panel { flex-direction: column; }
+.windows-apps-main { display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; }
+.windows-apps-toolbar { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; padding: 9px 12px; border-bottom: 1px solid var(--app-line); background: var(--app-neutral); }
+.windows-apps-toolbar .app-search { flex: 1; max-width: 420px; }
+.windows-apps-toolbar > span:last-child { margin-left: auto; color: var(--ink-muted); font-size: 10px; }
+.windows-apps-list { flex: 1; min-height: 0; overflow: auto; padding: 12px; }
+.windows-app-group + .windows-app-group { margin-top: 16px; }
+.windows-app-group h3 { display: flex; align-items: center; gap: 7px; margin: 0 0 7px; color: var(--ink-dim); font-size: 11px; }
+.windows-app-group h3 span { color: var(--ink-muted); font-size: 9px; font-weight: 400; }
+.windows-app-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 7px; }
+.windows-app-card { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; align-items: center; gap: 9px; min-width: 0; padding: 9px; border: 1px solid var(--app-line); border-radius: 11px; color: var(--ink-dim); background: var(--app-neutral); text-align: left; }
+.windows-app-card:hover { border-color: rgba(var(--c-blue-rgb), .46); background: rgba(var(--c-blue-rgb), .09); }
+.windows-app-icon { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 10px; background: rgba(var(--c-blue-rgb), .12); }
+.windows-app-icon .tz-icon { width: 20px; height: 20px; }
+.windows-app-card > span:nth-child(2) { display: flex; flex-direction: column; min-width: 0; }
+.windows-app-card strong { overflow: hidden; color: var(--ink); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.windows-app-card small { margin-top: 3px; color: var(--ink-muted); font-size: 9px; }
+.windows-app-card-actions { display: flex; align-items: center; gap: 4px; }
+.app-manager-panel .file-manager-main { max-width: none; height: 100%; align-self: stretch; }
+
+.python-tools-layout { display: grid; grid-template-columns: minmax(360px, 1.1fr) minmax(300px, .9fr); flex: 1; min-width: 0; min-height: 0; }
+.python-editor-pane,
+.python-output-pane { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.python-editor-pane { border-right: 1px solid var(--app-line); }
+.python-file-field { display: flex; flex: 1; min-width: 180px; flex-direction: row; align-items: center; gap: 7px; }
+.python-file-field > span { flex: 0 0 auto; color: var(--ink-muted); font-size: 10px; }
+.python-code-editor { flex: 1; min-width: 0; min-height: 0; resize: none; padding: 14px; border: 0; outline: 0; color: #d6e4ff; background: rgba(2, 6, 18, .76); font: 12px/1.65 ui-monospace, SFMono-Regular, Consolas, monospace; tab-size: 4; }
+body.tzos.light .python-code-editor { color: #172554; background: rgba(239,246,255,.78); }
+.python-output-pane > .app-toolbar { border-width: 0 0 1px; border-radius: 0; }
+.python-task-list { display: flex; flex-wrap: wrap; gap: 5px; flex: 0 0 auto; max-height: 100px; overflow: auto; padding: 7px; border-bottom: 1px solid var(--app-line); }
+.python-task { display: flex; min-width: 0; flex-direction: column; padding: 5px 8px; border: 1px solid var(--app-line); border-radius: 8px; color: var(--ink-dim); background: var(--app-neutral); text-align: left; }
+.python-task.active { border-color: rgba(var(--c-green-rgb), .5); }
+.python-task strong { max-width: 190px; overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.python-task small,
+.python-task-empty { color: var(--ink-muted); font-size: 9px; }
+.python-output { flex: 1; min-width: 0; min-height: 0; margin: 0; overflow: auto; padding: 13px; color: #c7f9d4; background: rgba(0, 8, 14, .75); font: 11.5px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace; white-space: pre-wrap; word-break: break-word; }
+body.tzos.light .python-output { color: #14532d; background: rgba(240,253,244,.76); }
+
+.browser-native-status { max-width: 180px; overflow: hidden; color: var(--ink-muted); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.browser-native-host { position: relative; }
+.browser-native-host .browser-empty { z-index: 1; }
+.browser-download-badge { min-width: 24px; }
+
+/* 网页 AI：配置页多选 + 桌面原生 Chromium 承载区（第三方站点不使用 iframe）。 */
+.web-ai-site-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.web-ai-site-card {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--app-line);
+  border-radius: 11px;
+  color: var(--ink-dim);
+  background: var(--app-neutral);
+  cursor: pointer;
+}
+.web-ai-site-card:hover { border-color: rgba(var(--c-violet-rgb), .46); background: var(--hover); }
+.web-ai-site-card.requires-vpn { border-color: rgba(245,158,11,.28); }
+.web-ai-site-card > input { width: 16px; height: 16px; flex: 0 0 auto; accent-color: var(--c-violet); }
+.web-ai-site-card__mark { display: grid; width: 31px; height: 31px; flex: 0 0 auto; place-items: center; border-radius: 9px; color: var(--c-violet-soft); background: var(--app-primary-soft); }
+.web-ai-site-card__mark .tz-icon { width: 17px; height: 17px; }
+.web-ai-site-card__copy { display: flex; flex: 1; min-width: 0; flex-direction: column; }
+.web-ai-site-card__copy strong { overflow: hidden; color: var(--ink); font-size: 11.5px; text-overflow: ellipsis; white-space: nowrap; }
+.web-ai-site-card__copy small { overflow: hidden; margin-top: 1px; color: var(--ink-muted); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.web-ai-site-card .app-badge { flex: 0 0 auto; }
+.web-ai-config-summary { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 9px; color: var(--ink-dim); font-size: 10px; }
+.web-ai-config-summary small { color: var(--ink-muted); text-align: right; }
+.web-ai-provider-picker { display: flex; align-items: center; gap: 6px; min-width: 220px; color: var(--ink-faint); }
+.web-ai-provider-picker > .tz-icon { width: 15px; height: 15px; flex: 0 0 auto; }
+.web-ai-provider-picker__label { flex: 0 0 auto; font-size: 10px; }
+.web-ai-provider-picker .input { width: min(245px, 35vw); height: 32px; padding: 4px 28px 4px 8px; font-size: 10.5px; }
+.web-ai-status { max-width: 200px; overflow: hidden; color: var(--ink-muted); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.web-ai-native-host { position: relative; flex: 1; min-height: 0; background: #fff; }
+.web-ai-empty { position: absolute; inset: 0; z-index: 1; min-height: 0; background-image: var(--os-surface-layer); }
+
+@container (max-width: 860px) {
+  .native-files-layout { grid-template-columns: 142px minmax(0, 1fr); }
+  .native-files-split { grid-template-columns: 1fr; }
+  .native-preview { min-height: 46%; border-top: 1px solid var(--app-line); }
+  .native-file-browser { border-right: 0; }
+  .python-tools-layout { grid-template-columns: 1fr; overflow: auto; }
+  .python-editor-pane { min-height: 440px; border-right: 0; border-bottom: 1px solid var(--app-line); }
+  .python-output-pane { min-height: 360px; }
+}
+@container (max-width: 600px) {
+  .workspace-tabs { width: 100%; }
+  .workspace-tabs > .btn { flex: 1; }
+  .native-files-layout { display: flex; flex-direction: column; overflow: auto; }
+  .native-files-places { display: none; }
+  .native-files-main { min-height: 680px; }
+  .native-pathbar { flex-wrap: wrap; }
+  .file-search { flex-basis: 100%; max-width: none; }
+  .native-file-columns,
+  .native-file-row { grid-template-columns: minmax(130px, 1fr) 70px; }
+  .native-file-columns > span:nth-child(2),
+  .native-file-row > span:nth-child(2) { display: none; }
+  .windows-apps-toolbar { align-items: stretch; flex-direction: column; }
+  .windows-apps-toolbar > span:last-child { margin-left: 0; }
+  .windows-app-grid { grid-template-columns: 1fr; }
+  .windows-app-card { grid-template-columns: 36px minmax(0, 1fr); }
+  .windows-app-card-actions { grid-column: 1 / -1; justify-content: flex-end; }
+  .web-ai-site-grid { grid-template-columns: 1fr; }
+  .web-ai-provider-picker { min-width: 190px; }
+  .web-ai-provider-picker__label { display: none; }
+  .web-ai-provider-picker .input { width: 180px; }
 }
 
 /* ============================================================

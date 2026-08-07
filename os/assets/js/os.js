@@ -10,7 +10,26 @@
 'use strict';
 
 /* 系统版本（每次发布更新必须同步递增，并更新 dev/os/version.json） */
-const OS_VERSION = '4.1.0';
+const OS_VERSION = '5.0.0';
+
+/* 网页 AI 站点目录。桌面版通过主进程的原生 Chromium WebContentsView 加载，
+ * 绝不把第三方登录页放进 iframe；网页版只能提供限制说明与外部打开入口。 */
+const WEB_AI_SITES = Object.freeze([
+  { id: 'doubao', name: '豆包', edition: '国内版', url: 'https://www.doubao.com/chat/', domain: 'doubao.com', vpn: false },
+  { id: 'qianwen-cn', name: '千问', edition: '国内版', url: 'https://www.qianwen.com/', domain: 'qianwen.com', vpn: false },
+  { id: 'qianwen-global', name: '千问', edition: '国际版', url: 'https://chat.qwen.ai/', domain: 'chat.qwen.ai', vpn: false },
+  { id: 'deepseek', name: 'DeepSeek', edition: '网页版', url: 'https://chat.deepseek.com/', domain: 'chat.deepseek.com', vpn: false },
+  { id: 'kimi', name: 'Kimi', edition: '网页版', url: 'https://kimi.com/', domain: 'kimi.com', vpn: false },
+  { id: 'chatglm-cn', name: '智谱清言', edition: '国内版', url: 'https://chatglm.cn/', domain: 'chatglm.cn', vpn: false },
+  { id: 'chatglm-global', name: '智谱', edition: '国际版', url: 'https://chat.z.ai/', domain: 'chat.z.ai', vpn: false },
+  { id: 'chatgpt', name: 'ChatGPT', edition: '国际版', url: 'https://chatgpt.com/', domain: 'chatgpt.com', vpn: true },
+  { id: 'claude', name: 'Claude', edition: '国际版', url: 'https://claude.ai/', domain: 'claude.ai', vpn: true },
+  { id: 'gemini', name: 'Gemini', edition: '国际版', url: 'https://gemini.google.com/', domain: 'gemini.google.com', vpn: true },
+  { id: 'grok', name: 'Grok', edition: '国际版', url: 'https://grok.com/', domain: 'grok.com', vpn: true }
+]);
+const WEB_AI_SITE_BY_ID = Object.freeze(Object.fromEntries(WEB_AI_SITES.map(site => [site.id, site])));
+function webAISite(id) { return WEB_AI_SITE_BY_ID[String(id || '')] || null; }
+function isWebAIProvider(id) { return !!webAISite(id); }
 
 /* ===================== 存储层 ===================== */
 const Store = {
@@ -98,9 +117,53 @@ const Store = {
   updateApp(id, patch) { const apps = this.getApps(); const i = apps.findIndex(a => a.id === id); if (i < 0) return null; apps[i] = { ...apps[i], ...patch }; this.set('installedApps', apps); return apps[i]; },
   // AI 配置
   getAIConfig() {
-    return this.get('aiConfig', { url: 'https://api.deepseek.com/v1/chat/completions', key: '', model: 'deepseek-v4-flash' });
+    const fallback = { url: 'https://api.deepseek.com/responses', key: '', model: 'deepseek-v4-flash', api: 'responses' };
+    const cfg = this.get('aiConfig', fallback);
+    // 只迁移 4.1 的精确内置默认地址；自定义服务商和其他模型保持原样。
+    if (cfg && cfg.model === 'deepseek-v4-flash' && /^https:\/\/api\.deepseek\.com\/(?:v1\/)?chat\/completions\/?$/i.test(String(cfg.url || ''))) {
+      const migrated = { ...cfg, url: fallback.url, api: 'responses' };
+      this.set('aiConfig', migrated);
+      this.setAICaps({ image: false, file: false, webSearch: true });
+      return migrated;
+    }
+    return cfg;
   },
   setAIConfig(cfg) { this.set('aiConfig', cfg); },
+  // AI 调用路由：api=始终云端 API，local=始终本地模型，auto=云端不可达时无损回退本地。
+  getAIRouteMode() {
+    const mode = String(this.get('aiRoutingMode', 'api')).toLowerCase();
+    return ['api', 'local', 'auto'].includes(mode) ? mode : 'api';
+  },
+  setAIRouteMode(mode) {
+    const value = String(mode || '').toLowerCase();
+    if (!['api', 'local', 'auto'].includes(value)) throw new Error('AI 模式仅支持 api、local 或 auto');
+    this.set('aiRoutingMode', value);
+    return value;
+  },
+  getAILocalConfig() {
+    const fallback = {
+      provider: 'ollama', api: 'ollama', url: 'http://127.0.0.1:11434',
+      model: 'qwen3.5:4b', key: '', maxTokens: 8192, thinking: true,
+      caps: { image: false, file: false, webSearch: false, contextLength: 0 }
+    };
+    const saved = this.get('aiLocalConfig', fallback);
+    const value = saved && typeof saved === 'object' ? saved : {};
+    return { ...fallback, ...value, caps: { ...fallback.caps, ...(value.caps || {}) }, key: '' };
+  },
+  setAILocalConfig(cfg) {
+    const current = this.getAILocalConfig();
+    const next = cfg && typeof cfg === 'object' ? cfg : {};
+    this.set('aiLocalConfig', { ...current, ...next, caps: { ...current.caps, ...(next.caps || {}) }, key: '' });
+  },
+  getContextCompressionSettings() {
+    const saved = this.get('contextCompressionSettings', {});
+    const threshold = Math.min(95, Math.max(50, parseInt(saved && saved.threshold, 10) || 80));
+    const keepRecent = Math.min(20, Math.max(4, parseInt(saved && saved.keepRecent, 10) || 8));
+    return { auto: saved && saved.auto !== undefined ? !!saved.auto : true, threshold, keepRecent };
+  },
+  setContextCompressionSettings(patch) {
+    this.set('contextCompressionSettings', { ...this.getContextCompressionSettings(), ...(patch || {}) });
+  },
   // 用户自定义 AI 配置：固定三个本地槽位，槽位可为空；密钥随整套配置仅存 localStorage。
   getAIProfiles() {
     const raw = this.get('aiCustomProfiles', []);
@@ -122,12 +185,24 @@ const Store = {
     });
     this.set('aiCustomProfiles', safe);
   },
-  // 豆包 AI 配置（Volcengine Ark OpenAI 兼容接口）
-  getDoubaoConfig() {
-    return this.get('doubaoConfig', { url: 'https://ark.cn-beijing.volces.com/api/v3/chat/completions', key: '', model: 'doubao-1-5-pro-32k-250115' });
+  // 网页 AI 多选：旧存档没有此字段时保持原行为，仅启用豆包。
+  getWebAISites() {
+    const raw = this.get('webAiSites', null);
+    if (!Array.isArray(raw)) return ['doubao'];
+    const valid = [...new Set(raw.map(String).filter(id => !!WEB_AI_SITE_BY_ID[id]))];
+    return valid.length ? valid : ['doubao'];
   },
-  setDoubaoConfig(cfg) { this.set('doubaoConfig', cfg); },
-  // 当前对话使用的 AI 提供方：'custom' | 'doubao'
+  setWebAISites(ids) {
+    const valid = [...new Set((Array.isArray(ids) ? ids : []).map(String).filter(id => !!WEB_AI_SITE_BY_ID[id]))];
+    const selected = valid.length ? valid : ['doubao'];
+    this.set('webAiSites', selected);
+    const provider = this.getProvider();
+    if (isWebAIProvider(provider) && !selected.includes(provider)) this.setProvider('custom');
+    const floatProvider = this.get('float_provider', 'custom');
+    if (isWebAIProvider(floatProvider) && !selected.includes(floatProvider)) this.set('float_provider', 'custom');
+    return selected;
+  },
+  // 当前对话使用的 AI 提供方：'custom' 或 WEB_AI_SITES 中的站点 id。
   getProvider() { return this.get('aiProvider', 'custom'); },
   setProvider(p) { this.set('aiProvider', p); },
   // 深度思考开关（默认开启）
@@ -210,6 +285,13 @@ const Store = {
     // 已关闭会话的异步回复绝不能回退写入其他标签。
     if (!chat) return false;
     chat.messages = (Array.isArray(h) ? h : []).slice(-100);
+    const compressed = chat.contextCompression;
+    if (compressed) {
+      const through = Math.max(0, parseInt(compressed.through, 10) || 0);
+      if (!through || through > chat.messages.length || compressed.prefixSignature !== this._chatPrefixSignature(chat.messages, through)) {
+        delete chat.contextCompression;
+      }
+    }
     if (!chat.title || chat.title === '新对话') chat.title = this._chatTitle(chat.messages);
     chat.updatedAt = Date.now();
     chat.rev = (parseInt(chat.rev, 10) || 0) + 1;
@@ -219,6 +301,55 @@ const Store = {
       s.activeChatId = chat.id;
     }
     delete s.chatHistory;
+    this._saveChatState(s);
+    return true;
+  },
+  _chatPrefixSignature(messages, count) {
+    const limit = Math.min(Array.isArray(messages) ? messages.length : 0, Math.max(0, parseInt(count, 10) || 0));
+    let hash = 2166136261;
+    for (let index = 0; index < limit; index++) {
+      const message = messages[index] || {};
+      let text = '';
+      try { text = typeof message.content === 'string' ? message.content : JSON.stringify(message.content || ''); }
+      catch (_) { text = String(message.content || ''); }
+      const value = String(message.role || '') + '\u0000' + text + '\u0001';
+      for (let i = 0; i < value.length; i++) { hash ^= value.charCodeAt(i); hash = Math.imul(hash, 16777619); }
+    }
+    return limit + ':' + (hash >>> 0).toString(36);
+  },
+  getChatCompression(id) {
+    const target = id || this.getActiveChatId();
+    const chat = this.getChats().find(item => item.id === target);
+    const value = chat && chat.contextCompression;
+    if (!value || !value.summary) return null;
+    const through = Math.max(0, parseInt(value.through, 10) || 0);
+    if (!through || through > chat.messages.length || value.prefixSignature !== this._chatPrefixSignature(chat.messages, through)) return null;
+    return { ...value, through };
+  },
+  setChatCompression(value, id) {
+    const target = id || this.getActiveChatId();
+    const s = this._chatState();
+    const chats = this.getChats();
+    const chat = chats.find(item => item.id === target);
+    if (!chat) return false;
+    if (!value || !String(value.summary || '').trim()) delete chat.contextCompression;
+    else {
+      const through = Math.min(chat.messages.length, Math.max(1, parseInt(value.through, 10) || 0));
+      chat.contextCompression = {
+        ...value,
+        summary: String(value.summary).trim().slice(0, 24000),
+        through,
+        prefixSignature: this._chatPrefixSignature(chat.messages, through),
+        updatedAt: Number(value.updatedAt) || Date.now()
+      };
+    }
+    chat.updatedAt = Date.now();
+    chat.rev = (parseInt(chat.rev, 10) || 0) + 1;
+    s.chatSessions = chats;
+    const ctxMap = { ...(s.chatCtxRealByChat || {}) };
+    delete ctxMap[target];
+    s.chatCtxRealByChat = ctxMap;
+    if (s.activeChatId === target) s.chatCtxReal = null;
     this._saveChatState(s);
     return true;
   },
@@ -1329,6 +1460,8 @@ const isMobile = () => {
   const forced = Store.get('deviceLayout', 'auto');
   if (forced === 'mobile') return true;
   if (forced === 'desktop') return false;
+  // Windows 触控笔记本会报告 coarse pointer；Electron 桌面版不能因此误切到移动布局。
+  if (window.tzDesktop) return false;
   const shortSide = Math.min(window.innerWidth, window.innerHeight);
   const narrow = window.innerWidth < 768;
   const coarse = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || navigator.maxTouchPoints > 0;
@@ -1387,10 +1520,16 @@ const BUILTIN_APPS = {
     desc: '与 AI 助手对话（单一工作区）',
     render: (opts) => renderAIChat(opts)
   },
+  'file-explorer': {
+    name: '文件与知识库', icon: '📁', iconKey: 'folder', grad: true, category: 'system',
+    desc: '管理天择OS内部文件、下载与 AI 知识库',
+    render: (opts) => renderFileExplorer(opts)
+  },
+  // 兼容 4.x 深链和存档；启动时会重定向到 file-explorer 的「知识库」标签。
   'knowledge-manager': {
-    name: '知识库管理', icon: '🗂️', iconKey: 'folder', grad: true, category: 'ai',
-    desc: '查看与管理 AI 可使用的站内页面、文档、笔记和历史会话',
-    render: () => renderKnowledgeManager()
+    name: '知识库管理（兼容入口）', icon: '🗂️', iconKey: 'folder', grad: true, category: 'ai', hidden: true,
+    desc: '兼容旧版入口；现已并入文件与知识库',
+    render: (opts) => renderFileExplorer({ ...(opts || {}), initialTab: 'knowledge' })
   },
   'ai-usage': {
     name: 'Token 用量与计费', icon: '📊', iconKey: 'info', grad: true, category: 'ai',
@@ -1423,10 +1562,21 @@ const BUILTIN_APPS = {
     desc: '系统信息',
     render: () => renderAbout()
   },
+  'app-manager': {
+    name: '应用管理器', icon: '🪟', iconKey: 'windows', grad: true, category: 'system',
+    desc: '管理 Windows 软件、安装包与天择OS HTML 应用',
+    render: (opts) => renderAppManager(opts)
+  },
+  // 兼容旧版「我的软件」应用 id；启动时会重定向到 app-manager。
   'file-manager': {
-    name: '我的软件', icon: '📁', iconKey: 'folder', grad: false, category: 'system',
-    desc: '管理已安装的软件',
-    render: () => renderFileManager()
+    name: '我的软件（兼容入口）', icon: '📁', iconKey: 'folder', grad: false, category: 'system', hidden: true,
+    desc: '兼容旧版入口；现已并入应用管理器',
+    render: (opts) => renderAppManager({ ...(opts || {}), initialTab: 'html' })
+  },
+  'python-tools': {
+    name: 'Python 工具', icon: '🐍', iconKey: 'terminal', grad: true, category: 'tool',
+    desc: '经用户授权运行 Python 代码或内部 .py 文件',
+    render: () => renderPythonTools()
   },
   'browser': {
     name: '浏览器', icon: '🌐', iconKey: 'globe', grad: true, category: 'system',
@@ -1482,6 +1632,7 @@ const PRESET_APPS = [
   //   · COC 专区首页（含村庄存档分析）读写 localStorage["tz_coc_village"]
   //   · 背单词读写 IndexedDB tzwords 词库
   { id: 'tz-coc', name: 'COC 专区', icon: '🛡️', iconKey: 'shield', grad: false, category: 'tool', url: '../coc/index.html', desc: '部落冲突数据、村庄存档分析' },
+  { id: 'tz-coc-tutorial', name: 'COC教程', icon: '📖', iconKey: 'book', grad: false, category: 'tool', url: '../coc/tutorial/index.html', desc: '部落冲突教程与攻略' },
   { id: 'tz-coc-planner', name: '升级规划', icon: '📅', iconKey: 'calendar', grad: false, category: 'tool', url: '../coc/planner/index.html', desc: '升级规划器' },
   { id: 'tz-coc-dmg', name: '伤害计算', icon: '💥', iconKey: 'burst', grad: false, category: 'tool', url: '../coc/dmg-calc/index.html', desc: '法术伤害计算器' },
   { id: 'tz-words', name: '背单词', icon: '📚', iconKey: 'book', grad: true, category: 'tool', url: '../english/words/index.html', desc: '四阶段背单词' },
@@ -1493,13 +1644,14 @@ const PRESET_APPS = [
   { id: 'emu-android', name: '安卓模拟器', icon: '🤖', iconKey: 'android', grad: true, category: 'emu', url: 'https://mobilegym.dev/', desc: '浏览器内的现代安卓仿真环境（MobileGym，中科院开源，28 个应用）' }
 ];
 
-function getAllApps() {
+function getAllApps(includeHidden = false) {
   const installed = Store.getApps().map(a => ({ ...a, iconKey: normalizeUiIconKey(a.iconKey || a.icon), type: 'installed', category: a.category || 'installed' }));
-  return [...Object.entries(BUILTIN_APPS).map(([id, app]) => ({ id, ...app, type: 'builtin' })),
+  const apps = [...Object.entries(BUILTIN_APPS).map(([id, app]) => ({ id, ...app, type: 'builtin' })),
           ...PRESET_APPS.map(a => ({ ...a, type: 'preset' })),
           ...installed];
+  return includeHidden ? apps : apps.filter(app => !app.hidden);
 }
-function findApp(id) { return getAllApps().find(a => a.id === id); }
+function findApp(id) { return getAllApps(true).find(a => a.id === id); }
 function presetFrameUrl(app) {
   const hideSiteChrome = app.id !== 'tz-home'
     && (app.nochrome === true || app.category === 'tznet' || app.category === 'tool');
@@ -1861,6 +2013,14 @@ const WM = {
     w.el.classList.add('closing');
     w.el.classList.remove('focused');
     w.el.style.pointerEvents = 'none';
+    // 对话窗口允许在关闭动画尚未结束时立刻重开。旧窗口若继续保留 #chatMsgs 等
+    // 全局 ID，新窗口的初始化查询会命中旧 DOM，导致历史/降级提示画进即将删除的窗口。
+    // 立即让旧对话子树退出 ID 命名空间，同时保留 180ms 关闭动画。
+    if (w.appId === 'ai-chat') {
+      w.el.setAttribute('aria-hidden', 'true');
+      w.el.setAttribute('inert', '');
+      w.el.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
+    }
     setTimeout(() => { w.el.remove(); }, 180);
     this.windows.splice(idx, 1);
     if (w.appId === 'browser') cleanupBrowserHooks();
@@ -1992,7 +2152,7 @@ const WM = {
       const html = app.render({ titlebarTabs: app.id === 'ai-chat' && !window.__tzFloatMode });
       if (typeof html === 'string') w.body.innerHTML = html;
       else if (html instanceof HTMLElement) { w.body.innerHTML = ''; w.body.appendChild(html); }
-      setTimeout(() => initAppHooks(app.id), 0);
+      setTimeout(() => initAppHooks(app.id, w), 0);
     }
     this.focus(id);
     toast('已刷新 ' + (app.name || '应用'));
@@ -2630,6 +2790,16 @@ const FloatingWidget = {
 
 /* ===================== 启动应用 ===================== */
 function launchApp(id, opts = {}) {
+  if (id === 'knowledge-manager') {
+    const win = launchApp('file-explorer', { ...opts, initialTab: 'knowledge' });
+    setTimeout(() => { if (typeof FileExplorerApp !== 'undefined') FileExplorerApp.setTab('knowledge'); }, 0);
+    return win;
+  }
+  if (id === 'file-manager') {
+    const win = launchApp('app-manager', { ...opts, initialTab: 'html' });
+    setTimeout(() => { if (typeof AppManagerApp !== 'undefined') AppManagerApp.setTab('html'); }, 0);
+    return win;
+  }
   const app = findApp(id);
   if (!app) { toast('应用不存在：' + id); return; }
   const defaults = { width: 820, height: 560 };
@@ -2657,8 +2827,12 @@ function launchApp(id, opts = {}) {
     defaults.width = 880; defaults.height = 660;
   } else if (id === 'growth') {
     defaults.width = 820; defaults.height = 640;
-  } else if (id === 'file-manager') {
-    defaults.width = 780; defaults.height = 600;
+  } else if (id === 'file-explorer') {
+    defaults.width = 1080; defaults.height = 700;
+  } else if (id === 'app-manager') {
+    defaults.width = 980; defaults.height = 680;
+  } else if (id === 'python-tools') {
+    defaults.width = 900; defaults.height = 650;
   } else if (id === 'about' || id === 'tz-tree') {
     defaults.width = 760; defaults.height = 620;
   } else if (id === 'clock') {
@@ -2696,7 +2870,7 @@ async function uninstallApp(id) {
   WM.windows.filter(w => w.appId === id).forEach(w => WM.close(w.id));
   Desktop.render();
   StartMenu.render();
-  refreshOpenApp('file-manager');
+  refreshOpenApp('app-manager');
   toast('已卸载');
 }
 
@@ -2837,7 +3011,7 @@ const AIUsage = {
   },
   tokens(usage) {
     const u = usage || {};
-    const hit = Number(u.prompt_cache_hit_tokens ?? u.cache_read_input_tokens ?? u.prompt_tokens_details?.cached_tokens) || 0;
+    const hit = Number(u.prompt_cache_hit_tokens ?? u.cache_read_input_tokens ?? u.input_tokens_details?.cached_tokens ?? u.prompt_tokens_details?.cached_tokens) || 0;
     const write = Number(u.cache_creation_input_tokens ?? u.cache_write_tokens) || 0;
     const prompt = Number(u.prompt_tokens ?? u.input_tokens) || 0;
     const input = Number(u.prompt_cache_miss_tokens) || Math.max(0, prompt - hit - write);
@@ -2902,18 +3076,58 @@ const AIUsage = {
 
 /* ===================== AI 引擎 ===================== */
 const AI = {
-  // 所有 API 类 AI 功能统一使用「AI 配置」里的通用配置（豆包仅为对话网页嵌入模式，不走 API）。
-  config() { return { ...Store.getAIConfig() }; },
-  isReady() { const c = this.config(); return !!(c.url && c.key && c.model); },
+  // 网页 AI 站点只用于人工网页对话；接口 AI 可固定使用云端、本地或自动回退。
+  apiConfig() { return { ...Store.getAIConfig(), source: 'api' }; },
+  localConfig() { return { ...Store.getAILocalConfig(), source: 'local', key: '' }; },
+  routeMode() { return Store.getAIRouteMode(); },
+  config() { return this.routeMode() === 'local' ? this.localConfig() : this.apiConfig(); },
+  isConfigReady(c) {
+    if (!c || !c.url || !c.model) return false;
+    return c.source === 'local' || this.isOllama(c) || !!c.key;
+  },
+  isReady() {
+    const candidates = this.candidateConfigs();
+    return candidates.length > 0 && (this.routeMode() === 'auto'
+      ? candidates.every(c => this.isConfigReady(c))
+      : this.isConfigReady(candidates[0]));
+  },
+  candidateConfigs() {
+    const mode = this.routeMode();
+    const api = this.apiConfig(), local = this.localConfig();
+    if (mode === 'api') return [api];
+    if (mode === 'local') return [local];
+    return [api, local];
+  },
   // 最大输出 token：AI 配置里可自定义 maxTokens，默认 8192
   maxTokens(c, fallback) {
     const v = parseInt(c.maxTokens, 10);
     return Math.min(384000, (v > 0) ? v : (fallback || 8192));
   },
   supportsThinking(c) {
+    if (c && c.source === 'local' && typeof c.thinking === 'boolean') return c.thinking;
     const model = String(c && c.model || '').toLowerCase();
     const url = String(c && c.url || '');
-    return /deepseek\.com/i.test(url) && /^deepseek-v4-(flash|pro)$/.test(model);
+    return this.isOllama(c) || (/deepseek\.com/i.test(url) && /^deepseek-v4-(flash|pro)$/.test(model));
+  },
+  isOllama(c) {
+    const api = String(c && (c.api || c.provider) || '').toLowerCase();
+    if (api === 'ollama') return true;
+    if (['chat', 'chat-completions', 'responses', 'openai', 'openai-local'].includes(api)) return false;
+    return /\/api\/chat\/?(?:[?#].*)?$/i.test(String(c && c.url || ''));
+  },
+  endpoint(c) {
+    const raw = String(c && c.url || '').trim();
+    if (this.isOllama(c)) return /\/api\/chat\/?(?:[?#].*)?$/i.test(raw) ? raw : raw.replace(/\/+$/, '') + '/api/chat';
+    if (c && c.source === 'local' && String(c.api || '').toLowerCase() === 'chat-completions') {
+      if (/\/chat\/completions\/?(?:[?#].*)?$/i.test(raw)) return raw;
+      const base = raw.replace(/\/+$/, '');
+      return /\/v1$/i.test(base) ? base + '/chat/completions' : base + '/v1/chat/completions';
+    }
+    return raw;
+  },
+  isResponses(c) {
+    const api = String(c && (c.api || c.protocol) || '').toLowerCase();
+    return api === 'responses' || /\/responses\/?(?:[?#].*)?$/i.test(String(c && c.url || ''));
   },
   isMiMo(c) {
     return /xiaomimimo\.com/i.test(String(c && c.url || '')) ||
@@ -2922,13 +3136,191 @@ const AI = {
   requestHeaders(c, stream) {
     const headers = {
       'Content-Type': 'application/json',
-      'Accept': stream ? 'text/event-stream' : 'application/json'
+      'Accept': stream ? (this.isOllama(c) ? 'application/x-ndjson' : 'text/event-stream') : 'application/json'
     };
     if (this.isMiMo(c)) headers['api-key'] = c.key;
-    else headers.Authorization = 'Bearer ' + c.key;
+    else if (!this.isOllama(c) && c.key) headers.Authorization = 'Bearer ' + c.key;
     return headers;
   },
+  responsesInput(messages) {
+    return (messages || []).map(message => {
+      if (!message || typeof message !== 'object') return message;
+      if (message.type && !message.role) return { ...message };
+      if (message.role === 'tool' && message.tool_call_id) {
+        return {
+          type: 'function_call_output',
+          call_id: message.tool_call_id,
+          output: typeof message.content === 'string' ? message.content : JSON.stringify(message.content || '')
+        };
+      }
+      const role = message.role === 'developer' ? 'developer' :
+        message.role === 'system' ? 'system' :
+        message.role === 'assistant' ? 'assistant' : 'user';
+      let content = message.content;
+      if (Array.isArray(content)) {
+        content = content.map(part => {
+          if (!part || typeof part !== 'object') return part;
+          if (part.type === 'text' || part.type === 'input_text' || part.type === 'output_text') {
+            return { type: role === 'assistant' ? 'output_text' : 'input_text', text: String(part.text || '') };
+          }
+          if (part.type === 'image_url') {
+            const image = part.image_url || {};
+            const imageUrl = typeof image === 'string' ? image : image.url;
+            return { type: 'input_image', image_url: imageUrl || '', ...(image && image.detail ? { detail: image.detail } : {}) };
+          }
+          return { ...part };
+        });
+      }
+      return { role, content };
+    });
+  },
+  responsesTools(tools) {
+    return (tools || []).map(tool => {
+      if (!tool || typeof tool !== 'object') return tool;
+      if (tool.type === 'web_search' || tool.type === 'web_search_2025_08_26') return { type: 'web_search' };
+      if (tool.type === 'function' && tool.function) {
+        return {
+          type: 'function',
+          name: tool.function.name,
+          description: tool.function.description,
+          parameters: tool.function.parameters
+        };
+      }
+      return { ...tool };
+    });
+  },
+  normalizeUsage(usage, searchCalls = 0) {
+    if (!usage && !searchCalls) return null;
+    const u = { ...(usage || {}) };
+    const input = Number(u.input_tokens ?? u.prompt_tokens) || 0;
+    const output = Number(u.output_tokens ?? u.completion_tokens) || 0;
+    const cached = Number(u.input_tokens_details?.cached_tokens ?? u.prompt_tokens_details?.cached_tokens ?? u.prompt_cache_hit_tokens) || 0;
+    const searches = Math.max(
+      Number(searchCalls) || 0,
+      Number(u.web_search_calls ?? u.search_calls ?? u.web_search_count ?? u.search_count) || 0
+    );
+    return {
+      ...u,
+      input_tokens: input,
+      output_tokens: output,
+      prompt_tokens: input,
+      completion_tokens: output,
+      total_tokens: Number(u.total_tokens) || (input + output),
+      input_tokens_details: { ...(u.input_tokens_details || {}), cached_tokens: cached },
+      prompt_tokens_details: { ...(u.prompt_tokens_details || {}), cached_tokens: cached },
+      web_search_calls: searches
+    };
+  },
+  responseResult(data) {
+    if (!data || typeof data !== 'object') throw new Error('AI Responses 接口响应为空');
+    if (data.error || data.status === 'failed') {
+      const error = data.error || {};
+      throw new Error(error.message || error.code || 'AI Responses 请求失败');
+    }
+    const output = Array.isArray(data.output) ? data.output : [];
+    const content = [], reasoning = [];
+    let searches = 0;
+    const addText = (target, value) => {
+      if (typeof value === 'string' && value) target.push(value);
+      else if (value && typeof value.text === 'string' && value.text) target.push(value.text);
+    };
+    const addParts = (target, parts) => {
+      if (typeof parts === 'string') { addText(target, parts); return; }
+      (Array.isArray(parts) ? parts : []).forEach(part => addText(target, part));
+    };
+    output.forEach(item => {
+      if (!item || typeof item !== 'object') return;
+      if (item.type === 'web_search_call') { searches += 1; return; }
+      if (item.type === 'reasoning') {
+        addText(reasoning, item.reasoning_text);
+        addParts(reasoning, item.content);
+        addParts(reasoning, item.summary);
+        return;
+      }
+      if (item.type === 'message' || item.type === 'output_text') {
+        addText(content, item.text);
+        addParts(content, item.content);
+      }
+    });
+    if (!content.length) addText(content, data.output_text);
+    if (!reasoning.length) addText(reasoning, data.reasoning_text);
+    const status = String(data.status || 'completed');
+    const incompleteReason = data.incomplete_details && data.incomplete_details.reason;
+    return {
+      content: content.join(''),
+      reasoning: reasoning.join(''),
+      usage: this.normalizeUsage(data.usage, searches),
+      finishReason: incompleteReason || (status === 'completed' ? 'stop' : status),
+      searchCalls: searches
+    };
+  },
+  ollamaMessages(messages) {
+    return (messages || []).filter(Boolean).map(message => {
+      let content = message.content;
+      const images = [];
+      if (Array.isArray(content)) {
+        const texts = [];
+        content.forEach(part => {
+          if (!part || typeof part !== 'object') return;
+          if (part.type === 'text' || part.type === 'input_text' || part.type === 'output_text') texts.push(String(part.text || ''));
+          if (part.type === 'image_url') {
+            const value = typeof part.image_url === 'string' ? part.image_url : part.image_url?.url;
+            const match = String(value || '').match(/^data:image\/[^;]+;base64,(.+)$/);
+            if (match) images.push(match[1]);
+          }
+        });
+        content = texts.join('\n');
+      }
+      const role = message.role === 'developer' ? 'system' : (message.role || 'user');
+      return { role, content: typeof content === 'string' ? content : JSON.stringify(content || ''), ...(images.length ? { images } : {}) };
+    });
+  },
+  ollamaUsage(data) {
+    if (!data || typeof data !== 'object') return null;
+    const prompt = Number(data.prompt_eval_count) || 0;
+    const completion = Number(data.eval_count) || 0;
+    return this.normalizeUsage({ prompt_tokens: prompt, completion_tokens: completion, total_tokens: prompt + completion });
+  },
   requestBody(c, messages, opts = {}, stream = false) {
+    if (this.isOllama(c)) {
+      const thinking = this.supportsThinking(c) && (opts.thinking !== undefined ? !!opts.thinking : getDeepThinkCtx());
+      const body = {
+        model: c.model,
+        messages: this.ollamaMessages(messages),
+        stream: !!stream,
+        think: thinking,
+        options: {
+          temperature: opts.temperature ?? 0.7,
+          num_predict: opts.max_tokens ?? this.maxTokens(c)
+        }
+      };
+      if (opts.top_p !== undefined) body.options.top_p = opts.top_p;
+      // Ollama 不提供内置 web_search；只保留标准 function 工具，避免自动回退时把云端专有工具带到本地。
+      const tools = (opts.tools || []).filter(tool => tool && tool.type === 'function' && tool.function);
+      if (tools.length) body.tools = tools;
+      return body;
+    }
+    if (this.isResponses(c)) {
+      const body = {
+        model: c.model,
+        input: this.responsesInput(messages),
+        temperature: opts.temperature ?? 0.7,
+        max_output_tokens: opts.max_tokens ?? this.maxTokens(c),
+        stream: !!stream
+      };
+      if (opts.top_p !== undefined) body.top_p = opts.top_p;
+      if (this.supportsThinking(c)) {
+        const thinking = opts.thinking !== undefined ? !!opts.thinking : getDeepThinkCtx();
+        const requestedEffort = String(opts.reasoning_effort || 'high').toLowerCase();
+        body.reasoning = { effort: thinking && ['low', 'high', 'max'].includes(requestedEffort) ? requestedEffort : (thinking ? 'high' : 'none') };
+        if (thinking) { delete body.temperature; delete body.top_p; }
+      }
+      if (opts.tools && opts.tools.length) {
+        body.tools = this.responsesTools(opts.tools);
+        body.tool_choice = opts.tool_choice || 'auto';
+      }
+      return body;
+    }
     const body = {
       model: c.model,
       messages,
@@ -2948,10 +3340,14 @@ const AI = {
       // DeepSeek V4 思考模式会忽略温度；不发送可避免给用户造成参数生效的错觉。
       if (thinking) delete body.temperature;
     }
+    if (opts.tools && opts.tools.length) {
+      body.tools = opts.tools;
+      body.tool_choice = opts.tool_choice || 'auto';
+    }
     return body;
   },
 
-  async request(c, body, onData, signal) {
+  async request(c, body, onData, signal, onResponseStarted) {
     if (window.tzDesktop?.requestAI) {
       let text = '';
       const id = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : 'ai-' + Date.now() + '-' + Math.random().toString(36).slice(2);
@@ -2961,7 +3357,11 @@ const AI = {
         signal.addEventListener('abort', abort, { once: true });
       }
       try {
-        const response = await window.tzDesktop.requestAI({ id, url: c.url, key: c.key, body, provider: this.isMiMo(c) ? 'mimo' : 'openai' }, chunk => {
+        const response = await window.tzDesktop.requestAI({
+          id, url: this.endpoint(c), key: c.source === 'local' ? '' : (c.key || ''), body,
+          provider: this.isOllama(c) ? 'ollama' : (c.source === 'local' ? 'openai-local' : (this.isMiMo(c) ? 'mimo' : 'openai')),
+          onHeaders: onResponseStarted
+        }, chunk => {
           if (signal && signal.aborted) return;
           text += chunk;
           if (onData) onData(chunk);
@@ -2969,16 +3369,25 @@ const AI = {
         if (signal && signal.aborted) { const err = new Error('已停止生成'); err.name = 'AbortError'; throw err; }
         if (response.status < 200 || response.status >= 300) throw this.httpError(response.status, text);
         return text;
+      } catch (error) {
+        throw this.transportError(error, signal);
       } finally {
         if (signal) signal.removeEventListener('abort', abort);
       }
     }
-    const res = await fetch(c.url, {
-      method: 'POST',
-      headers: this.requestHeaders(c, body.stream),
-      body: JSON.stringify(body),
-      signal: signal || undefined
-    });
+    let res;
+    try {
+      res = await fetch(this.endpoint(c), {
+        method: 'POST',
+        headers: this.requestHeaders(c, body.stream),
+        body: JSON.stringify(body),
+        redirect: c.source === 'local' ? 'error' : 'follow',
+        signal: signal || undefined
+      });
+      if (onResponseStarted) onResponseStarted();
+    } catch (error) {
+      throw this.transportError(error, signal);
+    }
     if (!res.ok) throw this.httpError(res.status, await res.text().catch(()=> ''));
     if (!onData) return await res.text();
     if (!res.body) throw new Error('AI 接口未返回可读取的响应内容');
@@ -2986,7 +3395,10 @@ const AI = {
     const dec = new TextDecoder();
     let text = '';
     while (true) {
-      const { done, value } = await reader.read();
+      let packet;
+      try { packet = await reader.read(); }
+      catch (error) { throw this.transportError(error, signal); }
+      const { done, value } = packet;
       if (done) break;
       const chunk = dec.decode(value, { stream: true });
       text += chunk;
@@ -3001,50 +3413,246 @@ const AI = {
   httpError(status, body) {
     let detail = String(body || '').trim();
     try { const parsed = JSON.parse(detail); detail = parsed.error?.message || parsed.message || detail; } catch {}
-    return new Error('AI 接口错误 ' + status + (detail ? '：' + detail.slice(0, 300) : ''));
+    const error = new Error('AI 接口错误 ' + status + (detail ? '：' + detail.slice(0, 300) : ''));
+    error.status = Number(status) || 0;
+    error.code = 'HTTP_' + error.status;
+    error.kind = 'http';
+    error.userAborted = false;
+    error.timedOut = false;
+    return error;
+  },
+  transportError(error, signal) {
+    if (error && error.kind) return error;
+    if ((signal && signal.aborted) || (error && error.name === 'AbortError')) {
+      const aborted = new Error('已停止生成');
+      aborted.name = 'AbortError';
+      aborted.code = 'ABORT_ERR';
+      aborted.kind = 'abort';
+      aborted.userAborted = true;
+      aborted.timedOut = false;
+      return aborted;
+    }
+    const network = new Error(error && error.message ? error.message : 'AI 网络请求失败');
+    network.code = (error && error.code) || 'NETWORK_ERROR';
+    network.kind = 'network';
+    network.userAborted = false;
+    network.timedOut = false;
+    return network;
   },
 
-  async chat(messages, opts = {}) {
-    const c = this.config();
-    if (!this.isReady()) throw new Error('AI 未配置，请先在「AI 配置」中设置 URL、Key 和模型。');
-    const text = await this.request(c, this.requestBody(c, messages, opts, false), null, opts.signal);
+  shouldAutoFallback(error) {
+    if (!error || error.name === 'AbortError' || error.userAborted) return false;
+    if ([408, 502, 503, 504].includes(Number(error.status))) return true;
+    if (Number(error.status)) return false;
+    return error.timedOut === true || error.kind === 'network';
+  },
+  fallbackInfo(error, fromConfig, toConfig) {
+    const status = Number(error && error.status) || 0;
+    const errorCode = status
+      ? 'HTTP ' + status
+      : String(error && error.code || (error && error.timedOut ? 'ETIMEDOUT' : 'NETWORK_ERROR')).slice(0, 48);
+    return {
+      fromModel: String(fromConfig && fromConfig.model || 'API').slice(0, 120),
+      toModel: String(toConfig && toConfig.model || '本地模型').slice(0, 120),
+      kind: String(error && error.kind || (status ? 'http' : 'network')).slice(0, 24),
+      status,
+      code: errorCode
+    };
+  },
+  async runAttempt(operation, opts, timeout) {
+    if (!timeout) return operation(opts);
+    const controller = new AbortController();
+    let timedOut = false;
+    const external = opts.signal;
+    const onAbort = () => controller.abort();
+    if (external) {
+      if (external.aborted) { const error = new Error('已停止生成'); error.name = 'AbortError'; throw error; }
+      external.addEventListener('abort', onAbort, { once: true });
+    }
+    let timer = setTimeout(() => { timedOut = true; controller.abort(); }, 15000);
+    const responseStarted = () => {
+      if (timer) { clearTimeout(timer); timer = null; }
+    };
+    try {
+      return await operation({ ...opts, signal: controller.signal, onTransportStart: responseStarted });
+    } catch (error) {
+      if (timedOut && !(external && external.aborted)) {
+        const timeoutError = new Error('云端 API 连接超时');
+        timeoutError.code = 'ETIMEDOUT';
+        timeoutError.kind = 'timeout';
+        timeoutError.timedOut = true;
+        timeoutError.userAborted = false;
+        throw timeoutError;
+      }
+      throw error;
+    } finally {
+      if (timer) clearTimeout(timer);
+      if (external) external.removeEventListener('abort', onAbort);
+    }
+  },
+  async _chatWithConfig(messages, opts = {}, c) {
+    if (!this.isConfigReady(c)) throw new Error('AI 未配置，请先在「AI 配置」中完成当前模式所需的接口与模型。');
+    const text = await this.request(c, this.requestBody(c, messages, opts, false), null, opts.signal, opts.onTransportStart);
     let data;
     try { data = JSON.parse(text); } catch { throw new Error('AI 接口返回了无效的 JSON'); }
-    const msg = data.choices?.[0]?.message;
-    if (!msg) throw new Error('AI 接口响应缺少 choices[0].message');
-    const result = { content: msg.content || '', reasoning: msg.reasoning_content || '', usage: data.usage || null };
-    AIUsage.record(result.usage || AIUsage.estimate(messages, result.content), { source: opts.source || 'api', model: c.model, estimated: !result.usage });
+    let result;
+    if (this.isOllama(c)) {
+      const msg = data.message;
+      if (!msg) throw new Error('Ollama 响应缺少 message');
+      result = {
+        content: msg.content || '',
+        reasoning: msg.thinking || '',
+        usage: this.ollamaUsage(data),
+        finishReason: data.done_reason || (data.done ? 'stop' : null)
+      };
+    } else if (this.isResponses(c)) {
+      result = this.responseResult(data);
+    } else {
+      const msg = data.choices?.[0]?.message;
+      if (!msg) throw new Error('AI 接口响应缺少 choices[0].message');
+      result = {
+        content: msg.content || '',
+        reasoning: msg.reasoning_content || msg.reasoning || msg.thinking || '',
+        usage: this.normalizeUsage(data.usage),
+        finishReason: data.choices?.[0]?.finish_reason || null
+      };
+    }
+    result.route = c.source === 'local' ? (opts.autoFallback ? 'auto-fallback' : 'local') : 'api';
+    result.provider = this.isOllama(c) ? 'ollama' : (this.isResponses(c) ? 'responses' : 'openai');
+    AIUsage.record(result.usage || AIUsage.estimate(messages, result.content), {
+      source: result.route === 'api' ? (opts.source || 'api') : result.route,
+      model: c.model,
+      prices: c.source === 'local' ? { hit: 0, write: 0, input: 0, output: 0, search: 0, unit: 'cny' } : c.prices,
+      estimated: !result.usage
+    });
     return result;
   },
 
+  async chat(messages, opts = {}) {
+    const forcedLocal = opts.forceLocal === true;
+    const candidates = forcedLocal ? [this.localConfig()] : this.candidateConfigs();
+    const auto = !forcedLocal && this.routeMode() === 'auto';
+    if (!candidates.length || (auto ? !candidates.every(c => this.isConfigReady(c)) : !this.isConfigReady(candidates[0]))) {
+      throw new Error(auto ? '自动模式需要同时完整配置云端 API（含 Key）和本地模型' : 'AI 未配置，请先在「AI 配置」中完成当前模式所需的接口与模型。');
+    }
+    if (forcedLocal) return await this._chatWithConfig(messages, { ...opts, autoFallback: opts.autoFallback !== false }, candidates[0]);
+    try {
+      // 15 秒只覆盖连接/首响应；收到 headers 后立即清除，长时间推理不会被中止。
+      return await this.runAttempt(next => this._chatWithConfig(messages, next, candidates[0]), opts, auto);
+    } catch (error) {
+      if (!auto || !this.shouldAutoFallback(error)) throw error;
+      const result = await this._chatWithConfig(messages, { ...opts, autoFallback: true }, candidates[1]);
+      result.fallback = this.fallbackInfo(error, candidates[0], candidates[1]);
+      return result;
+    }
+  },
+
   // 流式输出。onChunk(delta, fullContent) 收正文；opts.onReasoning(delta, fullReasoning) 收思考过程
-  // 返回 { content, reasoning, usage, finishReason }（usage 来自 stream_options include_usage 的末块）
-  async chatStream(messages, onChunk, opts = {}) {
-    const c = this.config();
-    if (!this.isReady()) throw new Error('AI 未配置，请先在「AI 配置」中设置 URL、Key 和模型。');
-    let buf = '', full = '', reasoning = '', finished = false, usage = null, finishReason = null, validEvents = 0;
+  // 返回 { content, reasoning, usage, finishReason }；同时兼容 Chat Completions 与 Responses 语义化 SSE。
+  async _chatStreamWithConfig(messages, onChunk, opts = {}, c) {
+    if (!this.isConfigReady(c)) throw new Error('AI 未配置，请先在「AI 配置」中完成当前模式所需的接口与模型。');
+    const responsesMode = this.isResponses(c);
+    const ollamaMode = this.isOllama(c);
+    let buf = '', full = '', reasoning = '', finished = false, usage = null, finishReason = null, validEvents = 0, sseEventType = '';
+    let anonymousSearches = 0;
+    const searchIds = new Set();
     const onReasoning = opts.onReasoning;
     const reqBody = this.requestBody(c, messages, opts, true);
-    // 联网搜索工具（MiMo 等 OpenAI 兼容服务），不支持的服务端会忽略或报错（由调用方降级）
-    if (opts.tools && opts.tools.length) { reqBody.tools = opts.tools; reqBody.tool_choice = 'auto'; }
+    const markSearch = event => {
+      const id = event && (event.item_id || event.call_id || event.id || event.output_index);
+      if (id !== undefined && id !== null && id !== '') searchIds.add(String(id));
+      else anonymousSearches += 1;
+    };
+    const searchCount = () => searchIds.size + anonymousSearches;
+    const consumeResponseEvent = (event, eventType) => {
+      const type = String(eventType || event.type || event.event || '');
+      validEvents++;
+      if (event.error || type === 'error') {
+        const error = event.error || {};
+        throw new Error(error.message || error.code || 'AI Responses 流式接口返回错误');
+      }
+      if (type === 'response.output_text.delta') {
+        const delta = typeof event.delta === 'string' ? event.delta : String(event.delta?.text || '');
+        if (delta) { full += delta; if (onChunk) onChunk(delta, full); }
+        return;
+      }
+      if (type === 'response.output_text.done') {
+        const text = String(event.text ?? event.output_text ?? '');
+        if (!full && text) { full = text; if (onChunk) onChunk(text, full); }
+        return;
+      }
+      if (type === 'response.reasoning_text.delta') {
+        const delta = typeof event.delta === 'string' ? event.delta : String(event.delta?.text || '');
+        if (delta) { reasoning += delta; if (onReasoning) onReasoning(delta, reasoning); }
+        return;
+      }
+      if (type === 'response.reasoning_text.done') {
+        const text = String(event.text ?? event.reasoning_text ?? '');
+        if (!reasoning && text) { reasoning = text; if (onReasoning) onReasoning(text, reasoning); }
+        return;
+      }
+      if (type === 'response.web_search_call.completed') {
+        markSearch(event);
+        return;
+      }
+      if (type === 'response.completed' || type === 'response.incomplete' || type === 'response.failed') {
+        const response = event.response || event;
+        if (type === 'response.failed' && !response.error) response.error = event.error || { message: 'AI Responses 请求失败' };
+        const parsed = this.responseResult(response);
+        if (!full && parsed.content) { full = parsed.content; if (onChunk) onChunk(parsed.content, full); }
+        if (!reasoning && parsed.reasoning) { reasoning = parsed.reasoning; if (onReasoning) onReasoning(parsed.reasoning, reasoning); }
+        usage = this.normalizeUsage(parsed.usage, Math.max(searchCount(), parsed.searchCalls || 0));
+        finishReason = parsed.finishReason;
+        finished = true;
+      }
+    };
+    const consumeOllama = (flush = false) => {
+      const lines = buf.split(/\r?\n/);
+      buf = flush ? '' : lines.pop();
+      for (const line of lines) {
+        const raw = line.trim();
+        if (!raw) continue;
+        const event = JSON.parse(raw);
+        if (event.error) throw new Error(event.error.message || event.error || 'Ollama 流式接口返回错误');
+        validEvents++;
+        const msg = event.message || {};
+        if (msg.thinking) { reasoning += msg.thinking; if (onReasoning) onReasoning(msg.thinking, reasoning); }
+        if (msg.content) { full += msg.content; if (onChunk) onChunk(msg.content, full); }
+        if (event.done) {
+          usage = this.ollamaUsage(event);
+          finishReason = event.done_reason || 'stop';
+          finished = true;
+        }
+      }
+    };
     const consume = (flush = false) => {
+      if (ollamaMode) { consumeOllama(flush); return; }
       const lines = buf.split(/\r?\n/);
       buf = flush ? '' : lines.pop();
       for (const line of lines) {
         const s = line.trim();
+        if (!s) { sseEventType = ''; continue; }
+        if (s.startsWith('event:')) { sseEventType = s.slice(6).trim(); continue; }
         if (!s.startsWith('data:')) continue;
         const raw = s.slice(5).trim();
         if (raw === '[DONE]') { finished = true; continue; }
         try {
           const j = JSON.parse(raw);
+          if (responsesMode) {
+            const type = j.type || j.event || sseEventType;
+            sseEventType = '';
+            consumeResponseEvent(j, type);
+            continue;
+          }
           if (j && j.error) throw new Error(j.error.message || j.error.code || 'AI 流式接口返回错误');
           validEvents++;
-          if (j.usage) usage = j.usage;
+          if (j.usage) usage = this.normalizeUsage(j.usage);
           const choice = j.choices?.[0];
           if (choice && choice.finish_reason) finishReason = choice.finish_reason;
           const delta = choice?.delta || {};
-          if (delta.reasoning_content) { reasoning += delta.reasoning_content; if (onReasoning) onReasoning(delta.reasoning_content, reasoning); }
-          if (delta.content) { full += delta.content; onChunk(delta.content, full); }
+          const reasoningDelta = delta.reasoning_content || delta.reasoning || delta.thinking || '';
+          if (reasoningDelta) { reasoning += reasoningDelta; if (onReasoning) onReasoning(reasoningDelta, reasoning); }
+          if (delta.content) { full += delta.content; if (onChunk) onChunk(delta.content, full); }
         } catch (e) {
           // 网络分块已由 buf 跨 chunk 拼接；完整 data 行仍无法解析时才忽略非 JSON 心跳。
           if (!(e instanceof SyntaxError)) throw e;
@@ -3056,15 +3664,16 @@ const AI = {
         if (finished) return;
         buf += chunk;
         consume(false);
-      }, opts.signal);
+      }, opts.signal, opts.onTransportStart);
     };
     try {
       await perform();
     } catch (error) {
       // 部分 OpenAI 兼容服务不接受 stream_options；仅在尚未收到有效事件时无损降级重试。
-      if (!validEvents && reqBody.stream_options && /stream_options|include_usage|unknown (field|parameter)|extra inputs/i.test(String(error && error.message || ''))) {
+      if (!ollamaMode && !responsesMode && !validEvents && reqBody.stream_options && /stream_options|include_usage|unknown (field|parameter)|extra inputs/i.test(String(error && error.message || ''))) {
         delete reqBody.stream_options;
-        buf = ''; full = ''; reasoning = ''; finished = false; usage = null; finishReason = null;
+        buf = ''; full = ''; reasoning = ''; finished = false; usage = null; finishReason = null; sseEventType = '';
+        searchIds.clear(); anonymousSearches = 0;
         await perform();
       } else {
         throw error;
@@ -3072,11 +3681,50 @@ const AI = {
     }
     if (buf.trim() && !finished) { buf += '\n'; consume(true); }
     if (!validEvents || (!full && !reasoning && !usage)) {
-      throw new Error('AI 接口未返回兼容的 SSE 对话数据，请检查该模型是否支持流式输出');
+      throw new Error(ollamaMode ? 'Ollama 未返回兼容的 NDJSON 对话数据，请检查模型名称与版本' : 'AI 接口未返回兼容的 SSE 对话数据，请检查该模型是否支持流式输出');
     }
-    const result = { content: full, reasoning, usage, finishReason };
-    AIUsage.record(result.usage || AIUsage.estimate(messages, result.content || result.reasoning), { source: opts.source || 'api', model: c.model, estimated: !result.usage });
+    const result = {
+      content: full,
+      reasoning,
+      usage: this.normalizeUsage(usage, searchCount()),
+      finishReason,
+      route: c.source === 'local' ? (opts.autoFallback ? 'auto-fallback' : 'local') : 'api',
+      provider: ollamaMode ? 'ollama' : (responsesMode ? 'responses' : 'openai')
+    };
+    AIUsage.record(result.usage || AIUsage.estimate(messages, result.content || result.reasoning), {
+      source: result.route === 'api' ? (opts.source || 'api') : result.route,
+      model: c.model,
+      prices: c.source === 'local' ? { hit: 0, write: 0, input: 0, output: 0, search: 0, unit: 'cny' } : c.prices,
+      estimated: !result.usage
+    });
     return result;
+  },
+
+  async chatStream(messages, onChunk, opts = {}) {
+    const forcedLocal = opts.forceLocal === true;
+    const candidates = forcedLocal ? [this.localConfig()] : this.candidateConfigs();
+    const auto = !forcedLocal && this.routeMode() === 'auto';
+    if (!candidates.length || (auto ? !candidates.every(c => this.isConfigReady(c)) : !this.isConfigReady(candidates[0]))) {
+      throw new Error(auto ? '自动模式需要同时完整配置云端 API（含 Key）和本地模型' : 'AI 未配置，请先在「AI 配置」中完成当前模式所需的接口与模型。');
+    }
+    if (forcedLocal) return await this._chatStreamWithConfig(messages, onChunk, { ...opts, autoFallback: opts.autoFallback !== false }, candidates[0]);
+    let emitted = false;
+    const visibleChunk = (delta, full) => { if (delta) emitted = true; if (onChunk) onChunk(delta, full); };
+    const originalReasoning = opts.onReasoning;
+    const visibleReasoning = (delta, full) => { if (delta) emitted = true; if (originalReasoning) originalReasoning(delta, full); };
+    try {
+      return await this.runAttempt(
+        next => this._chatStreamWithConfig(messages, visibleChunk, { ...next, onReasoning: visibleReasoning }, candidates[0]),
+        opts,
+        auto
+      );
+    } catch (error) {
+      // 已输出任何正文或思考内容后绝不重放，避免两套模型把半条回答拼在一起。
+      if (!auto || emitted || !this.shouldAutoFallback(error)) throw error;
+      const result = await this._chatStreamWithConfig(messages, onChunk, { ...opts, autoFallback: true }, candidates[1]);
+      result.fallback = this.fallbackInfo(error, candidates[0], candidates[1]);
+      return result;
+    }
   },
 
   async refinePrompt(userPrompt) {
@@ -3100,7 +3748,7 @@ const AI = {
   appPromptExtra() {
     const c = this.config();
     const aiCfgText = this.isReady()
-      ? `用户已经配置 AI。软件需要 AI 功能时，必须通过天择OS纯 API 命令调用，不要读取或写入 API Key，也不要自行 fetch：
+      ? `用户已经配置 AI。软件需要 AI 功能时，必须通过天择OS统一 AI 路由命令调用，不要读取或写入 API Key，也不要自行 fetch：
 const answer = await TZOS_CMD.exec('ask ' + 用户问题);
 if (answer.startsWith('执行出错：')) throw new Error(answer);
 ask 会直接返回模型正文，不会打开或写入 AI 对话，也不会启用截图、知识库或 Agent；Token 和费用会自动进入“Token 用量与计费”。`
@@ -3132,7 +3780,7 @@ TZOS_CMD 与 window.TZOS_APP_ID 由系统注入，直接用即可；绝不要自
 【可选：软件内调用系统命令行】软件里可随时 await TZOS_CMD.exec('系统命令') 调用天择OS命令行并拿到输出文本（Promise<string>），例如：
 const list = await TZOS_CMD.exec('note list');   // 读取系统笔记列表
 await TZOS_CMD.exec('clock');                     // 打开系统时钟
-可用的系统命令与用户终端一致（help 列出的全部命令，含 ask 与其它软件注册的 cmd 应用id 指令）。需要读取系统数据、调用 AI 或联动系统功能时使用，不需要可跳过。`;
+应用只能调用命令注册表中明确标记为“应用可用”的命令（例如 ask、notify、echo，以及被允许的只读查询）；AI 配置、文件写入、Shell、Python 和其它敏感能力会被拒绝或要求逐次授权。需要读取允许的数据、调用统一 AI 路由或联动安全功能时使用，不需要可跳过。`;
   },
 
   // 输出被 token 上限截断时自动续写：从截断点继续，不重复已输出内容
@@ -3635,10 +4283,11 @@ const BUILTIN_APP_CMDS = {
 
   /* ===== 关于（about）===== */
   about: (r) => {
-    if (!r) return 'about 用法：\n  about info  系统详细信息\n  about changelog  查看更新日志\n  about credits  致谢';
+    if (!r) return 'about 用法：\n  about info  系统详细信息\n  about changelog  查看当前版本更新日志\n  about history  查看完整历史版本\n  about credits  致谢';
     const { sub } = splitSub(r);
-    if (sub === 'info') return '天择OS v' + OS_VERSION + '\n发布日期：2026-08-01\n版本代号：Evolution Shell\n作者：天择网\n构建：浏览器内操作系统（Web + Electron 桌面版）\n视觉：简洁系统壁纸、专区专属背景与统一图片图标图集\nAI：OpenAI 兼容接口（DeepSeek/OpenAI/GLM/MiMo 等）\n开源：https://wjtianze.github.io/open/';
-    if (sub === 'changelog') return 'v4.1（2026-08-01）：主页与OS背景简化；各专区启用标志性专属背景；移动端与首页一屏树状导航完成适配；AI 对话支持归档、查看、还原与永久删除，归档内容仍进入知识库；命令行升级为统一注册中心并支持桌面 PowerShell/CMD；ask 为纯 API 问答，agent 为可调用命令的子智能体，二者均可被主 AI 和应用调用；取消 Agent 次数/轮数硬限制，改用无进展循环检测；应用 AI 调用加入实时滥用监管；新增 Token 用量与计费账本\nv4.0（2026-07-31）：Evolution Shell 全面重构；新增顶部态势线与系统轨道；冷/中/暖三套生成式星图壁纸、图片按钮与表面材质；统一 8×8 图片图标图集并兼容旧 installedApps emoji 数据；网页与独立 AI 悬浮窗视觉同步；独立悬浮窗可通过代理执行主桌面 Agent 命令\nv3.5（2026-07-25）：用户等级与积分（加密存储、随存档迁移）、冷/中/暖配色皮肤（OS 内积分解锁，天择网全免费）、AI 对话工具栏联网与命令行开关、纯文本模型图片 OCR 与文本文件直读、软件可调用系统命令行（TZOS_CMD.exec）、修复上下文用量刷新后缩水\nv3.2（2026-07-24）：笔记编号固定化 + view/edit/undo、COC 伤害自定义闪震、官网版本探测修复、悬浮窗命令修复\nv3.1.1（2026-07-23）：修复 AI 软件命令包注册失效、新增命令行笔记应用、文档阅读器标签并入标题栏、命令行输入输出取消字符限制、AI 提示词补全\nv3.1（2026-07-22）：实用工具全面本地化、AI 对话与悬浮窗互通、命令行重构\nv3.0（2026-07-21）：AI 悬浮窗（Ctrl+1）、窗口层级体系、桌面版自定义协议\nv2.6（2026-07-20）：窗口置顶、文档缩放、命令行扩展\nv2.5（2026-07-20）：联网搜索、文件上传、命令行全面开放\nv2.2（2026-07-19）：桌面版四大痛点修复\nv2.1（2026-07-18）：命令行终端与 AI Agent\nv2.0（2026-07-18）：AI 全链路升级\nv1.0（2026-07-14）：首个版本发布';
+    if (sub === 'info') return '天择OS v' + OS_VERSION + '\n发布日期：2026-08-07\n版本代号：Evolution Shell\n作者：天择网\n构建：浏览器内操作系统（Web + Electron 桌面版）\n视觉：简洁系统壁纸、专区专属背景与统一图片图标图集\nAI：OpenAI 兼容接口（DeepSeek/OpenAI/GLM/MiMo 等）\n开源：https://wjtianze.github.io/open/';
+    if (sub === 'changelog') return 'v5.0（2026-08-07）：DeepSeek V4 Flash 升级为 Responses API 并支持联网搜索；天择网站点 AI 恢复流式输出、深度思考、跨页同一会话与 Markdown/LaTeX 增量渲染；桌面浏览器改用真实网页视图；网页 AI 支持 11 个站点多选并使用原生 Chromium 视图，国际站加载时提示 VPN；新增内部文件与知识库一体化管理、Windows 应用管理器和内置 Python 3.13 工具；命令行完善透传、权限与逐次授权；COC 伤害计算分享配置可复制回主页，并新增 COC教程入口；AI 应用新增 API、本地部署、自动回退三档路由，支持 Ollama 自动读取模型/上下文/能力与可配置上下文压缩；Windows 任务栏和窗口统一使用天择OS图标。\n\n历史版本：v4.1（统一命令中心与 Evolution Shell 完善）、v4.0（Evolution Shell 重构）、v3.5（等级积分与应用命令桥）、v3.2、v3.1、v3.0、v2.x、v1.0。';
+    if (sub === 'history') return 'v4.1（2026-08-01）：主页与OS背景简化；各专区启用标志性专属背景；移动端与首页一屏树状导航完成适配；AI 对话支持归档、查看、还原与永久删除，归档内容仍进入知识库；命令行升级为统一注册中心并支持桌面 PowerShell/CMD；ask 为纯 API 问答，agent 为可调用命令的子智能体，二者均可被主 AI 和应用调用；取消 Agent 次数/轮数硬限制，改用无进展循环检测；应用 AI 调用加入实时滥用监管；新增 Token 用量与计费账本\nv4.0（2026-07-31）：Evolution Shell 全面重构；新增顶部态势线与系统轨道；冷/中/暖三套生成式星图壁纸、图片按钮与表面材质；统一 8×8 图片图标图集并兼容旧 installedApps emoji 数据；网页与独立 AI 悬浮窗视觉同步；独立悬浮窗可通过代理执行主桌面 Agent 命令\nv3.5（2026-07-25）：用户等级与积分（加密存储、随存档迁移）、冷/中/暖配色皮肤（OS 内积分解锁，天择网全免费）、AI 对话工具栏联网与命令行开关、纯文本模型图片 OCR 与文本文件直读、软件可调用系统命令行（TZOS_CMD.exec）、修复上下文用量刷新后缩水\nv3.2（2026-07-24）：笔记编号固定化 + view/edit/undo、COC 伤害自定义闪震、官网版本探测修复、悬浮窗命令修复\nv3.1.1（2026-07-23）：修复 AI 软件命令包注册失效、新增命令行笔记应用、文档阅读器标签并入标题栏、命令行输入输出取消字符限制、AI 提示词补全\nv3.1（2026-07-22）：实用工具全面本地化、AI 对话与悬浮窗互通、命令行重构\nv3.0（2026-07-21）：AI 悬浮窗（Ctrl+1）、窗口层级体系、桌面版自定义协议\nv2.6（2026-07-20）：窗口置顶、文档缩放、命令行扩展\nv2.5（2026-07-20）：联网搜索、文件上传、命令行全面开放\nv2.2（2026-07-19）：桌面版四大痛点修复\nv2.1（2026-07-18）：命令行终端与 AI Agent\nv2.0（2026-07-18）：AI 全链路升级\nv1.0（2026-07-14）：首个版本发布';
     if (sub === 'credits') return '天择OS 致谢：\n· DeepSeek / OpenAI / GLM / MiMo 等 AI 服务商\n· Electron 跨平台桌面框架\n· 所有开源项目（marked/highlight.js/pdf.js 等）\n· 天择网用户的支持与反馈';
     throw new Error('未知子命令：' + sub);
   },
@@ -3722,7 +4371,7 @@ const BUILTIN_APP_CMDS = {
     const cats = {
       'tznet': '天择网（首页+天择导航）',
       'tool': '实用工具（COC 专区（含存档分析）/升级规划/伤害计算/背单词/笔记）',
-      'system': '系统（AI 配置/对话/软件商城/设置/关于/我的软件/浏览器/命令行/时钟/文档阅读器/玩机技巧/导航）',
+      'system': '系统（AI 配置/文件与知识库/应用管理器/浏览器/命令行/设置/关于/时钟/文档阅读器/玩机技巧/导航）',
       'ai': 'AI（AI 配置、AI 对话）',
       'game': '游戏（绩点战争）',
       'emu': '模拟器（Windows 11/Windows 10/安卓）'
@@ -3835,10 +4484,16 @@ const BUILTIN_APP_CMDS = {
 
   /* ===== COC 专区（tz-coc）===== */
   coc: (r) => {
-    if (!r) return 'coc 用法：\n  coc list  COC 专区板块列表\n  coc open  打开 COC 专区（含村庄存档分析）';
-    const { sub } = splitSub(r);
-    if (sub === 'list') return 'COC 专区板块：\n  · 村庄存档分析（COC 专区首页，命令 coc-data 读写本地存档）\n  · 数据查询（命令 coc-game）\n  · tz-coc-planner 升级规划（命令 planner）\n  · tz-coc-dmg 伤害计算（命令 dmg）';
+    if (!r) return 'coc 用法：\n  coc list  COC 专区板块列表\n  coc open  打开 COC 专区（含村庄存档分析）\n  coc tutorial [open|info]  打开或介绍 COC教程';
+    const { sub, args } = splitSub(r);
+    if (sub === 'list') return 'COC 专区板块：\n  · 村庄存档分析（COC 专区首页，命令 coc-data 读写本地存档）\n  · 数据查询（命令 coc-game）\n  · tz-coc-planner 升级规划（命令 planner）\n  · tz-coc-dmg 伤害计算（命令 dmg）\n  · COC教程（命令 coc tutorial）';
     if (sub === 'open') { launchApp('tz-coc'); return '已打开 COC 专区（含村庄存档分析）'; }
+    if (sub === 'tutorial' || sub === 'guide') {
+      const action = String(args || 'open').trim().toLowerCase() || 'open';
+      if (action === 'info') return 'COC教程：天择网 COC 专区的教程与攻略栏目；当前内容为“敬请期待”，以后会持续增加文章。';
+      if (action === 'open') { launchApp('tz-coc-tutorial'); return '已打开 COC教程'; }
+      throw new Error('用法：coc tutorial [open|info]');
+    }
     throw new Error('未知子命令：' + sub);
   },
 
@@ -4148,7 +4803,7 @@ const CLI = {
 '  resetlayout                 重置桌面图标布局\n' +
 '  export                      导出全量存档\n' +
 '  settings info|storage|reset 系统信息/存储/重置布局\n' +
-'  about info|changelog|credits 关于/更新日志/致谢\n' +
+'  about info|changelog|history|credits 关于/更新日志/历史版本/致谢\n' +
 '── 应用 ──\n' +
 '  apps                        列出所有应用（含 id）\n' +
 '  open 应用id                 打开应用\n' +
@@ -4165,6 +4820,8 @@ const CLI = {
 '── AI ──\n' +
 '  aiconfig                    查看当前 AI 配置\n' +
 '  aiconfig url|key|model|maxtokens 值    修改配置\n' +
+'  ai mode [api|local|auto]    查看/切换 API、本地或自动回退\n' +
+'  ai local [url|model|api 值] 查看/修改本地模型；models 扫描模型\n' +
 '  price                       查看 token 单价\n' +
 '  price hit|write|input|output|search 数值  设置单价（每百万 tokens；search 按次）\n' +
 '  price unit usd|cny          设置货币单位\n' +
@@ -4198,6 +4855,7 @@ const CLI = {
 '  timer 时长                  倒计时，如 timer 5m / timer 90s / timer 1h30m\n' +
 '── 天择网专区直达 ──\n' +
 '  coc list|open               COC 专区板块/打开专区\n' +
+'  coc tutorial [open|info]    COC教程专区打开/介绍（coc-tutorial 亦可）\n' +
 '  coc-data [save <JSON>|json|clear|help]  读写本地玩家村庄存档\n' +
 '  coc-game [子命令]           COC 游戏静态数据查询；子命令：\n' +
 '    search 名字 | th 等级 | cat 类别 | count | json | help\n' +
@@ -4236,7 +4894,7 @@ const CLI = {
 '  emu-win10 info|open         Windows 10 模拟器\n' +
 '  emu-android info|open       安卓模拟器\n' +
 '── 软件命令包与 AI 提问 ──\n' +
-'  ask 问题                    纯 API 提问，结果直接输出到命令行；不写入 AI 对话\n' +
+'  ask 问题                    按当前 AI 模式提问，结果直接输出到命令行；不写入 AI 对话\n' +
 '  ai-usage [open|summary]     打开或汇总 Token 用量与计费统计\n' +
 '  cmd 应用id 指令 [参数]       调用 AI 软件注册的命令包（cmd list 查看）\n' +
 '  installhelp                 获取安装软件教程（返回 AI 软件商城提示词）\n' +
@@ -4251,24 +4909,24 @@ const CLI = {
     if (this.registry) {
       return '\n\n【天择OS 命令行能力】你可以输出 tzcli 代码块让操作系统执行命令，每行一条：\n```tzcli\napp open ai-config\nmemory add 用户喜欢简洁回答\n```\n' +
         this.registry.agentPrompt() +
-        '\n规则：仅在确有必要时使用；不要写注释；优先使用新的命名空间。包括 ai ask/ask 在内的全部命令都可调用。系统不限制调用次数或轮数，但会在发现重复命令、重复结果或周期性无进展时自动掐断循环。';
+        '\n规则：仅在确有必要时使用；不要写注释；优先使用新的命名空间。只能调用上面列出的 Agent 可用命令；仅用户命令会被拒绝，需授权命令会弹出单次确认。系统不限制调用次数或轮数，但会在发现重复命令、重复结果或周期性无进展时自动掐断循环。';
     }
     return '\n\n【天择OS 命令行能力】你可以输出 tzcli 代码块让操作系统执行命令，格式（每行一条命令）：\n' +
 '```tzcli\nopen ai-config\nmem add 用户喜欢简洁的回答\n```\n' +
 '全部命令如下（自有软件命令均为顶层命令，无需 cmd 前缀；只有用户安装的 AI 软件才走 cmd）：\n' +
-'· 系统：version | theme dark|light | style win|mac|auto | level [rule] | skin [list|use|unlock] | widget open|close | resetlayout | export | settings info|storage|reset | about info|changelog|credits\n' +
+'· 系统：version | theme dark|light | style win|mac|auto | level [rule] | skin [list|use|unlock] | widget open|close | resetlayout | export | settings info|storage|reset | about info|changelog|history|credits\n' +
 '· 应用：apps | open 应用id | close 应用id | pin/top 应用id | unpin 应用id | pinned | install 名称|图标|完整HTML | uninstall 应用id | rename 应用id|新名[|图标] | sethtml 应用id|完整HTML | gethtml 应用id | files list|export 应用id|size\n' +
-'· AI：aiconfig [url|key|model|maxtokens 值] | price [hit|write|input|output 值] / price unit usd|cny | deepthink on|off | agent on|off | chat clear|history|last | store open|tutorial|idea | installhelp（AI 软件命令包接入教程）\n' +
+'· AI：aiconfig [url|key|model|maxtokens 值] | ai mode [api|local|auto] | ai local [url|model|api|maxtokens 值|models] | price [hit|write|input|output 值] / price unit usd|cny | deepthink on|off | agent on|off | chat clear|history|last | store open|tutorial|idea | installhelp（AI 软件命令包接入教程）\n' +
 '· 记忆：mem | mem add 内容 | mem del 编号 | mem on|off 编号\n' +
 '· 通知/对话：notify 文本 | clear chat（清空 AI 对话，保留最后一次回复） | clear notifs\n' +
 '· 浏览器/网页：openurl 网址或搜索词（go 同义） | browser tabs|closeall|home | home sections|open 板块 | news [编号] | blog [编号] | bm / bm add 网址|标题 / bm del 编号\n' +
 '· 时钟：clock | clock-now | stopwatch [start|stop|reset] | timer 时长(如 5m / 90s / 1h30m)\n' +
-'· 天择网专区：coc list|open | coc-data [save <JSON>|json|clear] | coc-game [search 名字|th 等级|cat 类别|count|json] | village info|open | planner info|open | dmg info|quake HP|open | game list|open | gpa info|open|rules | english list|open | ai-zone list|open | open-data list|open | tree [分类]\n' +
+'· 天择网专区：coc list|open | coc tutorial [open|info] | coc-data [save <JSON>|json|clear] | coc-game [search 名字|th 等级|cat 类别|count|json] | village info|open | planner info|open | dmg info|quake HP|open | game list|open | gpa info|open|rules | english list|open | ai-zone list|open | open-data list|open | tree [分类]\n' +
 '· 单词本：words | words add word|词性|释义 | words list [N] | words count | words find 关键词 | words del 编号\n' +
 '· 笔记（Markdown/LaTeX）：note | note list | note new 标题 | note open 编号|标题 | note view 编号|标题 | note edit 编号 文本(整体替换，\\n 为换行) | note append 编号 文本(\n 为换行) | note export 编号 | note search 关键词 | note undo | note del 编号\n' +
 '· 文档/技巧/模拟器：docs open URL|recent | tips [编号] | emu-win/emu-win10/emu-android info|open\n' +
 '· 用户安装的 AI 软件：cmd list 查看已注册命令；cmd 应用id 指令 [参数] 调用（会自动打开软件窗口，指令在软件内部执行）\n' +
-'· 其他：js JavaScript代码 | echo 文本 | ask 问题（纯 API 提问，AI 也可调用）\n' +
+'· 其他：js JavaScript代码 | echo 文本 | ask 问题（使用统一 AI 路由，AI 也可调用）\n' +
 '规则：仅在确有必要时使用（普通问答不要用）；命令在你输出后立即执行，结果会以用户消息回传；异步命令（fetch/IndexedDB）会自动等待；块内不要写注释和空行；命令调用没有次数或轮数硬限制，系统仅在检测到重复且无进展的循环时自动终止；写记忆、改配置、装改软件、查 COC/单词/笔记数据等操作优先用命令完成，不要只口头描述。';
   },
   cmds: {
@@ -4304,7 +4962,7 @@ const CLI = {
       try { localStorage.removeItem('tz_app_cmds_' + r); } catch (e) {}
       if (typeof AppCommands !== 'undefined') AppCommands.syncRegistry(r, []);
       WM.windows.filter(w => w.appId === r).forEach(w => WM.close(w.id));
-      Desktop.render(); StartMenu.render(); refreshOpenApp('file-manager');
+      Desktop.render(); StartMenu.render(); refreshOpenApp('app-manager');
       return '已卸载「' + app.name + '」';
     },
     rename: (r) => {
@@ -4316,7 +4974,7 @@ const CLI = {
       if (p[1]) patch.name = p[1];
       if (p[2] && /\p{Extended_Pictographic}/u.test(p[2])) { patch.icon = p[2]; patch.iconKey = normalizeUiIconKey(p[2]); }
       Store.updateApp(p[0], patch);
-      Desktop.render(); StartMenu.render(); refreshOpenApp('file-manager');
+      Desktop.render(); StartMenu.render(); refreshOpenApp('app-manager');
       return '已重命名为「' + (patch.name || app.name) + '」';
     },
     sethtml: (r) => {
@@ -4358,6 +5016,80 @@ const CLI = {
       else throw new Error('用法：aiconfig url|key|model|maxtokens 值');
       Store.setAIConfig(c);
       return 'AI 配置已更新：' + k;
+    },
+    aimode: (r) => {
+      const mode = String(r || '').trim().toLowerCase();
+      if (!mode) return 'AI 调用模式：' + Store.getAIRouteMode() + '\napi=始终 API，local=始终本地，auto=API 不可达且尚未输出时回退本地';
+      Store.setAIRouteMode(mode);
+      if (mode === 'local') setWebSearchCtx(false);
+      refreshChatView();
+      return 'AI 调用模式已切换为：' + mode;
+    },
+    ailocal: async (r) => {
+      const raw = String(r || '').trim();
+      const c = Store.getAILocalConfig();
+      if (!raw) return '协议：' + c.api + '\nURL：' + c.url + '\n模型：' + c.model + '\nKey：不需要\nmaxTokens：' + (c.maxTokens || 8192) +
+        '\ncontextLength：' + ((c.caps && c.caps.contextLength) || '未设置') + '\n图片：' + (!!(c.caps && c.caps.image) ? '开' : '关') +
+        '\n文件：' + (!!(c.caps && c.caps.file) ? '开' : '关') + '\n深度思考：' + (c.thinking !== false ? '开' : '关');
+      const sp = raw.indexOf(' '), action = (sp < 0 ? raw : raw.slice(0, sp)).toLowerCase(), value = sp < 0 ? '' : raw.slice(sp + 1).trim();
+      if (action === 'models') {
+        if (!window.tzDesktop?.discoverLocalModels) throw new Error('桌面版才能通过受限桥接扫描本地模型；网页版可在 AI 配置中手填');
+        const base = String(c.url || '').replace(/\/+$/, '');
+        const endpoint = c.api === 'ollama' ? base.replace(/\/api\/chat$/i, '') + '/api/tags' : base.replace(/\/chat\/completions$/i, '').replace(/\/v1$/i, '') + '/v1/models';
+        const data = await window.tzDesktop.discoverLocalModels(endpoint);
+        const models = c.api === 'ollama' ? (data.models || []).map(item => item.name || item.model).filter(Boolean) : (data.data || []).map(item => item.id).filter(Boolean);
+        return models.length ? models.join('\n') : '（本地服务未返回模型）';
+      }
+      if (action === 'details') {
+        if (c.api !== 'ollama') throw new Error('details 仅支持 Ollama');
+        if (!window.tzDesktop?.getLocalModelDetails) throw new Error('桌面版才能通过受限桥接读取 Ollama 模型详情');
+        const endpoint = String(c.url || '').replace(/\/+$/, '').replace(/\/api\/chat$/i, '') + '/api/show';
+        const details = await window.tzDesktop.getLocalModelDetails(endpoint, c.model);
+        c.caps = { ...(c.caps || {}), contextLength: details.contextLength || (c.caps && c.caps.contextLength) || 0, image: (details.capabilities || []).includes('vision') };
+        if ((details.capabilities || []).length) c.thinking = details.capabilities.includes('thinking');
+        c.discovered = { ...details, fetchedAt: Date.now() };
+        Store.setAILocalConfig(c);
+        return JSON.stringify(details, null, 2);
+      }
+      if (!value) throw new Error('用法：ai local url|model|api|maxtokens|context|image|file|thinking 值，或 ai local models|details');
+      if (action === 'url') c.url = value;
+      else if (action === 'model') c.model = value;
+      else if (action === 'api') { if (!['ollama', 'chat-completions'].includes(value)) throw new Error('api 仅支持 ollama 或 chat-completions'); c.api = value; c.provider = value === 'ollama' ? 'ollama' : 'openai-local'; }
+      else if (action === 'maxtokens') { const n = parseInt(value, 10); if (!(n > 0)) throw new Error('maxtokens 必须是正整数'); c.maxTokens = n; }
+      else if (action === 'context') { const n = parseInt(value, 10); if (!(n > 0)) throw new Error('context 必须是正整数'); c.caps = { ...(c.caps || {}), contextLength: n }; }
+      else if (['image', 'file', 'thinking'].includes(action)) {
+        if (!['on', 'off'].includes(value)) throw new Error(action + ' 仅支持 on 或 off');
+        if (action === 'thinking') c.thinking = value === 'on';
+        else c.caps = { ...(c.caps || {}), [action]: value === 'on' };
+      }
+      else throw new Error('用法：ai local url|model|api|maxtokens|context|image|file|thinking 值，或 ai local models|details');
+      Store.setAILocalConfig(c);
+      return '本地 AI 配置已更新：' + action;
+    },
+    aicontext: async (r) => {
+      const raw = String(r || '').trim();
+      const settings = Store.getContextCompressionSettings();
+      const current = Store.getChatCompression(Store.getActiveChatId());
+      if (!raw) return '自动压缩：' + (settings.auto ? '开' : '关') + '\n阈值：' + settings.threshold + '%\n保留最近消息：' + settings.keepRecent +
+        '\n当前对话摘要：' + (current ? '已覆盖前 ' + current.through + ' 条消息' : '无');
+      const sp = raw.indexOf(' '), action = (sp < 0 ? raw : raw.slice(0, sp)).toLowerCase(), value = sp < 0 ? '' : raw.slice(sp + 1).trim().toLowerCase();
+      if (action === 'compress') {
+        const result = await compressChatContext(Store.getActiveChatId());
+        markChatDirty();
+        return result.changed ? '已压缩前 ' + result.through + ' 条消息；聊天记录未删除' : result.reason;
+      }
+      if (action === 'clear') { Store.setChatCompression(null, Store.getActiveChatId()); markChatDirty(); return '已清除当前对话的压缩摘要（聊天记录未删除）'; }
+      if (action === 'auto') {
+        if (!['on', 'off'].includes(value)) throw new Error('用法：ai context auto on|off');
+        Store.setContextCompressionSettings({ auto: value === 'on' });
+      } else if (action === 'threshold') {
+        const n = parseInt(value, 10); if (!(n >= 50 && n <= 95)) throw new Error('threshold 必须为 50-95');
+        Store.setContextCompressionSettings({ threshold: n });
+      } else if (action === 'keep') {
+        const n = parseInt(value, 10); if (!(n >= 4 && n <= 20)) throw new Error('keep 必须为 4-20');
+        Store.setContextCompressionSettings({ keepRecent: n });
+      } else throw new Error('用法：ai context [auto on|off | threshold 50-95 | keep 4-20 | compress | clear]');
+      return '上下文压缩设置已更新：' + action;
     },
     price: (r) => {
       if (!r) {
@@ -4557,14 +5289,15 @@ const CLI = {
       return '倒计时 ' + sec + ' 秒已开始' + floatTip('时钟');
     },
     // 软件直达（coc-data 玩家存档 / coc-game 游戏数据 / words 词库 均为数据输出命令，见 BUILTIN_APP_CMDS）
-    // 纯 API 提问：不打开/写入 AI 对话，不带截图、附件、知识库或 Agent。
+    // 统一 AI 路由提问：不打开/写入 AI 对话，不带截图、附件、知识库或 Agent。
     ask: async (r, execOpts = {}) => {
       need(r, 'ask 问题');
       if (!AI.isReady()) throw new Error('AI 未配置，请先在「AI 配置」中设置');
       const result = await AI.chat([{ role: 'user', content: r }], { thinking: false, signal: execOpts.signal || null, source: execOpts.byApp ? 'app' : 'ask' });
       const usage = result.usage ? '\n\n[' + usageText(result.usage) + ']' : '';
+      const route = '\n[' + (result.route === 'auto-fallback' ? '自动回退 · 本地模型' : (result.route === 'local' ? '本地模型' : 'API')) + ']';
       const answer = result.content || result.reasoning || '（AI 未返回正文）';
-      return { out: answer + usage, data: { kind: 'ask', question: r, answer, reasoning: result.reasoning || '', usage: result.usage || null } };
+      return { out: answer + usage + route, data: { kind: 'ask', question: r, answer, reasoning: result.reasoning || '', usage: result.usage || null, route: result.route, provider: result.provider } };
     },
     'ai-usage': (r) => {
       const sub = String(r || '').trim().toLowerCase();
@@ -4664,39 +5397,306 @@ function formatChatList(chats) {
   return chats.length ? chats.map((chat, index) => (index + 1) + '. ' + chat.id + '  ' + (chat.archivedAt ? '[已归档] ' : '') + (chat.title || '新对话') + '  ' + (chat.messages || []).length + ' 条消息').join('\n') : '（暂无对话）';
 }
 
+function cliPassthrough(ctx, fallbackStart = 0) {
+  if (ctx && (ctx.literalProvided || ctx.spec?.passthrough === true || ctx.spec?.parseOptions === false)) {
+    return String(ctx.literal || '');
+  }
+  return (ctx && Array.isArray(ctx.args) ? ctx.args.slice(fallbackStart) : []).join(' ');
+}
+
+async function requireAgentApproval(ctx, title, detail) {
+  if (!ctx || (!ctx.byAI && !ctx.byApp)) return true;
+  const actor = ctx.byAI ? 'AI Agent' : '应用';
+  const approved = await confirmDialog({
+    title: '授权 ' + actor + '：' + title,
+    message: actor + ' 请求执行本机高风险能力。该授权只对本次命令有效。\n\n' + String(detail || '').slice(0, 1600),
+    confirmText: '授权本次执行',
+    danger: true
+  });
+  if (!approved) {
+    const error = new Error('用户未授权本次操作：' + title);
+    error.meta = { reason: 'approval-denied', command: ctx.command || '' };
+    throw error;
+  }
+  Store.addNotif({ title: '已授权本次命令', body: actor + ' · ' + (ctx.command || title) });
+  return true;
+}
+
+async function internalFileSearch(api, rootPath, query, limit = 100) {
+  const root = normalizeInternalPath(rootPath || '');
+  const needle = String(query || '').trim().toLocaleLowerCase('zh-CN');
+  if (!needle) throw new Error('搜索关键词不能为空');
+  const max = Math.max(1, Math.min(500, Number(limit) || 100));
+  const queue = [root], hits = [];
+  let visited = 0;
+  while (queue.length && hits.length < max && visited < 5000) {
+    const result = await api.list(queue.shift());
+    for (const entry of result.entries || []) {
+      visited++;
+      if ([entry.name, entry.path, entry.extension].join(' ').toLocaleLowerCase('zh-CN').includes(needle)) hits.push(entry);
+      if (entry.kind === 'directory' && visited < 5000) queue.push(entry.path);
+      if (hits.length >= max) break;
+    }
+  }
+  return { root, query, hits, visited, truncated: visited >= 5000 || hits.length >= max };
+}
+
+async function migrateInternalKnowledge(fromPath, toPath) {
+  const from = normalizeInternalPath(fromPath);
+  const to = normalizeInternalPath(toPath);
+  const exact = 'internal:' + from;
+  const prefix = exact.replace(/\/+$/, '') + '/';
+  const docs = await KnowledgeStore.listDocs();
+  const matches = docs.filter(doc => doc.id === exact || String(doc.id || '').startsWith(prefix));
+  for (const doc of matches) {
+    const suffix = doc.id === exact ? '' : String(doc.id).slice(exact.length);
+    const nextPath = to + suffix;
+    await KnowledgeStore.removeDoc(doc.id);
+    await KnowledgeStore.putDoc({ id: 'internal:' + nextPath, title: nextPath.split('/').pop() || doc.title, source: '天择OS 文件/' + nextPath, text: doc.text });
+  }
+  return matches.length;
+}
+
+async function removeInternalKnowledge(pathValue) {
+  const path = normalizeInternalPath(pathValue);
+  const exact = 'internal:' + path;
+  const prefix = exact.replace(/\/+$/, '') + '/';
+  const docs = await KnowledgeStore.listDocs();
+  const matches = docs.filter(doc => doc.id === exact || String(doc.id || '').startsWith(prefix));
+  await Promise.all(matches.map(doc => KnowledgeStore.removeDoc(doc.id)));
+  return matches.length;
+}
+
+const NativeCLI = {
+  files() {
+    const api = desktopService('files');
+    if (!api) throw new Error('内部文件命令仅在天择OS桌面版可用');
+    return api;
+  },
+  apps() {
+    const api = desktopService('apps');
+    if (!api) throw new Error('Windows 软件命令仅在天择OS Windows 桌面版可用');
+    return api;
+  },
+  python() {
+    const api = desktopService('python');
+    if (!api) throw new Error('Python 命令仅在天择OS桌面版可用');
+    return api;
+  },
+  async fileInfo() {
+    const info = await this.files().getInfo();
+    return { out: '内部文件根：' + (info.rootDisplayPath || '天择OS 文件') + '\n固定目录：' + (info.folders || []).map(item => item.path || '/').join('、'), data: info };
+  },
+  async fileList(ctx) {
+    const path = normalizeInternalPath(ctx.args.join(' '));
+    const result = await this.files().list(path);
+    return { out: (result.entries || []).map(entry => (entry.kind === 'directory' ? '[目录] ' : '[文件] ') + entry.path + (entry.kind === 'file' ? '  ' + formatFileBytes(entry.size) : '')).join('\n') || '（空文件夹）', data: result };
+  },
+  async fileRead(ctx) {
+    const path = normalizeInternalPath(ctx.args.join(' ')); need(path, 'file read 内部路径');
+    const result = await this.files().read(path);
+    return { out: result.kind === 'text' ? result.data : JSON.stringify({ ...result, data: undefined }, null, 2), data: result.kind === 'text' ? { ...result, data: undefined, text: result.data } : result };
+  },
+  async fileWrite(ctx) {
+    const path = normalizeInternalPath(ctx.args[0] || ''); need(path, 'file write 内部路径 [--overwrite] [--parents] -- 文本');
+    const content = cliPassthrough(ctx, 1).replace(/\\n/g, '\n');
+    const overwrite = ctx.options.overwrite === true || String(ctx.options.overwrite || '').toLowerCase() === 'true';
+    if (overwrite) await requireAgentApproval(ctx, '覆盖内部文件', path);
+    const result = await this.files().writeText({ path, content, overwrite, createParents: ctx.options.parents === true });
+    const indexed = await KnowledgeStore.getDoc('internal:' + path);
+    if (indexed) await KnowledgeStore.putDoc({ id: indexed.id, title: result.name, source: '天择OS 文件/' + path, text: content });
+    return { out: (overwrite ? '已写入' : '已新建') + '内部文件：' + result.path, data: result };
+  },
+  async fileMkdir(ctx) {
+    const path = normalizeInternalPath(ctx.args.join(' ')); need(path, 'file mkdir 内部路径');
+    const result = await this.files().mkdir({ path, recursive: ctx.options.parents === true });
+    return { out: '已创建内部文件夹：' + result.path, data: result };
+  },
+  async fileRename(ctx) {
+    const path = normalizeInternalPath(ctx.args[0] || ''); const name = ctx.args.slice(1).join(' '); need(path && name, 'file rename 内部路径 新名称');
+    await requireAgentApproval(ctx, '重命名内部项目', path + ' → ' + name);
+    const result = await this.files().rename({ path, name });
+    await migrateInternalKnowledge(path, result.path);
+    return { out: '已重命名：' + path + ' → ' + result.path, data: result };
+  },
+  async fileCopy(ctx) {
+    const from = normalizeInternalPath(ctx.args[0] || ''), to = normalizeInternalPath(ctx.args[1] || ''); need(from && to, 'file copy 源路径 目标路径');
+    const result = await this.files().copy({ from, to, createParents: ctx.options.parents === true });
+    return { out: '已复制：' + from + ' → ' + result.path, data: result };
+  },
+  async fileMove(ctx) {
+    const from = normalizeInternalPath(ctx.args[0] || ''), to = normalizeInternalPath(ctx.args[1] || ''); need(from && to, 'file move 源路径 目标路径');
+    await requireAgentApproval(ctx, '移动内部项目', from + ' → ' + to);
+    const result = await this.files().move({ from, to, createParents: ctx.options.parents === true });
+    await migrateInternalKnowledge(from, result.path);
+    return { out: '已移动：' + from + ' → ' + result.path, data: result };
+  },
+  async fileTrash(ctx) {
+    const path = normalizeInternalPath(ctx.args.join(' ')); need(path, 'file trash 内部路径');
+    const api = this.files();
+    const stat = await api.stat(path);
+    const recursive = stat.kind === 'directory';
+    const first = await api.remove({ path, recursive, requireConfirm: true, userConfirmed: true });
+    if (!first.requiresConfirmation) return { out: '没有删除任何项目', data: first };
+    const summary = first.summary || {};
+    const approved = await confirmDialog({ title: ctx.byAI ? '授权 AI 移到回收站' : '移到 Windows 回收站', message: path + '\n文件 ' + (summary.files || 0) + ' 个，文件夹 ' + (summary.directories || 0) + ' 个，共 ' + formatFileBytes(summary.bytes || 0) + '。\n此确认只对应当前目标和当前版本。', confirmText: '移到回收站', danger: true });
+    if (!approved) throw new Error('用户取消了删除');
+    const result = await api.remove({ path, recursive, requireConfirm: true, userConfirmed: true, confirmToken: first.confirmToken });
+    await removeInternalKnowledge(path);
+    return { out: '已移到 Windows 回收站：' + path, data: result };
+  },
+  async fileSearch(ctx) {
+    const query = ctx.args.join(' '); need(query, 'file search 关键词 [--path 路径] [--limit N]');
+    const result = await internalFileSearch(this.files(), ctx.options.path || '', query, ctx.options.limit || 100);
+    return { out: result.hits.map(entry => (entry.kind === 'directory' ? '[目录] ' : '[文件] ') + entry.path).join('\n') || '（没有命中）', data: result };
+  },
+  async fileImport(ctx, directory) {
+    const destination = normalizeInternalPath(ctx.args.join(' ') || 'Imports');
+    await requireAgentApproval(ctx, '从 Windows 导入' + (directory ? '文件夹' : '文件'), destination);
+    const result = directory ? await this.files().importDirectory(destination) : await this.files().importFiles(destination);
+    return { out: result.canceled ? '已取消导入' : '已导入 ' + (result.imported || []).length + ' 个项目', data: result };
+  },
+  async fileExport(ctx) {
+    const path = normalizeInternalPath(ctx.args.join(' ')); need(path, 'file export 内部路径');
+    await requireAgentApproval(ctx, '导出到 Windows', path);
+    const result = await this.files().export(path);
+    return { out: result.canceled ? '已取消导出' : '已导出到 Windows：' + result.destination, data: result };
+  },
+  async winList(ctx) {
+    const result = await this.apps().list();
+    const query = ctx.args.join(' ').trim().toLocaleLowerCase('zh-CN');
+    const apps = (result.apps || []).filter(app => !query || [app.name, app.group, app.source].join(' ').toLocaleLowerCase('zh-CN').includes(query));
+    return { out: apps.map(app => app.id + '  ' + app.name + '  [' + app.group + '] · 原生窗口').join('\n') || '（没有匹配的软件）', data: { ...result, apps } };
+  },
+  async winChoose(ctx) {
+    await requireAgentApproval(ctx, '选择 Windows 软件入口', '将打开 Windows 文件选择器，只接受 exe、com 或 lnk。');
+    const result = await this.apps().choose();
+    return { out: result.canceled ? '已取消选择' : '已加入应用管理器：' + result.app.name, data: result };
+  },
+  async winImport(ctx, launch) {
+    await requireAgentApproval(ctx, launch ? '导入并运行 EXE 安装包' : '导入 EXE 安装包', '安装包会保存到内部 Applications/Installers；运行时将修改 Windows 系统。');
+    const result = await this.apps().importInstaller({ launch: !!launch, userConfirmed: !!launch });
+    return { out: result.canceled ? '已取消选择' : '已导入安装包：' + (result.file || result.app.name) + (result.launched ? ' · 已启动' : ''), data: result };
+  },
+  async winLaunch(ctx) {
+    const id = ctx.args[0] || ''; need(id, 'winapp launch 应用id [-- 参数]');
+    const args = ctx.args.slice(1);
+    await requireAgentApproval(ctx, '启动 Windows 原生软件', id + (args.length ? '\n参数：' + args.join(' ') : '') + '\n窗口由 Windows 管理，不能通用嵌入天择OS DOM。');
+    const result = await this.apps().launch(id, args, { userConfirmed: true });
+    return { out: '已启动 ' + result.name + ' · 原生窗口由 Windows 管理', data: result };
+  },
+  async winRemove(ctx) {
+    const id = ctx.args.join(' ').trim(); need(id, 'winapp remove 应用id');
+    await requireAgentApproval(ctx, '移除 Windows 软件入口', id);
+    const approved = await confirmDialog({ title: '移除应用入口', message: '仅移除天择OS应用管理器记录；已导入安装包文件会保留。\n\n' + id, confirmText: '移除', danger: true });
+    if (!approved) throw new Error('用户取消了移除');
+    const result = await this.apps().unregister(id);
+    return { out: '已移除应用入口：' + id, data: result };
+  },
+  async pythonStatus(force) {
+    const result = await this.python().discover(!!force);
+    return { out: result.available ? 'Python ' + result.version + ' · ' + result.executable + ' · ' + result.source : result.message, data: result };
+  },
+  async pythonList() {
+    const jobs = await this.python().list();
+    return { out: jobs.map(job => job.id + '  PID=' + job.pid + '  ' + job.output + '  ' + formatFileBytes(job.bytes)).join('\n') || '（暂无运行中的 Python 任务）', data: jobs };
+  },
+  async pythonRun(ctx, mode) {
+    const api = this.python();
+    const id = 'python-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+    const payload = mode === 'file'
+      ? { id, mode: 'file', path: normalizeInternalPath(ctx.args[0] || ''), args: ctx.args.slice(1), userConfirmed: true }
+      : { id, mode: 'code', code: cliPassthrough(ctx, 0), args: [], userConfirmed: true };
+    if (mode === 'file') need(payload.path, 'python file 内部脚本.py [参数]'); else need(payload.code.trim(), 'python run -- Python代码');
+    await requireAgentApproval(ctx, '运行 Python', mode === 'file' ? payload.path : payload.code.slice(0, 1600));
+    const abort = () => api.stop(id).catch(() => {});
+    if (ctx.signal) { if (ctx.signal.aborted) throw new DOMException('已停止', 'AbortError'); ctx.signal.addEventListener('abort', abort, { once: true }); }
+    try {
+      const result = await api.run(payload, (chunk, stream) => { if (typeof ctx.emit === 'function') ctx.emit(chunk, stream); });
+      return { ok: result.ok, code: result.code, out: result.out || ('Python 退出码 ' + result.code + '\n日志：' + result.output), data: result };
+    } finally { if (ctx.signal) ctx.signal.removeEventListener('abort', abort); }
+  },
+  async pythonStop(ctx) {
+    const id = ctx.args.join(' ').trim(); need(id, 'python stop 任务id');
+    const result = await this.python().stop(id);
+    return { ok: result.ok, out: result.ok ? '已请求停止 ' + id : result.message, data: result };
+  }
+};
+
 function initCLIRegistry() {
   if (!window.TZCLIEngine) return;
   const registry = new window.TZCLIEngine.Registry();
   const legacyHandler = name => ctx => CLI.cmds[name](ctx.raw, ctx);
-  Object.keys(CLI.cmds).forEach(name => registry.register({ path: name, hidden: true, handler: legacyHandler(name) }));
+  // 4.x 兼容入口采用显式清单，避免新加入 CLI.cmds 的高权限能力被猜测命令名绕过。
+  [
+    ['pin', true], ['unpin', true], ['top', true], ['pinned', true],
+    ['news', true], ['blog', true], ['village', true], ['planner', true], ['dmg', true], ['gpa', true],
+    ['installhelp', true],
+    ['level', false], ['clear', false], ['store', false], ['settings', false], ['chat', false]
+  ].forEach(([name, agent]) => {
+    if (typeof CLI.cmds[name] === 'function') registry.register({ path: name, hidden: true, agent, app: false, handler: legacyHandler(name) });
+  });
 
   const add = (path, legacy, usage, description, group, extra = {}) => registry.register({
     path,
     usage: usage || path,
     description,
     group,
+    app: false,
     handler: typeof legacy === 'function'
       ? legacy
-      : ctx => CLI.cmds[legacy](extra.preserveRaw ? ctx.raw : ctx.args.join(' '), ctx),
+      : ctx => CLI.cmds[legacy](
+        extra.parseOptions === false || extra.passthrough === true || extra.preserveRaw
+          ? cliPassthrough(ctx)
+          : ctx.args.join(' '),
+        ctx
+      ),
     ...extra
   });
 
   add('help', ctx => CLI.manual(ctx.raw), 'help [关键词]', '查看全部命令或搜索帮助', '系统');
+  add('cli audit', () => {
+    const report = registry.audit();
+    return {
+      ok: report.ok,
+      code: report.ok ? 0 : 1,
+      out: (report.ok ? 'CLI 注册表正常' : 'CLI 注册表存在异常') +
+        '：' + report.commands + ' 条规范命令 · ' + report.aliases + ' 个别名 · ' + report.paths + ' 条可解析路径',
+      data: report
+    };
+  }, 'cli audit', '检查命令重复、别名映射和注册表完整性', '系统');
+  add('cli permissions', ctx => {
+    const query = ctx.args.join(' ').trim().toLowerCase();
+    const rows = registry.list({ includeHidden: !!ctx.options.all }).filter(item => {
+      if (!query) return true;
+      return [item.key, item.usage, item.description, ...(item.aliases || [])].join(' ').toLowerCase().includes(query);
+    });
+    const mark = value => value ? '✓' : '✗';
+    return {
+      out: rows.map(item => item.key + '  用户' + mark(item.access.user) + ' Agent' + mark(item.access.agent) +
+        ' 应用' + mark(item.access.app) + (item.access.requiresApproval ? ' 需授权' : '')).join('\n') || '（没有匹配的命令）',
+      data: rows
+    };
+  }, 'cli permissions [关键词] [--all]', '查看用户、Agent、应用与逐次授权权限矩阵', '系统');
   add('system info', ctx => CLI.cmds.settings('info', ctx), 'system info', '查看系统与运行环境信息', '系统', { aliases: ['version', 'settings info'] });
+  add('system about', ctx => CLI.cmds.about(ctx.raw || 'info', ctx), 'system about [info|changelog|history|credits]', '查看天择OS版本、更新日志、历史版本与致谢', '系统', { aliases: ['about', 'about info'] });
+  add('system changelog', ctx => CLI.cmds.about('changelog', ctx), 'system changelog', '查看当前版本更新日志', '系统', { aliases: ['about changelog'] });
+  add('system history', ctx => CLI.cmds.about('history', ctx), 'system history', '查看完整历史版本记录', '系统', { aliases: ['about history'] });
+  add('system credits', ctx => CLI.cmds.about('credits', ctx), 'system credits', '查看天择OS致谢名单', '系统', { aliases: ['about credits'] });
   add('system storage', ctx => {
     const state = localStorage.getItem(Store.KEY) || '';
     return '主存档：' + state.length + ' 字符\n已安装应用：' + Store.getApps().length + '\n对话：' + Store.getChats().length + '\n知识库文档：请用 knowledge documents 查看';
   }, 'system storage', '查看本机存储概况', '系统', { aliases: ['settings storage'] });
   add('system theme', 'theme', 'system theme dark|light', '切换深色或浅色主题', '系统', { aliases: ['theme'] });
   add('system style', 'style', 'system style win|mac|auto', '切换桌面窗口风格', '系统', { aliases: ['style'] });
-  add('system palette', 'skin', 'system palette list|use|unlock', '查看、切换或解锁界面配色', '系统', { aliases: ['skin'] });
-  add('vip', 'vip', 'vip status|plans|subscribe 档位|open', '查看或开通天择OS积分月卡 VIP', '外观与 VIP');
+  add('system palette', 'skin', 'system palette list|use|unlock', '查看、切换或解锁界面配色', '系统', { aliases: ['skin'], agent: false });
+  add('vip', 'vip', 'vip status|plans|subscribe 档位|open', '查看或开通天择OS积分月卡 VIP', '外观与 VIP', { agent: false });
   add('vip status', ctx => CLI.cmds.vip('status', ctx), 'vip status', '查看当前 VIP 档位与到期时间', '外观与 VIP');
   add('vip plans', ctx => CLI.cmds.vip('plans', ctx), 'vip plans', '查看六档 VIP 的等级门槛、月费与专属皮肤', '外观与 VIP');
-  add('vip subscribe', ctx => CLI.cmds.vip('subscribe ' + ctx.raw, ctx), 'vip subscribe bronze|silver|gold|platinum|blackgold|diamond', '使用积分开通或续订 30 天 VIP', '外观与 VIP');
-  add('system archive export', 'export', 'system archive export', '导出天择OS全量存档', '系统', { aliases: ['export'] });
+  add('vip subscribe', ctx => CLI.cmds.vip('subscribe ' + ctx.raw, ctx), 'vip subscribe bronze|silver|gold|platinum|blackgold|diamond', '使用积分开通或续订 30 天 VIP', '外观与 VIP', { agent: false });
+  add('system archive export', 'export', 'system archive export', '导出天择OS全量存档', '系统', { aliases: ['export'], agent: false });
   add('system update check', async () => '线上版本：' + ((await Updater.check(true)) || '检查失败'), 'system update check', '检查天择OS更新', '系统');
-  add('system update apply', () => { Updater.apply(); return '已启动更新流程'; }, 'system update apply', '应用可用更新', '系统');
+  add('system update apply', () => { Updater.apply(); return '已启动更新流程'; }, 'system update apply', '应用可用更新', '系统', { agent: false });
   add('system volume', ctx => {
     const action = (ctx.args[0] || 'get').toLowerCase();
     if (action === 'mute' || action === 'unmute') Store.set('sysMuted', action === 'mute');
@@ -4707,8 +5707,8 @@ function initCLIRegistry() {
     applySysVolume();
     return '音量：' + Math.round(Store.get('sysVolume', 1) * 100) + '% · ' + (Store.get('sysMuted', false) ? '静音' : '播放');
   }, 'system volume get|set 0-100|mute|unmute', '查看或调整系统媒体音量', '系统');
-  add('system quit', () => { if (!window.tzDesktop?.quit) throw new Error('仅桌面版可退出'); window.tzDesktop.quit(); return '正在退出天择OS…'; }, 'system quit', '退出桌面版天择OS', '系统');
-  add('system restart', () => { if (!window.tzDesktop?.restart) throw new Error('仅桌面版可重启'); window.tzDesktop.restart(); return '正在重启天择OS…'; }, 'system restart', '重启桌面版天择OS', '系统');
+  add('system quit', () => { if (!window.tzDesktop?.quit) throw new Error('仅桌面版可退出'); window.tzDesktop.quit(); return '正在退出天择OS…'; }, 'system quit', '退出桌面版天择OS', '系统', { agent: false });
+  add('system restart', () => { if (!window.tzDesktop?.restart) throw new Error('仅桌面版可重启'); window.tzDesktop.restart(); return '正在重启天择OS…'; }, 'system restart', '重启桌面版天择OS', '系统', { agent: false });
 
   add('desktop reset-layout', 'resetlayout', 'desktop reset-layout', '重置桌面图标布局', '桌面', { aliases: ['resetlayout'] });
   add('desktop widget', 'widget', 'desktop widget open|close', '打开或收起快捷面板', '桌面', { aliases: ['widget'] });
@@ -4730,22 +5730,25 @@ function initCLIRegistry() {
   add('app list', 'apps', 'app list', '列出所有应用', '应用', { aliases: ['apps'] });
   add('app open', 'open', 'app open 应用id', '打开一个应用', '应用');
   add('app close', 'close', 'app close 应用id', '关闭某应用的窗口', '应用');
-  add('app install', 'install', 'app install 名称|图标|HTML', '安装 HTML 应用', '应用', { aliases: ['install'], preserveRaw: true });
-  add('app uninstall', 'uninstall', 'app uninstall 应用id', '卸载用户应用', '应用', { aliases: ['uninstall'] });
-  add('app rename', 'rename', 'app rename 应用id|新名[|图标]', '重命名用户应用', '应用', { aliases: ['rename'] });
+  add('app html install', 'install', 'app html install 名称|图标|HTML', '安装天择OS内部 HTML 应用', '应用', { aliases: ['app install', 'install'], parseOptions: false, agent: false });
+  add('app uninstall', 'uninstall', 'app uninstall 应用id', '卸载用户应用', '应用', { aliases: ['uninstall'], agent: false });
+  add('app rename', 'rename', 'app rename 应用id|新名[|图标]', '重命名用户应用', '应用', { aliases: ['rename'], parseOptions: false, agent: false });
   add('app code get', 'gethtml', 'app code get 应用id', '读取应用完整 HTML', '应用', { aliases: ['gethtml'] });
-  add('app code set', 'sethtml', 'app code set 应用id|HTML', '替换应用完整 HTML', '应用', { aliases: ['sethtml'], preserveRaw: true });
-  add('app commands', 'cmd', 'app commands [list|应用id 指令 参数]', '查看或调用应用注册的命令', '应用', { aliases: ['cmd'] });
+  add('app code set', 'sethtml', 'app code set 应用id|HTML', '替换应用完整 HTML', '应用', { aliases: ['sethtml'], parseOptions: false, agent: false });
+  add('app commands', 'cmd', 'app commands [list|应用id 指令 参数]', '查看或调用应用注册的命令', '应用', { aliases: ['cmd'], parseOptions: false, agent: false });
   add('app ai-monitor', ctx => JSON.stringify(AppAIGuard.snapshot(ctx.raw || ''), null, 2), 'app ai-monitor [应用id]', '查看应用 AI 调用实时监管状态', '应用');
 
-  add('ask', 'ask', 'ask 问题', '纯 API 问答；不打开对话、不启用 Agent', 'AI', { preserveRaw: true });
-  add('agent', 'agent', 'agent 问题', '调用可使用全部命令行的子智能体；on/off 保留为模式开关', 'AI', { preserveRaw: true });
-  add('ai ask', 'ask', 'ai ask 问题', '纯 API 问答', 'AI', { preserveRaw: true });
-  add('ai agent', 'agent', 'ai agent 问题', '调用可使用命令行的子智能体', 'AI', { preserveRaw: true });
-  add('ai agent-mode', 'agent', 'ai agent-mode on|off', '开关主 AI 命令行模式', 'AI');
-  add('ai config', 'aiconfig', 'ai config [url|key|model|maxtokens 值]', '查看或修改 AI 配置', 'AI', { aliases: ['aiconfig'] });
-  add('ai price', 'price', 'ai price [字段 值]', '查看或设置 Token 单价', 'AI', { aliases: ['price'] });
-  add('ai deepthink', 'deepthink', 'ai deepthink on|off', '开关深度思考', 'AI', { aliases: ['deepthink'] });
+  add('ask', 'ask', 'ask 问题', '按当前 AI 模式问答；不打开对话、不启用 Agent', 'AI', { parseOptions: false, app: true });
+  add('agent', 'agent', 'agent 问题', '调用仅能使用 Agent 可用命令的子智能体；on/off 保留为模式开关', 'AI', { parseOptions: false });
+  add('ai ask', 'ask', 'ai ask 问题', '通过统一 AI 路由问答', 'AI', { parseOptions: false, app: true });
+  add('ai agent', 'agent', 'ai agent 问题', '调用仅能使用 Agent 可用命令的子智能体', 'AI', { parseOptions: false });
+  add('ai agent-mode', 'agent', 'ai agent-mode on|off', '开关主 AI 命令行模式', 'AI', { user: true, agent: false, app: false });
+  add('ai config', 'aiconfig', 'ai config [url|key|model|maxtokens 值]', '查看或修改 AI 配置', 'AI', { aliases: ['aiconfig'], user: true, agent: false, app: false });
+  add('ai mode', 'aimode', 'ai mode [api|local|auto]', '查看或切换 API、本地部署、自动回退三种调用模式', 'AI', { user: true, agent: false, app: false });
+  add('ai local', 'ailocal', 'ai local [url|model|api|maxtokens|context|image|file|thinking 值|models|details]', '查看或修改本地模型完整配置，并读取 Ollama 模型列表/详情', 'AI', { user: true, agent: false, app: false });
+  add('ai context', 'aicontext', 'ai context [auto on|off|threshold 数值|keep 数值|compress|clear]', '查看、设置或手动执行当前对话的上下文压缩', 'AI', { user: true, agent: false, app: false });
+  add('ai price', 'price', 'ai price [字段 值]', '查看或设置 Token 单价', 'AI', { aliases: ['price'], user: true, agent: false, app: false });
+  add('ai deepthink', 'deepthink', 'ai deepthink on|off', '开关深度思考', 'AI', { aliases: ['deepthink'], user: true, agent: false, app: false });
   add('ai usage', 'ai-usage', 'ai usage open|summary', '打开或汇总 AI 用量', 'AI', { aliases: ['ai-usage'] });
   add('ai activity', () => { launchApp('agent-center'); return '已打开 Agent 与命令中心'; }, 'ai activity', '打开 Agent 活动与统一命令中心', 'AI');
   add('ai activity status', () => JSON.stringify({ activities: AgentActivity.snapshot(), appGuard: AppAIGuard.snapshot() }, null, 2), 'ai activity status', '输出智能体活动与应用 AI 监管状态', 'AI');
@@ -4761,8 +5764,8 @@ function initCLIRegistry() {
     return Object.entries(groups).map(([name, g]) => name + '  ' + g.requests + ' 次  ' + g.tokens + ' tokens  ' + g.cost.toFixed(6) + ' ' + g.unit.toUpperCase()).join('\n') || '（暂无记录）';
   }, 'usage model', '按模型汇总 AI 用量', '用量');
   add('usage export', () => JSON.stringify(AIUsage.get(), null, 2), 'usage export', '输出完整 AI 用量 JSON', '用量');
-  add('usage reset', () => { AIUsage.reset(); return 'AI 用量统计已清空'; }, 'usage reset', '清空 AI 用量账本', '用量');
-  add('usage price', 'price', 'usage price [字段 值]', '查看或设置计费单价', '用量');
+  add('usage reset', () => { AIUsage.reset(); return 'AI 用量统计已清空'; }, 'usage reset', '清空 AI 用量账本', '用量', { agent: false });
+  add('usage price', 'price', 'usage price [字段 值]', '查看或设置计费单价', '用量', { agent: false });
 
   add('chat list', ctx => formatChatList(ctx.options.all ? Store.getChats() : ctx.options.archived ? Store.getArchivedChats() : Store.getVisibleChats()), 'chat list [--archived|--all]', '列出活动、归档或全部对话', '对话');
   add('chat show', ctx => { const chat = resolveChatTarget(ctx.raw, { all: true }); if (!chat) throw new Error('对话不存在'); return JSON.stringify(chat, null, 2); }, 'chat show 编号|id|标题', '查看对话完整内容', '对话');
@@ -4770,28 +5773,58 @@ function initCLIRegistry() {
   add('chat rename', ctx => { const split = ctx.raw.indexOf('|'); if (split < 0) throw new Error('用法：chat rename 对话|新标题'); const chat = resolveChatTarget(ctx.raw.slice(0, split), { all: true }); if (!chat) throw new Error('对话不存在'); Store.updateChatMeta(chat.id, { title: ctx.raw.slice(split + 1).trim(), aiNamed: false }); refreshChatView(); return '已重命名对话'; }, 'chat rename 对话|新标题', '重命名对话', '对话');
   add('chat archive', ctx => { const chat = resolveChatTarget(ctx.raw); if (!chat) throw new Error('对话不存在'); Store.archiveChat(chat.id); refreshChatView(); return '已归档：' + chat.title; }, 'chat archive 编号|id|标题', '归档对话；内容仍进入知识库', '对话');
   add('chat restore', ctx => { const chat = resolveChatTarget(ctx.raw, { archived: true }); if (!chat) throw new Error('归档对话不存在'); Store.restoreChat(chat.id); refreshChatView(); return '已还原：' + chat.title; }, 'chat restore 编号|id|标题', '还原已归档对话', '对话');
-  add('chat delete', ctx => { if (!ctx.options.permanent) throw new Error('彻底删除需要显式添加 --permanent'); const chat = resolveChatTarget(ctx.args.join(' '), { all: true }); if (!chat) throw new Error('对话不存在'); Store.removeChat(chat.id); refreshChatView(); return '已彻底删除：' + chat.title; }, 'chat delete 编号|id|标题 --permanent', '彻底删除对话', '对话');
-  add('chat clear', ctx => CLI.cmds.chat(ctx.raw || 'clear', ctx), 'chat clear|history|last', '清空或查看当前对话历史', '对话');
+  add('chat delete', ctx => { if (!ctx.options.permanent) throw new Error('彻底删除需要显式添加 --permanent'); const chat = resolveChatTarget(ctx.args.join(' '), { all: true }); if (!chat) throw new Error('对话不存在'); Store.removeChat(chat.id); refreshChatView(); return '已彻底删除：' + chat.title; }, 'chat delete 编号|id|标题 --permanent', '彻底删除对话', '对话', { agent: false });
+  add('chat clear', ctx => CLI.cmds.chat(ctx.raw || 'clear', ctx), 'chat clear|history|last', '清空或查看当前对话历史', '对话', { agent: false });
   add('chat export', ctx => { const chat = resolveChatTarget(ctx.raw, { all: true }); if (!chat) throw new Error('对话不存在'); return JSON.stringify(chat, null, 2); }, 'chat export 编号|id|标题', '导出单个对话 JSON', '对话');
   add('chat use', ctx => { const chat = resolveChatTarget(ctx.raw); if (!chat || !Store.setActiveChat(chat.id)) throw new Error('活动对话不存在'); refreshChatView(); return '已切换到：' + chat.title; }, 'chat use 编号|id|标题', '切换当前对话', '对话');
 
-  add('memory', 'mem', 'memory [list|add|del|on|off]', '管理长期记忆', '知识与记忆', { aliases: ['mem'] });
+  add('memory', 'mem', 'memory [list|add|del|on|off]', '管理长期记忆', '知识与记忆', { aliases: ['mem'], agent: false });
   add('memory list', ctx => CLI.cmds.mem('', ctx), 'memory list', '列出全部长期记忆', '知识与记忆');
-  add('memory add', ctx => CLI.cmds.mem('add ' + ctx.raw, ctx), 'memory add 内容', '写入一条长期记忆', '知识与记忆');
-  add('memory delete', ctx => CLI.cmds.mem('del ' + ctx.raw, ctx), 'memory delete 编号', '删除长期记忆', '知识与记忆');
-  add('memory enable', ctx => CLI.cmds.mem('on ' + ctx.raw, ctx), 'memory enable 编号', '启用长期记忆', '知识与记忆');
-  add('memory disable', ctx => CLI.cmds.mem('off ' + ctx.raw, ctx), 'memory disable 编号', '停用长期记忆', '知识与记忆');
+  add('memory add', ctx => CLI.cmds.mem('add ' + ctx.literal, ctx), 'memory add 内容', '写入一条长期记忆', '知识与记忆', { parseOptions: false });
+  add('memory delete', ctx => CLI.cmds.mem('del ' + ctx.raw, ctx), 'memory delete 编号', '删除长期记忆', '知识与记忆', { agent: false });
+  add('memory enable', ctx => CLI.cmds.mem('on ' + ctx.raw, ctx), 'memory enable 编号', '启用长期记忆', '知识与记忆', { agent: false });
+  add('memory disable', ctx => CLI.cmds.mem('off ' + ctx.raw, ctx), 'memory disable 编号', '停用长期记忆', '知识与记忆', { agent: false });
   add('knowledge status', async () => { const entries = await SiteAI.allKnowledgeEntries(); const modes = Store.getKnowledgeModes(); return '来源模式：' + JSON.stringify(modes) + '\n可检索条目：' + entries.length; }, 'knowledge status', '查看知识库状态', '知识与记忆');
   add('knowledge sources', () => JSON.stringify(Store.getKnowledgeModes(), null, 2), 'knowledge sources', '查看四类知识来源模式', '知识与记忆');
-  add('knowledge mode', ctx => { const source = ctx.args[0], mode = ctx.args[1]; if (!Store.setKnowledgeMode(source, mode)) throw new Error('用法：knowledge mode site|document|note|chat off|auto|full'); return '已将 ' + source + ' 设为 ' + mode; }, 'knowledge mode 来源 off|auto|full', '设置知识来源注入模式', '知识与记忆');
+  add('knowledge mode', ctx => { const source = ctx.args[0], mode = ctx.args[1]; if (!Store.setKnowledgeMode(source, mode)) throw new Error('用法：knowledge mode site|document|note|chat off|auto|full'); return '已将 ' + source + ' 设为 ' + mode; }, 'knowledge mode 来源 off|auto|full', '设置知识来源注入模式', '知识与记忆', { agent: false });
   add('knowledge search', async ctx => { const query = ctx.args.join(' '); need(query, 'knowledge search 关键词'); const entries = await SiteAI.allKnowledgeEntries(); const hits = SiteAI.rankEntries(entries, query, parseInt(ctx.options.limit || 10, 10) || 10); return hits.map((hit, i) => (i + 1) + '. [' + hit.entry.sourceLabel + '] ' + hit.entry.title + '\n' + SiteAI.entryExcerpt(hit.entry, SiteAI.queryTerms(query))).join('\n\n') || '（没有命中）'; }, 'knowledge search 关键词 [--limit N]', '在本机知识库中检索', '知识与记忆');
   add('knowledge documents', async () => { const docs = await KnowledgeStore.listDocs(); return docs.map((doc, i) => (i + 1) + '. ' + doc.id + '  ' + doc.title + '  ' + doc.source).join('\n') || '（暂无文档）'; }, 'knowledge documents', '列出导入的知识库文档', '知识与记忆');
   add('knowledge show', async ctx => { const doc = await KnowledgeStore.getDoc(ctx.raw); if (!doc) throw new Error('文档不存在：' + ctx.raw); return JSON.stringify(doc, null, 2); }, 'knowledge show 文档id', '查看知识库文档', '知识与记忆');
-  add('knowledge remove', async ctx => { need(ctx.raw, 'knowledge remove 文档id'); await KnowledgeStore.removeDoc(ctx.raw); return '已移除知识库文档：' + ctx.raw; }, 'knowledge remove 文档id', '移除知识库文档', '知识与记忆');
+  add('knowledge remove', async ctx => { need(ctx.raw, 'knowledge remove 文档id'); await KnowledgeStore.removeDoc(ctx.raw); return '已移除知识库文档：' + ctx.raw; }, 'knowledge remove 文档id', '移除知识库文档', '知识与记忆', { agent: false });
 
-  add('notify send', 'notify', 'notify send 文本', '发送系统通知', '工具', { aliases: ['notify'] });
+  add('file info', () => NativeCLI.fileInfo(), 'file info', '查看天择OS内部文件根与固定目录', '内部文件');
+  add('file list', ctx => NativeCLI.fileList(ctx), 'file list [内部路径]', '列出内部文件或文件夹', '内部文件');
+  add('file read', ctx => NativeCLI.fileRead(ctx), 'file read 内部路径', '读取内部文本文件或文件元数据', '内部文件');
+  add('file write', ctx => NativeCLI.fileWrite(ctx), 'file write 内部路径 [--overwrite] [--parents] -- 文本', '新建文本；覆盖必须显式声明并由 Agent 逐次获批', '内部文件', { passthrough: true, requiresApproval: true });
+  add('file mkdir', ctx => NativeCLI.fileMkdir(ctx), 'file mkdir 内部路径 [--parents]', '新建内部文件夹', '内部文件');
+  add('file rename', ctx => NativeCLI.fileRename(ctx), 'file rename 内部路径 新名称', '重命名内部项目；同步知识库索引', '内部文件', { requiresApproval: true });
+  add('file copy', ctx => NativeCLI.fileCopy(ctx), 'file copy 源路径 目标路径 [--parents]', '复制内部文件或文件夹', '内部文件');
+  add('file move', ctx => NativeCLI.fileMove(ctx), 'file move 源路径 目标路径 [--parents]', '移动内部项目；Agent 需逐次授权', '内部文件', { requiresApproval: true });
+  add('file trash', ctx => NativeCLI.fileTrash(ctx), 'file trash 内部路径', '确认后移到 Windows 回收站并清理知识库索引', '内部文件', { requiresApproval: true });
+  add('file search', ctx => NativeCLI.fileSearch(ctx), 'file search 关键词 [--path 路径] [--limit N]', '递归搜索内部文件名和路径', '内部文件');
+  add('file import', ctx => NativeCLI.fileImport(ctx, false), 'file import [目标内部目录]', '经文件选择器从 Windows 导入文件', '内部文件', { requiresApproval: true });
+  add('file import-directory', ctx => NativeCLI.fileImport(ctx, true), 'file import-directory [目标内部目录]', '经文件选择器从 Windows 导入文件夹', '内部文件', { requiresApproval: true });
+  add('file export', ctx => NativeCLI.fileExport(ctx), 'file export 内部路径', '经保存对话框导出到 Windows', '内部文件', { requiresApproval: true });
+
+  add('winapp list', ctx => NativeCLI.winList(ctx), 'winapp list [关键词]', '列出或搜索允许启动的 Windows 软件', 'Windows 软件');
+  add('winapp add', ctx => NativeCLI.winChoose(ctx), 'winapp add', '选择 exe、com 或 lnk 加入应用管理器', 'Windows 软件', { requiresApproval: true });
+  add('winapp import', ctx => NativeCLI.winImport(ctx, false), 'winapp import', '把 EXE 安装包导入内部 Applications 目录但不运行', 'Windows 软件', { requiresApproval: true });
+  add('winapp install', ctx => NativeCLI.winImport(ctx, true), 'winapp install', '导入并在明确授权后运行 EXE 安装包', 'Windows 软件', { requiresApproval: true });
+  add('winapp launch', ctx => NativeCLI.winLaunch(ctx), 'winapp launch 应用id [-- 参数]', '启动 Windows 原生软件；AI 需逐次授权', 'Windows 软件', { passthrough: true, requiresApproval: true });
+  add('winapp remove', ctx => NativeCLI.winRemove(ctx), 'winapp remove 应用id', '移除手动登记的 Windows 软件入口', 'Windows 软件', { requiresApproval: true });
+
+  add('python status', () => NativeCLI.pythonStatus(false), 'python status', '探测 Python 3 运行时', 'Python');
+  add('python refresh', () => NativeCLI.pythonStatus(true), 'python refresh', '重新探测 Python 3 运行时', 'Python');
+  add('python list', () => NativeCLI.pythonList(), 'python list', '列出正在运行的 Python 任务', 'Python');
+  add('python run', ctx => NativeCLI.pythonRun(ctx, 'code'), 'python run -- Python代码', '运行临时代码；AI 必须由用户逐次授权', 'Python', { passthrough: true, requiresApproval: true });
+  add('python file', ctx => NativeCLI.pythonRun(ctx, 'file'), 'python file 内部脚本.py [-- 参数]', '运行内部 .py 文件；AI 必须由用户逐次授权', 'Python', { passthrough: true, requiresApproval: true });
+  add('python stop', ctx => NativeCLI.pythonStop(ctx), 'python stop 任务id', '停止 Python 任务', 'Python');
+
+  add('app html files', ctx => CLI.cmds.files(ctx.raw, ctx), 'app html files list|export|size', '兼容 4.x 的 HTML 应用数据命令；旧别名 files', '兼容命令', { aliases: ['files'], agent: false });
+
+  add('notify send', 'notify', 'notify send 文本', '发送系统通知', '工具', { aliases: ['notify'], parseOptions: false, app: true });
   add('notify list', () => JSON.stringify(Store.getNotifs(), null, 2), 'notify list', '列出系统通知', '工具');
-  add('notify clear', ctx => CLI.cmds.clear('notifs', ctx), 'notify clear', '清空系统通知', '工具');
+  add('notify clear', ctx => CLI.cmds.clear('notifs', ctx), 'notify clear', '清空系统通知', '工具', { agent: false });
   add('web open', 'openurl', 'web open 网址或搜索词', '在内置浏览器打开网页', '网页', { aliases: ['openurl', 'go'] });
   add('web tabs', ctx => CLI.cmds.browser(ctx.raw || 'tabs', ctx), 'web tabs [closeall|home]', '管理内置浏览器标签', '网页', { aliases: ['browser'] });
   add('web bookmark', 'bm', 'web bookmark list|add|del', '管理网页收藏', '网页', { aliases: ['bm'] });
@@ -4801,20 +5834,24 @@ function initCLIRegistry() {
   add('clock now', 'clock-now', 'clock now', '查看当前时间', '工具', { aliases: ['clock-now'] });
   add('clock stopwatch', 'stopwatch', 'clock stopwatch start|stop|reset', '控制秒表', '工具', { aliases: ['stopwatch'] });
   add('clock timer', 'timer', 'clock timer 时长', '启动倒计时', '工具', { aliases: ['timer'] });
-  ['note', 'words', 'coc', 'coc-data', 'coc-game', 'game', 'english', 'ai-zone', 'open-data', 'tree', 'docs', 'tips'].forEach(name => add(name, name, name + ' [子命令]', '使用「' + name + '」内置工具', '专区与工具', { preserveRaw: name === 'note' || name === 'coc-data' || name === 'coc-game' }));
+  ['note', 'words', 'coc-data', 'coc-game', 'game', 'english', 'ai-zone', 'open-data', 'tree', 'docs', 'tips'].forEach(name => add(name, name, name + ' [子命令]', '使用「' + name + '」内置工具', '专区与工具', {
+    parseOptions: name === 'note' || name === 'coc-data' || name === 'coc-game' ? false : undefined
+  }));
+  add('coc', 'coc', 'coc list|open|tutorial [open|info]', '查看或打开 COC 专区及 COC教程', '专区与工具');
+  add('coc tutorial', ctx => CLI.cmds.coc('tutorial ' + (ctx.raw || 'open'), ctx), 'coc tutorial [open|info]', '打开或介绍 COC教程专区', '专区与工具', { aliases: ['coc guide', 'coc-tutorial'] });
   add('emulator windows', 'emu-win', 'emulator windows info|open', '打开 Windows 11 模拟器', '专区与工具', { aliases: ['emu-win'] });
   add('emulator windows10', 'emu-win10', 'emulator windows10 info|open', '打开 Windows 10 模拟器', '专区与工具', { aliases: ['emu-win10'] });
   add('emulator android', 'emu-android', 'emulator android info|open', '打开安卓模拟器', '专区与工具', { aliases: ['emu-android'] });
 
-  add('shell profile', ctx => { const value = (ctx.args[0] || '').toLowerCase(); if (!value || value === 'list') return 'powershell\ncmd\n当前：' + ShellRuntime.profile(); if (!['powershell', 'cmd'].includes(value)) throw new Error('配置只能是 powershell 或 cmd'); Store.set('shellProfile', value); return 'Shell 已切换为 ' + value; }, 'shell profile list|powershell|cmd', '查看或切换本机 Shell', '本机 Shell');
-  add('shell pwd', async () => ShellRuntime.cwd() || (await window.tzDesktop?.validateShellCwd?.(''))?.cwd || '（桌面版启动后解析用户目录）', 'shell pwd', '查看 Shell 工作目录', '本机 Shell');
-  add('shell cd', async ctx => 'Shell 工作目录：' + await ShellRuntime.setCwd(ctx.raw), 'shell cd 路径', '切换 Shell 工作目录', '本机 Shell');
-  add('shell run', ctx => ShellRuntime.run(ctx.raw, ctx), 'shell run 命令', '在 PowerShell/CMD 执行任意命令', '本机 Shell');
-  add('shell jobs', () => { const jobs = [...ShellRuntime.jobs.values()]; return jobs.map(job => job.id + '  ' + job.status + '  ' + job.profile + '  ' + job.command).join('\n') || '（暂无 Shell 任务）'; }, 'shell jobs', '列出 Shell 任务', '本机 Shell');
-  add('shell stop', ctx => ShellRuntime.stop(ctx.raw), 'shell stop 任务id', '停止 Shell 任务', '本机 Shell');
-  add('shell env', ctx => ShellRuntime.run(ShellRuntime.profile() === 'cmd' ? 'set' : 'Get-ChildItem Env: | Sort-Object Name', ctx), 'shell env', '查看 Shell 环境变量', '本机 Shell');
-  add('dev eval', 'js', 'dev eval JavaScript', '执行 JavaScript 开发者代码', '开发', { aliases: ['js'], preserveRaw: true });
-  add('dev echo', ctx => ctx.args.join(' '), 'dev echo 文本', '原样输出文本', '开发', { aliases: ['echo'] });
+  add('shell profile', ctx => { const value = (ctx.args[0] || '').toLowerCase(); if (!value || value === 'list') return 'powershell\ncmd\n当前：' + ShellRuntime.profile(); if (!['powershell', 'cmd'].includes(value)) throw new Error('配置只能是 powershell 或 cmd'); Store.set('shellProfile', value); return 'Shell 已切换为 ' + value; }, 'shell profile list|powershell|cmd', '查看或切换本机 Shell', '本机 Shell', { agent: false });
+  add('shell pwd', async () => ShellRuntime.cwd() || (await window.tzDesktop?.validateShellCwd?.(''))?.cwd || '（桌面版启动后解析用户目录）', 'shell pwd', '查看 Shell 工作目录', '本机 Shell', { agent: false });
+  add('shell cd', async ctx => 'Shell 工作目录：' + await ShellRuntime.setCwd(ctx.args.join(' ')), 'shell cd 路径', '切换 Shell 工作目录', '本机 Shell', { agent: false });
+  add('shell run', ctx => ShellRuntime.run(cliPassthrough(ctx), ctx), 'shell run -- 命令', '在 PowerShell/CMD 执行任意命令（仅用户终端）', '本机 Shell', { agent: false, passthrough: true });
+  add('shell jobs', () => { const jobs = [...ShellRuntime.jobs.values()]; return jobs.map(job => job.id + '  ' + job.status + '  ' + job.profile + '  ' + job.command).join('\n') || '（暂无 Shell 任务）'; }, 'shell jobs', '列出 Shell 任务', '本机 Shell', { agent: false });
+  add('shell stop', ctx => ShellRuntime.stop(ctx.args.join(' ')), 'shell stop 任务id', '停止 Shell 任务', '本机 Shell', { agent: false });
+  add('shell env', ctx => ShellRuntime.run(ShellRuntime.profile() === 'cmd' ? 'set' : 'Get-ChildItem Env: | Sort-Object Name', ctx), 'shell env', '查看 Shell 环境变量（仅用户终端）', '本机 Shell', { agent: false });
+  add('dev eval', 'js', 'dev eval JavaScript', '执行 JavaScript 开发者代码（仅用户终端）', '开发', { aliases: ['js'], parseOptions: false, agent: false });
+  add('dev echo', ctx => ctx.args.join(' '), 'dev echo 文本', '原样输出文本', '开发', { aliases: ['echo'], parseOptions: false, app: true });
 
   CLI.registry = registry;
   CLI.tasks = new window.TZCLIEngine.TaskManager(registry);
@@ -5024,16 +6061,18 @@ const AppCommands = {
     if (!CLI.registry || typeof CLI.registry.unregister !== 'function') return;
     CLI.registry.unregister(spec => spec.dynamicAppId === appId);
     const app = findApp(appId);
-    if (!app) return;
+    if (!app || app.type !== 'installed') return;
     (Array.isArray(list) ? list : this.load(appId)).forEach(def => {
       const command = String(def && def.cmd || '').trim().toLowerCase();
-      if (!command || /\s/.test(command)) return;
+      if (!/^[a-z0-9][a-z0-9_-]{0,63}$/.test(command)) return;
       CLI.registry.register({
         path: ['app', appId, command],
         usage: 'app ' + appId + ' ' + command + ' [参数]',
         description: (def.desc || '调用应用指令') + '（' + app.name + '）',
         group: '应用扩展',
         dynamicAppId: appId,
+        agent: false,
+        app: false,
         handler: async ctx => {
           const out = await this.exec(appId, command + (ctx.raw ? ' ' + ctx.raw : ''), ctx);
           return { out, data: { kind: 'app-command', appId, appName: app.name, command, args: ctx.raw } };
@@ -5070,10 +6109,10 @@ const AppCommands = {
         const sourceAppId = this._sourceAppId(ev.source);
         if (!sourceAppId || sourceAppId !== reg.appId) return;
         const safeList = reg.list.slice(0, 100).map(item => ({
-          cmd: String(item && item.cmd || '').trim().slice(0, 64),
+          cmd: String(item && item.cmd || '').trim().toLowerCase().slice(0, 64),
           desc: String(item && item.desc || '').slice(0, 240),
           js: String(item && item.js || '').slice(0, 200000)
-        })).filter(item => item.cmd && item.js);
+        })).filter(item => /^[a-z0-9][a-z0-9_-]{0,63}$/.test(item.cmd) && item.js);
         try { this.save(sourceAppId, safeList); } catch (e) {}
         return;
       }
@@ -5125,23 +6164,16 @@ const AppCommands = {
   async exec(appId, rest, options = {}) {
     const app = findApp(appId);
     if (!app) throw new Error('应用不存在：' + appId);
+    if (app.type !== 'installed') throw new Error('只有已安装的 HTML 应用可以注册和执行应用指令');
     const sp = rest.indexOf(' ');
-    const cmd = (sp < 0 ? rest : rest.slice(0, sp)).trim();
+    const cmd = (sp < 0 ? rest : rest.slice(0, sp)).trim().toLowerCase();
     const args = sp < 0 ? '' : rest.slice(sp + 1).trim();
     if (!cmd) {
       const list = this.load(appId);
       return list.length ? ('「' + app.name + '」可用指令：\n' + list.map(c => '  ' + c.cmd + (c.desc ? '  — ' + c.desc : '')).join('\n')) : '「' + app.name + '」未注册任何命令';
     }
-    const def = this.load(appId).find(c => c.cmd === cmd);
+    const def = this.load(appId).find(c => String(c.cmd || '').toLowerCase() === cmd);
     if (!def) throw new Error('「' + app.name + '」没有指令「' + cmd + '」（用 cmd ' + appId + ' 查看）');
-    // 非自定义软件（builtin/preset）没有 iframe 桥，兜底在父页面执行
-    if (app.type !== 'installed') {
-      try {
-        const fn = new Function('args', 'appId', 'api', 'app', def.js);
-        const ret = await fn(args, appId, window.TZOS, app);
-        return (ret === undefined) ? '（已执行）' : String(ret);
-      } catch (e) { throw new Error('指令执行出错：' + (e.message || e)); }
-    }
     // 自定义软件：桥接进软件 iframe 内执行（window.* 即软件自身作用域）
     this._ensureListener();
     const frame = await this._ensureFrame(appId, options.signal);
@@ -5206,9 +6238,9 @@ TZOS_CMD.register([
 
 4) 反过来，你的软件也可以随时调用【系统命令行】并拿到输出（v3.5 新增）：
    const out = await TZOS_CMD.exec('note list');  // out 就是命令行输出文本
-   - 与用户终端可用的命令完全一致（help 列出的全部命令，含 ask 与其它软件注册的 cmd 应用id 指令）
+   - 只能调用标记为“应用可用”的命令（如 ask、notify、echo）；系统设置、文件、Shell 与执行代码等命令会拒绝应用调用
    - 返回 Promise<string>；异步命令（如 ask/note/coc-data/words）同样 await 即可
-   - 适合调用纯 API AI、读取系统数据（笔记、单词、COC 存档）、联动打开系统应用、查询系统状态等场景`;
+   - 适合调用统一 AI 路由、读取系统数据（笔记、单词、COC 存档）、联动打开系统应用、查询系统状态等场景`;
 
 
 
@@ -6390,10 +7422,10 @@ function initTerminal() {
 const AI_MODEL_PRESETS = [
   {
     id: 'deepseek-v4-flash', provider: 'DeepSeek', model: 'deepseek-v4-flash',
-    url: 'https://api.deepseek.com/v1/chat/completions',
-    title: 'DeepSeek V4 Flash', desc: '极高性能快速文本模型',
+    url: 'https://api.deepseek.com/responses', api: 'responses',
+    title: 'DeepSeek V4 Flash', desc: 'Responses API · 快速文本与联网搜索',
     contextLength: 1000000, maxTokens: 384000,
-    caps: { image: false, file: false, webSearch: false },
+    caps: { image: false, file: false, webSearch: true },
     prices: { hit: 0.02, write: 0, input: 1, output: 2, search: 0, unit: 'cny' }
   },
   {
@@ -6429,11 +7461,27 @@ const AI_MODEL_PRESETS = [
     prices: { hit: 0, write: 0, input: 0, output: 0, search: 0, unit: 'cny' }
   }
 ];
-function effectiveAICaps() {
+function configuredCloudAICaps() {
   const saved = Store.getAICaps();
   const cfg = Store.getAIConfig();
-  const known = AI_MODEL_PRESETS.find(p => p.model === cfg.model);
+  const known = AI_MODEL_PRESETS.find(p => p.model === cfg.model && (!p.api || AI.isResponses(cfg)));
   return known ? { ...saved, ...known.caps, contextLength: known.contextLength } : saved;
+}
+function effectiveAICaps() {
+  const cloud = configuredCloudAICaps();
+  const localCfg = Store.getAILocalConfig();
+  const local = { image: false, file: false, webSearch: false, contextLength: 0, ...(localCfg.caps || {}) };
+  const mode = Store.getAIRouteMode();
+  if (mode === 'local') return local;
+  if (mode !== 'auto') return cloud;
+  const cloudContext = Math.max(0, parseInt(cloud.contextLength, 10) || 0);
+  const localContext = Math.max(0, parseInt(local.contextLength, 10) || 0);
+  return {
+    image: cloud.image !== false && local.image !== false,
+    file: cloud.file !== false && local.file !== false,
+    webSearch: !!cloud.webSearch,
+    contextLength: cloudContext && localContext ? Math.min(cloudContext, localContext) : (localContext || cloudContext)
+  };
 }
 function aiModelPresetHTML() {
   const tokenLabel = (n) => {
@@ -6585,7 +7633,7 @@ function agentGuardListHTML() {
 function commandExplorerHTML() {
   if (!CLI.registry) return '<div class="app-empty">命令注册表尚未就绪。</div>';
   const groups = new Map();
-  CLI.registry.visible().forEach(spec => {
+  CLI.registry.list().forEach(spec => {
     const group = spec.group || '其他';
     if (!groups.has(group)) groups.set(group, []);
     groups.get(group).push(spec);
@@ -6593,12 +7641,19 @@ function commandExplorerHTML() {
   return [...groups.entries()].map(([group, specs]) => `<section class="command-group" data-command-group>
     <h3>${escapeHtml(group)} <small>${specs.length}</small></h3>
     <div class="command-grid">${specs.map(spec => {
-      const aliases = (spec.aliases || []).map(item => item.join(' '));
+      const aliases = spec.aliases || [];
+      const access = spec.access || { user: true, agent: true, app: true, requiresApproval: false };
       const search = [spec.key, spec.usage, spec.description, group, ...aliases].join(' ').toLowerCase();
+      const accessBadges = [
+        `<span class="app-badge ${access.user ? 'is-live' : 'is-warn'}">用户${access.user ? '可用' : '禁用'}</span>`,
+        `<span class="app-badge ${access.agent ? 'is-live' : 'is-warn'}">Agent${access.agent ? '可用' : '禁用'}</span>`,
+        `<span class="app-badge ${access.app ? 'is-live' : 'is-warn'}">应用${access.app ? '可用' : '禁用'}</span>`,
+        access.requiresApproval ? '<span class="app-badge is-warn">需逐次授权</span>' : ''
+      ].join('');
       return `<article class="command-item app-card" data-command-item data-search="${escapeHtml(search)}">
         <code>${escapeHtml(spec.usage || spec.key)}</code>
         <p>${escapeHtml(spec.description || '暂无说明')}</p>
-        <footer>${spec.agent === false ? '<span class="app-badge is-warn">仅用户</span>' : '<span class="app-badge is-live">Agent 可用</span>'}${aliases.length ? `<small>别名：${escapeHtml(aliases.join('、'))}</small>` : ''}</footer>
+        <footer>${accessBadges}${aliases.length ? `<small>别名：${escapeHtml(aliases.join('、'))}</small>` : ''}</footer>
       </article>`;
     }).join('')}</div>
   </section>`).join('');
@@ -6644,32 +7699,82 @@ window.TZOS.stopAgentActivity = function(id) {
   else toast('该任务已经结束');
 };
 
+function webAIProviderOptionsHTML(activeProvider) {
+  const selected = Store.getWebAISites();
+  const options = [`<option value="custom"${activeProvider === 'custom' ? ' selected' : ''}>接口 AI（API）</option>`];
+  selected.forEach(id => {
+    const site = webAISite(id);
+    if (!site) return;
+    const suffix = site.edition ? ' · ' + site.edition : '';
+    options.push(`<option value="${escapeHtml(site.id)}"${activeProvider === site.id ? ' selected' : ''}>${escapeHtml(site.name + suffix)}${site.vpn ? ' · 需 VPN' : ''}</option>`);
+  });
+  return options.join('');
+}
+
+function webAIProviderPickerHTML(activeProvider, compact = false) {
+  return `<label class="web-ai-provider-picker${compact ? ' is-compact' : ''}">
+    ${uiIconHTML('globe')}<span class="web-ai-provider-picker__label">对话方式</span>
+    <select class="input" id="chatProvider" aria-label="选择 AI 对话方式">${webAIProviderOptionsHTML(activeProvider)}</select>
+  </label>`;
+}
+
+function webAISiteConfigHTML() {
+  const selected = new Set(Store.getWebAISites());
+  return `<div class="web-ai-site-grid" role="group" aria-label="选择网页 AI 站点">
+    ${WEB_AI_SITES.map(site => `<label class="web-ai-site-card${site.vpn ? ' requires-vpn' : ''}">
+      <input type="checkbox" data-web-ai-site="${escapeHtml(site.id)}"${selected.has(site.id) ? ' checked' : ''} />
+      <span class="web-ai-site-card__mark">${uiIconHTML('ai', site.name)}</span>
+      <span class="web-ai-site-card__copy"><strong>${escapeHtml(site.name)}</strong><small>${escapeHtml(site.edition)} · ${escapeHtml(site.domain)}</small></span>
+      <span class="app-badge ${site.vpn ? 'is-warn' : ''}">${site.vpn ? '大陆需 VPN' : '可选'}</span>
+    </label>`).join('')}
+  </div>
+  <div class="web-ai-config-summary">
+    <span id="webAiSelectedCount">已选择 ${selected.size} 个站点</span>
+    <small>至少保留一个。旧用户默认仅启用豆包；勾选结果会立即保存在本机。</small>
+  </div>
+  <p class="app-security-note tz-icon-label">${uiIconHTML('shield')}<span>桌面版使用独立的原生 Chromium WebContentsView，不使用第三方 iframe，可正常处理站点的登录、跳转与嵌入限制。网页版无法绕过站点安全策略，只提供限制提示与外部打开入口。</span></p>`;
+}
+
 function renderAIConfig() {
   const c = Store.getAIConfig();
-  const caps = effectiveAICaps();
+  const local = Store.getAILocalConfig();
+  const routeMode = Store.getAIRouteMode();
+  const activeConfig = routeMode === 'local' ? local : c;
+  const caps = configuredCloudAICaps();
+  const compression = Store.getContextCompressionSettings();
   const ready = AI.isReady();
   const priceValue = (name) => c.prices && c.prices[name] != null ? String(c.prices[name]) : '';
   return `
   <div class="app-workspace app-workspace--settings app-config">
     ${appWorkspaceHeaderHTML('key', 'AI 配置', '统一管理模型接入、能力、费用与长期记忆', {
       eyebrow: 'AI CONTROL PLANE',
-      meta: `<span class="app-badge ${ready ? 'is-live' : 'is-warn'}">${ready ? escapeHtml(c.model || '已连接') : '等待配置'}</span>`,
+      meta: `<span class="app-badge ${ready ? 'is-live' : 'is-warn'}">${ready ? escapeHtml(activeConfig.model || '已连接') : '等待配置'}</span>`,
       actions: `<button class="btn sm ghost tz-icon-label" onclick="TZOS.testConfig()">${uiIconHTML('network')}<span>测试连接</span></button>
                 <button class="btn sm primary tz-icon-label" onclick="TZOS.saveConfig()">${uiIconHTML('save')}<span>保存配置</span></button>`
     })}
     <div class="app-workspace__layout">
       <nav class="app-workspace__rail app-nav" aria-label="AI 配置分区">
         <a class="app-nav__item active" href="#cfg-provider">${uiIconHTML('key')}<span>接口与模型</span></a>
+        <a class="app-nav__item" href="#cfg-local">${uiIconHTML('terminal')}<span>本地模型</span></a>
         <a class="app-nav__item" href="#cfg-profiles">${uiIconHTML('save')}<span>我的配置</span></a>
         <a class="app-nav__item" href="#cfg-capabilities">${uiIconHTML('crystal')}<span>模型能力</span></a>
         <a class="app-nav__item" href="#cfg-pricing">${uiIconHTML('star')}<span>Token 费用</span></a>
         <a class="app-nav__item" href="#cfg-memory">${uiIconHTML('ai')}<span>AI 记忆</span></a>
-        <a class="app-nav__item" href="#cfg-doubao">${uiIconHTML('globe')}<span>网页 AI</span></a>
+        <a class="app-nav__item" href="#cfg-web-ai">${uiIconHTML('globe')}<span>网页 AI</span></a>
       </nav>
       <main class="app-workspace__main app-workspace__main--scroll cfg-main">
-        ${appSectionHTML('key', '接口与模型', 'OpenAI 兼容接口用于 AI 对话与软件商城', `
+        ${appSectionHTML('key', '接口与模型', '选择始终使用 API、始终使用本地模型，或在云端不可达时自动无损回退', `
+          <div class="app-toolbar price-toolbar">
+            <span class="app-toolbar__label">调用模式</span>
+            <div class="style-pick" role="group" aria-label="AI 调用模式">
+              <button id="aiRouteApi" class="${routeMode === 'api' ? 'active' : ''}" onclick="TZOS.setAIRouteMode('api')">始终 API</button>
+              <button id="aiRouteLocal" class="${routeMode === 'local' ? 'active' : ''}" onclick="TZOS.setAIRouteMode('local')">始终本地</button>
+              <button id="aiRouteAuto" class="${routeMode === 'auto' ? 'active' : ''}" onclick="TZOS.setAIRouteMode('auto')">自动回退</button>
+            </div>
+          </div>
+          <p class="app-security-note tz-icon-label">${uiIconHTML('info')}<span>自动模式先调用 API；仅在连接失败、连接超时或 HTTP 408/502/503/504 且尚未输出任何内容时改用本地模型。鉴权、限流、参数错误或生成到一半时不会回退。</span></p>
           <div class="config-status ${ready?'ok':'warn'}">
-            <span>${uiIconHTML(ready ? 'check' : 'warning')}</span><span>${ready?'已就绪：'+escapeHtml(c.model):'尚未配置 API Key'}</span>
+            <span>${uiIconHTML(ready ? 'check' : 'warning')}</span><span>${ready ? '已就绪：' + escapeHtml(activeConfig.model) : '请完成当前调用模式所需的 API / 本地模型配置'}</span>
           </div>
           <div class="config-presets" aria-label="最新模型快速预设">
             <div class="model-presets__head">
@@ -6681,7 +7786,7 @@ function renderAIConfig() {
           <div class="app-form-grid">
             <div class="field app-field app-field--wide">
               <label>API 接口地址</label>
-              <input class="input" id="cfgUrl" value="${escapeHtml(c.url)}" placeholder="https://api.deepseek.com/v1/chat/completions" />
+              <input class="input" id="cfgUrl" value="${escapeHtml(c.url)}" placeholder="https://api.deepseek.com/responses" />
             </div>
             <div class="field app-field">
               <label>API Key</label>
@@ -6699,6 +7804,36 @@ function renderAIConfig() {
           </div>
           <p class="app-security-note tz-icon-label">${uiIconHTML('shield')}<span>静态网站无法安全内置共享密钥；所有预设均需填写自己的 API Key。Key 只保存在本机，推荐使用加密存档迁移。</span></p>
         `, { id: 'cfg-provider' })}
+
+        ${appSectionHTML('terminal', '本地部署模型', '原生支持 Ollama，也可连接无需密钥的本机 OpenAI 兼容接口', `
+          <div class="app-form-grid">
+            <div class="field app-field">
+              <label>本地服务协议</label>
+              <select class="input" id="cfgLocalApi">
+                <option value="ollama" ${local.api === 'ollama' ? 'selected' : ''}>Ollama /api/chat</option>
+                <option value="chat-completions" ${local.api !== 'ollama' ? 'selected' : ''}>OpenAI 兼容</option>
+              </select>
+            </div>
+            <div class="field app-field app-field--wide">
+              <label>本地接口地址</label>
+              <input class="input" id="cfgLocalUrl" value="${escapeHtml(local.url)}" placeholder="http://127.0.0.1:11434" />
+            </div>
+            <div class="field app-field app-field--wide">
+              <label class="field-label-actions"><span>本地模型名称</span><button class="btn sm ghost tz-icon-label" id="cfgFetchLocalModels" type="button" onclick="TZOS.fetchLocalModels()">${uiIconHTML('download')}<span>扫描本机模型</span></button></label>
+              <input class="input" id="cfgLocalModel" value="${escapeHtml(local.model)}" placeholder="qwen3.5:4b" list="cfgLocalModelList" />
+              <datalist id="cfgLocalModelList"></datalist>
+            </div>
+            <div class="field app-field"><label>最大输出 Token</label><input class="input" id="cfgLocalMaxTokens" type="number" min="1" max="384000" value="${escapeHtml(String(local.maxTokens || ''))}" placeholder="8192" /></div>
+            <div class="field app-field"><label>上下文长度（token）</label><input class="input" id="cfgLocalCtxLen" type="number" min="0" max="2000000" value="${escapeHtml(String((local.caps && local.caps.contextLength) || ''))}" placeholder="可从 Ollama 自动读取" /></div>
+          </div>
+          <div class="app-setting-list">
+            <div class="setting-row"><div><div class="sr-label">支持图片输入</div><div class="sr-desc">Ollama 视觉模型可直接接收图片；关闭时仍可用本地 OCR。</div></div><div class="toggle ${local.caps && local.caps.image ? 'on' : ''}" id="capLocalImageTg"></div></div>
+            <div class="setting-row"><div><div class="sr-label">支持文件输入</div><div class="sr-desc">仅在本地服务明确兼容 OpenAI 文件内容时开启。</div></div><div class="toggle ${local.caps && local.caps.file ? 'on' : ''}" id="capLocalFileTg"></div></div>
+            <div class="setting-row"><div><div class="sr-label">支持深度思考</div><div class="sr-desc">开启后向 Ollama 发送 think，或向兼容接口发送 thinking 参数。</div></div><div class="toggle ${local.thinking !== false ? 'on' : ''}" id="capLocalThinkingTg"></div></div>
+          </div>
+          <p class="app-security-note tz-icon-label" id="cfgLocalMetadata">${uiIconHTML('info')}<span>进入本页时桌面版会自动读取 Ollama 已安装模型；选择模型后可读取上下文长度与能力，所有值仍可手工覆盖。</span></p>
+          <p class="app-security-note tz-icon-label">${uiIconHTML('shield')}<span>本地请求不携带云端 API Key、不跟随重定向，Token 费用按 0 记录；本地模式不提供服务商内置联网搜索。网页版直连 Ollama 还会受浏览器 CORS / Private Network Access 限制，应只为可信来源配置 Ollama 允许的来源，禁止关闭浏览器安全功能。</span></p>
+        `, { id: 'cfg-local' })}
 
         ${appSectionHTML('save', '我的配置', '三个可命名的本地槽位，适合在不同服务商、模型或费用方案之间快速切换', `
           ${aiCustomProfilesHTML()}
@@ -6723,6 +7858,17 @@ function renderAIConfig() {
             <label>上下文长度（token）</label>
             <input class="input" id="cfgCtxLen" type="number" min="0" max="2000000" value="${escapeHtml(String(caps.contextLength || ''))}" placeholder="如 64000 / 128000" />
           </div>
+          <div class="app-setting-list">
+            <div class="setting-row">
+              <div><div class="sr-label">自动压缩旧上下文</div><div class="sr-desc">达到阈值时调用当前路由模型生成摘要，保留最近消息；会多产生一次模型调用。</div></div>
+              <div class="toggle ${compression.auto ? 'on' : ''}" id="contextCompressAutoTg"></div>
+            </div>
+          </div>
+          <div class="app-form-grid">
+            <div class="field app-field"><label>自动压缩阈值（%）</label><input class="input" id="cfgCompressThreshold" type="number" min="50" max="95" value="${compression.threshold}" /></div>
+            <div class="field app-field"><label>保留最近消息数</label><input class="input" id="cfgCompressKeepRecent" type="number" min="4" max="20" value="${compression.keepRecent}" /></div>
+          </div>
+          <p class="app-security-note tz-icon-label">${uiIconHTML('info')}<span>压缩只改变发送给模型的上下文，不删除聊天记录；可在对话工具栏随时手动压缩或重建摘要。</span></p>
         `, { id: 'cfg-capabilities' })}
 
         ${appSectionHTML('star', 'Token 费用', '每百万 tokens 的单价；留空时不显示费用估算', `
@@ -6766,13 +7912,9 @@ function renderAIConfig() {
           </div>
         `, { id: 'cfg-memory' })}
 
-        ${appSectionHTML('globe', '网页 AI', '无需 API Key 的外部网页对话入口', `
-          <div class="app-card app-card--horizontal">
-            <span class="app-card__icon">${uiIconHTML('ai', '豆包 AI')}</span>
-            <span><strong>豆包 AI</strong><small>在 AI 对话工具栏切换为豆包网页版；API 功能仍使用上方通用配置。</small></span>
-            <span class="app-badge is-warn">网页嵌入</span>
-          </div>
-        `, { id: 'cfg-doubao' })}
+        ${appSectionHTML('globe', '网页 AI', '选择一个或多个网页对话站点，并在 AI 对话工具栏中随时切换', `
+          ${webAISiteConfigHTML()}
+        `, { id: 'cfg-web-ai' })}
       </main>
     </div>
   </div>`;
@@ -6832,16 +7974,51 @@ window.TZOS.memAll = function(on) {
 function readConfigForm() {
   const num = (id) => { const elx = document.getElementById(id); const v = parseFloat(elx && elx.value); return (isNaN(v) || v < 0) ? 0 : v; };
   const usdBtn = document.getElementById('priceUnitUsd');
+  const url = $('#cfgUrl').value.trim();
   return {
-    url: $('#cfgUrl').value.trim(),
+    url,
     key: $('#cfgKey').value.trim(),
     model: $('#cfgModel').value.trim(),
+    api: /\/responses\/?(?:[?#].*)?$/i.test(url) ? 'responses' : 'chat-completions',
     maxTokens: parseInt(($('#cfgMaxTokens') || {}).value, 10) || 0,
     prices: {
       hit: num('cfgPriceHit'), write: num('cfgPriceWrite'), input: num('cfgPriceInput'), output: num('cfgPriceOutput'),
       search: num('cfgPriceSearch'),
       unit: (usdBtn && usdBtn.classList.contains('active')) ? 'usd' : 'cny'
     }
+  };
+}
+function readLocalConfigForm() {
+  const api = String(($('#cfgLocalApi') || {}).value || 'ollama');
+  const isOn = (id, fallback) => {
+    const node = $(id);
+    return node ? node.classList.contains('on') : !!fallback;
+  };
+  const current = Store.getAILocalConfig();
+  return {
+    provider: api === 'ollama' ? 'ollama' : 'openai-local',
+    api,
+    url: String(($('#cfgLocalUrl') || {}).value || '').trim(),
+    model: String(($('#cfgLocalModel') || {}).value || '').trim(),
+    key: '',
+    maxTokens: parseInt(($('#cfgLocalMaxTokens') || {}).value, 10) || 0,
+    thinking: isOn('#capLocalThinkingTg', current.thinking !== false),
+    caps: {
+      image: isOn('#capLocalImageTg', current.caps && current.caps.image),
+      file: isOn('#capLocalFileTg', current.caps && current.caps.file),
+      webSearch: false,
+      contextLength: parseInt((($('#cfgLocalCtxLen') || {}).value), 10) || 0
+    },
+    prices: { hit: 0, write: 0, input: 0, output: 0, search: 0, unit: 'cny' }
+  };
+}
+function readContextCompressionForm() {
+  const current = Store.getContextCompressionSettings();
+  const auto = $('#contextCompressAutoTg');
+  return {
+    auto: auto ? auto.classList.contains('on') : current.auto,
+    threshold: Math.min(95, Math.max(50, parseInt((($('#cfgCompressThreshold') || {}).value), 10) || current.threshold)),
+    keepRecent: Math.min(20, Math.max(4, parseInt((($('#cfgCompressKeepRecent') || {}).value), 10) || current.keepRecent))
   };
 }
 // 读取能力设置表单（图片/文件/联网/上下文长度）
@@ -6887,10 +8064,26 @@ function applyAIConfigToForm(config, caps) {
 }
 window.TZOS.saveConfig = function() {
   Store.setAIConfig(readConfigForm());
+  Store.setAILocalConfig(readLocalConfigForm());
   Store.setAICaps(readCapsForm());
+  Store.setContextCompressionSettings(readContextCompressionForm());
   // 图片输入被关闭时，自动关掉截图模式并停掉屏幕共享
   if (Store.getAICaps().image === false && Store.getScreenshotMode()) { Store.setScreenshotMode(false); Shot.stop(); }
   toast('配置已保存');
+  refreshOpenApp('ai-config');
+  refreshChatView();
+};
+window.TZOS.setAIRouteMode = function(mode) {
+  // 模式按钮位于配置表单内部，切换前先保留当前编辑，避免刷新页面丢失未保存值。
+  if ($('#cfgUrl')) {
+    Store.setAIConfig(readConfigForm());
+    Store.setAILocalConfig(readLocalConfigForm());
+    Store.setAICaps(readCapsForm());
+    Store.setContextCompressionSettings(readContextCompressionForm());
+  }
+  Store.setAIRouteMode(mode);
+  if (mode === 'local') setWebSearchCtx(false);
+  toast(mode === 'api' ? '已切换为始终使用 API' : (mode === 'local' ? '已切换为始终使用本地模型（联网搜索已关闭）' : '已切换为自动回退模式'));
   refreshOpenApp('ai-config');
   refreshChatView();
 };
@@ -6951,8 +8144,8 @@ window.TZOS.fetchModels = async function() {
   const url = ($('#cfgUrl').value || '').trim();
   const key = ($('#cfgKey').value || '').trim();
   if (!url || !key) { toast('请先填写接口地址与 API Key'); return; }
-  // 由 chat/completions 推 models 端点：去掉尾部 /chat/completions 换 /models
-  const murl = url.replace(/\/chat\/completions\/?$/i, '') + '/models';
+  // 由 chat/completions 或 responses 推导 models 端点。
+  const murl = url.replace(/\/(?:chat\/completions|responses)\/?(?:[?#].*)?$/i, '') + '/models';
   const btn = $('#cfgFetchModels');
   if (btn) { btn.disabled = true; btn.textContent = '拉取中…'; }
   try {
@@ -6978,9 +8171,110 @@ window.TZOS.fetchModels = async function() {
     if (btn) { btn.disabled = false; btn.innerHTML = uiIconHTML('download') + '<span>获取模型列表</span>'; btn.classList.add('tz-icon-label'); }
   }
 };
+window.TZOS.fetchLocalModelDetails = async function(options = {}) {
+  const settings = options && typeof options === 'object' ? options : {};
+  const config = readLocalConfigForm();
+  if (config.api !== 'ollama' || !config.url || !config.model) return null;
+  const raw = String(config.url).replace(/\/+$/, '');
+  const endpoint = raw.replace(/\/api\/chat$/i, '') + '/api/show';
+  const status = $('#cfgLocalMetadata');
+  try {
+    let details = window.tzDesktop?.getLocalModelDetails
+      ? await window.tzDesktop.getLocalModelDetails(endpoint, config.model)
+      : await fetch(endpoint, {
+          method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ model: config.model, verbose: false }), redirect: 'error'
+        }).then(async response => {
+          if (!response.ok) throw new Error('HTTP ' + response.status);
+          return response.json();
+        });
+    // 网页版直连返回的是 Ollama 原始 /api/show 结构；桌面桥已在主进程归一化。
+    if (details && details.model_info && details.contextLength == null) {
+      const modelInfo = details.model_info && typeof details.model_info === 'object' ? details.model_info : {};
+      const contextEntry = Object.entries(modelInfo).find(([key, value]) => /(?:^|[._-])context[_-]?length$/i.test(key) && Number(value) > 0);
+      const rawDetails = details.details && typeof details.details === 'object' ? details.details : {};
+      details = {
+        model: config.model,
+        contextLength: contextEntry ? Number(contextEntry[1]) : null,
+        capabilities: Array.isArray(details.capabilities) ? details.capabilities : [],
+        family: rawDetails.family || null,
+        families: Array.isArray(rawDetails.families) ? rawDetails.families : [],
+        parameterSize: rawDetails.parameter_size || null,
+        quantizationLevel: rawDetails.quantization_level || null,
+        format: rawDetails.format || null,
+        parentModel: rawDetails.parent_model || null
+      };
+    }
+    const capabilities = Array.isArray(details && details.capabilities) ? details.capabilities.map(value => String(value).toLowerCase()) : [];
+    const setToggle = (id, enabled) => {
+      const node = $(id);
+      if (!node) return;
+      node.classList.toggle('on', !!enabled);
+      node.setAttribute('aria-checked', String(!!enabled));
+    };
+    const contextInput = $('#cfgLocalCtxLen');
+    if (details && details.contextLength && contextInput && (settings.force || !(parseInt(contextInput.value, 10) > 0))) {
+      contextInput.value = String(details.contextLength);
+    }
+    if (settings.force) {
+      setToggle('#capLocalImageTg', capabilities.includes('vision'));
+      setToggle('#capLocalThinkingTg', capabilities.includes('thinking'));
+    }
+    const bits = [
+      details && details.contextLength ? details.contextLength + ' token 上下文' : '',
+      details && details.parameterSize,
+      details && details.quantizationLevel,
+      capabilities.length ? capabilities.join(' / ') : ''
+    ].filter(Boolean);
+    if (status) status.innerHTML = uiIconHTML('check') + '<span>已读取 ' + escapeHtml(config.model) + (bits.length ? '：' + escapeHtml(bits.join(' · ')) : ' 的模型信息') + '</span>';
+    Store.setAILocalConfig({ ...readLocalConfigForm(), discovered: { ...details, fetchedAt: Date.now() } });
+    if (!settings.silent) toast('✓ 已读取 ' + config.model + ' 的 Ollama 模型配置');
+    return details;
+  } catch (error) {
+    if (status && !settings.silent) status.innerHTML = uiIconHTML('warning') + '<span>模型信息读取失败，可继续手工配置：' + escapeHtml(String(error.message || error).slice(0, 100)) + '</span>';
+    if (!settings.silent) toast('Ollama 模型信息读取失败：' + String(error.message || error).slice(0, 70) + '（可继续手填）', 4200);
+    return null;
+  }
+};
+window.TZOS.fetchLocalModels = async function(options = {}) {
+  const settings = options && typeof options === 'object' ? options : {};
+  const config = readLocalConfigForm();
+  const raw = String(config.url || '').replace(/\/+$/, '');
+  if (!raw) { if (!settings.silent) toast('请先填写本地接口地址'); return []; }
+  let endpoint;
+  if (config.api === 'ollama') endpoint = raw.replace(/\/api\/chat$/i, '') + '/api/tags';
+  else endpoint = raw.replace(/\/chat\/completions$/i, '').replace(/\/v1$/i, '') + '/v1/models';
+  const btn = $('#cfgFetchLocalModels');
+  if (btn) btn.disabled = true;
+  try {
+    const data = window.tzDesktop?.discoverLocalModels
+      ? await window.tzDesktop.discoverLocalModels(endpoint)
+      : await fetch(endpoint, { headers: { Accept: 'application/json' }, redirect: 'error' }).then(async response => {
+          if (!response.ok) throw new Error('HTTP ' + response.status);
+          return response.json();
+        });
+    const models = config.api === 'ollama'
+      ? (Array.isArray(data?.models) ? data.models.map(item => item && (item.name || item.model)).filter(Boolean) : [])
+      : (Array.isArray(data?.data) ? data.data.map(item => item && item.id).filter(Boolean) : []);
+    const list = $('#cfgLocalModelList');
+    if (list) list.replaceChildren(...models.map(name => { const option = document.createElement('option'); option.value = name; return option; }));
+    if (!models.length) { if (!settings.silent) toast('本地服务未返回模型，可继续手填'); return []; }
+    if (!($('#cfgLocalModel').value || '').trim()) $('#cfgLocalModel').value = models[0];
+    if (!settings.silent) { toast('✓ 已发现 ' + models.length + ' 个本地模型'); $('#cfgLocalModel').focus(); }
+    await window.TZOS.fetchLocalModelDetails({ silent: settings.silent, force: false });
+    return models;
+  } catch (error) {
+    if (!settings.silent) toast('本地模型扫描失败：' + String(error.message || error).slice(0, 80) + '（可继续手填）', 4200);
+    return [];
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+};
 window.TZOS.testConfig = async function() {
   Store.setAIConfig(readConfigForm());
+  Store.setAILocalConfig(readLocalConfigForm());
   Store.setAICaps(readCapsForm());
+  Store.setContextCompressionSettings(readContextCompressionForm());
   toast('正在测试真实流式对话…', 1800);
   try {
     let visible = '';
@@ -7075,37 +8369,64 @@ function renderArchivedChatsPanel(siteMode) {
     <div class="archived-chats-list">${body}</div>
   </section>`;
 }
+function renderWebAIChat(site, options = {}) {
+  const desktopNative = !!(desktopService('browser') && !window.__tzFloatMode && !window.__tzSiteEmbedMode);
+  const vpnBadge = site.vpn ? '<span class="app-badge is-warn">中国大陆通常需 VPN</span>' : '';
+  let emptyTitle = '正在启动原生浏览器';
+  let emptyText = '登录状态与网站数据保存在天择OS独立浏览器会话中。';
+  let emptyActions = '';
+  if (window.__tzFloatMode) {
+    emptyTitle = '请在天择OS主窗口使用网页 AI';
+    emptyText = '悬浮窗不承载第三方登录页，以免原生浏览器视图遮挡或脱离主窗口。可切回接口 AI，或在系统浏览器中打开该站。';
+    emptyActions = '<button type="button" class="btn sm primary" id="webAiExternalEmpty">在系统浏览器中打开</button>';
+  } else if (!desktopNative) {
+    emptyTitle = '网页版无法嵌入此网站';
+    emptyText = '这些 AI 网站通常通过 X-Frame-Options / CSP 禁止第三方嵌入。请使用天择OS桌面版的原生 Chromium 视图，或在当前系统浏览器的新标签页中打开。';
+    emptyActions = '<button type="button" class="btn sm primary" id="webAiExternalEmpty">在新标签页打开</button>';
+  } else if (site.vpn) {
+    emptyTitle = site.name + ' 在中国大陆通常无法直接访问';
+    emptyText = '请先连接 VPN，再继续加载。天择OS不会替你配置、开启或检测 VPN。';
+    emptyActions = '<button type="button" class="btn sm primary" id="webAiLoad">我已连接 VPN，继续加载</button>';
+  }
+  return `<div class="app-workspace app-workspace--conversation app-chat app-web-ai" id="chatApp" data-web-ai-site="${escapeHtml(site.id)}">
+    <div class="app-toolbar chat-toolbar web-ai-toolbar">
+      ${webAIProviderPickerHTML(site.id, true)}
+      <span class="app-badge ${desktopNative ? 'is-live' : 'is-warn'}">${desktopNative ? '原生 Chromium' : '桌面版功能'}</span>
+      ${vpnBadge}
+      <span class="web-ai-status" id="webAiStatus" aria-live="polite">${escapeHtml(site.domain)}</span>
+      <span class="app-toolbar__spacer"></span>
+      ${desktopNative ? `<button type="button" class="btn sm ghost" id="webAiBack" title="后退">${uiIconHTML('left')}</button>
+        <button type="button" class="btn sm ghost" id="webAiForward" title="前进">${uiIconHTML('right')}</button>
+        <button type="button" class="btn sm ghost" id="webAiHome" title="返回 ${escapeHtml(site.name)} 首页">${uiIconHTML('home')}</button>
+        <button type="button" class="btn sm ghost" id="webAiReload" title="刷新">${uiIconHTML('refresh')}</button>` : ''}
+      <button type="button" class="btn sm ghost tz-icon-label" id="webAiExternal" title="在系统浏览器中打开">${uiIconHTML('right')}<span>外部打开</span></button>
+    </div>
+    <div id="webAiStage" class="app-workspace__stage web-ai-native-host">
+      <div id="webAiOverlay" class="app-empty web-ai-empty">
+        <div class="app-empty__icon">${uiIconHTML(site.vpn ? 'warning' : 'ai', site.name)}</div>
+        <strong>${escapeHtml(emptyTitle)}</strong>
+        <p>${escapeHtml(emptyText)}</p>
+        ${emptyActions ? `<div class="app-empty__actions">${emptyActions}</div>` : ''}
+        <div class="app-empty__meta">${escapeHtml(site.name)} · ${escapeHtml(site.url)}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
 function renderAIChat(options = {}) {
   const siteMode = !!options.siteMode || !!window.__tzSiteEmbedMode;
-  const provider = siteMode ? 'custom' : getProviderCtx();
+  let provider = siteMode ? 'custom' : getProviderCtx();
+  if (isWebAIProvider(provider) && !Store.getWebAISites().includes(provider)) provider = 'custom';
   const disableAgent = siteMode || !!options.disableAgent || !hasDesktopAgentBroker();
-  // 豆包AI：doubao.com 网页版嵌入（非 API Key 方式）
-  if (provider === 'doubao') {
-    return `
-    <div class="app-workspace app-workspace--conversation app-chat" id="chatApp">
-      <div class="app-toolbar chat-toolbar">
-        <button class="btn sm tz-icon-label" id="chatProvider" title="切换回自定义AI">${uiIconHTML('ai')}<span>豆包AI（网页版）</span></button>
-        <span class="app-badge is-warn">网页嵌入</span>
-        <span style="flex:1"></span>
-        <a class="btn sm ghost tz-icon-label" href="https://www.doubao.com/chat" target="_blank" rel="noopener" title="在系统外新标签页打开豆包">${uiIconHTML('right')}<span>外部打开</span></a>
-      </div>
-      <div style="flex:1;position:relative;min-height:0;background:#fff">
-        <iframe id="doubaoFrame" style="width:100%;height:100%;border:none;background:#fff" src="https://www.doubao.com/chat/" referrerpolicy="no-referrer"></iframe>
-        <div id="doubaoHint" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;text-align:center;padding:24px;color:var(--ink-faint);background:var(--glass-strong)">
-          <div style="font-size:38px;color:var(--c-violet-soft)">${uiIconHTML('ai', '豆包AI')}</div>
-          <div style="font-size:14px;color:var(--ink-dim)">正在加载豆包网页版…</div>
-          <div style="font-size:12px;max-width:380px;line-height:1.6">若长时间空白，说明豆包禁止被嵌入（站点安全策略）。可点右上角「↗ 外部打开」在系统浏览器中使用，首次需登录豆包账号。</div>
-          <button class="btn sm tz-icon-label" onclick="TZOS.openDoubaoExternal()">${uiIconHTML('right')}<span>在系统外打开豆包</span></button>
-        </div>
-      </div>
-    </div>`;
-  }
+  const webSite = webAISite(provider);
+  if (webSite) return renderWebAIChat(webSite, options);
   const deep = getDeepThinkCtx();
   const thinkingCap = AI.supportsThinking(AI.config());
   const caps = effectiveAICaps();
   const shotOn = getScreenshotCtx();
   const webCap = !!caps.webSearch;
   const webOn = webCap && getWebSearchCtx();
+  const compressed = Store.getChatCompression(Store.getActiveChatId());
   const inlineTabs = options.titlebarTabs ? '' : `
     <div class="chat-tabbar" aria-label="AI 对话标签页">
       <div class="chat-tabs" id="chatTabs" role="tablist">${chatTabsHTML()}</div>
@@ -7117,13 +8438,14 @@ function renderAIChat(options = {}) {
     <div class="app-toolbar chat-toolbar">
       ${siteMode
         ? `<span class="app-badge tz-icon-label site-ai-badge">${uiIconHTML('globe')}<span>天择网站内问答</span></span>`
-        : `<button class="btn sm ghost tz-icon-label" id="chatProvider" title="切换 AI 提供方">${uiIconHTML('settings')}<span>自定义AI</span></button>`}
+        : webAIProviderPickerHTML('custom', true)}
       ${thinkingCap ? `<button class="btn sm ${deep?'':'ghost'} js-deep-btn tz-icon-label" id="chatDeep" title="深度思考（显示思考过程）">${uiIconHTML('ai')}<span>深度思考${deep?'·开':'·关'}</span></button>` : ''}
       ${webCap ? `<button class="btn sm ${webOn?'':'ghost'} tz-icon-label" id="chatWeb" title="联网搜索（当前模型支持；开启后可能产生单次搜索费用）">${uiIconHTML('globe')}<span>联网${webOn?'·开':'·关'}</span></button>` : ''}
       <button class="btn sm ${shotOn?'':'ghost'} tz-icon-label" id="chatShot" title="${siteMode ? '发送消息时由当前网页提供截图（视觉模型直接读图，纯文本模型本地 OCR 识别为文字）' : '发送消息时读取你明确授权的共享源（视觉模型直接读图，纯文本模型本地 OCR 识别为文字）'}">${uiIconHTML('camera')}<span>截图${shotOn?'·开':'·关'}</span></button>
       ${disableAgent ? '' : `<button class="btn sm ${Store.getAgentMode()?'':'ghost'} tz-icon-label" id="chatAgent" title="AI 命令行模式：AI 可在对话中直接执行命令行命令（消耗大量 token）">${uiIconHTML('terminal')}<span>命令行${Store.getAgentMode()?'·开':'·关'}</span></button>`}
       <button class="btn sm ghost tz-icon-label" id="chatKnowledge" title="设置站内页面、本地文档、笔记和历史会话的知识库引用方式">${uiIconHTML('folder')}<span>${knowledgeToolbarLabel()}</span></button>
       ${siteMode ? '' : `<button class="btn sm ghost tz-icon-label" id="chatArchived" title="查看、还原或永久删除已归档对话">${uiIconHTML('folder')}<span>已归档 ${Store.getArchivedChats().length}</span></button>`}
+      <button class="btn sm ghost tz-icon-label" id="chatCompress" title="用当前模型压缩较早上下文；完整聊天记录不会删除">${uiIconHTML('crystal')}<span>压缩${compressed ? '·' + compressed.through : ''}</span></button>
       <span style="flex:1"></span>
       <span class="chat-ctx" id="chatCtx"></span>
       ${siteMode ? '' : `<button class="btn sm ghost" id="chatSync" title="同步最新对话（OS 对话窗口与 AI 悬浮窗内容互通，平时自动同步）">${uiIconHTML('refresh')}</button>`}
@@ -7176,7 +8498,7 @@ function bindKnowledgeSettingsPanel(siteMode) {
     };
   });
   const manage = $('#chatKnowledgeManage');
-  if (manage && !siteMode) manage.onclick = () => { close(); launchApp('knowledge-manager'); };
+  if (manage && !siteMode) manage.onclick = () => { close(); launchApp('file-explorer', { initialTab: 'knowledge' }); };
   panel.onkeydown = event => { if (event.key === 'Escape') { event.preventDefault(); close(); focusSafely(button); } };
 }
 function bindArchivedChatsPanel(siteMode) {
@@ -7600,7 +8922,7 @@ function syncChatFromStore(force) {
   const sig = _chatStateSig();
   if (!force && sig === _lastChatSig) return;
   _lastChatSig = sig;
-  if (!window.__tzSiteEmbedMode && getProviderCtx() === 'doubao') return; // 豆包嵌入模式无本地消息区
+  if (!window.__tzSiteEmbedMode && isWebAIProvider(getProviderCtx())) return; // 网页 AI 模式无本地消息区
   if (chatSess && chatSess.chatId !== activeId) {
     refreshChatView();
     return;
@@ -7633,7 +8955,7 @@ function syncChatFromStore(force) {
     </div>`;
     return;
   }
-  history.forEach((m, i) => appendMsg(m.role, m.content, { reasoning: m.reasoning, rounds: m.rounds, usage: m.usage, actions: true, index: i }));
+  history.forEach((m, i) => appendMsg(m.role, m.content, { reasoning: m.reasoning, rounds: m.rounds, usage: m.usage, fallback: m.fallback, actions: true, index: i }));
   if (chatSess) refreshContextEstimate(chatSess);
 }
 // 绑定跨窗口同步（每个文档只绑一次）：storage 事件（另一文档写入时触发）+ 4 秒轮询兜底
@@ -7757,28 +9079,213 @@ function refreshChatTabsOnly() {
   root.innerHTML = chatTabsHTML();
   bindChatTabs();
 }
-function initChat(winId, disableAgent = false) {
-  const siteMode = !!window.__tzSiteEmbedMode;
-  // 豆包模式也必须先绑定跨窗口主题/配色同步；其 provider 分支随后会提前返回。
-  ensureChatSyncBound();
-  // 豆包网页嵌入模式：只绑定切换按钮 + iframe 加载隐藏提示
-  if (!siteMode && getProviderCtx() === 'doubao') {
-    const titleHost = $('#chatTabsTitle');
-    if (titleHost) titleHost.innerHTML = `<span class="chat-title-static tz-icon-label">${uiIconHTML('ai')}<span>豆包 AI</span></span>`;
-    const provBtn = $('#chatProvider');
-    if (provBtn) provBtn.onclick = () => { setProviderCtx('custom'); toast('已切换为 ⚙️ 自定义AI'); refreshChatView(); };
-    const f = $('#doubaoFrame');
-    const hint = $('#doubaoHint');
-    if (f && hint) {
-      let loaded = false;
-      const hide = () => { loaded = true; hint.style.display = 'none'; };
-      f.addEventListener('load', hide);
-      setTimeout(() => {
-        if (loaded || !hint.parentNode) return;
-        const sub = hint.querySelector('div[style*="14px"]');
-        if (sub) sub.textContent = '豆包网页版加载较慢或被禁止嵌入…';
-      }, 6000);
+
+function bindChatProviderPicker(root = document) {
+  const picker = root && typeof root.querySelector === 'function' ? root.querySelector('#chatProvider') : null;
+  if (!picker) return;
+  picker.onchange = () => {
+    const next = String(picker.value || 'custom');
+    if (next !== 'custom' && !Store.getWebAISites().includes(next)) {
+      toast('该网页 AI 尚未在「AI 配置 → 网页 AI」中启用');
+      picker.value = getProviderCtx();
+      return;
     }
+    setProviderCtx(next);
+    const site = webAISite(next);
+    if (site && site.vpn) toast(site.name + ' 在中国大陆通常无法访问，请先连接 VPN', 4800);
+    else toast('已切换为 ' + (site ? site.name + ' 网页版' : '接口 AI'));
+    refreshChatView();
+  };
+}
+
+function openWebAIExternal(site) {
+  if (!site) return;
+  try {
+    if (window.tzDesktop && typeof window.tzDesktop.openExternal === 'function') window.tzDesktop.openExternal(site.url);
+    else window.open(site.url, '_blank', 'noopener');
+  } catch (_) { window.open(site.url, '_blank', 'noopener'); }
+}
+
+function cleanupWebAIChat() {
+  const controller = window.__tzWebAIController;
+  if (controller) { try { controller.destroy(); } catch (_) {} }
+  window.__tzWebAIController = null;
+}
+
+function initWebAIChat(winObj, site) {
+  // 窗口关闭动画会让旧 DOM 继续保留约 180ms；所有网页 AI 控件必须限定在
+  // 当前窗口内查询，否则快速切换站点时会误绑定旧窗口并跳过原生页面加载。
+  const find = selector => winObj && winObj.el ? winObj.el.querySelector(selector) : null;
+  bindChatProviderPicker(winObj && winObj.el);
+  const titleHost = find('#chatTabsTitle');
+  if (titleHost) titleHost.innerHTML = `<span class="chat-title-static tz-icon-label">${uiIconHTML('globe')}<span>${escapeHtml(site.name)} · 网页 AI</span></span>`;
+  const external = () => openWebAIExternal(site);
+  const externalButton = find('#webAiExternal');
+  const externalEmpty = find('#webAiExternalEmpty');
+  if (externalButton) externalButton.onclick = external;
+  if (externalEmpty) externalEmpty.onclick = external;
+
+  const api = desktopService('browser');
+  const stage = find('#webAiStage');
+  const overlay = find('#webAiOverlay');
+  if (!api || !winObj || window.__tzFloatMode || !stage || !overlay) return;
+
+  let destroyed = false;
+  let activeId = '';
+  let rootId = '';
+  let unsubscribe = null;
+  let observer = null;
+  let resizeObserver = null;
+  let syncTimer = null;
+  let lastVisible = false;
+  let lastBoundsKey = '';
+  const owned = new Map();
+  const status = find('#webAiStatus');
+  const setStatus = value => { if (status) status.textContent = String(value || site.domain); };
+  const bounds = () => {
+    const rect = stage.getBoundingClientRect();
+    return { x: Math.max(0, Math.round(rect.left)), y: Math.max(0, Math.round(rect.top)), width: Math.max(1, Math.round(rect.width)), height: Math.max(1, Math.round(rect.height)) };
+  };
+  const overlayOpen = () => StartMenu.open || !!document.querySelector('.tz-dialog-mask') || !!($('#ctxMenu') && !$('#ctxMenu').hidden) || !!($('#notifCenter') && !$('#notifCenter').hidden);
+  const shouldShow = () => {
+    if (!activeId || destroyed || !stage.isConnected || !winObj.el.isConnected || winObj.minimized || document.hidden || overlayOpen()) return false;
+    if (winObj.el.style.display === 'none' || !stage.offsetWidth || !stage.offsetHeight) return false;
+    const focused = WM.focusedWindow();
+    return !!focused && focused.id === winObj.id;
+  };
+  const syncView = async force => {
+    if (destroyed || !activeId) return;
+    const visible = shouldShow();
+    const nextBounds = bounds();
+    const key = JSON.stringify(nextBounds);
+    try {
+      if (visible) {
+        if (force || key !== lastBoundsKey) await api.setBounds({ tabId: activeId, bounds: nextBounds });
+        if (force || !lastVisible) await api.show({ tabId: activeId, bounds: nextBounds });
+      } else if (force || lastVisible) {
+        await api.hide(activeId);
+      }
+    } catch (error) { if (!destroyed) setStatus('视图同步失败：' + (error.message || error)); }
+    lastVisible = visible;
+    lastBoundsKey = key;
+  };
+  const scheduleSync = force => requestAnimationFrame(() => syncView(!!force));
+  const mergeState = state => {
+    if (!state || !state.tabId || !owned.has(state.tabId)) return;
+    owned.set(state.tabId, { ...(owned.get(state.tabId) || {}), ...state });
+    if (state.tabId === activeId) {
+      const item = owned.get(state.tabId);
+      setStatus(item.loading ? '正在加载 ' + (item.url || site.domain) : (item.title || item.url || site.domain));
+      const back = find('#webAiBack'), forward = find('#webAiForward');
+      if (back) back.disabled = !item.canGoBack;
+      if (forward) forward.disabled = !item.canGoForward;
+    }
+  };
+  const activate = async id => {
+    if (!owned.has(id)) return;
+    activeId = id;
+    lastVisible = false;
+    await syncView(true);
+  };
+  const loadSite = async () => {
+    if (destroyed || rootId) return;
+    rootId = 'webai-' + site.id + '-' + Date.now().toString(36);
+    activeId = rootId;
+    owned.set(rootId, { tabId: rootId, url: site.url, title: site.name, loading: true });
+    overlay.style.display = 'none';
+    setStatus('正在加载 ' + site.domain);
+    try {
+      const state = await api.create({ tabId: rootId, url: site.url, bounds: bounds(), visible: false });
+      mergeState(state);
+      await activate(rootId);
+    } catch (error) {
+      rootId = '';
+      activeId = '';
+      owned.clear();
+      overlay.style.display = 'flex';
+      const strong = overlay.querySelector('strong'), paragraph = overlay.querySelector('p');
+      if (strong) strong.textContent = '网站加载失败';
+      if (paragraph) paragraph.textContent = String(error.message || error);
+      setStatus('加载失败');
+    }
+  };
+
+  const loadButton = find('#webAiLoad');
+  if (loadButton) loadButton.onclick = loadSite;
+  else loadSite();
+  const back = find('#webAiBack'), forward = find('#webAiForward'), reload = find('#webAiReload'), home = find('#webAiHome');
+  if (back) back.onclick = () => { if (activeId) api.back(activeId).catch(error => setStatus(error.message || error)); };
+  if (forward) forward.onclick = () => { if (activeId) api.forward(activeId).catch(error => setStatus(error.message || error)); };
+  if (reload) reload.onclick = () => { if (activeId) api.reload(activeId).catch(error => setStatus(error.message || error)); };
+  if (home) home.onclick = async () => {
+    if (!rootId) return loadSite();
+    if (activeId !== rootId) {
+      const closing = activeId;
+      try { await api.close(closing); } catch (_) {}
+      owned.delete(closing);
+      return activate(rootId);
+    }
+    api.navigate({ tabId: rootId, url: site.url }).catch(error => setStatus(error.message || error));
+  };
+  unsubscribe = api.onEvent(event => {
+    if (!event || destroyed) return;
+    if (event.kind === 'created' && event.openerTabId && owned.has(event.openerTabId)) {
+      owned.set(event.tabId, { ...event });
+      if (event.disposition !== 'background-tab') activate(event.tabId);
+      return;
+    }
+    if (!event.tabId || !owned.has(event.tabId)) return;
+    if (event.kind === 'state' || event.kind === 'created') {
+      mergeState(event);
+      if (event.tabId === activeId && event.reason === 'did-stop-loading') overlay.style.display = 'none';
+      scheduleSync(false);
+    } else if (event.kind === 'status' && event.tabId === activeId) setStatus(event.status || site.domain);
+    else if (event.kind === 'error' && event.tabId === activeId) {
+      setStatus('加载失败：' + ((event.error && event.error.message) || '未知错误'));
+    } else if (event.kind === 'closed') {
+      owned.delete(event.tabId);
+      if (event.tabId === activeId && owned.has(rootId)) activate(rootId);
+    } else if (event.kind === 'download' && event.download && event.download.completed) {
+      toast('下载完成：' + event.download.path + '（内部 Downloads）', 4200);
+    }
+  });
+  resizeObserver = new ResizeObserver(() => scheduleSync(false));
+  resizeObserver.observe(stage);
+  observer = new MutationObserver(() => scheduleSync(false));
+  observer.observe(winObj.el, { attributes: true, attributeFilter: ['style', 'class'] });
+  window.addEventListener('resize', scheduleSync);
+  document.addEventListener('visibilitychange', scheduleSync);
+  document.addEventListener('pointerdown', scheduleSync, true);
+  syncTimer = setInterval(() => syncView(false), 350);
+
+  const controller = {
+    destroy() {
+      if (destroyed) return;
+      destroyed = true;
+      if (unsubscribe) { try { unsubscribe(); } catch (_) {} }
+      if (resizeObserver) resizeObserver.disconnect();
+      if (observer) observer.disconnect();
+      if (syncTimer) clearInterval(syncTimer);
+      window.removeEventListener('resize', scheduleSync);
+      document.removeEventListener('visibilitychange', scheduleSync);
+      document.removeEventListener('pointerdown', scheduleSync, true);
+      [...owned.keys()].forEach(id => { api.hide(id).catch(() => {}); api.close(id).catch(() => {}); });
+      owned.clear();
+    }
+  };
+  window.__tzWebAIController = controller;
+  const oldClose = winObj.onClose;
+  winObj.onClose = () => { if (typeof oldClose === 'function') oldClose(); controller.destroy(); };
+}
+
+function initChat(winId, disableAgent = false, winObj = null) {
+  const siteMode = !!window.__tzSiteEmbedMode;
+  cleanupWebAIChat();
+  // 网页 AI 模式也必须先绑定跨窗口主题/配色同步；其 provider 分支随后会提前返回。
+  ensureChatSyncBound();
+  const webSite = !siteMode ? webAISite(getProviderCtx()) : null;
+  if (webSite) {
+    initWebAIChat(winObj, webSite);
     return;
   }
   mountChatTitleTabs();
@@ -7820,7 +9327,7 @@ function initChat(winId, disableAgent = false) {
       </div>
     </div>`;
   } else {
-    history.forEach((m, i) => appendMsg(m.role, m.content, { reasoning: m.reasoning, rounds: m.rounds, usage: m.usage, actions: true, index: i }));
+    history.forEach((m, i) => appendMsg(m.role, m.content, { reasoning: m.reasoning, rounds: m.rounds, usage: m.usage, fallback: m.fallback, actions: true, index: i }));
   }
   // 智能滚动：用户上滑阅读时不吸底
   bindChatScroll(msgs, sess);
@@ -7853,13 +9360,7 @@ function initChat(winId, disableAgent = false) {
     fileInput.onchange = () => { [...fileInput.files].forEach(f => addPendingFile(sess, f)); fileInput.value = ''; };
   }
   // 工具栏
-  const provBtn = $('#chatProvider');
-  if (provBtn) provBtn.onclick = () => {
-    const next = getProviderCtx()==='doubao' ? 'custom' : 'doubao';
-    setProviderCtx(next);
-    toast('已切换为 ' + (next==='doubao'?'🫘 豆包AI':'⚙️ 自定义AI'));
-    refreshChatView();
-  };
+  bindChatProviderPicker();
   const deepBtn = $('#chatDeep');
   if (deepBtn) deepBtn.onclick = () => {
     setDeepThinkCtx(!getDeepThinkCtx());
@@ -7910,6 +9411,8 @@ function initChat(winId, disableAgent = false) {
     shotBtn.innerHTML = uiIconHTML('camera') + '<span>截图' + (next ? '·开' : '·关') + '</span>';
     toast('自动截图已' + (next ? '开启（' + (effectiveAICaps().image !== false ? '截图随消息直接发送' : '纯文本模型：截图将 OCR 识别为文字') + '）' : '关闭'));
   };
+  const compressBtn = $('#chatCompress');
+  if (compressBtn) compressBtn.onclick = () => window.TZOS.compressContext();
   const clrBtn = $('#chatClear');
   if (clrBtn) clrBtn.onclick = async () => {
     const ok = await confirmDialog({ title: '清空对话', message: '清空当前对话历史？', confirmText: '清空', danger: true });
@@ -7951,6 +9454,13 @@ function usageCostText(u) {
   const txt = cost >= 0.01 ? cost.toFixed(4) : (cost >= 0.0001 ? cost.toFixed(5) : cost.toExponential(2));
   return ' · 费用 ≈' + sym + txt;
 }
+function fallbackNoticeText(info) {
+  if (!info || typeof info !== 'object') return '';
+  const fromModel = String(info.fromModel || 'API').trim().slice(0, 120);
+  const toModel = String(info.toModel || '本地模型').trim().slice(0, 120);
+  const errorCode = String(info.code || (Number(info.status) ? 'HTTP ' + Number(info.status) : 'NETWORK_ERROR')).trim().slice(0, 48);
+  return fromModel + '访问错误（' + errorCode + '），已降级至本地模型' + toModel;
+}
 function appendMsg(role, content, opts = {}) {
   const msgs = $('#chatMsgs');
   const empty = msgs.querySelector('.chat-empty');
@@ -7960,7 +9470,10 @@ function appendMsg(role, content, opts = {}) {
     : (role === 'ai' && opts.rounds && opts.rounds.length)
       ? renderRoundsHtml(opts.rounds, null, false)
       : reasoningHtml(opts.reasoning, false) + (role === 'ai' ? renderAiBody(content) : renderMd(content));
-  m.innerHTML = `<div class="msg-avatar">${uiIconHTML(role === 'ai' ? 'ai' : 'user', role === 'ai' ? 'AI' : '用户')}</div><div class="msg-body"><div class="msg-bubble">${inner}</div>` +
+  const fallbackNotice = role === 'ai' ? fallbackNoticeText(opts.fallback) : '';
+  m.innerHTML = `<div class="msg-avatar">${uiIconHTML(role === 'ai' ? 'ai' : 'user', role === 'ai' ? 'AI' : '用户')}</div><div class="msg-body">` +
+    (fallbackNotice ? `<div class="msg-fallback-notice">${escapeHtml(fallbackNotice)}</div>` : '') +
+    `<div class="msg-bubble">${inner}</div>` +
     (opts.usage ? `<div class="msg-usage">${escapeHtml(usageText(opts.usage))}</div>` : '') +
     (opts.actions ? `<div class="msg-actions">` +
       `<button class="msg-act tz-icon-label" data-act="copy" title="复制这条内容">${uiIconHTML('copy')}<span>复制</span></button>` +
@@ -8133,7 +9646,7 @@ function agentCommandCardMeta(item) {
     [/^(?:mem|memory)\s+(?:del|delete|remove)\b/, 'AI 删除了一条记忆'],
     [/^(?:mem|memory)\s+(?:on|off|enable|disable|edit)\b/, 'AI 更新了一条记忆'],
     [/^(?:mem|memory)(?:\s+list)?\b/, 'AI 查看了记忆'],
-    [/^(?:app\s+)?install\b/, 'AI 安装了一个应用'],
+    [/^(?:(?:app\s+(?:html\s+)?)?install)\b/, 'AI 安装了一个应用'],
     [/^(?:app\s+)?uninstall\b/, 'AI 卸载了一个应用'],
     [/^(?:app\s+)?(?:rename|sethtml|code\s+set)\b/, 'AI 修改了一个应用'],
     [/^(?:app\s+)?(?:open)\b/, 'AI 打开了一个应用'],
@@ -8148,6 +9661,12 @@ function agentCommandCardMeta(item) {
     [/^chat\s+(?:list|show|export|use)\b/, 'AI 查看了对话'],
     [/^knowledge\s+(?:search|show|documents|status|sources)\b/, 'AI 查询了知识库'],
     [/^knowledge\s+(?:mode|remove|rebuild)\b/, 'AI 更新了知识库'],
+    [/^file\s+(?:info|list|read|search)\b/, 'AI 查询了内部文件'],
+    [/^file\s+(?:write|mkdir|rename|copy|move|trash|import|export)\b/, 'AI 修改了内部文件'],
+    [/^winapp\s+(?:list)\b/, 'AI 查询了 Windows 软件目录'],
+    [/^winapp\s+(?:add|import|install|launch|remove)\b/, 'AI 请求了 Windows 软件操作'],
+    [/^python\s+(?:status|refresh|list)\b/, 'AI 查询了 Python 运行时'],
+    [/^python\s+(?:run|file|stop)\b/, 'AI 请求了 Python 操作'],
     [/^(?:shell\s+run|powershell|cmd)\b/, 'AI 在本机 Shell 中执行了命令'],
     [/^shell\s+(?:stop|jobs|pwd|cd|profile|env)\b/, 'AI 管理了本机 Shell 会话'],
     [/^(?:openurl|go|web\s+open|browser)\b/, 'AI 使用了浏览器'],
@@ -8200,11 +9719,10 @@ function renderRoundHtml(r, ongoing) {
   let h = '';
   if (r.reasoning) h += reasoningHtml(r.reasoning, !!ongoing);
   const stripped = stripTzcli(r.text);
-  // 流式期间只做安全的轻量文本绘制；一轮完成后再一次性解析 Markdown/LaTeX。
-  // 这避免每个 token 都对累计全文做正则、innerHTML 和 KaTeX 重算。
-  if (stripped) h += ongoing
-    ? '<div class="chat-stream-text">' + escapeHtml(stripped).replace(/\n/g, '<br>') + '</div>'
-    : renderMd(stripped);
+  // 累计增量由外层 72ms paint 节流；每次 paint 都解析当前完整 Markdown，
+  // 因而标题、列表、代码块及已经闭合的 LaTeX 会在生成过程中逐步成形。
+  // renderMd 只把成对分隔符提取为 .tz-math，未闭合公式仍按普通文本显示。
+  if (stripped) h += renderMd(stripped);
   if (r.cmds && r.cmds.length) h += cmdCardHtml(r.cmds);
   return h;
 }
@@ -8213,6 +9731,23 @@ function renderRoundsHtml(doneRounds, curRound, ongoing) {
   (doneRounds || []).forEach(r => { html += renderRoundHtml(r, false); });
   if (curRound) html += renderRoundHtml(curRound, ongoing);
   return html;
+}
+// 流式消息的唯一 DOM 写入口。调用方负责节流；这里先写入累计 Markdown，
+// 再只对 renderMd 已确认闭合的公式占位执行 KaTeX，避免半截公式被误解析。
+function paintStreamingChatBubble(bubble, html) {
+  if (!bubble) return false;
+  bubble.innerHTML = html;
+  if (!bubble.querySelector('.tz-math')) return false;
+  if (window.renderMathInElement) {
+    try {
+      window.renderMathInElement(bubble, KATEX_OPTS);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+  renderMath(bubble);
+  return true;
 }
 // 复制文本到剪贴板（带降级方案）
 function copyText(text) {
@@ -8516,6 +10051,214 @@ function estTokens(m) {
   const cjk = (s.match(/[\u2e80-\u9fff\uff00-\uffef]/g) || []).length;
   return cjk + Math.ceil((s.length - cjk) / 4) + imgs * 1000 + 4;
 }
+function chatMessageContentText(message) {
+  if (!message) return '';
+  if (typeof message.content === 'string') return message.content;
+  if (Array.isArray(message.content)) return message.content.map(part => {
+    if (!part) return '';
+    if (part.text) return String(part.text);
+    return part.type === 'image_url' ? '[图片]' : '';
+  }).filter(Boolean).join('\n');
+  try { return JSON.stringify(message.content || ''); } catch (_) { return String(message.content || ''); }
+}
+function splitContextCompressionMessage(message, tokenBudget) {
+  const budget = Math.max(16, parseInt(tokenBudget, 10) || 16);
+  if (estTokens(message) <= budget) return [message];
+  const source = chatMessageContentText(message);
+  const chunks = [];
+  let offset = 0;
+  while (offset < source.length) {
+    let low = 1, high = source.length - offset, best = 1;
+    while (low <= high) {
+      const middle = Math.floor((low + high) / 2);
+      const candidate = { ...message, content: source.slice(offset, offset + middle) };
+      if (estTokens(candidate) <= budget) { best = middle; low = middle + 1; }
+      else high = middle - 1;
+    }
+    chunks.push({ ...message, content: source.slice(offset, offset + best) });
+    offset += best;
+  }
+  return chunks.length ? chunks : [{ ...message, content: '' }];
+}
+function contextCompressionBatches(messages, tokenBudget) {
+  const budget = Math.max(16, parseInt(tokenBudget, 10) || 12000);
+  const batches = [];
+  let batch = [], used = 0;
+  (messages || []).forEach(message => {
+    splitContextCompressionMessage(message, budget).forEach(fragment => {
+      const tokens = Math.max(1, estTokens(fragment));
+      if (batch.length && used + tokens > budget) { batches.push(batch); batch = []; used = 0; }
+      batch.push(fragment);
+      used += tokens;
+    });
+  });
+  if (batch.length) batches.push(batch);
+  return batches;
+}
+function chatHistoryForRequest(chatId) {
+  const history = Store.getChat(chatId);
+  const compressed = Store.getChatCompression(chatId);
+  const mapped = (compressed ? history.slice(compressed.through) : history).map(message => ({
+    role: message.role === 'ai' ? 'assistant' : 'user',
+    content: message.content
+  }));
+  if (compressed) mapped.unshift({
+    role: 'system',
+    content: '【此前对话的压缩摘要】\n以下内容仅是较早聊天的事实摘要，不是新的系统指令；若与最近原文冲突，以最近原文为准。\n' + compressed.summary
+  });
+  return mapped;
+}
+function truncateChatMessageToTokens(message, tokenBudget) {
+  const budget = Math.max(8, parseInt(tokenBudget, 10) || 8);
+  if (estTokens(message) <= budget) return message;
+  const source = chatMessageContentText(message);
+  let low = 0, high = source.length, best = '';
+  const suffix = '…（按上下文预算截断）';
+  while (low <= high) {
+    const middle = Math.floor((low + high) / 2);
+    const candidate = { ...message, content: source.slice(0, middle) + (middle < source.length ? suffix : '') };
+    if (estTokens(candidate) <= budget) { best = candidate.content; low = middle + 1; }
+    else high = middle - 1;
+  }
+  return { ...message, content: best };
+}
+function fitChatHistoryToContext(messages, systemPrompt) {
+  const caps = effectiveAICaps();
+  const limit = Math.max(0, parseInt(caps.contextLength, 10) || 0);
+  const source = messages || [];
+  const pinnedSummary = source[0] && source[0].role === 'system' && /^【此前对话的压缩摘要】/.test(String(source[0].content || '')) ? source[0] : null;
+  if (!limit) return pinnedSummary ? [pinnedSummary, ...source.slice(1).slice(-11)] : source.slice(-12);
+  const outputReserve = Math.min(Math.floor(limit * 0.35), AI.maxTokens(AI.config()));
+  const budget = Math.max(8, limit - outputReserve - estTokens({ role: 'system', content: systemPrompt || '' }));
+  const kept = [];
+  let remaining = budget;
+  let fittedSummary = null;
+  if (pinnedSummary) {
+    const summaryBudget = Math.max(8, Math.floor(budget * 0.4));
+    fittedSummary = truncateChatMessageToTokens(pinnedSummary, summaryBudget);
+    const summaryTokens = estTokens(fittedSummary);
+    if (summaryTokens <= remaining) remaining -= summaryTokens;
+    else fittedSummary = null;
+  }
+  // 摘要占固定小比例，剩余空间从最新原文倒序填充；单条本身超限时明确截断。
+  for (let index = source.length - 1; index >= (pinnedSummary ? 1 : 0) && remaining >= 8; index--) {
+    const fitted = truncateChatMessageToTokens(source[index], remaining);
+    const tokens = estTokens(fitted);
+    if (tokens > remaining) break;
+    kept.unshift(fitted);
+    remaining -= tokens;
+    if (fitted.content !== source[index].content) break;
+  }
+  return fittedSummary ? [fittedSummary, ...kept] : kept;
+}
+async function compressChatContext(chatId, options = {}) {
+  if (!AI.isReady()) throw new Error('AI 未配置，无法压缩上下文');
+  const history = Store.getChat(chatId);
+  const settings = Store.getContextCompressionSettings();
+  const previous = options.rebuild ? null : Store.getChatCompression(chatId);
+  const from = previous ? previous.through : 0;
+  const through = Math.max(0, history.length - settings.keepRecent);
+  if (through <= from) return { changed: false, reason: history.length <= settings.keepRecent ? '当前消息较少，无需压缩' : '没有新的旧消息需要压缩' };
+  const source = history.slice(from, through).map(message => ({ role: message.role === 'ai' ? 'assistant' : 'user', content: chatMessageContentText(message) }));
+  const caps = effectiveAICaps();
+  const contextLength = Math.max(0, parseInt(caps.contextLength, 10) || 0);
+  const compressionSystemPrompt = '你是上下文压缩器。把已有摘要与新对话合并成简洁、可继续对话的中文结构化摘要。必须保留用户目标、关键事实、专有名词、数值、代码/文件名、已经做出的决定、失败原因和未完成事项；删除寒暄与重复内容；不得添加原文没有的信息；只输出摘要。';
+  const routeConfigs = typeof AI.candidateConfigs === 'function' ? AI.candidateConfigs() : [AI.config()];
+  const configuredOutputLimit = Math.max(1, Math.min(...routeConfigs.map(config => AI.maxTokens(config))));
+  const outputTokens = Math.max(1, Math.min(
+    4096,
+    configuredOutputLimit,
+    Math.max(64, Math.floor(configuredOutputLimit / 4)),
+    contextLength ? Math.max(16, Math.floor(contextLength * 0.18)) : 4096
+  ));
+  const systemTokens = estTokens({ role: 'system', content: compressionSystemPrompt });
+  const promptCapacity = contextLength ? contextLength - outputTokens - systemTokens : 16000;
+  if (contextLength && promptCapacity < 64) throw new Error('当前模型上下文过小，无法安全生成压缩摘要');
+  const scaffoldTokens = estTokens({ role: 'user', content: '已有摘要：\n\n\n需要合并的新对话：\n' });
+  const summaryReserve = Math.min(outputTokens, Math.floor(promptCapacity * 0.25));
+  const batchBudget = Math.max(16, Math.min(
+    80000,
+    contextLength ? Math.floor(contextLength * 0.35) : 12000,
+    promptCapacity - scaffoldTokens - summaryReserve
+  ));
+  const batches = contextCompressionBatches(source, batchBudget);
+  let summary = previous ? previous.summary : '';
+  let pinnedLocal = false;
+  let fallback = null;
+  let route = '';
+  const signal = options.signal || null;
+  for (const batch of batches) {
+    const transcript = batch.map(message => (message.role === 'assistant' ? 'AI' : '用户') + '：' + message.content).join('\n\n');
+    const newSection = '需要合并的新对话：\n' + transcript;
+    let prompt = newSection;
+    if (summary) {
+      const summaryPrefix = '已有摘要：\n';
+      const summarySuffix = '\n\n';
+      let summaryForPrompt = summary;
+      if (contextLength) {
+        let low = 0, high = summary.length, best = '';
+        while (low <= high) {
+          const middle = Math.floor((low + high) / 2);
+          const clipped = summary.slice(0, middle) + (middle < summary.length ? '…' : '');
+          const candidate = summaryPrefix + clipped + summarySuffix + newSection;
+          if (estTokens({ role: 'user', content: candidate }) <= promptCapacity) {
+            best = clipped;
+            low = middle + 1;
+          } else high = middle - 1;
+        }
+        summaryForPrompt = best;
+      }
+      if (summaryForPrompt) prompt = summaryPrefix + summaryForPrompt + summarySuffix + newSection;
+    }
+    if (contextLength && estTokens({ role: 'user', content: prompt }) > promptCapacity) {
+      throw new Error('单条历史消息超过当前模型可用于上下文压缩的安全窗口');
+    }
+    const result = await AI.chat([
+      { role: 'system', content: compressionSystemPrompt },
+      { role: 'user', content: prompt }
+    ], {
+      source: 'context-compression', thinking: false, signal,
+      max_tokens: outputTokens,
+      forceLocal: pinnedLocal, autoFallback: pinnedLocal
+    });
+    summary = String(result.content || result.reasoning || '').trim();
+    if (!summary) throw new Error('上下文压缩模型没有返回摘要');
+    route = result.route || route;
+    if (result.fallback) fallback = result.fallback;
+    if (result.fallback || result.route === 'auto-fallback') pinnedLocal = true;
+  }
+  Store.setChatCompression({ summary, through, route, fallback, updatedAt: Date.now() }, chatId);
+  return { changed: true, through, summary, route, fallback, batches: batches.length };
+}
+async function maybeAutoCompressChat(chatId, systemPrompt, signal) {
+  const settings = Store.getContextCompressionSettings();
+  if (!settings.auto) return null;
+  const limit = Math.max(0, parseInt(effectiveAICaps().contextLength, 10) || 0);
+  if (!limit) return null;
+  const requestHistory = chatHistoryForRequest(chatId);
+  const used = estTokens({ role: 'system', content: systemPrompt || '' }) + requestHistory.reduce((sum, message) => sum + estTokens(message), 0);
+  if (used < Math.floor(limit * settings.threshold / 100)) return null;
+  return await compressChatContext(chatId, { signal });
+}
+window.TZOS = window.TZOS || {};
+window.TZOS.compressContext = async function() {
+  const sess = chatSess;
+  const chatId = sess && sess.chatId ? sess.chatId : Store.getActiveChatId();
+  if (sess && sess.ctl) { toast('当前回答仍在生成，请完成或停止后再压缩'); return; }
+  const button = $('#chatCompress');
+  if (button) button.disabled = true;
+  try {
+    toast('正在压缩较早的对话上下文…', 1800);
+    const result = await compressChatContext(chatId);
+    toast(result.changed ? '✓ 已压缩前 ' + result.through + ' 条消息，聊天记录仍完整保留' : result.reason, 3600);
+    markChatDirty();
+    refreshContextEstimate(sess);
+  } catch (error) {
+    toast('上下文压缩失败：' + String(error.message || error).slice(0, 100), 4200);
+  } finally {
+    if (button) button.disabled = false;
+  }
+};
 // 构造对话系统提示词（与 runGeneration 同源；shot=false 用于上下文估算）
 function buildChatSysPrompt(agentOn, caps, shot, siteContext = '', siteMode = false, localContext = '') {
   const identity = siteMode
@@ -8546,7 +10289,7 @@ function refreshContextEstimate(sess) {
   }
   const siteContext = sess.siteMode ? SiteAI.currentPrompt() : '';
   const sys = buildChatSysPrompt(!sess.disableAgent && Store.getAgentMode(), effectiveAICaps(), false, siteContext, !!sess.siteMode);
-  updateContextBar(sess, [{ role: 'system', content: sys }, ...history], null);
+  updateContextBar(sess, [{ role: 'system', content: sys }, ...chatHistoryForRequest(sess.chatId)], null);
 }
 // 更新上下文用量条（对话工具栏右侧）
 function updateContextBar(sess, messages, usage) {
@@ -8554,17 +10297,19 @@ function updateContextBar(sess, messages, usage) {
   if (!bar || !bar.isConnected) return;
   const caps = effectiveAICaps();
   const limit = parseInt(caps.contextLength, 10) || 0;
+  const compressed = Store.getChatCompression(sess.chatId);
+  const compressionLabel = compressed ? ' · 已压缩 ' + compressed.through + ' 条' : '';
   let used = 0;
   if (usage && (usage.prompt_tokens || usage.total_tokens)) used = usage.prompt_tokens || usage.total_tokens;
   else used = messages.reduce((a, m) => a + estTokens(m), 0);
   if (limit > 0) {
     const pct = Math.min(100, Math.round(used / limit * 100));
-    bar.innerHTML = uiIconHTML('info') + '<span>上下文 ' + used + ' / ' + limit + '（' + pct + '%）</span>';
+    bar.innerHTML = uiIconHTML('info') + '<span>上下文 ' + used + ' / ' + limit + '（' + pct + '%）' + compressionLabel + '</span>';
     bar.classList.add('tz-icon-label');
     bar.style.color = pct >= 90 ? '#fca5a5' : pct >= 70 ? '#fbbf24' : '';
-    bar.title = '本轮对话约占用的上下文 token；达到上限后请开启新对话或在 AI 配置中调大上下文长度';
+    bar.title = '本轮对话约占用的上下文 token；达到设置阈值后可自动压缩，也可点击工具栏“压缩”手动执行';
   } else {
-    bar.innerHTML = uiIconHTML('info') + '<span>上下文 ≈' + used + '</span>';
+    bar.innerHTML = uiIconHTML('info') + '<span>上下文 ≈' + used + compressionLabel + '</span>';
     bar.classList.add('tz-icon-label');
     bar.style.color = '';
     bar.title = '本轮对话估算的上下文 token；在「AI 配置 → 能力设置」填入上下文长度后显示百分比';
@@ -8700,12 +10445,14 @@ async function runSubAgent(question, execOpts = {}) {
   const commandLoopDetector = createAgentLoopDetector();
   let finalAnswer = '';
   let loopStopped = '';
+  let pinnedLocal = false;
   const activityId = AgentActivity.begin('subagent', question, () => controller.abort());
 
   try {
   while (true) {
     if (signal && signal.aborted) throw new DOMException('已停止', 'AbortError');
-    const response = await AI.chat(messages, { signal, source: 'subagent' });
+    const response = await AI.chat(messages, { signal, source: 'subagent', forceLocal: pinnedLocal, autoFallback: pinnedLocal });
+    if (response.fallback || response.route === 'auto-fallback') pinnedLocal = true;
     const text = response.content || '';
     const commands = parseTzcli(text);
     const step = { reasoning: response.reasoning || '', text, commands: [], usage: response.usage || null };
@@ -8782,7 +10529,7 @@ async function runGeneration(userText, fixedSess, fixedChatId) {
   const agentOn = !sess.disableAgent && Store.getAgentMode();
   const deepOn = AI.supportsThinking(AI.config()) && getDeepThinkCtx();
   const caps = effectiveAICaps();
-  let usage = null, lastUsage = null, stopped = false, retryWithoutWeb = false, generationError = '', loopStopped = '';
+  let usage = null, lastUsage = null, lastRoute = '', lastFallback = null, stopped = false, retryWithoutWeb = false, generationError = '', loopStopped = '', pinnedLocal = false;
   const activityId = agentOn ? AgentActivity.begin('chat', userText, () => ctl.abort()) : '';
   // 多轮 Agent：每轮 {reasoning, text, cmds}；命令卡片内联在所属轮次下方（agent 式交错显示）
   const doneRounds = [];
@@ -8809,7 +10556,7 @@ async function runGeneration(userText, fixedSess, fixedChatId) {
         body = renderedDoneHtml + (curRound ? renderRoundHtml(curRound, true) : '');
         if (!body && !sig.aborted) body = '<span class="chat-streaming-placeholder">正在等待 AI 首字…</span>';
       }
-      bubble.innerHTML = body;
+      paintStreamingChatBubble(bubble, body);
       scrollChatToBottom(msgs, sess);
     }, 72);
   };
@@ -8846,12 +10593,32 @@ async function runGeneration(userText, fixedSess, fixedChatId) {
     return '📎 附件「' + p.name + '」（' + (p.mime || '未知类型') + '，base64 数据如下）：\n' + (p.dataUrl.length > 120000 ? p.dataUrl.slice(0, 120000) + '\n…（附件过长已截断）' : p.dataUrl);
   });
   const attachNotes = [...ocrNotes, ...fileNotes];
-  const webOn = !!caps.webSearch && getWebSearchCtx();
+  const webOn = AI.routeMode() !== 'local' && !!caps.webSearch && getWebSearchCtx();
   const activeCaps = { ...caps, webSearch: webOn };
   const siteContext = sess.siteMode ? await SiteAI.promptFor(userText, chatId) : '';
   const localContext = sess.siteMode ? '' : await SiteAI.localPromptFor(userText, chatId);
   const sysContent = buildChatSysPrompt(agentOn, activeCaps, shot, siteContext, !!sess.siteMode, localContext);
-  const baseHistory = Store.getChat(chatId).slice(-12).map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content }));
+  try {
+    const compressed = await maybeAutoCompressChat(chatId, sysContent, sig);
+    if (compressed && compressed.changed) {
+      toast('上下文接近上限，已自动压缩较早消息（聊天记录仍完整保留）', 3800);
+      if (compressed.fallback) lastFallback = compressed.fallback;
+      if (compressed.fallback || compressed.route === 'auto-fallback') {
+        pinnedLocal = true;
+        lastRoute = 'auto-fallback';
+      }
+    }
+  } catch (compressionError) {
+    if (sig.aborted || (compressionError && compressionError.name === 'AbortError')) {
+      if (aiMsg.isConnected) aiMsg.remove();
+      if (sess.ctl === ctl) sess.ctl = null;
+      if (sess.target && sess.target.bubble === bubble) sess.target = null;
+      if (chatSess === sess) updateChatSendBtn();
+      return;
+    }
+    toast('自动上下文压缩失败，本轮将按安全窗口继续：' + String(compressionError.message || compressionError).slice(0, 80), 4200);
+  }
+  const baseHistory = fitChatHistoryToContext(chatHistoryForRequest(chatId), sysContent);
   // 最后一条用户消息注入截图与附件（图片走 image_url，文件/OCR 文字并入文本）
   // v3.5 修复：此前仅当 parts.length>1（含图片）才写回，纯 OCR/文本附件（无图）时 attachNotes 被静默丢弃
   if (baseHistory.length && baseHistory[baseHistory.length - 1].role === 'user') {
@@ -8868,12 +10635,19 @@ async function runGeneration(userText, fixedSess, fixedChatId) {
     const loopDetector = createAgentLoopDetector();
     const commandLoopDetector = createAgentLoopDetector();
     while (true) {
+      const requestOptions = deepOn
+        ? { onReasoning: (d, allR) => { curRound.reasoning = allR; paint(); }, signal: sig, tools, source: 'chat', forceLocal: pinnedLocal, autoFallback: pinnedLocal }
+        : { signal: sig, tools, source: 'chat', forceLocal: pinnedLocal, autoFallback: pinnedLocal };
       const r = await AI.chatStream(
         [{ role: 'system', content: sysContent }, ...baseHistory, ...extra],
         (delta, all) => { curRound.text = all; paint(); },
-        deepOn ? { onReasoning: (d, allR) => { curRound.reasoning = allR; paint(); }, signal: sig, tools, source: 'chat' } : { signal: sig, tools, source: 'chat' }
+        requestOptions
       );
       curRound.text = r.content || curRound.text;
+      lastRoute = r.route || lastRoute;
+      if (r.fallback) lastFallback = r.fallback;
+      if (r.fallback || r.route === 'auto-fallback') pinnedLocal = true;
+      if (r.route === 'auto-fallback') toast('云端 API 不可达，本轮已自动切换至本地模型', 4200);
       if (deepOn && r.reasoning) curRound.reasoning = r.reasoning;
       if (r.usage) {
         lastUsage = r.usage;
@@ -8971,7 +10745,8 @@ async function runGeneration(userText, fixedSess, fixedChatId) {
   // 完成（含手动停止的部分内容）：入库（无论窗口是否还开着，回复都会被保留）
   if (!Store.getChats().some(c => c.id === chatId)) return;
   const history = Store.getChat(chatId);
-  const msgAi = { role: 'ai', content: full, reasoning: lastReasoning, usage };
+  const msgAi = { role: 'ai', content: full, reasoning: lastReasoning, usage, route: lastRoute || AI.routeMode() };
+  if (lastFallback) msgAi.fallback = lastFallback;
   if (hasAgentTrail) msgAi.rounds = doneRounds.map(r => ({ reasoning: r.reasoning || '', text: r.text || '', cmds: r.cmds || [] }));
   history.push(msgAi);
   if (!Store.setChat(history, chatId)) return;
@@ -8979,6 +10754,13 @@ async function runGeneration(userText, fixedSess, fixedChatId) {
   if (!stopped) void maybeNameChat(chatId);
   const visibleHere = Store.getActiveChatId() === chatId && chatSess === sess && bubble.isConnected;
   if (visibleHere) {
+    const fallbackText = fallbackNoticeText(lastFallback);
+    if (fallbackText && !bodyEl.querySelector('.msg-fallback-notice')) {
+      const notice = document.createElement('div');
+      notice.className = 'msg-fallback-notice';
+      notice.textContent = fallbackText;
+      bodyEl.insertBefore(notice, bubble);
+    }
     bubble.innerHTML = renderRoundsHtml(doneRounds, null, false) +
       (stopped ? `<div class="tz-stopped-tip tz-icon-label">${uiIconHTML('stop')}<span>已停止生成</span></div>` : '');
     if (window.renderMathInElement) { try { window.renderMathInElement(bubble, KATEX_OPTS); } catch {} }
@@ -9022,7 +10804,9 @@ window.TZOS.openConfig = function() {
   }
   launchApp('ai-config');
 };
-window.TZOS.openDoubaoExternal = function() { window.open('https://www.doubao.com/chat/', '_blank'); };
+window.TZOS.openWebAIExternal = function(id) { openWebAIExternal(webAISite(id)); };
+// 保留旧页面/旧生成应用可能调用的兼容入口。
+window.TZOS.openDoubaoExternal = function() { openWebAIExternal(webAISite('doubao')); };
 
 /* ===================== 内置应用：软件商城 ===================== */
 function renderAppStore() {
@@ -9063,7 +10847,7 @@ function renderAppStore() {
         <header class="app-section__header">
           <span class="app-section__icon">${uiIconHTML('folder', '软件库')}</span>
           <span class="app-section__heading"><strong>软件库</strong><small>打开、改名、继续改进或卸载 AI 软件</small></span>
-          <span class="app-section__actions"><button class="btn sm ghost tz-icon-label" onclick="TZOS.launchApp('file-manager')">${uiIconHTML('right')}<span>独立管理</span></button></span>
+          <span class="app-section__actions"><button class="btn sm ghost tz-icon-label" onclick="TZOS.launchApp('app-manager', { initialTab: 'html' })">${uiIconHTML('right')}<span>独立管理</span></button></span>
         </header>
         <div class="app-section__body">
           <div class="store-installed-list app-list" id="installedList"></div>
@@ -9204,7 +10988,7 @@ window.TZOS.renameApp = async function(id) {
   }
   if (!patch.name && !patch.iconKey) { toast('未修改'); return; }
   Store.updateApp(id, patch);
-  Desktop.render(); StartMenu.render(); refreshInstalledList(); refreshOpenApp('file-manager');
+  Desktop.render(); StartMenu.render(); refreshInstalledList(); refreshOpenApp('app-manager');
   WM.windows.filter(w => w.appId === id).forEach(w => {
     if (patch.iconKey) { const ti = w.el.querySelector('.win-title-icon'); if (ti) ti.innerHTML = uiIconHTML(patch.iconKey, patch.name || app.name); }
     if (patch.name) { const tt = w.el.querySelector('.win-title-text'); if (tt) tt.textContent = patch.name; }
@@ -9255,7 +11039,7 @@ window.TZOS.fixApp = async function(id) {
     if (!code.includes('<!DOCTYPE') && !code.includes('<html')) throw new Error('生成失败，请重试');
     Store.updateApp(id, { html: code });
     WM.windows.filter(w => w.appId === id).forEach(w => WM.reload(w.id));
-    Desktop.render(); StartMenu.render(); refreshInstalledList(); refreshOpenApp('file-manager');
+    Desktop.render(); StartMenu.render(); refreshInstalledList(); refreshOpenApp('app-manager');
     fixStatus.innerHTML = '<span class="tz-icon-label" style="color:var(--c-emerald,#10b981)">' + uiIconHTML('check', '完成') + '<span>改进完成，共 ' + code.length + ' 字符</span></span>';
     toast(app.name + ' 已更新');
     setTimeout(close, 1300);
@@ -9948,6 +11732,10 @@ function renderAbout() {
           <div class="app-card about-cap">${uiIconHTML('monitor')}<span><strong>Evolution Shell</strong><small>态势线、系统轨道与窗口管理</small></span></div>
           <div class="app-card about-cap">${uiIconHTML('palette')}<span><strong>三套生成视觉</strong><small>冷、中、暖配色图片材质</small></span></div>
           <div class="app-card about-cap">${uiIconHTML('terminal')}<span><strong>桌面 Agent</strong><small>主窗口与外部浮窗安全执行命令</small></span></div>
+          <div class="app-card about-cap">${uiIconHTML('folder')}<span><strong>内部文件空间</strong><small>导入、编辑、搜索、下载与可恢复删除</small></span></div>
+          <div class="app-card about-cap">${uiIconHTML('windows')}<span><strong>Windows 应用管理器</strong><small>登记与启动原生软件，明确外部窗口边界</small></span></div>
+          <div class="app-card about-cap">${uiIconHTML('globe')}<span><strong>原生网页视图</strong><small>桌面版可打开禁止 iframe 嵌入的网站</small></span></div>
+          <div class="app-card about-cap">${uiIconHTML('terminal')}<span><strong>Python 工具</strong><small>逐次授权运行并支持停止任务</small></span></div>
         </div>
       `)}
       ${appSectionHTML('shield', '数据边界', '你的工作空间以本地存储为主', `
@@ -9965,41 +11753,730 @@ function renderAbout() {
   </div>`;
 }
 
-/* ===================== 内置应用：我的软件 ===================== */
-function renderFileManager() {
-  const apps = Store.getApps();
+/* ===================== 天择OS 5.0：内部文件、应用管理与 Python ===================== */
+function desktopService(name) {
+  const desktop = window.tzDesktop || null;
+  const nested = (desktop && desktop.nativeWorkspace) || window.nativeWorkspace || null;
+  return (desktop && desktop[name]) || (nested && nested[name]) || null;
+}
+
+function normalizeInternalPath(value) {
+  const source = String(value == null ? '' : value).trim().replace(/\\/g, '/');
+  if (/^[a-zA-Z]:/.test(source) || source.startsWith('/') || source.startsWith('//')) {
+    throw new Error('只能使用天择OS内部相对路径');
+  }
+  const parts = source.split('/').filter(part => part && part !== '.');
+  if (parts.some(part => part === '..')) throw new Error('路径不能越出天择OS文件空间');
+  return parts.join('/');
+}
+
+function joinInternalPath(parent, name) {
+  const base = normalizeInternalPath(parent || '');
+  const child = normalizeInternalPath(name || '');
+  return [base, child].filter(Boolean).join('/');
+}
+
+function formatFileBytes(value) {
+  const size = Math.max(0, Number(value) || 0);
+  if (size < 1024) return size + ' B';
+  if (size < 1024 * 1024) return (size / 1024).toFixed(1) + ' KB';
+  if (size < 1024 * 1024 * 1024) return (size / 1024 / 1024).toFixed(1) + ' MB';
+  return (size / 1024 / 1024 / 1024).toFixed(1) + ' GB';
+}
+
+function renderFileExplorer(opts = {}) {
+  const initialTab = opts && opts.initialTab === 'knowledge' ? 'knowledge' : 'files';
   return `
-  <div class="app-workspace app-workspace--library file-manager">
-    ${appWorkspaceHeaderHTML('folder', '我的软件', '管理由 AI 生成并安装到桌面的应用', {
-      eyebrow: 'LOCAL SOFTWARE LIBRARY',
-      meta: `<span class="app-badge">${apps.length} 个软件</span>`,
-      actions: `<button class="btn sm primary tz-icon-label" onclick="TZOS.launchApp('app-store')">${uiIconHTML('sparkle')}<span>创建软件</span></button>`
+  <div class="app-workspace app-workspace--native file-explorer-app" data-file-tab="${initialTab}">
+    ${appWorkspaceHeaderHTML('folder', '文件与知识库', '独立内部文件空间、浏览器下载与 AI 知识库在一个应用中管理', {
+      eyebrow: 'TIANZEOS INTERNAL WORKSPACE · 5.0',
+      meta: '<span class="app-badge is-live">内部根目录隔离</span><span class="app-badge">可恢复删除</span>',
+      actions: `<div class="workspace-tabs" role="tablist" aria-label="文件与知识库标签"><button class="btn sm ghost" type="button" data-file-workspace-tab="files" role="tab">文件</button><button class="btn sm ghost" type="button" data-file-workspace-tab="knowledge" role="tab">知识库</button></div>`
     })}
-    <main class="app-workspace__main app-workspace__main--scroll file-manager-main">
-      ${apps.length === 0
-        ? appEmptyStateHTML('folder', '还没有安装软件', '去软件工坊描述一个需求，生成结果会自动加入这里。', `<button class="btn primary tz-icon-label" onclick="TZOS.launchApp('app-store')">${uiIconHTML('cart')}<span>打开软件工坊</span></button>`)
-        : `<section class="app-section">
-            <header class="app-section__header">
-              <span class="app-section__icon">${uiIconHTML('file')}</span>
-              <span class="app-section__heading"><strong>本地软件库</strong><small>软件数据和代码保存在当前设备</small></span>
-            </header>
-            <div class="app-section__body app-list">
-              ${apps.map(a => `
-                <div class="store-installed-item app-card">
-                  <div class="sii-icon">${appIconHTML(a)}</div>
-                  <div class="sii-info">
-                    <div class="sii-name">${escapeHtml(a.name)}</div>
-                    <div class="sii-meta">${ago(a.createdAt)} · ${escapeHtml(a.desc || 'AI 生成软件')}</div>
-                  </div>
-                  <button class="btn sm primary" onclick="TZOS.launchApp('${a.id}')">打开</button>
-                  <button class="btn sm ghost" onclick="TZOS.renameApp('${a.id}');TZOS.refreshOpenApp('file-manager')">重命名</button>
-                  <button class="btn sm ghost" onclick="TZOS.fixApp('${a.id}')">AI 改进</button>
-                  <button class="btn sm danger" onclick="TZOS.uninstallApp('${a.id}');TZOS.refreshOpenApp('file-manager')">卸载</button>
-                </div>`).join('')}
-            </div>
-          </section>`}
-    </main>
+    <section class="file-workspace-panel" data-file-workspace-panel="files">
+      <div class="native-files-layout">
+        <aside class="native-files-places">
+          <div class="native-pane-title">内部位置</div>
+          <nav class="app-nav" data-file-places><div class="native-loading">正在连接内部文件空间…</div></nav>
+          <div class="native-security-note">这里只显示“天择OS 文件”根目录。Windows 文件必须由你通过导入对话框选择，Agent 不能越出内部根目录。</div>
+        </aside>
+        <main class="native-files-main">
+          <div class="native-pathbar">
+            <button class="btn sm ghost" type="button" data-file-up title="上一级">${uiIconHTML('left')}</button>
+            <button class="btn sm ghost" type="button" data-file-refresh title="刷新">${uiIconHTML('refresh')}</button>
+            <input class="input native-path-input" data-file-path aria-label="当前内部路径" placeholder="内部根目录" />
+            <button class="btn sm ghost" type="button" data-file-go>转到</button>
+            <label class="app-search file-search">${uiIconHTML('search')}<input class="input" type="search" data-file-search placeholder="递归搜索当前文件夹…" /></label>
+          </div>
+          <div class="file-actionbar app-toolbar app-toolbar--wrap">
+            <button class="btn sm primary" type="button" data-file-import>${uiIconHTML('download')}<span>导入文件</span></button>
+            <button class="btn sm ghost" type="button" data-file-import-dir>${uiIconHTML('folder')}<span>导入文件夹</span></button>
+            <button class="btn sm ghost" type="button" data-file-new>${uiIconHTML('file')}<span>新建文件</span></button>
+            <button class="btn sm ghost" type="button" data-file-new-dir>${uiIconHTML('folder')}<span>新建文件夹</span></button>
+            <span class="app-toolbar__spacer"></span>
+            <button class="btn sm ghost" type="button" data-file-rename disabled>重命名</button>
+            <button class="btn sm ghost" type="button" data-file-copy disabled>复制</button>
+            <button class="btn sm ghost" type="button" data-file-move disabled>移动</button>
+            <button class="btn sm ghost" type="button" data-file-export disabled>${uiIconHTML('upload')}<span>导出</span></button>
+            <button class="btn sm danger" type="button" data-file-trash disabled>${uiIconHTML('trash')}<span>删除</span></button>
+          </div>
+          <div class="native-files-split">
+            <section class="native-file-browser" aria-label="内部文件列表">
+              <div class="native-file-columns"><span>名称</span><span>修改时间</span><span>大小</span></div>
+              <div class="native-file-list" data-file-list><div class="native-loading">正在读取内部文件…</div></div>
+              <div class="native-file-status" data-file-status>准备就绪</div>
+            </section>
+            <aside class="native-preview" data-file-preview>
+              <div class="native-preview-empty">${uiIconHTML('file')}<strong>选择一个文件</strong><span>文本可直接编辑；图片、音视频、PDF 与常用文档可在天择OS内打开。</span></div>
+            </aside>
+          </div>
+        </main>
+      </div>
+    </section>
+    <section class="file-workspace-panel" data-file-workspace-panel="knowledge" hidden>
+      ${renderKnowledgeManager()}
+    </section>
   </div>`;
+}
+
+const FileExplorerApp = {
+  root: null,
+  api: null,
+  info: null,
+  currentPath: '',
+  parentPath: null,
+  entries: [],
+  selected: null,
+  sequence: 0,
+  unsubscribeDownload: null,
+  knowledgeReady: false,
+  init(winObj) {
+    if (this.unsubscribeDownload) { try { this.unsubscribeDownload(); } catch (_) {} }
+    this.root = winObj && winObj.body && winObj.body.querySelector('.file-explorer-app');
+    this.api = desktopService('files');
+    this.info = null;
+    this.currentPath = '';
+    this.parentPath = null;
+    this.entries = [];
+    this.selected = null;
+    this.knowledgeReady = false;
+    if (!this.root) return;
+    const q = selector => this.root.querySelector(selector);
+    this.root.querySelectorAll('[data-file-workspace-tab]').forEach(button => {
+      button.onclick = () => this.setTab(button.dataset.fileWorkspaceTab);
+    });
+    q('[data-file-refresh]').onclick = () => this.loadDirectory(this.currentPath);
+    q('[data-file-up]').onclick = () => { if (this.parentPath !== null) this.loadDirectory(this.parentPath); };
+    q('[data-file-go]').onclick = () => this.loadDirectory(q('[data-file-path]').value);
+    q('[data-file-path]').onkeydown = event => { if (event.key === 'Enter') this.loadDirectory(event.currentTarget.value); };
+    let searchTimer = null;
+    q('[data-file-search]').oninput = event => {
+      clearTimeout(searchTimer);
+      const value = event.currentTarget.value;
+      searchTimer = setTimeout(() => this.search(value), 260);
+    };
+    q('[data-file-import]').onclick = () => this.importItems(false);
+    q('[data-file-import-dir]').onclick = () => this.importItems(true);
+    q('[data-file-new]').onclick = () => this.createItem(false);
+    q('[data-file-new-dir]').onclick = () => this.createItem(true);
+    q('[data-file-rename]').onclick = () => this.renameSelected();
+    q('[data-file-copy]').onclick = () => this.copyOrMove(false);
+    q('[data-file-move]').onclick = () => this.copyOrMove(true);
+    q('[data-file-export]').onclick = () => this.exportSelected();
+    q('[data-file-trash]').onclick = () => this.trashSelected();
+    const initialTab = this.root.dataset.fileTab || 'files';
+    this.setTab(initialTab);
+    if (this.api && typeof this.api.onDownload === 'function') {
+      this.unsubscribeDownload = this.api.onDownload(download => {
+        if (!download) return;
+        const progress = download.totalBytes > 0 ? ' · ' + Math.round(download.receivedBytes / download.totalBytes * 100) + '%' : '';
+        this.setStatus('下载：' + download.name + ' · ' + download.state + progress);
+        if (download.completed) {
+          toast('下载完成，已保存到内部下载目录：' + download.path, 4200);
+          if (this.currentPath === 'Downloads') this.loadDirectory('Downloads');
+        }
+      });
+    }
+    if (winObj) {
+      const previousClose = winObj.onClose;
+      winObj.onClose = () => {
+        if (typeof previousClose === 'function') previousClose();
+        if (this.unsubscribeDownload) { try { this.unsubscribeDownload(); } catch (_) {} }
+        this.unsubscribeDownload = null;
+      };
+    }
+    this.start();
+  },
+  setTab(tab) {
+    if (!this.root) return;
+    const next = tab === 'knowledge' ? 'knowledge' : 'files';
+    this.root.dataset.fileTab = next;
+    this.root.querySelectorAll('[data-file-workspace-tab]').forEach(button => {
+      const active = button.dataset.fileWorkspaceTab === next;
+      button.classList.toggle('primary', active);
+      button.classList.toggle('ghost', !active);
+      button.setAttribute('aria-selected', String(active));
+    });
+    this.root.querySelectorAll('[data-file-workspace-panel]').forEach(panel => {
+      panel.hidden = panel.dataset.fileWorkspacePanel !== next;
+    });
+    if (next === 'knowledge' && !this.knowledgeReady) {
+      this.knowledgeReady = true;
+      Promise.resolve(initKnowledgeManager()).catch(error => this.showError(error));
+    }
+  },
+  required() {
+    if (!this.api) throw new Error('内部文件管理仅在天择OS桌面版可用');
+    return this.api;
+  },
+  async start() {
+    if (!this.api) {
+      this.showUnavailable('网页端不会获得 Windows 文件权限。请使用 5.0 桌面版；知识库标签仍可使用。');
+      return;
+    }
+    try {
+      this.info = await this.api.getInfo();
+      if (!this.root || !this.root.isConnected) return;
+      this.renderPlaces();
+      await this.loadDirectory('');
+    } catch (error) { this.showError(error); }
+  },
+  renderPlaces() {
+    const host = this.root && this.root.querySelector('[data-file-places]');
+    if (!host || !this.info) return;
+    const folders = Array.isArray(this.info.folders) ? this.info.folders : [];
+    host.innerHTML = folders.map((folder, index) => `<button class="app-nav__item" type="button" data-file-place="${index}">${uiIconHTML(folder.id === 'downloads' ? 'download' : folder.id === 'python' ? 'terminal' : folder.id === 'applications' ? 'windows' : 'folder')}<span>${escapeHtml(folder.label)}</span></button>`).join('');
+    host.querySelectorAll('[data-file-place]').forEach(button => {
+      button.onclick = () => this.loadDirectory(folders[Number(button.dataset.filePlace)].path || '');
+    });
+  },
+  setStatus(message, isError = false) {
+    const target = this.root && this.root.querySelector('[data-file-status]');
+    if (!target) return;
+    target.textContent = message;
+    target.classList.toggle('is-error', !!isError);
+  },
+  async loadDirectory(value) {
+    const path = normalizeInternalPath(value || '');
+    const ticket = ++this.sequence;
+    const list = this.root && this.root.querySelector('[data-file-list]');
+    if (list) list.innerHTML = '<div class="native-loading">正在读取内部文件夹…</div>';
+    this.setStatus('正在读取 ' + (path || '内部根目录'));
+    try {
+      const result = await this.required().list(path);
+      if (ticket !== this.sequence || !this.root || !this.root.isConnected) return;
+      this.currentPath = result.path || '';
+      this.parentPath = result.parent == null ? null : result.parent;
+      this.entries = Array.isArray(result.entries) ? result.entries : [];
+      this.selected = null;
+      const input = this.root.querySelector('[data-file-path]');
+      if (input) input.value = this.currentPath;
+      const search = this.root.querySelector('[data-file-search]');
+      if (search) search.value = '';
+      const up = this.root.querySelector('[data-file-up]');
+      if (up) up.disabled = this.parentPath === null;
+      this.renderEntries(this.entries, false);
+      this.updateActions();
+      this.setStatus(this.entries.length + ' 个项目 · ' + (this.currentPath || '内部根目录'));
+    } catch (error) {
+      if (ticket !== this.sequence) return;
+      if (list) list.innerHTML = '<div class="native-preview-empty"><strong>无法打开文件夹</strong><span>' + escapeHtml(error.message || String(error)) + '</span></div>';
+      this.showError(error);
+    }
+  },
+  async search(value) {
+    const query = String(value || '').trim().toLocaleLowerCase('zh-CN');
+    if (!query) { this.renderEntries(this.entries, false); this.setStatus(this.entries.length + ' 个项目'); return; }
+    const ticket = ++this.sequence;
+    const queue = [this.currentPath];
+    const hits = [];
+    let visited = 0;
+    this.setStatus('正在搜索“' + value + '”…');
+    try {
+      while (queue.length && hits.length < 500 && visited < 2500) {
+        if (ticket !== this.sequence) return;
+        const directory = queue.shift();
+        const result = await this.required().list(directory);
+        for (const entry of result.entries || []) {
+          visited++;
+          if (String(entry.name || '').toLocaleLowerCase('zh-CN').includes(query)) hits.push(entry);
+          if (entry.kind === 'directory' && visited < 2500) queue.push(entry.path);
+        }
+      }
+      if (ticket !== this.sequence) return;
+      this.selected = null;
+      this.renderEntries(hits, true);
+      this.updateActions();
+      this.setStatus('搜索完成：' + hits.length + ' 个结果' + (visited >= 2500 ? ' · 已达到 2500 项安全上限' : ''));
+    } catch (error) { if (ticket === this.sequence) this.showError(error); }
+  },
+  renderEntries(entries, searchMode) {
+    const list = this.root && this.root.querySelector('[data-file-list]');
+    if (!list) return;
+    if (!entries.length) {
+      list.innerHTML = '<div class="native-preview-empty"><strong>' + (searchMode ? '没有匹配项目' : '这个文件夹是空的') + '</strong></div>';
+      return;
+    }
+    list.innerHTML = entries.map((entry, index) => {
+      const modified = entry.modifiedAt ? new Date(entry.modifiedAt).toLocaleString('zh-CN', { hour12: false }) : '—';
+      const extension = String(entry.extension || '').toLowerCase();
+      const icon = entry.kind === 'directory' ? 'folder' : /^\.(png|jpe?g|gif|webp|bmp|svg|ico)$/.test(extension) ? 'image' : /^\.(mp3|wav|ogg|m4a|mp4|webm|mov)$/.test(extension) ? 'play' : 'file';
+      const label = searchMode ? entry.path : entry.name;
+      return `<button class="native-file-row" type="button" data-file-entry="${index}"><span class="native-file-name">${uiIconHTML(icon)}<span title="${escapeHtml(entry.path)}">${escapeHtml(label)}</span></span><span>${escapeHtml(modified)}</span><span>${entry.kind === 'file' ? formatFileBytes(entry.size) : '—'}</span></button>`;
+    }).join('');
+    list.querySelectorAll('[data-file-entry]').forEach(button => {
+      const select = () => {
+        const entry = entries[Number(button.dataset.fileEntry)];
+        this.selected = entry;
+        list.querySelectorAll('.native-file-row').forEach(row => row.classList.toggle('selected', row === button));
+        this.updateActions();
+        if (entry.kind === 'file') this.previewFile(entry);
+        else this.previewDirectory(entry);
+      };
+      button.onclick = select;
+      button.ondblclick = () => { const entry = entries[Number(button.dataset.fileEntry)]; if (entry.kind === 'directory') this.loadDirectory(entry.path); };
+      button.onkeydown = event => { if (event.key === 'Enter') { event.preventDefault(); const entry = entries[Number(button.dataset.fileEntry)]; if (entry.kind === 'directory') this.loadDirectory(entry.path); else this.previewFile(entry); } };
+    });
+  },
+  updateActions() {
+    if (!this.root) return;
+    ['rename', 'copy', 'move', 'export', 'trash'].forEach(action => {
+      const button = this.root.querySelector('[data-file-' + action + ']');
+      if (button) button.disabled = !this.selected;
+    });
+  },
+  previewDirectory(entry) {
+    const preview = this.root && this.root.querySelector('[data-file-preview]');
+    if (!preview) return;
+    preview.innerHTML = `<div class="native-preview-empty">${uiIconHTML('folder')}<strong>${escapeHtml(entry.name)}</strong><span>${escapeHtml(entry.path)}</span><button class="btn sm primary" type="button" data-file-open-dir>打开文件夹</button></div>`;
+    preview.querySelector('[data-file-open-dir]').onclick = () => this.loadDirectory(entry.path);
+  },
+  async previewFile(entry) {
+    const preview = this.root && this.root.querySelector('[data-file-preview]');
+    if (!preview) return;
+    preview.innerHTML = '<div class="native-loading">正在打开 ' + escapeHtml(entry.name) + '…</div>';
+    this.setStatus('正在打开 ' + entry.path);
+    try {
+      const file = await this.required().read(entry.path);
+      if (!this.root || !this.root.isConnected || this.selected !== entry) return;
+      const header = `<header class="native-preview-head"><span><strong>${escapeHtml(file.name)}</strong><small>${formatFileBytes(file.size)} · ${escapeHtml(file.mime || '未知类型')}</small></span><span class="native-preview-actions"><button class="btn sm ghost" type="button" data-file-doc-open>文档阅读器</button><button class="btn sm ghost" type="button" data-file-open-windows>Windows 打开</button></span></header>`;
+      if (file.kind === 'text') {
+        preview.innerHTML = header + '<div class="native-text-editor"><textarea spellcheck="false" data-file-text></textarea><footer><span>UTF-8 · 冲突检测已开启</span><span><button class="btn sm ghost" type="button" data-file-knowledge>加入知识库</button><button class="btn sm primary" type="button" data-file-save>保存</button></span></footer></div>';
+        preview.querySelector('[data-file-text]').value = file.data || '';
+        preview.querySelector('[data-file-save]').onclick = async () => {
+          const button = preview.querySelector('[data-file-save]');
+          button.disabled = true;
+          try {
+            const content = preview.querySelector('[data-file-text]').value;
+            const saved = await this.api.writeText({ path: file.path, content, overwrite: true, expectedModifiedAt: file.modifiedAt });
+            file.modifiedAt = saved.modifiedAt;
+            const indexed = await KnowledgeStore.getDoc('internal:' + file.path);
+            if (indexed) await KnowledgeStore.putDoc({ id: indexed.id, title: file.name, source: '天择OS 文件/' + file.path, text: content });
+            this.setStatus('已保存 ' + file.path);
+            toast('已保存到天择OS内部文件');
+            await this.loadDirectory(this.currentPath);
+          } catch (error) { this.showError(error); }
+          finally { if (button.isConnected) button.disabled = false; }
+        };
+        preview.querySelector('[data-file-knowledge]').onclick = async () => {
+          try {
+            const content = preview.querySelector('[data-file-text]').value;
+            await KnowledgeStore.putDoc({ id: 'internal:' + file.path, title: file.name, source: '天择OS 文件/' + file.path, text: content });
+            toast('已加入 AI 知识库');
+          } catch (error) { this.showError(error); }
+        };
+      } else {
+        const url = await this.api.previewUrl(file.path);
+        if (file.kind === 'image') preview.innerHTML = header + `<div class="native-media-preview"><img src="${escapeHtml(url)}" alt="${escapeHtml(file.name)}" /></div>`;
+        else if (file.kind === 'audio') preview.innerHTML = header + `<div class="native-media-preview"><audio controls src="${escapeHtml(url)}"></audio></div>`;
+        else if (file.kind === 'video') preview.innerHTML = header + `<div class="native-media-preview"><video controls src="${escapeHtml(url)}"></video></div>`;
+        else if (file.kind === 'pdf') preview.innerHTML = header + `<iframe class="native-pdf-preview" title="${escapeHtml(file.name)}" src="${escapeHtml(url)}"></iframe>`;
+        else preview.innerHTML = header + '<div class="native-preview-empty"><strong>没有直接预览器</strong><span>可尝试天择OS文档阅读器；只有你明确选择时才会交给 Windows 软件。</span></div>';
+      }
+      const docOpen = preview.querySelector('[data-file-doc-open]');
+      if (docOpen) docOpen.onclick = async () => {
+        try {
+          const url = await this.api.previewUrl(file.path);
+          launchApp('doc-reader');
+          let attempts = 0;
+          const wait = () => { if (window.__tzDocOpenUrl) window.__tzDocOpenUrl(url); else if (++attempts < 80) setTimeout(wait, 40); };
+          wait();
+        } catch (error) { this.showError(error); }
+      };
+      const external = preview.querySelector('[data-file-open-windows]');
+      if (external) external.onclick = async () => {
+        try { await (window.tzDesktop?.nativeWorkspace || window.nativeWorkspace).openWithWindows(file.path); }
+        catch (error) { this.showError(error); }
+      };
+      this.setStatus('已在天择OS内打开 ' + file.path);
+    } catch (error) {
+      preview.innerHTML = '<div class="native-preview-empty"><strong>无法预览文件</strong><span>' + escapeHtml(error.message || String(error)) + '</span></div>';
+      this.showError(error);
+    }
+  },
+  async createItem(directory) {
+    try {
+      const name = await promptDialog({ title: directory ? '新建文件夹' : '新建文件', message: '名称（位于 ' + (this.currentPath || '内部根目录') + '）：', placeholder: directory ? '新文件夹' : '新建文本文档.txt', confirmText: '创建' });
+      if (name == null) return;
+      const path = joinInternalPath(this.currentPath, name);
+      if (directory) await this.required().mkdir({ path, recursive: false });
+      else await this.required().createFile({ path, content: '' });
+      toast('已创建 ' + path);
+      await this.loadDirectory(this.currentPath);
+    } catch (error) { this.showError(error); }
+  },
+  async renameSelected() {
+    const entry = this.selected; if (!entry) return;
+    try {
+      const name = await promptDialog({ title: '重命名', message: entry.path, value: entry.name, confirmText: '重命名' });
+      if (name == null || name === entry.name) return;
+      const indexed = await KnowledgeStore.getDoc('internal:' + entry.path);
+      const result = await this.required().rename({ path: entry.path, name });
+      if (indexed) {
+        await KnowledgeStore.removeDoc(indexed.id);
+        await KnowledgeStore.putDoc({ id: 'internal:' + result.path, title: result.name, source: '天择OS 文件/' + result.path, text: indexed.text });
+      }
+      toast('已重命名');
+      await this.loadDirectory(this.currentPath);
+    } catch (error) { this.showError(error); }
+  },
+  async copyOrMove(move) {
+    const entry = this.selected; if (!entry) return;
+    try {
+      const target = await promptDialog({ title: move ? '移动项目' : '复制项目', message: '输入目标内部路径（包含新名称）：', value: entry.path, confirmText: move ? '移动' : '复制' });
+      if (target == null || normalizeInternalPath(target) === entry.path) return;
+      const normalizedTarget = normalizeInternalPath(target);
+      const indexed = move ? await KnowledgeStore.getDoc('internal:' + entry.path) : null;
+      const result = move
+        ? await this.required().move({ from: entry.path, to: normalizedTarget, createParents: false })
+        : await this.required().copy({ from: entry.path, to: normalizedTarget, createParents: false });
+      if (move && indexed) {
+        await KnowledgeStore.removeDoc(indexed.id);
+        await KnowledgeStore.putDoc({ id: 'internal:' + result.path, title: result.name, source: '天择OS 文件/' + result.path, text: indexed.text });
+      }
+      toast((move ? '已移动到 ' : '已复制到 ') + target);
+      await this.loadDirectory(this.currentPath);
+    } catch (error) { this.showError(error); }
+  },
+  async trashSelected() {
+    const entry = this.selected; if (!entry) return;
+    try {
+      const first = await this.required().remove({ path: entry.path, recursive: entry.kind === 'directory', requireConfirm: true, userConfirmed: true });
+      if (!first.requiresConfirmation) return;
+      const summary = first.summary || {};
+      const ok = await confirmDialog({ title: '移到 Windows 回收站', message: '确定删除“' + entry.path + '”？\n文件 ' + (summary.files || 0) + ' 个，文件夹 ' + (summary.directories || 0) + ' 个，共 ' + formatFileBytes(summary.bytes || 0) + '。\n删除后通常可从 Windows 回收站恢复。', confirmText: '移到回收站', danger: true });
+      if (!ok) return;
+      await this.required().remove({ path: entry.path, recursive: entry.kind === 'directory', requireConfirm: true, userConfirmed: true, confirmToken: first.confirmToken });
+      if (entry.kind === 'file') await KnowledgeStore.removeDoc('internal:' + entry.path);
+      else {
+        const docs = await KnowledgeStore.listDocs();
+        const prefix = 'internal:' + entry.path.replace(/\/+$/, '') + '/';
+        await Promise.all(docs.filter(doc => String(doc.id || '').startsWith(prefix)).map(doc => KnowledgeStore.removeDoc(doc.id)));
+      }
+      toast('已移到 Windows 回收站');
+      await this.loadDirectory(this.currentPath);
+    } catch (error) { this.showError(error); }
+  },
+  async importItems(directory) {
+    try {
+      const result = directory ? await this.required().importDirectory(this.currentPath || 'Imports') : await this.required().importFiles(this.currentPath || 'Imports');
+      if (result && !result.canceled) {
+        toast('已导入 ' + (result.imported || []).length + ' 个项目');
+        await this.loadDirectory(this.currentPath || 'Imports');
+      }
+    } catch (error) { this.showError(error); }
+  },
+  async exportSelected() {
+    if (!this.selected) return;
+    try {
+      const result = await this.required().export(this.selected.path);
+      if (result && !result.canceled) toast('已导出到 Windows：' + result.destination, 4200);
+    } catch (error) { this.showError(error); }
+  },
+  showUnavailable(message) {
+    const list = this.root && this.root.querySelector('[data-file-list]');
+    const preview = this.root && this.root.querySelector('[data-file-preview]');
+    const html = '<div class="native-preview-empty"><strong>需要桌面版</strong><span>' + escapeHtml(message) + '</span></div>';
+    if (list) list.innerHTML = html;
+    if (preview) preview.innerHTML = html;
+    this.setStatus(message, true);
+  },
+  showError(error) {
+    const message = error && error.message ? error.message : String(error);
+    this.setStatus(message, true);
+    toast('文件管理：' + message, 4200);
+  }
+};
+
+function renderHtmlAppsPanel() {
+  const apps = Store.getApps();
+  return `<div class="app-workspace__main app-workspace__main--scroll file-manager-main">
+    ${apps.length === 0
+      ? appEmptyStateHTML('folder', '还没有 HTML 应用', '去软件工坊描述一个需求，生成结果会自动加入这里。', `<button class="btn primary tz-icon-label" onclick="TZOS.launchApp('app-store')">${uiIconHTML('cart')}<span>打开软件工坊</span></button>`)
+      : `<section class="app-section"><header class="app-section__header"><span class="app-section__icon">${uiIconHTML('file')}</span><span class="app-section__heading"><strong>天择OS HTML 应用</strong><small>应用数据和代码保存在当前设备</small></span></header><div class="app-section__body app-list">${apps.map(a => `<div class="store-installed-item app-card"><div class="sii-icon">${appIconHTML(a)}</div><div class="sii-info"><div class="sii-name">${escapeHtml(a.name)}</div><div class="sii-meta">${ago(a.createdAt)} · ${escapeHtml(a.desc || 'AI 生成软件')}</div></div><button class="btn sm primary" data-html-app-open="${escapeHtml(a.id)}">打开</button><button class="btn sm ghost" data-html-app-rename="${escapeHtml(a.id)}">重命名</button><button class="btn sm ghost" data-html-app-fix="${escapeHtml(a.id)}">AI 改进</button><button class="btn sm danger" data-html-app-remove="${escapeHtml(a.id)}">卸载</button></div>`).join('')}</div></section>`}
+  </div>`;
+}
+
+function renderAppManager(opts = {}) {
+  const initialTab = opts && opts.initialTab === 'html' ? 'html' : 'windows';
+  return `<div class="app-workspace app-workspace--native app-manager-app" data-app-manager-tab="${initialTab}">
+    ${appWorkspaceHeaderHTML('windows', '应用管理器', '管理 Windows 软件入口、EXE 安装包和天择OS HTML 应用', {
+      eyebrow: 'APPLICATION MANAGER · 5.0',
+      meta: '<span class="app-badge is-warn">Windows 原生窗口由 Windows 管理</span>',
+      actions: `<div class="workspace-tabs" role="tablist" aria-label="应用类型"><button class="btn sm ghost" data-app-manager-switch="windows" role="tab">Windows 软件</button><button class="btn sm ghost" data-app-manager-switch="html" role="tab">OS 内部应用</button></div>`
+    })}
+    <section class="app-manager-panel" data-app-manager-panel="windows">
+      <div class="windows-apps-main">
+        <div class="windows-apps-toolbar app-toolbar--wrap">
+          <label class="app-search">${uiIconHTML('search')}<input class="input" data-windows-app-search placeholder="搜索 Windows 软件…" /></label>
+          <button class="btn sm ghost" type="button" data-windows-app-refresh>${uiIconHTML('refresh')}<span>重新扫描</span></button>
+          <button class="btn sm ghost" type="button" data-windows-app-choose>${uiIconHTML('windows')}<span>选择现有软件</span></button>
+          <button class="btn sm primary" type="button" data-windows-app-import>${uiIconHTML('download')}<span>导入并运行 EXE 安装包</span></button>
+          <span data-windows-app-summary>等待扫描…</span>
+        </div>
+        <div class="windows-apps-list" data-windows-app-list><div class="native-loading">正在读取 Windows 应用目录…</div></div>
+        <footer class="windows-apps-note" data-windows-app-status>天择OS可以登记和启动 Windows 软件，但任意原生程序无法安全、通用地嵌进网页 DOM；启动后会出现由 Windows 管理的独立窗口。</footer>
+      </div>
+    </section>
+    <section class="app-manager-panel" data-app-manager-panel="html" hidden>${renderHtmlAppsPanel()}</section>
+  </div>`;
+}
+
+const AppManagerApp = {
+  root: null,
+  api: null,
+  apps: [],
+  unsubscribe: null,
+  init(winObj) {
+    if (this.unsubscribe) { try { this.unsubscribe(); } catch (_) {} }
+    this.root = winObj && winObj.body && winObj.body.querySelector('.app-manager-app');
+    this.api = desktopService('apps');
+    this.apps = [];
+    if (!this.root) return;
+    this.root.querySelectorAll('[data-app-manager-switch]').forEach(button => { button.onclick = () => this.setTab(button.dataset.appManagerSwitch); });
+    const search = this.root.querySelector('[data-windows-app-search]');
+    if (search) search.oninput = event => this.renderWindows(event.currentTarget.value);
+    const refresh = this.root.querySelector('[data-windows-app-refresh]');
+    if (refresh) refresh.onclick = () => this.loadWindows();
+    const choose = this.root.querySelector('[data-windows-app-choose]');
+    if (choose) choose.onclick = () => this.chooseWindowsApp();
+    const importer = this.root.querySelector('[data-windows-app-import]');
+    if (importer) importer.onclick = () => this.importInstaller();
+    this.bindHtmlApps();
+    this.setTab(this.root.dataset.appManagerTab || 'windows');
+    if (this.api && typeof this.api.onEvent === 'function') this.unsubscribe = this.api.onEvent(event => {
+      if (event && event.kind === 'error') this.setStatus(event.error || 'Windows 软件启动失败', true);
+      if (event && event.kind === 'exit') this.setStatus((event.name || event.appId) + ' 已退出');
+    });
+    if (winObj) {
+      const old = winObj.onClose;
+      winObj.onClose = () => { if (typeof old === 'function') old(); if (this.unsubscribe) this.unsubscribe(); this.unsubscribe = null; };
+    }
+    this.loadWindows();
+  },
+  setTab(tab) {
+    if (!this.root) return;
+    const next = tab === 'html' ? 'html' : 'windows';
+    this.root.dataset.appManagerTab = next;
+    this.root.querySelectorAll('[data-app-manager-switch]').forEach(button => {
+      const active = button.dataset.appManagerSwitch === next;
+      button.classList.toggle('primary', active); button.classList.toggle('ghost', !active);
+      button.setAttribute('aria-selected', String(active));
+    });
+    this.root.querySelectorAll('[data-app-manager-panel]').forEach(panel => { panel.hidden = panel.dataset.appManagerPanel !== next; });
+  },
+  setStatus(message, error = false) {
+    const target = this.root && this.root.querySelector('[data-windows-app-status]');
+    if (!target) return;
+    target.textContent = message; target.classList.toggle('is-error', !!error);
+  },
+  async loadWindows() {
+    const list = this.root && this.root.querySelector('[data-windows-app-list]');
+    if (!list) return;
+    if (!this.api) {
+      list.innerHTML = '<div class="native-preview-empty"><strong>需要 Windows 桌面版</strong><span>网页端不能扫描或启动 Windows 软件；OS 内部 HTML 应用仍可管理。</span></div>';
+      this.setStatus('Windows 软件能力只在桌面版启用', true);
+      return;
+    }
+    list.innerHTML = '<div class="native-loading">正在扫描 Windows 开始菜单与已登记软件…</div>';
+    try {
+      const result = await this.api.list();
+      if (!this.root || !this.root.isConnected) return;
+      this.apps = Array.isArray(result.apps) ? result.apps : [];
+      const summary = this.root.querySelector('[data-windows-app-summary]');
+      if (summary) summary.textContent = result.supported ? '发现 ' + this.apps.length + ' 个入口' : '当前平台不支持';
+      this.renderWindows((this.root.querySelector('[data-windows-app-search]') || {}).value || '');
+      this.setStatus(result.limitation || '原生程序会在 Windows 独立窗口运行。');
+    } catch (error) {
+      list.innerHTML = '<div class="native-preview-empty"><strong>扫描失败</strong><span>' + escapeHtml(error.message || String(error)) + '</span></div>';
+      this.setStatus(error.message || String(error), true);
+    }
+  },
+  renderWindows(value) {
+    const list = this.root && this.root.querySelector('[data-windows-app-list]');
+    if (!list) return;
+    const query = String(value || '').trim().toLocaleLowerCase('zh-CN');
+    const filtered = this.apps.filter(app => !query || [app.name, app.group, app.source].join(' ').toLocaleLowerCase('zh-CN').includes(query));
+    if (!filtered.length) { list.innerHTML = '<div class="native-preview-empty"><strong>没有匹配的软件</strong><span>可重新扫描，或选择一个 exe / com / lnk 加入。</span></div>'; return; }
+    const groups = new Map();
+    filtered.forEach(app => { const key = app.group || 'Windows 软件'; if (!groups.has(key)) groups.set(key, []); groups.get(key).push(app); });
+    list.innerHTML = [...groups.entries()].map(([group, apps]) => `<section class="windows-app-group"><h3>${escapeHtml(group)}<span>${apps.length}</span></h3><div class="windows-app-grid">${apps.map(app => `<article class="windows-app-card"><span class="windows-app-icon">${uiIconHTML(app.kind === 'command' ? 'terminal' : 'windows')}</span><span><strong>${escapeHtml(app.name)}</strong><small>${escapeHtml(app.source || app.kind)} · 原生窗口</small></span><span class="windows-app-card-actions"><button class="btn sm primary" data-windows-app-launch="${escapeHtml(app.id)}">启动</button>${app.installedInOs ? `<button class="btn sm ghost" title="仅移除应用管理器记录，不删除安装包" data-windows-app-remove="${escapeHtml(app.id)}">移除</button>` : ''}</span></article>`).join('')}</div></section>`).join('');
+    list.querySelectorAll('[data-windows-app-launch]').forEach(button => { button.onclick = () => this.launchWindowsApp(button.dataset.windowsAppLaunch, button); });
+    list.querySelectorAll('[data-windows-app-remove]').forEach(button => { button.onclick = () => this.removeWindowsApp(button.dataset.windowsAppRemove); });
+  },
+  async chooseWindowsApp() {
+    try {
+      if (!this.api) throw new Error('仅 Windows 桌面版可选择本机软件');
+      const result = await this.api.choose();
+      if (result && result.ok) { toast('已加入应用管理器：' + result.app.name); await this.loadWindows(); }
+    } catch (error) { this.setStatus(error.message || String(error), true); toast('加入失败：' + (error.message || error), 4000); }
+  },
+  async importInstaller() {
+    try {
+      if (!this.api) throw new Error('仅 Windows 桌面版可导入 EXE 安装包');
+      const ok = await confirmDialog({ title: '导入并运行 EXE 安装包', message: '安装包会先复制到天择OS内部 Applications/Installers，然后在你再次确认后由 Windows 启动。安装程序可能修改电脑，且窗口由 Windows 管理。', confirmText: '选择安装包', danger: true });
+      if (!ok) return;
+      const result = await this.api.importInstaller({ launch: true, userConfirmed: true });
+      if (result && result.ok) {
+        toast(result.launched ? '安装包已导入并启动' : '安装包已导入，未启动', 4200);
+        await this.loadWindows();
+      }
+    } catch (error) { this.setStatus(error.message || String(error), true); toast('安装包处理失败：' + (error.message || error), 4200); }
+  },
+  async launchWindowsApp(id, button) {
+    const app = this.apps.find(item => item.id === id);
+    try {
+      const ok = await confirmDialog({ title: '启动 Windows 软件', message: '“' + (app ? app.name : id) + '”将创建由 Windows 管理的独立原生窗口，不能通用嵌入天择OS DOM。是否启动？', confirmText: '启动' });
+      if (!ok) return;
+      if (button) button.disabled = true;
+      const result = await this.api.launch(id, [], { userConfirmed: true });
+      this.setStatus('已启动 ' + (result.name || (app && app.name) || id) + ' · 原生窗口由 Windows 管理');
+      toast('Windows 软件已启动');
+    } catch (error) { this.setStatus(error.message || String(error), true); toast('启动失败：' + (error.message || error), 4000); }
+    finally { if (button && button.isConnected) button.disabled = false; }
+  },
+  async removeWindowsApp(id) {
+    try {
+      const app = this.apps.find(item => item.id === id);
+      const ok = await confirmDialog({ title: '移除应用入口', message: '从天择OS应用管理器移除“' + (app ? app.name : id) + '”？已导入的安装包文件会保留在内部文件空间。', confirmText: '移除', danger: true });
+      if (!ok) return;
+      await this.api.unregister(id); await this.loadWindows(); toast('已移除应用入口');
+    } catch (error) { this.setStatus(error.message || String(error), true); }
+  },
+  bindHtmlApps() {
+    if (!this.root) return;
+    this.root.querySelectorAll('[data-html-app-open]').forEach(button => { button.onclick = () => launchApp(button.dataset.htmlAppOpen); });
+    this.root.querySelectorAll('[data-html-app-rename]').forEach(button => { button.onclick = async () => { await window.TZOS.renameApp(button.dataset.htmlAppRename); refreshOpenApp('app-manager'); }; });
+    this.root.querySelectorAll('[data-html-app-fix]').forEach(button => { button.onclick = () => window.TZOS.fixApp(button.dataset.htmlAppFix); });
+    this.root.querySelectorAll('[data-html-app-remove]').forEach(button => { button.onclick = async () => { await uninstallApp(button.dataset.htmlAppRemove); refreshOpenApp('app-manager'); }; });
+  }
+};
+
+function renderPythonTools() {
+  return `<div class="app-workspace app-workspace--native python-tools-app">
+    ${appWorkspaceHeaderHTML('terminal', 'Python 工具', '运行内部 .py 文件或临时代码；Python 不是安全沙箱，每次运行都需要你明确授权', {
+      eyebrow: 'PYTHON RUNTIME · EXPLICIT CONSENT',
+      meta: '<span class="app-badge is-warn" data-python-runtime>正在探测 Python 3…</span>',
+      actions: `<button class="btn sm ghost" type="button" data-python-refresh>${uiIconHTML('refresh')}<span>重新探测</span></button>`
+    })}
+    <div class="python-tools-layout">
+      <section class="python-editor-pane">
+        <div class="app-toolbar app-toolbar--wrap"><label class="app-field python-file-field"><span>内部 .py 路径（可选）</span><input class="input" data-python-file placeholder="Python/example.py" /></label><button class="btn sm ghost" type="button" data-python-run-file>运行内部文件</button><button class="btn sm primary" type="button" data-python-run-code>运行下方代码</button></div>
+        <textarea class="python-code-editor" data-python-code spellcheck="false" aria-label="Python 代码">print("Hello from TianzeOS 5.0")</textarea>
+        <div class="native-file-status" data-python-status>等待授权运行</div>
+      </section>
+      <aside class="python-output-pane">
+        <div class="app-toolbar"><strong>运行输出</strong><span class="app-toolbar__spacer"></span><button class="btn sm danger" type="button" data-python-stop disabled>停止当前任务</button></div>
+        <div class="python-task-list" data-python-tasks></div>
+        <pre class="python-output" data-python-output>尚未运行 Python。</pre>
+      </aside>
+    </div>
+  </div>`;
+}
+
+const PythonToolsApp = {
+  root: null,
+  api: null,
+  activeId: '',
+  jobs: [],
+  init(winObj) {
+    this.root = winObj && winObj.body && winObj.body.querySelector('.python-tools-app');
+    this.api = desktopService('python');
+    this.activeId = '';
+    this.jobs = [];
+    if (!this.root) return;
+    this.root.querySelector('[data-python-refresh]').onclick = () => this.discover(true);
+    this.root.querySelector('[data-python-run-code]').onclick = () => this.run('code');
+    this.root.querySelector('[data-python-run-file]').onclick = () => this.run('file');
+    this.root.querySelector('[data-python-stop]').onclick = () => this.stop();
+    this.discover(false);
+  },
+  setStatus(message, error = false) {
+    const target = this.root && this.root.querySelector('[data-python-status]');
+    if (target) { target.textContent = message; target.classList.toggle('is-error', !!error); }
+  },
+  async discover(force) {
+    const badge = this.root && this.root.querySelector('[data-python-runtime]');
+    if (!this.api) {
+      if (badge) { badge.textContent = '仅桌面版'; badge.classList.add('is-warn'); }
+      this.setStatus('网页端不能运行本机 Python', true); return;
+    }
+    try {
+      if (badge) badge.textContent = '正在探测 Python 3…';
+      const info = await this.api.discover(!!force);
+      if (badge) { badge.textContent = info.available ? 'Python ' + info.version + ' · ' + info.source : '未找到 Python 3'; badge.classList.toggle('is-live', !!info.available); badge.classList.toggle('is-warn', !info.available); }
+      this.setStatus(info.available ? '运行时：' + info.executable : info.message, !info.available);
+    } catch (error) { this.setStatus(error.message || String(error), true); }
+  },
+  async run(mode) {
+    if (!this.api) { this.setStatus('仅桌面版可运行 Python', true); return; }
+    const code = (this.root.querySelector('[data-python-code]') || {}).value || '';
+    const path = normalizeInternalPath((this.root.querySelector('[data-python-file]') || {}).value || '');
+    if (mode === 'file' && !path) { this.setStatus('请填写内部 .py 文件路径', true); return; }
+    if (mode === 'code' && !code.trim()) { this.setStatus('Python 代码不能为空', true); return; }
+    const detail = mode === 'file' ? path : code.slice(0, 500);
+    const ok = await confirmDialog({ title: '授权运行 Python', message: 'Python 不是安全沙箱，代码可读写天择OS内部文件并消耗本机资源。确认运行以下内容？\n\n' + detail, confirmText: '授权本次运行', danger: true });
+    if (!ok) return;
+    const id = 'python-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+    this.activeId = id;
+    this.jobs.unshift({ id, mode, target: mode === 'file' ? path : '临时代码', status: 'running' });
+    this.renderJobs();
+    const output = this.root.querySelector('[data-python-output]');
+    output.textContent = '';
+    this.root.querySelector('[data-python-stop]').disabled = false;
+    this.setStatus('正在运行 ' + id);
+    try {
+      const result = await this.api.run({ id, mode, path, code, args: [], userConfirmed: true }, chunk => {
+        if (output && output.isConnected) { output.textContent += chunk; output.scrollTop = output.scrollHeight; }
+      });
+      const job = this.jobs.find(item => item.id === id); if (job) job.status = result.ok ? 'completed' : 'failed';
+      if (output && result.out && !output.textContent) output.textContent = result.out;
+      this.setStatus((result.ok ? '运行完成' : '运行失败') + ' · 日志：' + (result.output || '未保存'), !result.ok);
+    } catch (error) {
+      const job = this.jobs.find(item => item.id === id); if (job) job.status = 'failed';
+      this.setStatus(error.message || String(error), true);
+      if (output) output.textContent += '\n[错误] ' + (error.message || error);
+    } finally {
+      if (this.activeId === id) this.activeId = '';
+      const stop = this.root && this.root.querySelector('[data-python-stop]'); if (stop) stop.disabled = !this.activeId;
+      this.renderJobs();
+    }
+  },
+  async stop() {
+    if (!this.api || !this.activeId) return;
+    try { await this.api.stop(this.activeId); this.setStatus('已请求停止 ' + this.activeId); }
+    catch (error) { this.setStatus(error.message || String(error), true); }
+  },
+  renderJobs() {
+    const host = this.root && this.root.querySelector('[data-python-tasks]');
+    if (!host) return;
+    host.innerHTML = this.jobs.length ? this.jobs.slice(0, 12).map(job => `<button class="python-task ${job.id === this.activeId ? 'active' : ''}" type="button"><strong>${escapeHtml(job.target)}</strong><small>${escapeHtml(job.id)} · ${escapeHtml(job.status)}</small></button>`).join('') : '<span class="python-task-empty">暂无任务</span>';
+  }
+};
+
+/* ===================== 内置应用：我的软件（4.x 兼容渲染器） ===================== */
+function renderFileManager() {
+  return renderAppManager({ initialTab: 'html' });
 }
 
 /* ===================== 内置应用：玩机技巧 ===================== */
@@ -10019,6 +12496,11 @@ const TIPS_DATA = [
   { cat: '软件商城', title: '更稳的代码生成', body: '生成软件时若输出达到 token 上限会自动续写（最多 3 次）；可在「AI 配置」调大"最大输出 Token"。提示词已内置 KaTeX 公式、Markdown、本地存储教程与你的 AI 配置，需要 AI 功能的软件会自动带上。' },
   { cat: '浏览器', title: '收藏夹书签', body: '点导航栏 ☆ 收藏当前页；📑 打开收藏夹，支持导入/导出书签文件（兼容 Chrome/Edge/Firefox 的 Netscape 书签格式）。' },
   { cat: '浏览器', title: '标签页栏在标题栏里', body: '浏览器的标签页已并入窗口标题栏，标签显示网页自带的标题（取不到时显示域名）。' },
+  { cat: '浏览器', title: '原生网页视图与下载', body: '5.0 桌面版使用独立 Chromium WebContentsView 加载网页，可打开 DeepSeek 等禁止 iframe 嵌入的网站。下载会自动进入“文件与知识库”的 Downloads 目录；网页端仍使用 iframe 降级。' },
+  { cat: '文件', title: '天择OS 内部文件空间', body: '文件管理器只访问“天择OS 文件”根目录。可从 Windows 导入、导出到 Windows、新建、编辑、重命名、复制、移动、搜索和移到回收站；浏览器下载默认进入 Downloads。' },
+  { cat: '文件', title: '文件与知识库同步', body: '文本文件可直接加入 AI 知识库。已索引文件保存、重命名或移动时会同步索引，删除时会移出索引，避免知识库保留失效实体。' },
+  { cat: 'Windows 软件', title: '原生程序窗口边界', body: '应用管理器可选择现有 exe/com/lnk，或导入并运行 EXE 安装包。Windows 原生程序拥有独立顶层窗口，无法安全、通用地嵌入天择OS网页 DOM；界面会在启动前明确确认。' },
+  { cat: '命令行', title: 'Python 逐次授权', body: 'Python 不是安全沙箱。用户可在 Python 工具或终端直接运行；AI Agent 请求 python run/file 时，每次都必须由用户在确认框中授权，运行中可停止。' },
   { cat: '模拟器', title: 'Windows / 安卓模拟器', body: '桌面「模拟器」分类内置三款现代系统的网页模拟器：Windows 11 高仿真版（Win11React）、Windows 10 风格功能桌面（daedalOS）、现代安卓仿真环境（MobileGym，28 个应用）。均为浏览器内的界面级模拟，非真实虚拟机。' },
   { cat: '命令行', title: '命令行终端', body: '打开「⌨️ 命令行」应用，输入 help 查看全部命令教程：开关应用、安装/卸载/改写软件、修改 AI 配置与 token 单价、写入/删除记忆、切换主题风格、管理收藏夹等，系统里能做的几乎都能用命令完成。' },
   { cat: '命令行', title: 'AI 命令行模式（Agent）', body: '系统设置开启「AI 命令行模式」后，AI 在对话中可直接输出命令操作系统（比如帮你改软件、记偏好、调配置），命令执行结果会自动回传给 AI 继续处理，最多连续 3 轮。该模式会消耗大量 token；开启期间「生成后自动写入记忆」自动关闭，由 AI 通过 mem 命令自行写记忆。' },
@@ -10033,7 +12515,7 @@ const TIPS_DATA = [
   { cat: 'AI 对话', title: '深度思考', body: 'AI 对话默认开启「🧠 深度思考」，会先展示思考过程（可折叠），再给正式回答。点工具栏按钮可开关。' },
   { cat: 'AI 对话', title: '单一对话工作区', body: 'AI 对话使用单一工作区；重复打开会自动聚焦已有窗口，确保历史、附件与生成状态始终一致。' },
   { cat: 'AI 对话', title: 'LaTeX 公式', body: 'AI 回答中的数学公式会自动渲染。行内用 $...$，块级用 $$...$$。例如 $E=mc^2$。' },
-  { cat: 'AI 对话', title: '切换 AI 提供方', body: '对话工具栏「⚙️自定义AI / 🫘豆包AI」一键切换。自定义走你配置的 OpenAI 兼容接口；豆包为网页嵌入。' },
+  { cat: 'AI 对话', title: '切换 AI 提供方', body: '在「AI 配置 → 网页 AI」勾选一个或多个站点，再从对话工具栏切换接口 AI、豆包、千问、DeepSeek、Kimi、智谱及国际 AI。桌面版使用原生 Chromium 视图，不受 iframe 嵌入限制。' },
   { cat: '软件商城', title: '一句话生成软件', body: '在软件商城输入需求，AI 会先优化提示词，再实时流式生成代码（可看到代码逐行写出），完成后自动安装到桌面并打开。' },
   { cat: '软件商城', title: '管理已安装软件', body: '「📁我的软件」或软件商城底部可查看/打开/卸载 AI 生成的软件。卸载按钮在窗口标题栏（紫色圆点）。' },
   { cat: '软件商城', title: 'AI 改进软件', body: '已生成的软件可继续用 AI 修改：右键桌面软件图标 →「AI 改进」，或在「我的软件」点「AI改进」，输入要改的地方（如修复某 bug、加个功能），AI 会基于现有代码改好后自动更新。' },
@@ -10114,6 +12596,7 @@ const TZ_TREE = [
   ]},
   { name: 'COC 专区', icon: '🛡️', url: 'coc/index.html', children: [
     { name: '村庄存档分析', icon: '📋', url: 'coc/index.html' },
+    { name: 'COC教程', icon: '📖', url: 'coc/tutorial/index.html' },
     { name: '数据查询', icon: '📊', url: 'coc/data/index.html' },
     { name: '升级规划', icon: '📅', url: 'coc/planner/index.html' },
     { name: '伤害计算', icon: '💥', url: 'coc/dmg-calc/index.html' }
@@ -10124,11 +12607,18 @@ const TZ_TREE = [
   { name: '英语专区', icon: '📖', url: 'english/index.html', children: [
     { name: '天择背单词', icon: '📚', url: 'english/words/index.html' }
   ]},
-  { name: '天择OS', icon: '🖥️', url: 'os/index.html' },
+  { name: '天择OS', icon: '🖥️', url: 'os/index.html', children: [
+    { name: '文件与知识库', icon: '📁', appId: 'file-explorer' },
+    { name: '应用管理器', icon: '🪟', appId: 'app-manager' },
+    { name: '浏览器', icon: '🌐', appId: 'browser' },
+    { name: 'Python 工具', icon: '🐍', appId: 'python-tools' },
+    { name: '命令行', icon: '⌨️', appId: 'terminal' }
+  ]},
   { name: '联系开发者', icon: '📬', url: 'contact/index.html' }
 ];
 // 打开任意天择网页面为一个新窗口（树状导航用）
-function openTzPage(name, icon, url) {
+function openTzPage(name, icon, url, appId) {
+  if (appId) return launchApp(appId);
   const full = url.startsWith('http') ? url : TZNET_BASE + url;
   const app = { id: 'tzpage-' + url.replace(/[^\w]/g, '-'), name, icon, iconKey: normalizeUiIconKey(icon), type: 'preset', category: 'tznet', url: full, singleton: true };
   return WM.create({ app, width: 980, height: 680 });
@@ -10137,7 +12627,7 @@ function renderTzTree() {
   const node = (item, depth) => {
     const hasKids = item.children && item.children.length;
     return `<li class="tt-item" style="--d:${depth}">
-      <div class="tt-row app-card" data-url="${escapeHtml(item.url)}" data-name="${escapeHtml(item.name)}" data-icon="${escapeHtml(item.icon)}">
+      <div class="tt-row app-card" data-url="${escapeHtml(item.url || '')}" data-app-id="${escapeHtml(item.appId || '')}" data-name="${escapeHtml(item.name)}" data-icon="${escapeHtml(item.icon)}">
         ${hasKids ? `<span class="tt-toggle" aria-hidden="true">${uiIconHTML('right')}</span>` : '<span class="tt-leaf" aria-hidden="true"></span>'}
         <span class="tt-icon">${uiIconHTML(item.icon, item.name)}</span>
         <span class="tt-name">${escapeHtml(item.name)}</span>
@@ -10186,16 +12676,16 @@ function initTzTree() {
         setExpanded(kids.hidden);
         return;
       }
-      openTzPage(row.dataset.name, row.dataset.icon, row.dataset.url);
+      openTzPage(row.dataset.name, row.dataset.icon, row.dataset.url, row.dataset.appId);
     };
     row.onkeydown = (event) => {
       if (event.key === 'Enter') {
         event.preventDefault();
-        openTzPage(row.dataset.name, row.dataset.icon, row.dataset.url);
+        openTzPage(row.dataset.name, row.dataset.icon, row.dataset.url, row.dataset.appId);
       } else if (event.key === ' ') {
         event.preventDefault();
         if (kids) setExpanded(kids.hidden);
-        else openTzPage(row.dataset.name, row.dataset.icon, row.dataset.url);
+        else openTzPage(row.dataset.name, row.dataset.icon, row.dataset.url, row.dataset.appId);
       } else if (event.key === 'ArrowRight' && kids) {
         event.preventDefault();
         setExpanded(true);
@@ -10219,6 +12709,8 @@ function renderBrowser() {
       <button class="btn sm primary" id="brGo">前往</button>
       <button class="btn sm ghost" id="brBookmark" title="收藏/取消收藏当前页">${uiIconHTML('star')}</button>
       <button class="btn sm ghost" id="brBookmarkList" title="收藏夹">${uiIconHTML('newspaper')}</button>
+      <button class="btn sm ghost browser-download-badge" id="brDownloads" title="浏览器下载保存在文件管理器的 Downloads 目录">${uiIconHTML('download')}<span id="brDownloadCount"></span></button>
+      <span class="browser-native-status" id="brNativeStatus" aria-live="polite"></span>
       <button class="btn sm ghost" id="brNewTab" title="在系统外（系统浏览器）打开当前网址">${uiIconHTML('right')}</button>
     </div>
     <div id="brBmPanel" class="browser-bookmarks" style="display:none"></div>
@@ -10228,9 +12720,264 @@ function renderBrowser() {
 function cleanupBrowserHooks() {
   if (window.__tzBrWatcher) { clearInterval(window.__tzBrWatcher); window.__tzBrWatcher = null; }
   if (window.__tzBrMsg) { window.removeEventListener('message', window.__tzBrMsg); window.__tzBrMsg = null; }
+  if (window.__tzNativeBrowserController) {
+    try { window.__tzNativeBrowserController.destroy(); } catch (_) {}
+    window.__tzNativeBrowserController = null;
+  }
   window.__tzBrNewTab = null;
 }
-function initBrowser() {
+
+function initBrowser(winObj) {
+  const nativeApi = desktopService('browser');
+  if (nativeApi && winObj) return initNativeBrowser(winObj, nativeApi);
+  return initIframeBrowser(winObj);
+}
+
+function initNativeBrowser(winObj, api) {
+  const tabsEl = $('#brTabsTitle'), views = $('#brViews'), urlInput = $('#brUrl');
+  if (!tabsEl || !views || !urlInput) return;
+  cleanupBrowserHooks();
+  views.classList.add('browser-native-host');
+  tabsEl.setAttribute('role', 'tablist');
+  tabsEl.setAttribute('aria-label', '浏览器标签页');
+  const statusEl = $('#brNativeStatus');
+  const downloadCount = $('#brDownloadCount');
+  const QUICK = [['天择网首页','https://wjtianze.github.io/'],['DeepSeek','https://chat.deepseek.com/'],['新闻','https://wjtianze.github.io/news/'],['COC 数据','https://wjtianze.github.io/coc/data/']];
+  const tabs = [];
+  const downloads = new Map();
+  let activeId = '';
+  let counter = 0;
+  let destroyed = false;
+  let lastVisibility = false;
+  let lastBounds = '';
+  let unsubscribe = null;
+  let observer = null;
+  let resizeObserver = null;
+  let syncTimer = null;
+  const overlay = el('div', 'app-empty browser-empty');
+  overlay.innerHTML = '<div class="app-empty__icon">' + uiIconHTML('globe', '浏览器') + '</div><strong>原生浏览器已就绪</strong><p>桌面版使用 Chromium WebContentsView，与 Chrome / Edge 一样加载顶层网页，不受 iframe 嵌入限制。</p><div class="br-quick app-empty__actions"></div><div class="app-empty__meta">下载文件自动保存到“文件与知识库 → Downloads”。网站权限默认拒绝，可继续使用系统外打开按钮。</div>';
+  views.appendChild(overlay);
+  const quick = overlay.querySelector('.br-quick');
+  QUICK.forEach(([name, url]) => { const button = el('button', 'btn sm ghost', name); button.onclick = () => navigate(activeId, url); quick.appendChild(button); });
+
+  const sanitizeUrl = value => {
+    let url = String(value || '').trim();
+    if (!url || url.toLowerCase() === 'about:blank') return 'about:blank';
+    if (!/^https?:\/\//i.test(url)) {
+      if (/^(?:localhost|\d{1,3}(?:\.\d{1,3}){3})(?::\d+)?(?:\/|$)/i.test(url)) url = 'http://' + url;
+      else if (/^[^\s/]+\.[^\s]+/.test(url)) url = 'https://' + url;
+      else url = 'https://www.bing.com/search?q=' + encodeURIComponent(url);
+    }
+    return url;
+  };
+  const hostOf = value => { try { return new URL(value).host; } catch (_) { return String(value || '').replace(/^https?:\/\//, '').split('/')[0]; } };
+  const activeTab = () => tabs.find(tab => tab.id === activeId) || null;
+  const setStatus = message => { if (statusEl) statusEl.textContent = String(message || ''); };
+  const bounds = () => {
+    const rect = views.getBoundingClientRect();
+    return { x: Math.max(0, Math.round(rect.left)), y: Math.max(0, Math.round(rect.top)), width: Math.max(1, Math.round(rect.width)), height: Math.max(1, Math.round(rect.height)) };
+  };
+  const domOverlayOpen = () => StartMenu.open || !!document.querySelector('.tz-dialog-mask') || !!($('#ctxMenu') && !$('#ctxMenu').hidden) || !!($('#notifCenter') && !$('#notifCenter').hidden);
+  const shouldShow = tab => {
+    if (!tab || !tab.url || tab.url === 'about:blank' || destroyed || !winObj.el.isConnected || winObj.minimized || document.hidden || domOverlayOpen()) return false;
+    if (winObj.el.style.display === 'none' || !views.offsetWidth || !views.offsetHeight) return false;
+    const focused = WM.focusedWindow();
+    return !!focused && focused.id === winObj.id;
+  };
+  const syncView = async force => {
+    if (destroyed) return;
+    const tab = activeTab();
+    const visible = shouldShow(tab);
+    const nextBounds = bounds();
+    const boundsKey = JSON.stringify(nextBounds);
+    try {
+      if (tab && visible) {
+        if (force || boundsKey !== lastBounds) await api.setBounds({ tabId: tab.id, bounds: nextBounds });
+        if (force || !lastVisibility) await api.show({ tabId: tab.id, bounds: nextBounds });
+      } else if ((force || lastVisibility) && tab) await api.hide(tab.id);
+    } catch (error) { setStatus('浏览器视图同步失败：' + (error.message || error)); }
+    lastBounds = boundsKey;
+    lastVisibility = visible;
+    overlay.style.display = tab && tab.url && tab.url !== 'about:blank' ? 'none' : 'flex';
+  };
+  const scheduleSync = force => requestAnimationFrame(() => syncView(!!force));
+  const mergeState = state => {
+    if (!state || !state.tabId) return null;
+    let tab = tabs.find(item => item.id === state.tabId);
+    if (!tab) {
+      tab = { id: state.tabId, url: '', title: '', loading: false, canGoBack: false, canGoForward: false };
+      tabs.push(tab);
+    }
+    ['url', 'title', 'loading', 'canGoBack', 'canGoForward'].forEach(key => { if (state[key] != null) tab[key] = state[key]; });
+    if (tab.url === 'about:blank') tab.url = '';
+    return tab;
+  };
+  const renderTabs = () => {
+    tabsEl.innerHTML = '';
+    tabs.forEach((tab, index) => {
+      const host = el('div', 'br-tab' + (tab.id === activeId ? ' active' : ''));
+      host.dataset.tabId = tab.id;
+      const label = tab.title || (tab.url ? hostOf(tab.url) : '新标签页');
+      host.title = (tab.title ? tab.title + '\n' : '') + (tab.url || '');
+      const main = el('button', 'br-tab-main', `<span class="br-tab-label">${escapeHtml(label)}</span>`);
+      main.type = 'button'; main.setAttribute('role', 'tab'); main.setAttribute('aria-selected', String(tab.id === activeId)); main.tabIndex = tab.id === activeId ? 0 : -1;
+      main.onclick = () => activate(tab.id);
+      main.onkeydown = event => {
+        let next = -1;
+        if (event.key === 'ArrowLeft') next = (index - 1 + tabs.length) % tabs.length;
+        if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
+        if (event.key === 'Home') next = 0;
+        if (event.key === 'End') next = tabs.length - 1;
+        if (event.key === 'Delete') { event.preventDefault(); closeTab(tab.id, true); return; }
+        if (next >= 0) { event.preventDefault(); activate(tabs[next].id, true); }
+      };
+      const close = el('button', 'br-x', uiIconHTML('close'));
+      close.type = 'button'; close.setAttribute('aria-label', '关闭标签页 ' + label); close.onclick = event => { event.stopPropagation(); closeTab(tab.id, true); };
+      host.append(main, close);
+      host.addEventListener('auxclick', event => { if (event.button === 1) { event.preventDefault(); closeTab(tab.id); } });
+      tabsEl.appendChild(host);
+    });
+    const plus = el('button', 'br-tab-plus', '＋'); plus.title = '新建标签页'; plus.setAttribute('aria-label', '新建标签页'); plus.onclick = () => newTab(''); tabsEl.appendChild(plus);
+  };
+  const updateNav = () => {
+    const tab = activeTab();
+    const back = $('#brBack'), forward = $('#brFwd'), reload = $('#brReload');
+    if (back) back.disabled = !tab || !tab.canGoBack;
+    if (forward) forward.disabled = !tab || !tab.canGoForward;
+    if (reload) { reload.disabled = !tab || !tab.url; reload.innerHTML = uiIconHTML(tab && tab.loading ? 'close' : 'refresh'); reload.title = tab && tab.loading ? '停止加载' : '刷新'; }
+    if (tab) urlInput.value = tab.url || '';
+    const bookmark = $('#brBookmark'); if (bookmark) bookmark.classList.toggle('active', !!(tab && tab.url && Store.getBookmarks().some(item => item.url === tab.url)));
+  };
+  const activate = async (id, focusTab) => {
+    if (!tabs.some(tab => tab.id === id)) return;
+    activeId = id;
+    renderTabs(); updateNav();
+    await syncView(true);
+    if (focusTab) focusSafely(tabsEl.querySelector(`[data-tab-id="${id}"] .br-tab-main`));
+  };
+  const newTab = async url => {
+    const id = 'br-' + Date.now().toString(36) + '-' + (++counter);
+    const requested = sanitizeUrl(url || '');
+    const tab = mergeState(await api.create({ tabId: id, url: requested, bounds: bounds(), visible: false })) || { id, url: '' };
+    if (!tabs.includes(tab)) tabs.push(tab);
+    if (requested === 'about:blank') tab.url = '';
+    await activate(id);
+    if (requested !== 'about:blank') setStatus('正在加载 ' + requested);
+    return id;
+  };
+  const navigate = async (id, value) => {
+    const tab = tabs.find(item => item.id === id); if (!tab) return;
+    const url = sanitizeUrl(value); if (url === 'about:blank') { tab.url = ''; tab.title = ''; updateNav(); scheduleSync(true); return; }
+    tab.url = url; tab.loading = true; updateNav(); renderTabs(); setStatus('正在加载 ' + url);
+    try { mergeState(await api.navigate({ tabId: id, url })); await activate(id); }
+    catch (error) { setStatus('加载失败：' + (error.message || error)); overlay.style.display = 'flex'; }
+  };
+  const closeTab = async (id, focusTab) => {
+    const index = tabs.findIndex(tab => tab.id === id); if (index < 0) return;
+    try { await api.close(id); } catch (_) {}
+    tabs.splice(index, 1);
+    if (!tabs.length) { const next = await newTab(''); if (focusTab) focusSafely(tabsEl.querySelector(`[data-tab-id="${next}"] .br-tab-main`)); return; }
+    if (activeId === id) await activate(tabs[Math.min(index, tabs.length - 1)].id, focusTab);
+    else { renderTabs(); updateNav(); }
+  };
+
+  const renderBookmarks = () => {
+    const panel = $('#brBmPanel'); if (!panel || panel.style.display === 'none') return;
+    const bookmarks = Store.getBookmarks();
+    panel.innerHTML = '<div class="app-toolbar"><strong>收藏夹</strong><span class="app-toolbar__spacer"></span><button class="btn sm ghost" id="brBmImport">导入</button><button class="btn sm ghost" id="brBmExport">导出</button></div>' + (bookmarks.length ? bookmarks.map((item, index) => `<div class="br-bm-item" data-url="${escapeHtml(item.url)}"><button type="button" data-bm-open="${index}"><strong>${escapeHtml(item.title || item.url)}</strong><small>${escapeHtml(hostOf(item.url))}</small></button><button type="button" class="br-bm-del" data-bm-remove="${index}">${uiIconHTML('close')}</button></div>`).join('') : '<div class="native-preview-empty"><strong>收藏夹为空</strong></div>');
+    panel.querySelectorAll('[data-bm-open]').forEach(button => { button.onclick = () => { navigate(activeId, bookmarks[Number(button.dataset.bmOpen)].url); panel.style.display = 'none'; }; });
+    panel.querySelectorAll('[data-bm-remove]').forEach(button => { button.onclick = () => { const next = Store.getBookmarks(); next.splice(Number(button.dataset.bmRemove), 1); Store.setBookmarks(next); renderBookmarks(); updateNav(); }; });
+    const importButton = panel.querySelector('#brBmImport'); if (importButton) importButton.onclick = importBookmarks;
+    const exportButton = panel.querySelector('#brBmExport'); if (exportButton) exportButton.onclick = exportBookmarks;
+  };
+  const exportBookmarks = () => {
+    const bookmarks = Store.getBookmarks(); if (!bookmarks.length) { toast('收藏夹为空'); return; }
+    const escapeAttr = value => String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const body = bookmarks.map(item => `    <DT><A HREF="${escapeAttr(item.url)}">${escapeAttr(item.title || item.url)}</A>`).join('\n');
+    const blob = new Blob(['<!DOCTYPE NETSCAPE-Bookmark-file-1>\n<TITLE>Bookmarks</TITLE>\n<H1>Bookmarks</H1>\n<DL><p>\n' + body + '\n</DL><p>'], { type: 'text/html' });
+    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'tianze-bookmarks-' + new Date().toISOString().slice(0, 10) + '.html'; a.click(); URL.revokeObjectURL(url);
+  };
+  const importBookmarks = () => {
+    const input = document.createElement('input'); input.type = 'file'; input.accept = '.html,.htm,.json,text/html,application/json';
+    input.onchange = async () => {
+      const file = input.files && input.files[0]; if (!file) return;
+      try {
+        const text = await file.text(); const found = [];
+        if (/^\s*[\[{]/.test(text)) { try { const parsed = JSON.parse(text); (Array.isArray(parsed) ? parsed : parsed.bookmarks || []).forEach(item => { if (item && item.url) found.push({ title: item.title || item.name || item.url, url: item.url }); }); } catch (_) {} }
+        if (!found.length) { const doc = new DOMParser().parseFromString(text, 'text/html'); doc.querySelectorAll('a[href]').forEach(a => { const url = a.getAttribute('href'); if (/^https?:\/\//i.test(url || '')) found.push({ title: a.textContent.trim() || url, url }); }); }
+        const bookmarks = Store.getBookmarks(); let added = 0; found.forEach(item => { if (!bookmarks.some(existing => existing.url === item.url)) { bookmarks.push({ ...item, time: Date.now() }); added++; } }); Store.setBookmarks(bookmarks); renderBookmarks(); toast('已导入 ' + added + ' 条收藏');
+      } catch (error) { toast('收藏导入失败：' + (error.message || error), 3600); }
+    };
+    input.click();
+  };
+
+  $('#brGo').onclick = () => navigate(activeId, urlInput.value);
+  urlInput.onkeydown = event => { if (event.key === 'Enter') navigate(activeId, urlInput.value); };
+  $('#brBack').onclick = () => { const tab = activeTab(); if (tab) api.back(tab.id).catch(error => setStatus(error.message || error)); };
+  $('#brFwd').onclick = () => { const tab = activeTab(); if (tab) api.forward(tab.id).catch(error => setStatus(error.message || error)); };
+  $('#brReload').onclick = () => { const tab = activeTab(); if (!tab) return; (tab.loading ? api.stop(tab.id) : api.reload(tab.id)).catch(error => setStatus(error.message || error)); };
+  $('#brNewTab').onclick = () => { const tab = activeTab(); const url = urlInput.value || (tab && tab.url) || ''; if (!url) return; window.tzDesktop.openExternal(url); };
+  $('#brBookmark').onclick = () => { const tab = activeTab(); if (!tab || !tab.url) return; let bookmarks = Store.getBookmarks(); const index = bookmarks.findIndex(item => item.url === tab.url); if (index >= 0) { bookmarks.splice(index, 1); toast('已取消收藏'); } else { bookmarks.unshift({ title: tab.title || hostOf(tab.url), url: tab.url, time: Date.now() }); toast('已收藏'); } Store.setBookmarks(bookmarks); updateNav(); renderBookmarks(); };
+  $('#brBookmarkList').onclick = () => { const panel = $('#brBmPanel'); panel.style.display = panel.style.display === 'none' ? '' : 'none'; renderBookmarks(); scheduleSync(true); };
+  $('#brDownloads').onclick = () => launchApp('file-explorer', { initialTab: 'files' });
+
+  unsubscribe = api.onEvent(event => {
+    if (!event || destroyed) return;
+    if (event.kind === 'state' || event.kind === 'created') {
+      const tab = mergeState(event);
+      if (event.kind === 'created' && event.disposition !== 'background-tab' && tab) activeId = tab.id;
+      if (tab && tab.id === activeId) {
+        urlInput.value = tab.url || '';
+        if (event.reason === 'did-stop-loading') setStatus(tab.title || tab.url || '页面加载完成');
+      }
+      renderTabs(); updateNav(); scheduleSync(false);
+    } else if (event.kind === 'closed') {
+      const index = tabs.findIndex(tab => tab.id === event.tabId); if (index >= 0) tabs.splice(index, 1);
+      renderTabs(); updateNav();
+    } else if (event.kind === 'status' && event.tabId === activeId) setStatus(event.status || '');
+    else if (event.kind === 'error') {
+      const message = event.error && event.error.message ? event.error.message : '网页加载失败';
+      setStatus(message); if (event.tabId === activeId) { overlay.style.display = 'flex'; overlay.querySelector('strong').textContent = '网页加载失败'; overlay.querySelector('p').textContent = message; }
+    } else if (event.kind === 'download' && event.download) {
+      downloads.set(event.download.id, event.download);
+      const activeDownloads = [...downloads.values()].filter(item => !item.completed && item.state !== 'cancelled' && item.state !== 'interrupted');
+      if (downloadCount) downloadCount.textContent = activeDownloads.length ? String(activeDownloads.length) : '';
+      const item = event.download; const progress = item.totalBytes > 0 ? Math.round(item.receivedBytes / item.totalBytes * 100) + '%' : item.state;
+      setStatus('下载 ' + item.name + ' · ' + progress);
+      if (item.completed) toast('下载完成：' + item.path + '（内部 Downloads）', 4200);
+    }
+  });
+  resizeObserver = new ResizeObserver(() => scheduleSync(false)); resizeObserver.observe(views);
+  observer = new MutationObserver(() => scheduleSync(false)); observer.observe(winObj.el, { attributes: true, attributeFilter: ['style', 'class'] });
+  window.addEventListener('resize', scheduleSync);
+  document.addEventListener('visibilitychange', scheduleSync);
+  document.addEventListener('pointerdown', scheduleSync, true);
+  syncTimer = setInterval(() => syncView(false), 350);
+  const controller = {
+    destroy() {
+      if (destroyed) return;
+      destroyed = true;
+      if (unsubscribe) { try { unsubscribe(); } catch (_) {} }
+      if (resizeObserver) resizeObserver.disconnect();
+      if (observer) observer.disconnect();
+      if (syncTimer) clearInterval(syncTimer);
+      window.removeEventListener('resize', scheduleSync);
+      document.removeEventListener('visibilitychange', scheduleSync);
+      document.removeEventListener('pointerdown', scheduleSync, true);
+      tabs.slice().forEach(tab => { api.hide(tab.id).catch(() => {}); api.close(tab.id).catch(() => {}); });
+    }
+  };
+  window.__tzNativeBrowserController = controller;
+  window.__tzBrNewTab = newTab;
+  if (winObj) {
+    const oldClose = winObj.onClose;
+    winObj.onClose = () => { if (typeof oldClose === 'function') oldClose(); controller.destroy(); };
+  }
+  newTab('').catch(error => setStatus(error.message || error));
+  setStatus('原生 Chromium 视图 · 可打开禁止 iframe 嵌入的网站');
+}
+
+function initIframeBrowser() {
   const tabsEl = $('#brTabsTitle'), views = $('#brViews'), urlInput = $('#brUrl');
   if (!tabsEl) return;
   tabsEl.setAttribute('role', 'tablist');
@@ -10655,15 +13402,17 @@ window.TZOS.checkUpdate = async function() {
   }
 };
 function initAppHooks(appId, winObj) {
-  if (appId === 'ai-chat') initChat('ai-chat-main');
+  if (appId === 'ai-chat') initChat('ai-chat-main', false, winObj);
   if (appId === 'app-store') initAppStore();
   if (appId === 'settings') initSettings();
   if (appId === 'ai-config') initAIConfig();
-  if (appId === 'browser') initBrowser();
+  if (appId === 'browser') initBrowser(winObj);
   if (appId === 'terminal') initTerminal();
   if (appId === 'clock') initClockApp();
   if (appId === 'doc-reader') initDocReader();
-  if (appId === 'knowledge-manager') initKnowledgeManager();
+  if (appId === 'file-explorer' || appId === 'knowledge-manager') FileExplorerApp.init(winObj);
+  if (appId === 'app-manager' || appId === 'file-manager') AppManagerApp.init(winObj);
+  if (appId === 'python-tools') PythonToolsApp.init(winObj);
   if (appId === 'agent-center') initAgentCenter(winObj);
   if (appId === 'notes') initNotes();
   if (appId === 'tips') initTips();
@@ -10676,8 +13425,37 @@ function initAppHooks(appId, winObj) {
     }
   }
 }
+function bindWebAIConfig() {
+  const inputs = $$('[data-web-ai-site]');
+  if (!inputs.length) return;
+  const updateCount = () => {
+    const count = inputs.filter(input => input.checked).length;
+    const label = $('#webAiSelectedCount');
+    if (label) label.textContent = '已选择 ' + count + ' 个站点';
+  };
+  inputs.forEach(input => {
+    input.onchange = () => {
+      let selected = inputs.filter(item => item.checked).map(item => item.dataset.webAiSite);
+      if (!selected.length) {
+        input.checked = true;
+        selected = [input.dataset.webAiSite];
+        toast('网页 AI 至少需要保留一个站点');
+      }
+      const before = getProviderCtx();
+      Store.setWebAISites(selected);
+      const site = webAISite(input.dataset.webAiSite);
+      if (input.checked && site && site.vpn) toast(site.name + ' 在中国大陆通常无法访问，选择和加载前请连接 VPN', 5200);
+      else toast('网页 AI 选择已保存');
+      updateCount();
+      if (before !== getProviderCtx()) refreshChatView();
+    };
+  });
+  updateCount();
+}
+
 function initAIConfig() {
   initAppWorkspaceNav('.app-config');
+  bindWebAIConfig();
   $$('[data-profile-save]').forEach(button => { button.onclick = () => window.TZOS.saveAIProfile(button.dataset.profileSave); });
   $$('[data-profile-load]').forEach(button => { button.onclick = () => window.TZOS.loadAIProfile(button.dataset.profileLoad); });
   $$('[data-profile-delete]').forEach(button => { button.onclick = () => window.TZOS.deleteAIProfile(button.dataset.profileDelete); });
@@ -10738,9 +13516,19 @@ function initAIConfig() {
   capToggle('#capImageTg', '允许图片输入');
   capToggle('#capFileTg', '允许文件输入');
   capToggle('#capWebTg', '允许联网搜索');
+  capToggle('#capLocalImageTg', '本地模型允许图片输入');
+  capToggle('#capLocalFileTg', '本地模型允许文件输入');
+  capToggle('#capLocalThinkingTg', '本地模型允许深度思考');
+  capToggle('#contextCompressAutoTg', '自动压缩旧上下文');
   // 模型列表拉取按钮
   const fm = $('#cfgFetchModels');
   if (fm) fm.onclick = () => window.TZOS.fetchModels();
+  const localModel = $('#cfgLocalModel');
+  if (localModel) localModel.onchange = () => window.TZOS.fetchLocalModelDetails({ force: true });
+  const localApi = $('#cfgLocalApi');
+  if (localApi) localApi.onchange = () => {
+    if (localApi.value === 'ollama' && window.tzDesktop?.discoverLocalModels) void window.TZOS.fetchLocalModels({ silent: true });
+  };
   // AI 命令行模式开启期间：自动写入记忆被接管（由 AI 通过 mem 命令写），开关禁用并提示
   if (Store.getAgentMode()) {
     const tg = $('#memAutoTg');
@@ -10766,6 +13554,10 @@ function initAIConfig() {
   renderMemList();
   const memInp = $('#memNewInput');
   if (memInp) memInp.onkeydown = (e) => { if (e.key === 'Enter') window.TZOS.memAdd(); };
+  // 桌面版通过受限主进程桥自动抓取，不在网页版后台探测 localhost，避免 CORS/PNA 噪音。
+  if (Store.getAILocalConfig().api === 'ollama' && window.tzDesktop?.discoverLocalModels) {
+    setTimeout(() => { if ($('#cfgLocalModel')) void window.TZOS.fetchLocalModels({ silent: true }); }, 80);
+  }
 }
 // 在窗口创建后初始化内置应用钩子
 const origRender = WM.renderContent.bind(WM);
@@ -11291,7 +14083,7 @@ function createFloatOverlay() {
   chatFrame.style.cssText = 'flex:1;min-height:0;border:none;background:transparent';
   chatFrame.addEventListener('load', syncFloatOverlayTheme);
   // 网页浮层也复用完整悬浮对话页：多会话标签、能力开关和主对话保持同一套实现。
-  chatFrame.src = 'float-chat.html?embedded=1&v=4.1.0';
+  chatFrame.src = 'float-chat.html?embedded=1&v=5.0.0';
   overlay.append(titleBar, chatFrame);
   document.body.appendChild(overlay);
   // v3.1：大小变化时保存位置/大小
@@ -11338,140 +14130,6 @@ function syncFloatOverlayTheme() {
   const frame = _floatOverlay.querySelector('iframe');
   if (!frame || !frame.contentDocument) return;
   applyFloatThemeTokens(frame.contentDocument.documentElement, getFloatThemeTokens());
-}
-
-// 构建悬浮窗内的独立对话页面 HTML（精简自 renderAIChat + AI 引擎）
-// srcdoc 使用 CSS 变量，跟随当前主题与冷/中/暖配色，无需重载对话。
-function buildFloatChatHTML() {
-  const ft = getFloatThemeTokens();
-  let h = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' +
-  ':root{--float-ink:' + ft.ink + ';--float-muted:' + ft.muted + ';--float-tint:' + ft.tint + ';--float-panel:' + ft.panel + ';--float-border:' + ft.border + ';--float-accent:' + ft.accent + ';--float-user:' + ft.user + ';--float-button-tint:' + ft.buttonTint + ';--float-surface:' + ft.surface + ';--float-button:' + ft.button + '}' +
-  '*{margin:0;padding:0;box-sizing:border-box}' +
-  'body{font-family:"Noto Sans SC","Source Han Sans SC","Microsoft YaHei",system-ui,-apple-system,"Segoe UI",sans-serif;' +
-  'color:var(--float-ink);background-image:linear-gradient(var(--float-tint),var(--float-tint)),var(--float-surface);background-size:cover;background-position:center;display:flex;flex-direction:column;height:100%;overflow:hidden}' +
-  '.chat-toolbar{display:flex;gap:4px;padding:4px 8px;border-bottom:1px solid var(--float-border);align-items:center;flex-shrink:0}' +
-  '.btn{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:6px;font-size:11px;border:1px solid var(--float-border);cursor:pointer;color:var(--float-muted);background-image:linear-gradient(var(--float-button-tint),var(--float-button-tint)),var(--float-button);background-size:280% 280%;background-position:center}' +
-  '.btn:hover{background-position:68% 42%;color:var(--float-ink)}' +
-  '.chat-messages{flex:1;overflow-y:auto;padding:10px;min-height:0}' +
-  '.chat-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:var(--float-muted)}' +
-  '.chat-input-bar{display:flex;gap:6px;padding:6px 8px;border-top:1px solid var(--float-border);align-items:flex-end;flex-shrink:0}' +
-  '.textarea{flex:1;background:var(--float-panel);border:1px solid var(--float-border);border-radius:8px;padding:6px 8px;font-size:12px;color:var(--float-ink);resize:none;outline:none;font-family:inherit;min-height:32px;max-height:80px}' +
-  '.textarea:focus{border-color:var(--float-accent)}' +
-  '.chat-send{width:44px;height:30px;border-radius:8px;border:1px solid var(--float-border);background-image:linear-gradient(var(--float-button-tint),var(--float-button-tint)),var(--float-button);background-size:260% 260%;background-position:center;color:var(--float-ink);cursor:pointer;font-size:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center}' +
-  '.msg{margin-bottom:10px;animation:fadeIn .2s ease}' +
-  '.msg .role{font-size:11px;color:var(--float-muted);margin-bottom:3px}' +
-  '.msg .bubble{font-size:12px;line-height:1.6;padding:8px 10px;border-radius:8px;background:var(--float-panel);white-space:pre-wrap;word-break:break-word}' +
-  '.msg.user .bubble{background:var(--float-user)}' +
-  '.msg-reasoning{margin-bottom:6px}' +
-  '.msg-reasoning summary{font-size:11px;color:var(--float-muted);cursor:pointer}' +
-  '.msg-reasoning div{font-size:11px;color:var(--float-muted);line-height:1.5;padding:4px 6px;background:var(--float-panel);border-radius:4px;margin-top:2px;white-space:pre-wrap}' +
-  '.stopped-tip{font-size:11px;color:var(--float-accent);margin-top:4px}' +
-  '@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}' +
-  '::-webkit-scrollbar{width:6px}' +
-  '::-webkit-scrollbar-thumb{background:var(--float-border);border-radius:3px}' +
-  '</style></head><body>' +
-  '<div class="chat-toolbar">' +
-  '<span style="font-size:12px;color:var(--float-accent);flex:1">AI 悬浮对话 · 4.1</span>' +
-  '<button class="btn" id="btnSync" title="同步最新对话">同步</button>' +
-  '<button class="btn" id="btnClear" title="清空对话">清空</button>' +
-  '</div>' +
-  '<div class="chat-messages" id="chatMsgs"></div>' +
-  '<div class="chat-input-bar">' +
-  '<textarea class="textarea" id="chatInput" placeholder="输入消息，Enter 发送…" rows="1"></textarea>' +
-  '<button class="chat-send" id="chatSend">发送</button>' +
-  '</div>' +
-  '<script>' +
-  '(()=>{' +
-  // 优先复用父页面 Store，保证 Store 缓存、多会话和兼容字段同时更新；保留独立存储兜底。
-  'var KEY="tzos_state_v1",CHAT_KEY="tzos_chat_state_v3";' +
-  'function bridgeStore(){try{return parent&&parent.TZOS&&parent.TZOS.Store||null}catch(e){return null}}' +
-  'function stateRead(){try{var raw=localStorage.getItem(CHAT_KEY);if(raw)return JSON.parse(raw)||{};var old=JSON.parse(localStorage.getItem(KEY)||"{}")||{};return{chatSessions:old.chatSessions,activeChatId:old.activeChatId,chatHistory:old.chatHistory,chatCtxRealByChat:old.chatCtxRealByChat}}catch(e){return{}}}' +
-  'function stateWrite(s){localStorage.setItem(CHAT_KEY,JSON.stringify(s))}' +
-  'function configRead(){try{return JSON.parse(localStorage.getItem(KEY)||"{}")||{}}catch(e){return{}}}' +
-  'function load(n,d){var st=bridgeStore();try{if(st&&typeof st.get==="function")return st.get(n,d)}catch(e){}var s=configRead();return s[n]!==undefined?s[n]:d}' +
-  'function chatTitle(h){var first=(h||[]).find(function(m){return m&&m.role==="user"&&typeof m.content==="string"});var t=first?first.content.replace(/\\s+/g," ").trim():"";return t?t.slice(0,22):"新对话"}' +
-  'function fallbackSnapshot(){var s=stateRead(),dirty=false;var chats=Array.isArray(s.chatSessions)?s.chatSessions.filter(function(c){return c&&c.id&&Array.isArray(c.messages)}):[];' +
-  'if(!chats.length){var now=Date.now(),legacy=Array.isArray(s.chatHistory)?s.chatHistory.slice(-100):[];chats=[{id:"chat-legacy-v1",title:chatTitle(legacy),messages:legacy,createdAt:now,updatedAt:now,rev:1}];s.chatSessions=chats;s.activeChatId=chats[0].id;s.chatSchemaVersion=2;dirty=true}' +
-  'var visible=chats.filter(function(c){return !c.archivedAt});if(!visible.length){var fresh={id:"chat-"+Date.now().toString(36)+"-fallback",title:"新对话",messages:[],createdAt:Date.now(),updatedAt:Date.now(),rev:1};chats.push(fresh);s.chatSessions=chats;visible=[fresh];dirty=true}' +
-  'var chat=visible.find(function(c){return c.id===s.activeChatId});if(!chat){chat=visible[0];s.activeChatId=chat.id;dirty=true}' +
-  'var mirror=chat.messages.slice(-100);if(s.chatHistory){delete s.chatHistory;dirty=true}if(dirty)stateWrite(s);' +
-  'return{id:chat.id,rev:parseInt(chat.rev,10)||0,messages:mirror}}' +
-  'function currentSnapshot(){var st=bridgeStore();try{if(st&&typeof st.getChats==="function"&&typeof st.getActiveChatId==="function"&&typeof st.getChat==="function"){var chats=st.getChats(),id=st.getActiveChatId(),chat=chats.find(function(c){return c.id===id});return{id:id,rev:chat?(parseInt(chat.rev,10)||0):0,messages:(st.getChat(id)||[]).slice(-100)}}}catch(e){}return fallbackSnapshot()}' +
-  'function fallbackSave(id,h){var s=stateRead();if(!Array.isArray(s.chatSessions)||!s.chatSessions.length){fallbackSnapshot();s=stateRead()}var chats=s.chatSessions.filter(function(c){return c&&c.id&&Array.isArray(c.messages)}),chat=chats.find(function(c){return c.id===id});if(!chat)return false;' +
-  'chat.messages=(Array.isArray(h)?h:[]).slice(-100);if(!chat.title||chat.title==="新对话")chat.title=chatTitle(chat.messages);chat.updatedAt=Date.now();chat.rev=(parseInt(chat.rev,10)||0)+1;s.chatSessions=chats;s.chatSchemaVersion=2;' +
-  'var active=chats.find(function(c){return c.id===s.activeChatId&&!c.archivedAt});if(!active){active=chat;s.activeChatId=chat.id}delete s.chatHistory;stateWrite(s);return true}' +
-  'function saveHist(id,h){var st=bridgeStore();try{if(st&&typeof st.setChat==="function")return st.setChat(h,id)}catch(e){}return fallbackSave(id,h)}' +
-  'var cfg=load("aiConfig",{url:"https://api.deepseek.com/v1/chat/completions",key:"",model:"deepseek-v4-flash"});' +
-  // 悬浮窗独立深度思考键（缺省跟随主设置）；API 配置共享
-  'var deep=load("float_deepThink", load("deepThink",true));' +
-  'var caps=load("aiCaps",{image:true,file:true,webSearch:false,contextLength:0});' +
-  'var snapshot=currentSnapshot(),activeChatId=snapshot.id,hist=snapshot.messages;' +
-  'var msgs=document.getElementById("chatMsgs");' +
-  'var input=document.getElementById("chatInput");' +
-  'var abortCtl=null;' +
-  // 与 OS 对话窗口同步：比较签名，变化且空闲时重载并重渲染
-  'function textHash(v){var s=String(v||""),n=0;for(var i=0;i<s.length;i++)n=((n<<5)-n+s.charCodeAt(i))|0;return n}' +
-  'function sig(s,c,d,p){var h=s.messages||[],l=h[h.length-1]||{};return[s.id,s.rev,h.length,l.role||"",textHash(l.content),textHash(l.reasoning),c.url||"",c.model||"",c.maxTokens||"",textHash(c.key),d?1:0,JSON.stringify(p||{})].join("|")}' +
-  'var lastSig=sig(snapshot,cfg,deep,caps);' +
-  'function syncFromStore(force){if(abortCtl)return;var next=currentSnapshot(),nextCfg=load("aiConfig",cfg),nextDeep=load("float_deepThink",load("deepThink",true)),nextCaps=load("aiCaps",caps);var sg=sig(next,nextCfg,nextDeep,nextCaps);if(!force&&sg===lastSig)return;activeChatId=next.id;hist=next.messages;cfg=nextCfg;deep=nextDeep;caps=nextCaps;lastSig=sg;render()}' +
-  'setInterval(function(){if(!document.hidden)syncFromStore(false)},15000);' +
-  'window.addEventListener("storage",function(e){if(e.key===KEY||e.key===CHAT_KEY)setTimeout(function(){syncFromStore(false)},40)});' +
-  // 渲染历史
-  'function render(){msgs.replaceChildren();if(!hist.length){var box=document.createElement("div"),title=document.createElement("div"),hint=document.createElement("div");box.className="chat-empty";title.textContent=cfg.key?"AI 悬浮窗":"未配置 AI";hint.style.fontSize="11px";hint.textContent=cfg.key?(deep?"深度思考已开启":"问我任何问题"):"请在天择OS的 AI 配置中设置 API Key";box.append(title,hint);msgs.appendChild(box);return}hist.forEach(function(m){addMsg(m.role,m.content,m.reasoning)})}' +
-  'function addMsg(role,text,reasoning){var d=document.createElement("div");d.className="msg "+(role==="user"?"user":"ai");' +
-  'd.innerHTML=(role==="user"?"<div class=\\"role\\">你</div>":"")+' +
-  '(reasoning?\'<details class="msg-reasoning"><summary>思考过程</summary><div>\'+esc(reasoning)+\'</div></details>\':"")+' +
-  '\'<div class="bubble">\'+(role==="ai"?md(text):esc(text))+\'</div>\';' +
-  'msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight}' +
-  'function esc(s){return String(s).replace(/[&<>\\x22\\x27]/g,function(c){var n=c.charCodeAt(0);return n===38?"&amp;":n===60?"&lt;":n===62?"&gt;":n===34?"&quot;":"&#39;"})}' +
-  'function md(s){var safe=esc(s);return safe.replace(/```(\\w*)\\n?([\\s\\S]*?)```/g,\'<pre style="background:rgba(255,255,255,0.05);padding:8px;border-radius:6px;font-size:11px;overflow-x:auto;margin:4px 0"><code>$2</code></pre>\')' +
-  '.replace(/`([^`]+)`/g,\'<code style="background:rgba(255,255,255,0.08);padding:1px 4px;border-radius:3px;font-size:11px">$1</code>\')' +
-  '.replace(/\\*\\*([^*]+)\\*\\*/g,\'<b>$1</b>\').replace(/\\*([^*]+)\\*/g,\'<i>$1</i>\')' +
-  '.replace(/\\n/g,\'<br>\')}' +
-  // 发送消息：参数规则与主 AI 引擎一致，SSE 使用跨网络 chunk 的持久缓冲。
-  'function maxTokens(c){var v=parseInt(c&&c.maxTokens,10);return Math.min(384000,v>0?v:8192)}' +
-  'function isMiMo(c){return /xiaomimimo\\.com/i.test(String(c&&c.url||""))||/^mimo-v2\\.5(?:-pro)?$/i.test(String(c&&c.model||""))}' +
-  'function supportsThinking(c){var model=String(c&&c.model||"").toLowerCase(),url=String(c&&c.url||"");return /deepseek\\.com/i.test(url)&&/^deepseek-v4-(flash|pro)$/.test(model)}' +
-  'function requestHeaders(c){var out={"Content-Type":"application/json",Accept:"text/event-stream"};if(isMiMo(c))out["api-key"]=c.key;else out.Authorization="Bearer "+c.key;return out}' +
-  'function markSaved(id){var now=currentSnapshot();lastSig=now.id===id?sig(now,cfg,deep,caps):""}' +
-  'async function send(){if(abortCtl){abortCtl.abort();return}syncFromStore(true);var t=input.value.trim();if(!t)return;if(!cfg.url||!cfg.key||!cfg.model)return;' +
-  'var sendChatId=activeChatId;hist.push({role:"user",content:t});if(!saveHist(sendChatId,hist)){hist.pop();syncFromStore(true);return}markSaved(sendChatId);' +
-  'input.value="";input.style.height="auto";addMsg("user",t);' +
-  'var aiDiv=document.createElement("div");aiDiv.className="msg ai";' +
-  'aiDiv.innerHTML=\'<div class="bubble"><span class="chat-streaming-placeholder">思考中…</span></div>\';msgs.appendChild(aiDiv);' +
-  'var bubble=aiDiv.querySelector(".bubble");' +
-  'var sys="你是天择 AI 助手，运行在天择OS悬浮窗中。回答简洁有用，使用中文。数学公式用 LaTeX：行内 $...$，块级 $$...$$。悬浮窗不支持命令行模式。";' +
-  'var msgs_arr=[{role:"system",content:sys}];' +
-  'hist.slice(-12).forEach(function(m){msgs_arr.push({role:m.role==="ai"?"assistant":"user",content:String(m.content||"")})});' +
-  'var body={model:cfg.model,messages:msgs_arr,stream:true,temperature:0.7,max_tokens:maxTokens(cfg),stream_options:{include_usage:true}};' +
-  'if(isMiMo(cfg)){body.max_completion_tokens=body.max_tokens;delete body.max_tokens}' +
-  'if(supportsThinking(cfg)){body.thinking={type:deep?"enabled":"disabled"};if(deep)delete body.temperature}' +
-  'if(caps.webSearch){body.tools=[{type:"web_search",max_keyword:3,limit:5,user_location:{type:"approximate",country:"China",city:"合肥"}}];body.tool_choice="auto"}' +
-  'try{abortCtl=new AbortController();' +
-  'var resp=await fetch(cfg.url,{method:"POST",headers:requestHeaders(cfg),body:JSON.stringify(body),signal:abortCtl.signal});' +
-  'if(!resp.ok){var err=await resp.text().catch(function(){return""});throw new Error("AI 接口错误 "+resp.status+(err?"："+err.slice(0,300):""))}' +
-  'if(!resp.body)throw new Error("AI 接口未返回可读取的响应内容");' +
-  'var reader=resp.body.getReader(),decoder=new TextDecoder(),full="",reasoning="",buffer="",validEvents=0,usage=null,finished=false,paintTimer=0;' +
-  'function paintStream(){if(paintTimer)return;paintTimer=setTimeout(function(){paintTimer=0;var rp=reasoning?\'<details class="msg-reasoning" open><summary>思考过程（进行中…）</summary><div>\'+esc(reasoning)+\'</div></details>\':"";bubble.innerHTML=rp+esc(full).replace(/\\n/g,"<br>");msgs.scrollTop=msgs.scrollHeight},72)}' +
-  'function consume(flush){var lines=buffer.split(/\\r?\\n/);buffer=flush?"":lines.pop();for(var i=0;i<lines.length;i++){var line=lines[i].trim();if(!line.startsWith("data:"))continue;var data=line.slice(5).trim();if(data==="[DONE]"){finished=true;continue}try{var j=JSON.parse(data);if(j&&j.error)throw new Error(j.error.message||j.error.code||"AI 流式接口返回错误");validEvents++;if(j.usage)usage=j.usage;var choice=j.choices&&j.choices[0],delta=choice&&choice.delta||{},changed=false;if(delta.reasoning_content){reasoning+=delta.reasoning_content;changed=true}if(delta.content){full+=delta.content;changed=true}if(changed)paintStream()}catch(parseErr){if(!(parseErr instanceof SyntaxError))throw parseErr}}}' +
-  'while(!finished){var r=await reader.read();if(r.done)break;buffer+=decoder.decode(r.value,{stream:true});consume(false)}' +
-  'var tail=decoder.decode();if(tail)buffer+=tail;if(buffer.trim()&&!finished){buffer+="\\n";consume(true)}' +
-  'if(!validEvents||(!full&&!reasoning&&!usage))throw new Error("AI 接口未返回兼容的 SSE 对话数据，请检查该模型是否支持流式输出");' +
-  'if(paintTimer){clearTimeout(paintTimer);paintTimer=0}if(full||reasoning){hist.push({role:"ai",content:full,reasoning:reasoning});saveHist(sendChatId,hist);markSaved(sendChatId);' +
-  'bubble.innerHTML=(reasoning?\'<details class="msg-reasoning"><summary>思考过程</summary><div>\'+esc(reasoning)+\'</div></details>\':"")+md(full)}' +
-  'else{bubble.textContent="(空响应)"}' +
-  '}catch(e){if(e.name==="AbortError"){bubble.insertAdjacentHTML("beforeend",\'<div class="stopped-tip">已停止生成</div>\')}else{bubble.textContent=e.message}}' +
-  'finally{if(paintTimer){clearTimeout(paintTimer);paintTimer=0}abortCtl=null;setTimeout(function(){syncFromStore(false)},0)}}' +
-  'input.onkeydown=function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}};' +
-  'input.oninput=function(){input.style.height="auto";input.style.height=Math.min(80,input.scrollHeight)+"px"};' +
-  'document.getElementById("chatSend").onclick=send;' +
-  'document.getElementById("btnClear").onclick=function(){if(abortCtl)return;hist=[];saveHist(activeChatId,hist);markSaved(activeChatId);render()};' +
-  'document.getElementById("btnSync").onclick=function(){syncFromStore(true)};' +
-  'render();' +
-  '})()' +
-  '</scr' + 'ipt>' +
-  '</body></html>';
-  return h;
 }
 
 /* ===================== 启动 ===================== */

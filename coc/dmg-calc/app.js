@@ -38,6 +38,7 @@
   var SHARE_MODE = false;   /* 分享查看模式：只读展示好友的计算结果，禁止写入 localStorage */
 
   var LS_KEY = "tz_coc_dmgcalc_v1";
+  var SHARE_IMPORT_KEY = LS_KEY + "_share_import_v1";
 
   function $(id){ return document.getElementById(id); }
   function num(v){ v=parseFloat(v); return isNaN(v)?0:v; }
@@ -718,16 +719,34 @@
       return d;
     }catch(e){ return null; }
   }
+  /* 把分享配置转换成可持久化的计算器状态；查看模式与“复制到主页”共用，避免两套规则漂移。 */
+  function stateFromShareData(d){
+    var next={ eq:{}, eqOn:{}, spell:{l:intv(d.l),q:intv(d.q)}, build:{}, th:0, target:String(d.t), builders:{count:0,levels:[]} };
+    if(d.eq)Object.keys(d.eq).forEach(function(id){ next.eq[id]=intv(d.eq[id]); next.eqOn[id]=true; });
+    next.build[next.target]=Math.max(0,intv(d.tl));
+    if(d.b){
+      next.builders.count=Math.max(0,Math.min(6,intv(d.b.c)));
+      next.builders.levels=(d.b.ls||[]).slice(0,next.builders.count).map(function(v){return Math.max(1,intv(v));});
+      while(next.builders.levels.length<next.builders.count)next.builders.levels.push(1);
+    }
+    return next;
+  }
   /* 用分享的数据构造一份只读 STATE（不读取访问者本地存档，save() 已被 SHARE_MODE 拦截） */
   function enterShareMode(d){
     SHARE_MODE=true;
-    STATE={ eq:{}, eqOn:{}, spell:{l:intv(d.l),q:intv(d.q)}, build:{}, th:0, target:String(d.t), builders:{count:0,levels:[]} };
-    if(d.eq)Object.keys(d.eq).forEach(function(id){ STATE.eq[id]=intv(d.eq[id]); STATE.eqOn[id]=true; });
-    STATE.build[STATE.target]=Math.max(0,intv(d.tl));
-    if(d.b){
-      STATE.builders.count=Math.max(0,Math.min(6,intv(d.b.c)));
-      STATE.builders.levels=(d.b.ls||[]).slice(0,STATE.builders.count).map(function(v){return Math.max(1,intv(v));});
-      while(STATE.builders.levels.length<STATE.builders.count)STATE.builders.levels.push(1);
+    STATE=stateFromShareData(d);
+  }
+  function copyShareToCalculator(d){
+    try{
+      localStorage.setItem(LS_KEY,JSON.stringify(stateFromShareData(d)));
+      sessionStorage.setItem(SHARE_IMPORT_KEY,JSON.stringify(d));
+      history.replaceState(null,"",location.pathname+location.search);
+      location.reload();
+      return true;
+    }catch(e){
+      var desc=$("dmShareDesc");
+      if(desc)desc.textContent="无法写入浏览器本地存储，因此没有改动你的配置。请检查隐私/存储权限后重试。";
+      return false;
     }
   }
   /* 横幅里的配置摘要 chips */
@@ -818,6 +837,7 @@
 
   /* ===== 分享查看模式：隐藏所有设置区，只读展示分享的配置与计算结果 ===== */
   function hideSetupSections(){
+    document.documentElement.classList.add("dm-share-mode");
     $("dmMechSection").style.display="none";
     $("dmSetup").style.display="none";
     $("dmTargetSection").style.display="none";
@@ -846,6 +866,21 @@
     $("dmShareView").hidden=false;
     document.title="好友分享的计算结果 · 伤害计算器 · 天择网";
   }
+  function applyImportedShare(d){
+    activateCalcTab(d.m,false);
+    if(d.m==="max"){
+      $("dmSpaceMax").value=(d.s!=null?Math.max(0,Math.min(200,intv(d.s))):11);
+      calcMax();
+    }else if(d.m==="min"){
+      calcMin();
+    }else{
+      $("dmCustomLight").value=Math.max(0,intv(d.ca));
+      $("dmCustomQuake").value=Math.max(0,Math.min(QUAKE_SEARCH_CAP,intv(d.cq)));
+      updateCustomSpace();
+      calcCustom();
+    }
+    flashImportOk("已把分享链接里的完整配置复制到你的伤害计算器");
+  }
   function setupShareInvalid(){
     SHARE_MODE=true;
     hideSetupSections();
@@ -858,6 +893,14 @@
     /* 分享链接：#share=... 则进入只读查看模式，完全不读取访问者本地存档 */
     var shareData=parseShareHash();
     var shareInvalid=!shareData && (location.hash||"").indexOf("#share=")===0;
+    var importedShareData=null;
+    if(!shareData&&!shareInvalid){
+      try{
+        importedShareData=JSON.parse(sessionStorage.getItem(SHARE_IMPORT_KEY)||"null");
+        sessionStorage.removeItem(SHARE_IMPORT_KEY);
+        if(!importedShareData||importedShareData.v!==1||!importedShareData.t||["max","min","custom"].indexOf(importedShareData.m)<0)importedShareData=null;
+      }catch(e){ importedShareData=null; }
+    }
     if(shareData)enterShareMode(shareData);
     else load();
     loadGame(function(){
@@ -924,15 +967,20 @@
       /* 分享查看模式：返回自己的计算器（访问者本地数据从未被改动，回到无 hash 的干净地址即可） */
       $("dmShareBack").addEventListener("click", function(ev){
         ev.preventDefault();
-        location.href=location.pathname+location.search;
+        history.replaceState(null,"",location.pathname+location.search);
+        location.reload();
+      });
+      $("dmShareCopy").addEventListener("click", function(){
+        if(shareData)copyShareToCalculator(shareData);
       });
       if(shareData)setupShareView(shareData);
       else if(shareInvalid)setupShareInvalid();
+      else if(importedShareData)applyImportedShare(importedShareData);
     });
   }
 
   /* 自动化测试钩子（界面无引用） */
-  window.__dmgShare={ buildUrl:buildShareUrl, parse:parseShareHash, isShareMode:function(){return SHARE_MODE;} };
+  window.__dmgShare={ buildUrl:buildShareUrl, parse:parseShareHash, importData:copyShareToCalculator, isShareMode:function(){return SHARE_MODE;} };
 
   init();
 })();

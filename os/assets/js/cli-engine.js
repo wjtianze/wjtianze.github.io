@@ -39,20 +39,25 @@
     return tokens;
   }
 
-  function parseOptions(tokens) {
+  function parseOptions(tokens, source) {
     const options = {};
     const args = [];
-    const booleanNames = new Set(['json', 'quiet', 'help', 'all', 'archived', 'permanent', 'force']);
+    const booleanNames = new Set([
+      'json', 'quiet', 'help', 'all', 'archived', 'permanent', 'force',
+      'overwrite', 'parents', 'recursive'
+    ]);
+    const isExactSourceToken = (token, value) => !source || source.slice(token.start, token.end) === value;
     for (let i = 0; i < tokens.length; i++) {
       const token = tokens[i];
       const value = token.value;
-      if (value === '--') { args.push(...tokens.slice(i + 1).map(item => item.value)); break; }
-      if (!/^--[a-zA-Z][\w-]*(?:=.*)?$/.test(value)) { args.push(value); continue; }
+      if (value === '--' && isExactSourceToken(token, value)) { args.push(...tokens.slice(i + 1).map(item => item.value)); break; }
+      if (!/^--[a-zA-Z][\w-]*(?:=.*)?$/.test(value) || !isExactSourceToken(token, value)) { args.push(value); continue; }
       const body = value.slice(2);
       const eq = body.indexOf('=');
       if (eq >= 0) {
         options[body.slice(0, eq)] = body.slice(eq + 1);
-      } else if (!booleanNames.has(body) && tokens[i + 1] && !tokens[i + 1].value.startsWith('--')) {
+      } else if (!booleanNames.has(body) && tokens[i + 1] &&
+        (!tokens[i + 1].value.startsWith('--') || !isExactSourceToken(tokens[i + 1], tokens[i + 1].value))) {
         options[body] = tokens[++i].value;
       } else {
         options[body] = true;
@@ -90,9 +95,87 @@
     };
   }
 
+  function agentAccessDeniedResult(spec) {
+    const command = String(spec && spec.key || '未知命令');
+    return {
+      ok: false,
+      code: 126,
+      out: 'AI 无权执行此命令：' + command + '。请由用户在终端中运行。',
+      data: undefined,
+      display: 'text',
+      meta: { reason: 'agent-disabled', command },
+      warnings: []
+    };
+  }
+
+  function appAccessDeniedResult(spec) {
+    const command = String(spec && spec.key || '未知命令');
+    return {
+      ok: false,
+      code: 126,
+      out: '应用无权执行此命令：' + command + '。请由用户在终端中运行。',
+      data: undefined,
+      display: 'text',
+      meta: { reason: 'app-disabled', command },
+      warnings: []
+    };
+  }
+
+  function userAccessDeniedResult(spec) {
+    const command = String(spec && spec.key || '未知命令');
+    return {
+      ok: false,
+      code: 126,
+      out: '用户终端无权执行此命令：' + command + '。该命令不允许从用户终端调用。',
+      data: undefined,
+      display: 'text',
+      meta: { reason: 'user-disabled', command },
+      warnings: []
+    };
+  }
+
   function commandPath(value) {
     return (Array.isArray(value) ? value : String(value || '').trim().split(/\s+/))
       .map(item => String(item || '').trim().toLowerCase()).filter(Boolean);
+  }
+
+  function commandAccess(spec) {
+    const access = spec && spec.access && typeof spec.access === 'object' ? spec.access : {};
+    const requiresApproval = access.requiresApproval === true || spec?.requiresApproval === true ||
+      spec?.approval === true || spec?.approval === 'required';
+    return {
+      user: access.user !== false && spec?.user !== false,
+      agent: access.agent !== false && spec?.agent !== false,
+      app: access.app !== false && spec?.app !== false,
+      requiresApproval
+    };
+  }
+
+  function commandBadges(spec) {
+    const access = commandAccess(spec);
+    const badges = [];
+    if (access.user && !access.agent && !access.app) badges.push('仅用户');
+    else {
+      if (!access.user) badges.push('用户禁用');
+      if (!access.agent) badges.push('Agent 禁用');
+      if (!access.app) badges.push('应用禁用');
+    }
+    if (access.requiresApproval) badges.push('需授权');
+    return badges;
+  }
+
+  function commandMetadata(spec) {
+    return {
+      key: spec.key,
+      path: spec.path.slice(),
+      aliases: (spec.aliases || []).map(alias => alias.join(' ')),
+      usage: spec.usage || spec.key,
+      description: spec.description || '',
+      group: spec.group || '其他',
+      hidden: !!spec.hidden,
+      access: commandAccess(spec),
+      badges: commandBadges(spec)
+    };
   }
 
   function distance(a, b) {
@@ -374,27 +457,80 @@
       this.byPath = new Map();
     }
     register(spec) {
-      const normalized = { ...spec, path: commandPath(spec.path), aliases: (spec.aliases || []).map(commandPath) };
+      const rawAliases = Array.isArray(spec.aliases) ? spec.aliases : (spec.aliases ? [spec.aliases] : []);
+      const pathParts = commandPath(spec.path);
+      const pathKey = pathParts.join(' ');
+      const seenAliases = new Set();
+      const aliases = rawAliases.map(commandPath).filter(alias => {
+        const key = alias.join(' ');
+        if (!key || key === pathKey || seenAliases.has(key)) return false;
+        seenAliases.add(key);
+        return true;
+      });
+      const normalized = { ...spec, path: pathParts, aliases };
       if (!normalized.path.length || typeof normalized.handler !== 'function') throw new Error('命令注册缺少 path 或 handler');
-      normalized.key = normalized.path.join(' ');
-      const previous = this.byPath.get(normalized.key);
-      if (previous) this.specs = this.specs.filter(item => item !== previous);
+      normalized.key = pathKey;
+      const previous = this.specs.find(item => item.key === normalized.key) || null;
+      const claims = [normalized.key, ...normalized.aliases.map(alias => alias.join(' '))];
+      for (const claim of claims) {
+        const owner = this.byPath.get(claim);
+        if (owner && owner !== previous) {
+          throw new Error('命令路径或别名冲突：' + claim + ' 已属于 ' + owner.key);
+        }
+      }
+      if (previous) this.removeSpec(previous);
       this.specs.push(normalized);
       this.byPath.set(normalized.key, normalized);
-      normalized.aliases.forEach(alias => this.byPath.set(alias.join(' '), { ...normalized, aliasPath: alias }));
+      normalized.aliases.forEach(alias => this.byPath.set(alias.join(' '), normalized));
       return normalized;
+    }
+    removeSpec(spec) {
+      this.specs = this.specs.filter(item => item !== spec);
+      for (const [key, owner] of this.byPath.entries()) {
+        if (owner === spec) this.byPath.delete(key);
+      }
     }
     unregister(predicate) {
       if (typeof predicate !== 'function') return 0;
       const removed = this.specs.filter(predicate);
       if (!removed.length) return 0;
-      this.specs = this.specs.filter(spec => !predicate(spec));
-      for (const [key, spec] of this.byPath.entries()) {
-        if (predicate(spec)) this.byPath.delete(key);
-      }
+      removed.forEach(spec => this.removeSpec(spec));
       return removed.length;
     }
     visible() { return this.specs.filter(spec => !spec.hidden).sort((a, b) => a.key.localeCompare(b.key, 'zh-CN')); }
+    list(options) {
+      const source = options && options.includeHidden
+        ? this.specs.slice().sort((a, b) => a.key.localeCompare(b.key, 'zh-CN'))
+        : this.visible();
+      return source.map(commandMetadata);
+    }
+    audit() {
+      const claims = new Map();
+      const conflicts = [];
+      const missing = [];
+      this.specs.forEach(spec => {
+        const keys = [spec.key, ...(spec.aliases || []).map(alias => alias.join(' '))];
+        keys.forEach(key => {
+          const owner = claims.get(key);
+          if (owner && owner !== spec.key) conflicts.push({ path: key, commands: [owner, spec.key] });
+          else claims.set(key, spec.key);
+          if (this.byPath.get(key) !== spec) missing.push({ path: key, command: spec.key });
+        });
+      });
+      const orphaned = [];
+      for (const [key, spec] of this.byPath.entries()) {
+        if (!this.specs.includes(spec) || !claims.has(key)) orphaned.push({ path: key, command: spec && spec.key });
+      }
+      return {
+        ok: conflicts.length === 0 && missing.length === 0 && orphaned.length === 0,
+        commands: this.specs.length,
+        paths: this.byPath.size,
+        aliases: Math.max(0, this.byPath.size - this.specs.length),
+        conflicts,
+        missing,
+        orphaned
+      };
+    }
     resolve(tokens) {
       const values = tokens.map(token => token.value.toLowerCase());
       for (let count = values.length; count > 0; count--) {
@@ -421,17 +557,46 @@
         return { ok: false, code: 127, out: '未知命令：' + tokens[0].value + (suggestions.length ? '（你是否想输入：' + suggestions.join('、') + '）' : '（输入 help 查看全部命令）'), display: 'text', warnings: [] };
       }
       const { spec, count } = match;
+      // 权限是执行边界，而不只是帮助文字；规范路径、别名和多级子命令共用同一 spec。
+      const access = commandAccess(spec);
+      const byAgent = baseContext && baseContext.byAI === true;
+      const byApp = baseContext && baseContext.byApp === true;
+      if (!byAgent && !byApp && !access.user) {
+        return userAccessDeniedResult(spec);
+      }
+      if (byAgent && !access.agent) {
+        return agentAccessDeniedResult(spec);
+      }
+      if (byApp && !access.app) {
+        return appAccessDeniedResult(spec);
+      }
       const restTokens = tokens.slice(count);
-      const parsed = parseOptions(restTokens);
+      const source = String(input || '');
       const rawStart = tokens[count - 1] ? tokens[count - 1].end : 0;
+      const raw = source.slice(rawStart).trim();
+      // 仅把源文本中真正未加引号、未转义的 `--` 当作 literal 分隔符。
+      // token.value 相同但源片段为 "--" / '--' / \-- 时仍是普通参数。
+      const separatorIndex = restTokens.findIndex(token => token.value === '--' && source.slice(token.start, token.end) === '--');
+      const beforeLiteral = separatorIndex >= 0 ? restTokens.slice(0, separatorIndex) : restTokens;
+      const afterLiteral = separatorIndex >= 0 ? restTokens.slice(separatorIndex + 1) : [];
+      const optionsDisabled = spec.parseOptions === false || (spec.passthrough === true && separatorIndex < 0);
+      const parsed = optionsDisabled
+        ? { options: {}, args: beforeLiteral.map(token => token.value) }
+        : parseOptions(beforeLiteral, source);
+      if (separatorIndex >= 0) parsed.args.push(...afterLiteral.map(token => token.value));
+      const literal = separatorIndex >= 0
+        ? source.slice(restTokens[separatorIndex].end).replace(/^\s+/, '')
+        : (spec.passthrough === true || spec.parseOptions === false ? raw : '');
       const ctx = {
         ...(baseContext || {}),
-        input: String(input || ''),
+        input: source,
         command: spec.key,
         spec,
         args: parsed.args,
         options: parsed.options,
-        raw: String(input || '').slice(rawStart).trim(),
+        raw,
+        literal,
+        literalProvided: separatorIndex >= 0,
         registry: this,
         emit: typeof baseContext?.emit === 'function' ? baseContext.emit : () => {},
         signal: baseContext?.signal || null
@@ -459,7 +624,8 @@
         const matches = exact ? [exact] : this.visible().filter(spec => spec.key.includes(q) || String(spec.description || '').toLowerCase().includes(q));
         if (!matches.length) return '没有找到与「' + query + '」匹配的命令。';
         return matches.map(spec => {
-          const lines = [spec.usage || spec.key, '  ' + (spec.description || '暂无说明')];
+          const badges = commandBadges(spec);
+          const lines = [(spec.usage || spec.key) + (badges.length ? '  [' + badges.join('] [') + ']' : ''), '  ' + (spec.description || '暂无说明')];
           if (spec.examples && spec.examples.length) lines.push('  示例：' + spec.examples.join('；'));
           if (spec.aliases && spec.aliases.length) lines.push('  别名：' + spec.aliases.map(item => item.join(' ')).join('、'));
           return lines.join('\n');
@@ -474,7 +640,10 @@
       const body = [];
       groups.forEach((specs, group) => {
         body.push('── ' + group + ' ──');
-        specs.forEach(spec => body.push('  ' + (spec.usage || spec.key).padEnd(34, ' ') + ' ' + (spec.description || '')));
+        specs.forEach(spec => {
+          const badges = commandBadges(spec);
+          body.push('  ' + (spec.usage || spec.key).padEnd(34, ' ') + ' ' + (spec.description || '') + (badges.length ? ' [' + badges.join('] [') + ']' : ''));
+        });
       });
       return '天择OS 命令行 · 统一命令中心\n' + body.join('\n') + '\n\n通用选项：--help 查看命令帮助；--json 输出结构化 JSON；--quiet 隐藏成功提示。\n快捷键：Tab 补全，↑/↓ 历史，Ctrl+L 清屏，Ctrl+C 中止当前任务。旧版命令仍可使用，但建议采用上面的命名空间。';
     }
@@ -486,17 +655,22 @@
       const values = tokens.map(token => token.value.toLowerCase());
       const prefix = endsSpace ? '' : (values.pop() || '');
       const base = values.join(' ');
-      return this.visible().map(spec => spec.key).filter(key => {
+      const candidates = [...new Set(this.visible().flatMap(spec => [
+        spec.key,
+        ...(spec.aliases || []).map(alias => alias.join(' '))
+      ]))];
+      return candidates.filter(key => {
         if (!base) return key.startsWith(prefix);
         return key.startsWith(base + ' ' + prefix);
       }).slice(0, 30);
     }
     agentPrompt() {
       const groups = new Map();
-      this.visible().filter(spec => spec.agent !== false).forEach(spec => {
+      this.visible().filter(spec => commandAccess(spec).agent).forEach(spec => {
         const group = spec.group || '其他';
         if (!groups.has(group)) groups.set(group, []);
-        groups.get(group).push(spec.usage || spec.key);
+        const access = commandAccess(spec);
+        groups.get(group).push((spec.usage || spec.key) + (access.requiresApproval ? ' [需授权]' : ''));
       });
       return [...groups.entries()].map(([group, specs]) => '· ' + group + '：' + specs.join(' | ')).join('\n');
     }

@@ -1269,6 +1269,15 @@ const AI = {
         ? 'AI 未配置：天择OS 通用配置中尚未设置 API Key，请在天择OS 的「AI 配置」中设置'
         : 'AI 未配置，请先在「AI 配置」中设置 URL、Key 和模型');
     }
+    // OS 内嵌时复用系统统一 provider：自动兼容 Responses / Chat Completions，并进入同一用量账本。
+    if (this._inOS()) {
+      try {
+        const engine = window.parent && window.parent.TZOS && window.parent.TZOS.AI;
+        if (engine && typeof engine.chatStream === 'function') {
+          return await engine.chatStream(messages, onChunk, { ...opts, source: opts.source || 'words' });
+        }
+      } catch (_) { /* 跨域或父页尚未就绪时继续使用独立兼容路径 */ }
+    }
     const reqBody = {
       model: c.model,
       messages,
