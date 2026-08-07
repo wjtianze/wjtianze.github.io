@@ -1658,6 +1658,74 @@ function presetFrameUrl(app) {
   return hideSiteChrome ? app.url + (app.url.includes('?') ? '&' : '?') + 'nochrome=1' : app.url;
 }
 
+const AppStorage = {
+  PREFIX: 'tz_app_storage_',
+  MAX_KEY_LENGTH: 256,
+  MAX_VALUE_LENGTH: 2 * 1024 * 1024,
+  MAX_TOTAL_LENGTH: 4 * 1024 * 1024,
+  key(appId) { return this.PREFIX + String(appId || ''); },
+  normalize(value) {
+    const out = Object.create(null);
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return out;
+    Object.keys(value).forEach(rawKey => {
+      const key = String(rawKey);
+      const stored = value[rawKey];
+      if (key.length > this.MAX_KEY_LENGTH || stored == null) return;
+      const text = String(stored);
+      if (text.length <= this.MAX_VALUE_LENGTH) out[key] = text;
+    });
+    return out;
+  },
+  load(appId) {
+    try {
+      const raw = localStorage.getItem(this.key(appId)) || '{}';
+      if (raw.length > this.MAX_TOTAL_LENGTH) return Object.create(null);
+      return this.normalize(JSON.parse(raw));
+    } catch (_) {
+      return Object.create(null);
+    }
+  },
+  persist(appId, data) {
+    try {
+      const encoded = JSON.stringify(this.normalize(data));
+      if (encoded.length > this.MAX_TOTAL_LENGTH) return false;
+      localStorage.setItem(this.key(appId), encoded);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  },
+  applyMessage(sourceAppId, request) {
+    if (!sourceAppId || !request || String(request.appId || '') !== String(sourceAppId)) return false;
+    const op = String(request.op || '');
+    const key = String(request.key == null ? '' : request.key);
+    if (key.length > this.MAX_KEY_LENGTH) return false;
+    const data = this.load(sourceAppId);
+    if (op === 'clear') {
+      return this.persist(sourceAppId, Object.create(null));
+    }
+    if (op === 'remove') {
+      delete data[key];
+      return this.persist(sourceAppId, data);
+    }
+    if (op !== 'set') return false;
+    const value = String(request.value == null ? '' : request.value);
+    if (value.length > this.MAX_VALUE_LENGTH) return false;
+    data[key] = value;
+    return this.persist(sourceAppId, data);
+  },
+  remove(appId) {
+    try { localStorage.removeItem(this.key(appId)); } catch (_) {}
+  }
+};
+
+function inlineScriptJson(value) {
+  return JSON.stringify(value)
+    .replace(/</g, '\\u003c')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+}
+
 /* ---- 已安装软件引导注入（v3.1.1）----
  * 修复"软件命令包不管用"的三个根因：
  *  1) 应用 id 安装时才生成（app-<时间戳>），AI 写代码时不可能知道
@@ -1668,29 +1736,26 @@ function presetFrameUrl(app) {
  *     → 注入执行桥：父页面 postMessage 过来，js 在软件自己的 iframe 里执行 */
 function injectAppBootstrap(html, app) {
   const meta = { id: app.id, name: app.name || '' };
-  // srcdoc 应用保持 opaque origin，不能直接访问父页面 localStorage。为应用注入同步
-  // Storage 兼容层：当前 iframe 内存中同步读写，父页面按 appId 隔离后持久化。
-  const appStorageKey = 'tz_app_storage_' + app.id;
-  let appStorageSnapshot = {};
-  try {
-    const saved = JSON.parse(localStorage.getItem(appStorageKey) || '{}');
-    if (saved && typeof saved === 'object' && !Array.isArray(saved)) appStorageSnapshot = saved;
-  } catch (e) {}
+  // srcdoc 软件保持 opaque origin，不能直接使用父页面 localStorage。注入同步兼容层，
+  // 当前 iframe 内立即读写，父页面按已验证的 appId 隔离并持久化。
+  const appStorageSnapshot = AppStorage.load(app.id);
   const boot = '<script>(function(){' +
-    'var APP_ID=' + JSON.stringify(app.id) + ';' +
+    'var APP_ID=' + inlineScriptJson(app.id) + ';' +
     'window.TZOS_APP_ID=APP_ID;' +
     'var REAL_KEY="tz_app_cmds_"+APP_ID;' +
-    'var STORAGE_DATA=' + JSON.stringify(appStorageSnapshot) + ';' +
+    'var STORAGE_DATA=Object.assign(Object.create(null),JSON.parse(' + inlineScriptJson(JSON.stringify(appStorageSnapshot)) + '));' +
     'var STORAGE_KEYS=function(){return Object.keys(STORAGE_DATA);};' +
+    'var _normalizeKey=function(k){k=String(k);if(k.indexOf("tz_app_cmds_")===0&&k!==REAL_KEY)k=REAL_KEY;return k;};' +
+    'var _quota=function(){var e=new Error("应用本地存储已超过限制");e.name="QuotaExceededError";throw e;};' +
     'var _persist=function(op,key,value){try{window.parent.postMessage({__tzStorageWrite:{appId:APP_ID,op:op,key:key,value:value}},"*");}catch(e){}};' +
     'var _storage={' +
-      'getItem:function(k){k=String(k);return Object.prototype.hasOwnProperty.call(STORAGE_DATA,k)?STORAGE_DATA[k]:null;},' +
-      'setItem:function(k,v){k=String(k);v=String(v);STORAGE_DATA[k]=v;_persist("set",k,v);},' +
-      'removeItem:function(k){k=String(k);delete STORAGE_DATA[k];_persist("remove",k,"");},' +
-      'clear:function(){STORAGE_DATA={};_persist("clear","","");},' +
-      'key:function(i){var keys=STORAGE_KEYS();i=Number(i)||0;return i>=0&&i<keys.length?keys[i]:null;}' +
+      'getItem:function(k){k=_normalizeKey(k);return Object.prototype.hasOwnProperty.call(STORAGE_DATA,k)?STORAGE_DATA[k]:null;},' +
+      'setItem:function(k,v){k=_normalizeKey(k);v=String(v);if(k.length>256||v.length>2097152)_quota();var had=Object.prototype.hasOwnProperty.call(STORAGE_DATA,k),old=STORAGE_DATA[k];STORAGE_DATA[k]=v;if(JSON.stringify(STORAGE_DATA).length>4194304){if(had)STORAGE_DATA[k]=old;else delete STORAGE_DATA[k];_quota();}_persist("set",k,v);},' +
+      'removeItem:function(k){k=_normalizeKey(k);if(k.length>256)return;delete STORAGE_DATA[k];_persist("remove",k,"");},' +
+      'clear:function(){STORAGE_DATA=Object.create(null);_persist("clear","","");},' +
+      'key:function(i){i=Math.trunc(Number(i));var keys=STORAGE_KEYS();return Number.isFinite(i)&&i>=0&&i<keys.length?keys[i]:null;}' +
     '};' +
-    'try{Object.defineProperty(_storage,"length",{get:function(){return STORAGE_KEYS().length;}});}catch(e){}' +
+    'try{Object.defineProperty(_storage,"length",{enumerable:false,get:function(){return STORAGE_KEYS().length;}});}catch(e){}' +
     'window.TZOS_STORAGE=_storage;' +
     'try{Object.defineProperty(window,"localStorage",{configurable:true,get:function(){return _storage;}});}catch(e){}' +
     'var _set=_storage.setItem.bind(_storage);' +
@@ -1708,8 +1773,8 @@ function injectAppBootstrap(html, app) {
       'if(sr&&_sysPending[sr.reqId]){var p=_sysPending[sr.reqId];clearTimeout(p.timer);delete _sysPending[sr.reqId];p.resolve(sr.ok?String(sr.value==null?"（完成）":sr.value):"执行出错："+sr.value);return;}' +
       'var d=ev.data&&ev.data.__tzCmdExec;if(!d)return;' +
       'var reply=function(ok,value){try{window.parent.postMessage({__tzCmdResult:{reqId:d.reqId,ok:ok,value:value}},"*");}catch(e){}};' +
-      'var api={appId:APP_ID,version:' + JSON.stringify(OS_VERSION) + '};' +
-      'var appMeta=' + JSON.stringify(meta) + ';' +
+       'var api={appId:APP_ID,version:' + inlineScriptJson(OS_VERSION) + '};' +
+       'var appMeta=' + inlineScriptJson(meta) + ';' +
       'try{' +
         'var fn=new Function("args","appId","api","app",d.js);' +
         'var ret=fn(String(d.args==null?"":d.args),APP_ID,api,appMeta);' +
@@ -1931,6 +1996,7 @@ const WM = {
       iframe.sandbox = 'allow-scripts allow-forms allow-modals allow-popups';
       iframe.srcdoc = injectAppBootstrap(app.html, app);
       body.appendChild(iframe);
+      AppCommands.trackFrame(app.id, iframe);
     } else {
       // builtin
       const html = app.render(opts);
@@ -2167,6 +2233,7 @@ const WM = {
       iframe.sandbox = 'allow-scripts allow-forms allow-modals allow-popups';
       iframe.srcdoc = injectAppBootstrap(app.html, app);
       w.body.appendChild(iframe);
+      AppCommands.trackFrame(app.id, iframe);
     } else {
       if (app.id === 'browser') cleanupBrowserHooks();
       const html = app.render({ titlebarTabs: app.id === 'ai-chat' && !window.__tzFloatMode });
@@ -2883,10 +2950,11 @@ function restoreOpenWindows() {
 async function uninstallApp(id) {
   const app = Store.getApps().find(a => a.id === id);
   const name = app ? app.name : '此软件';
-  const ok = await confirmDialog({ title: '卸载软件', message: '确定要卸载「' + name + '」吗？\n该软件将从桌面移除。', confirmText: '卸载', danger: true });
+  const ok = await confirmDialog({ title: '卸载软件', message: '确定要卸载「' + name + '」吗？\n该软件、命令和本地数据将被移除。', confirmText: '卸载', danger: true });
   if (!ok) return;
   Store.removeApp(id);
   try { localStorage.removeItem('tz_app_cmds_' + id); } catch (e) {}
+  AppStorage.remove(id);
   WM.windows.filter(w => w.appId === id).forEach(w => WM.close(w.id));
   Desktop.render();
   StartMenu.render();
@@ -4980,6 +5048,7 @@ const CLI = {
       if (!app) throw new Error('未安装该软件（仅 AI 生成的软件可卸载）：' + r);
       Store.removeApp(r);
       try { localStorage.removeItem('tz_app_cmds_' + r); } catch (e) {}
+      AppStorage.remove(r);
       if (typeof AppCommands !== 'undefined') AppCommands.syncRegistry(r, []);
       WM.windows.filter(w => w.appId === r).forEach(w => WM.close(w.id));
       Desktop.render(); StartMenu.render(); refreshOpenApp('app-manager');
@@ -6060,13 +6129,21 @@ const AgentActivity = {
 };
 const AppCommands = {
   key: (appId) => 'tz_app_cmds_' + appId,
-  _pending: {}, _reqSeq: 0, _listening: false,
+  _pending: {}, _reqSeq: 0, _listening: false, _frameApps: new WeakMap(),
+  trackFrame(appId, frame) {
+    const source = frame && frame.contentWindow;
+    if (source && appId) this._frameApps.set(source, String(appId));
+  },
   _sourceAppId(source) {
+    const remembered = source && this._frameApps.get(source);
+    const rememberedApp = remembered && findApp(remembered);
+    if (rememberedApp && rememberedApp.type === 'installed') return remembered;
     const match = WM.windows.find(win => {
       if (!win || !win.app || win.app.type !== 'installed') return false;
       const frame = win.body && win.body.querySelector('iframe');
       return !!frame && frame.contentWindow === source;
     });
+    if (match && source) this._frameApps.set(source, match.appId);
     return match ? match.appId : '';
   },
   load(appId) {
@@ -6105,35 +6182,9 @@ const AppCommands = {
     if (this._listening) return;
     this._listening = true;
     window.addEventListener('message', (ev) => {
-      // 沙箱应用的同步 Storage 兼容层：只接受当前已安装应用 iframe 的写入，
-      // 并限制单键与单应用总量，避免任意 frame 或异常应用污染系统存储。
       const sw = ev.data && ev.data.__tzStorageWrite;
       if (sw && sw.appId && typeof sw.op === 'string') {
-        const sourceAppId = this._sourceAppId(ev.source);
-        if (!sourceAppId || sourceAppId !== sw.appId) return;
-        const storageKey = 'tz_app_storage_' + sourceAppId;
-        let data = {};
-        try {
-          const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
-          if (saved && typeof saved === 'object' && !Array.isArray(saved)) data = saved;
-        } catch (e) {}
-        const op = sw.op;
-        const key = String(sw.key == null ? '' : sw.key).slice(0, 256);
-        if (op === 'clear') {
-          data = {};
-        } else if (op === 'remove') {
-          delete data[key];
-        } else if (op === 'set') {
-          const value = String(sw.value == null ? '' : sw.value);
-          if (!key || value.length > 2 * 1024 * 1024) return;
-          data[key] = value;
-        } else {
-          return;
-        }
-        try {
-          const encoded = JSON.stringify(data);
-          if (encoded.length <= 4 * 1024 * 1024) localStorage.setItem(storageKey, encoded);
-        } catch (e) {}
+        AppStorage.applyMessage(this._sourceAppId(ev.source), sw);
         return;
       }
       // v3.5：软件内调用系统命令行（TZOS_CMD.exec）——在父页执行 CLI 并把输出回传给软件

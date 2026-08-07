@@ -38,7 +38,7 @@
         <p>天择网与天择OS <strong>5.0.0</strong> 现已正式发布，Windows 安装包与网页版同步开放。5.0 不只是一次界面更新：浏览器、AI、文件、应用、Python、COC 工具和命令行都进入同一套可实际使用、可验证的工作流。</p>
 
         <h2>一、Windows 5.0 安装包正式开放</h2>
-        <p>Windows 用户可以从<a href="https://wjtianze.github.io/os/index.html">天择OS 下载页</a>获取 <strong>tianze-os-setup-5.0.0.exe</strong>，也可以直接前往 <a href="https://github.com/wjtianze/wjtianze.github.io/releases/tag/v5.0.0">GitHub Release</a>。安装包 SHA-256 为 <code>4F7B95D682E961E342354BB58001E1EC04E421D1857373F5542D79DC586A95AF</code>。</p>
+        <p>Windows 用户可以从<a href="https://wjtianze.github.io/os/index.html">天择OS 下载页</a>获取 <strong>tianze-os-setup-5.0.0.exe</strong>，也可以直接前往 <a href="https://github.com/wjtianze/wjtianze.github.io/releases/tag/v5.0.0">GitHub Release</a>。安装包 SHA-256 为 <code>C6F6118F9CCF324217D6F9230AC35DD2EA40D0710A26746F3A7889013F6699A3</code>。</p>
         <p>本次安装包仍未购买商业代码签名证书，Windows 可能显示 SmartScreen 提示。安装来源、文件大小和校验值以 GitHub Releases 为准。</p>
 
         <h2>二、DeepSeek V4 Flash 升级到 Responses API</h2>
@@ -69,6 +69,7 @@
 
         <h2>九、命令行、图标与完整回归</h2>
         <p>本轮对整个天择OS命令注册表做了运行时审计，清理真正重复项、保留必要兼容别名，并统一帮助、参数、错误信息和用户 / Agent / 应用权限。最终覆盖 <strong>166 条命令、47 个兼容别名和 213 条可达路径</strong>，没有发现命令冲突、缺失入口或孤立别名。文件、本地模型、上下文压缩、Windows 应用、Python 与 COC教程也都拥有对应命令。</p>
+        <p>AI 生成应用的沙箱 localStorage 现在按应用隔离并由系统持久化：关闭重开后数据仍在，应用不能伪造其他 appId 写入，卸载时会同步清理对应本地数据。</p>
         <p>桌面窗口、任务栏、安装包和快捷方式已统一使用天择OS自己的图标，不再出现 Electron 默认图标。</p>
 
         <h2>十、验收与下载</h2>
