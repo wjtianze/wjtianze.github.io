@@ -1668,12 +1668,32 @@ function presetFrameUrl(app) {
  *     → 注入执行桥：父页面 postMessage 过来，js 在软件自己的 iframe 里执行 */
 function injectAppBootstrap(html, app) {
   const meta = { id: app.id, name: app.name || '' };
+  // srcdoc 应用保持 opaque origin，不能直接访问父页面 localStorage。为应用注入同步
+  // Storage 兼容层：当前 iframe 内存中同步读写，父页面按 appId 隔离后持久化。
+  const appStorageKey = 'tz_app_storage_' + app.id;
+  let appStorageSnapshot = {};
+  try {
+    const saved = JSON.parse(localStorage.getItem(appStorageKey) || '{}');
+    if (saved && typeof saved === 'object' && !Array.isArray(saved)) appStorageSnapshot = saved;
+  } catch (e) {}
   const boot = '<script>(function(){' +
     'var APP_ID=' + JSON.stringify(app.id) + ';' +
     'window.TZOS_APP_ID=APP_ID;' +
     'var REAL_KEY="tz_app_cmds_"+APP_ID;' +
-    'var _set=function(){};' +
-    'try{_set=localStorage.setItem.bind(localStorage);localStorage.setItem=function(k,v){if(typeof k==="string"&&k.indexOf("tz_app_cmds_")===0&&k!==REAL_KEY)k=REAL_KEY;return _set(k,v);};}catch(e){}' +
+    'var STORAGE_DATA=' + JSON.stringify(appStorageSnapshot) + ';' +
+    'var STORAGE_KEYS=function(){return Object.keys(STORAGE_DATA);};' +
+    'var _persist=function(op,key,value){try{window.parent.postMessage({__tzStorageWrite:{appId:APP_ID,op:op,key:key,value:value}},"*");}catch(e){}};' +
+    'var _storage={' +
+      'getItem:function(k){k=String(k);return Object.prototype.hasOwnProperty.call(STORAGE_DATA,k)?STORAGE_DATA[k]:null;},' +
+      'setItem:function(k,v){k=String(k);v=String(v);STORAGE_DATA[k]=v;_persist("set",k,v);},' +
+      'removeItem:function(k){k=String(k);delete STORAGE_DATA[k];_persist("remove",k,"");},' +
+      'clear:function(){STORAGE_DATA={};_persist("clear","","");},' +
+      'key:function(i){var keys=STORAGE_KEYS();i=Number(i)||0;return i>=0&&i<keys.length?keys[i]:null;}' +
+    '};' +
+    'try{Object.defineProperty(_storage,"length",{get:function(){return STORAGE_KEYS().length;}});}catch(e){}' +
+    'window.TZOS_STORAGE=_storage;' +
+    'try{Object.defineProperty(window,"localStorage",{configurable:true,get:function(){return _storage;}});}catch(e){}' +
+    'var _set=_storage.setItem.bind(_storage);' +
     'var _sysSeq=0,_sysPending={};' +
     'window.TZOS_CMD={' +
       'appId:APP_ID,' +
@@ -6085,6 +6105,37 @@ const AppCommands = {
     if (this._listening) return;
     this._listening = true;
     window.addEventListener('message', (ev) => {
+      // 沙箱应用的同步 Storage 兼容层：只接受当前已安装应用 iframe 的写入，
+      // 并限制单键与单应用总量，避免任意 frame 或异常应用污染系统存储。
+      const sw = ev.data && ev.data.__tzStorageWrite;
+      if (sw && sw.appId && typeof sw.op === 'string') {
+        const sourceAppId = this._sourceAppId(ev.source);
+        if (!sourceAppId || sourceAppId !== sw.appId) return;
+        const storageKey = 'tz_app_storage_' + sourceAppId;
+        let data = {};
+        try {
+          const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
+          if (saved && typeof saved === 'object' && !Array.isArray(saved)) data = saved;
+        } catch (e) {}
+        const op = sw.op;
+        const key = String(sw.key == null ? '' : sw.key).slice(0, 256);
+        if (op === 'clear') {
+          data = {};
+        } else if (op === 'remove') {
+          delete data[key];
+        } else if (op === 'set') {
+          const value = String(sw.value == null ? '' : sw.value);
+          if (!key || value.length > 2 * 1024 * 1024) return;
+          data[key] = value;
+        } else {
+          return;
+        }
+        try {
+          const encoded = JSON.stringify(data);
+          if (encoded.length <= 4 * 1024 * 1024) localStorage.setItem(storageKey, encoded);
+        } catch (e) {}
+        return;
+      }
       // v3.5：软件内调用系统命令行（TZOS_CMD.exec）——在父页执行 CLI 并把输出回传给软件
       const se = ev.data && ev.data.__tzSysExec;
       if (se && se.reqId != null && typeof se.cmd === 'string') {
