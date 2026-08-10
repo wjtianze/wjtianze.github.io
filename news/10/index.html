@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>COC 专区新增村庄存档分析与升级规划器，解析脚本开源 — 天择网</title>
-  <meta name="description" content="天择网 COC 专区新增村庄存档分析、升级规划器两大功能页，并开源村庄 JSON 解析脚本 village_parser.py。支持家乡/夜世界分类展示、剩余升级时间墙钟折算、稳本/速本两种排程模式、甘特图拖拽规划。" />
+  <title>COC 专区新增村庄分析与升级规划 — 天择网</title>
+  <meta name="description" content="COC 专区新增村庄存档分析和升级规划器，可查看村庄进度并安排建筑工人任务。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260807-v5.0.0" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
@@ -40,7 +40,7 @@
     <article class="article wrap">
       <div class="article-head reveal">
         <span class="a-tag">功能上线</span>
-        <h1>COC 专区新增村庄存档分析与升级规划器，解析脚本开源</h1>
+        <h1>COC 专区新增村庄分析与升级规划</h1>
         <div class="article-meta">
           <span>🗓 发布：2026-07-13</span>
           <span>⏰ 时间：19:09（UTC+8）</span>
@@ -49,38 +49,17 @@
       </div>
 
       <div class="article-body reveal d1">
-        <p>天择网 COC 专区今天迎来一次大幅扩展：新增「<strong>村庄存档分析</strong>」与「<strong>升级规划器</strong>」两个功能页，并开源配套的村庄 JSON 解析脚本 <strong>village_parser.py</strong>。现在你可以在浏览器里粘贴自己的村庄存档，一键看清家底、算出升级时长、再用甘特图排出完整的升级计划。</p>
+        <p>COC 专区新增村庄分析与升级规划。粘贴游戏导出的村庄存档后，可以快速看清当前进度，并把剩余升级任务排成可执行计划。</p>
 
-        <h2>村庄存档分析：粘贴即解析</h2>
-        <p>把游戏中导出的村庄 JSON 粘贴到文本框，页面会自动按「家乡」与「夜世界」两个维度分类展示完整村庄信息——英雄、兵种、攻城机器、法术、战宠、英雄装备、建筑、陷阱、帮手各自独立分区，升级中、改造、武器、超级兵等状态都有标注。</p>
-        <p>页面上方是<strong>剩余升级时间总览</strong>：基于你当前的大本营等级，逐级累加每项单位到满级的升级时长，并按资源类别（建筑工人 / 研究员 / 战宠研究员）汇总。最关键的是<strong>墙钟时间</strong>——串行总时长除以对应的工人或研究员数量，得到并行后真正需要等待的时间。</p>
-
-        <h2>升级规划器：稳本与速本两种模式</h2>
-        <p>分析页底部进入升级规划器，家乡与夜世界分 Tab 独立排程。横轴是绝对日期，纵轴是资源泳道，每条泳道的进度条数量等于该资源的工人/研究员数量（例如 6 个建筑工人就开 6 条槽并行）。</p>
+        <h2>这次更新对你有什么用</h2>
         <ul>
-          <li><strong>稳本模式</strong>：升级全部内容。建筑工人优先升级英雄，然后是时间短的项目，最后是时间长的项目；研究员随机升级兵种与法术。</li>
-          <li><strong>速本模式</strong>：忽略防御建筑、建筑工人小屋升级、陷阱、资源采集器与英雄，把所有资源集中用来冲大本营。</li>
-        </ul>
-        <p>点「一键全排程」自动把所有任务安排到最早空闲的槽位，也可以手动选择单个任务添加。甘特图里的色块支持拖拽微调起止时间，系统会自动校验同槽位冲突并吸附到最近合法位置。还可以勾选「哥布林工人」「哥布林研究员」加成，实时增加对应槽位。</p>
-
-        <h2>解析脚本开源</h2>
-        <p>村庄 JSON 的解析与升级时间计算逻辑，已整理成可独立运行的 Python 脚本 <code>village_parser.py</code>。命令行运行 <code>python village_parser.py 村庄.json</code> 即可输出结构化中文报告。脚本已开源在天择网「数据开源」页，村庄分析页底部也可直接下载，免费、不限用途。</p>
-        <p>同时，AI 专区的开源技能 <strong>coc-units-data-exporter</strong> 也已更新：技能包现在包含两个脚本——原有的 <code>coc_pipeline.py</code>（从 APK 提取单位数据）与新增的 <code>village_parser.py</code>（村庄存档解析）。</p>
-
-        <h2>关于数据与隐私</h2>
-        <p>所有解析都在你的浏览器本地完成，村庄数据不会上传任何服务器。升级时间数据来自天择网已开源的《部落冲突》单位完整数据（272 条，数据版本 v18.400.9），升级时长按游戏内实际数值逐级累加，建筑与兵种两套不同的时间语义已分别正确处理。</p>
-
-        <h2>规划器重大升级（21:51 更新）</h2>
-        <p>上线当天，升级规划器迎来一次重大升级，让它从粗粒度排程变成真正可逐级规划的工具：</p>
-        <ul>
-          <li><strong>单级拆分</strong>：每级一个独立滑块（如蛮王 67→75 拆成 8 个），前置依赖自动处理——同单位逐级、兵种/法术需实验室等级、英雄需英雄殿堂等级、战宠需战宠小屋等级。</li>
-          <li><strong>英雄优先专用槽</strong>：几个英雄在升就留几个建筑工人专升英雄，一级接一级连续升级不被打断；工人不够时所有工人优先给英雄。</li>
-          <li><strong>正在升级锁定</strong>：时间轴从村庄 JSON 采集时刻起算，正在升级的项目用剩余时间显示并锁定钉板（🔒），不能拖走。</li>
-          <li><strong>多座建筑独立进度条</strong>：7 座箭塔、6 座加农炮等各自独立展开（箭塔#1…#7），不再合并成 1 个。</li>
-          <li><strong>缩放与拖拽</strong>：最大 4000% 缩放、日期标签随缩放自适应疏密；滑块可在甘特图内拖动改时间，或拖到待规划区移除。</li>
+          <li>按家乡与夜世界分类查看英雄、兵种、法术、建筑和装备。</li>
+          <li>统计剩余升级时间，并按建筑工人数换算实际等待时间。</li>
+          <li>升级规划器支持稳本和速本思路，可在时间轴上调整任务顺序。</li>
         </ul>
 
-        <blockquote>前往 <a href="https://wjtianze.github.io/coc/village/index.html">村庄存档分析</a> 粘贴你的存档试试，或直接打开 <a href="https://wjtianze.github.io/coc/planner/index.html">升级规划器</a> 排一份升级计划。</blockquote>
+        <h2>如何使用</h2>
+        <p>从<a href="https://wjtianze.github.io/coc/index.html">COC 专区</a>导入村庄存档，再进入<a href="https://wjtianze.github.io/coc/planner/index.html">升级规划器</a>安排任务。存档只保存在当前设备。</p>
       </div>
 
       <div class="article-foot">

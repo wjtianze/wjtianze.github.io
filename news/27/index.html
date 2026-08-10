@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>天择OS 4.1 正式发布：对话归档、子智能体命令行、Token 账本与六档 VIP — 天择网</title>
-  <meta name="description" content="天择OS 4.1 正式发布并开放 Windows 安装包下载：新增对话归档、ask 与 agent 子智能体、Token 用量账本、六档 VIP 专属皮肤、加密存档和实时滥用监管。" />
+  <title>天择OS 4.1：对话归档、智能体、用量账本与会员外观 — 天择网</title>
+  <meta name="description" content="天择OS 4.1 正式发布，新增对话归档、命令行智能体、人工智能用量账本、会员外观和加密存档。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260807-v5.0.0" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
@@ -27,7 +27,7 @@
     <article class="article wrap">
       <div class="article-head reveal">
         <span class="a-tag">正式发布</span>
-        <h1>天择OS 4.1 正式发布：对话归档、子智能体命令行、Token 账本与六档 VIP</h1>
+        <h1>天择OS 4.1：对话归档、智能体、用量账本与会员外观</h1>
         <div class="article-meta">
           <span>发布：2026-08-02</span>
           <span>作者：天择网</span>
@@ -35,37 +35,17 @@
       </div>
 
       <div class="article-body reveal d1">
-        <p>天择OS <strong>4.1.0</strong> 现已正式发布，Windows 安装包与网页版同步开放。4.1 延续本地优先的工作台方向，重点完善对话生命周期、命令行智能体、AI 用量核算、会员外观、存档安全与移动端体验。</p>
+        <p>天择OS 4.1 正式发布。新版重点完善对话管理、命令行智能体、人工智能用量统计、外观体系和存档安全。</p>
 
-        <h2>一、Windows 4.1 安装包正式开放</h2>
-        <p>Windows 用户现在可以从<a href="https://wjtianze.github.io/os/index.html">天择OS 下载页</a>获取 <strong>tianze-os-setup-4.1.0.exe</strong>。安装包和网页版使用同一份 4.1 源码，包含最新的 OS、COC、英语工具与公共视觉资源；覆盖安装不会主动删除本地应用数据。</p>
-        <p>本次安装包尚未购买商业代码签名证书，Windows 可能显示 SmartScreen 提示。安装来源和文件校验信息以 GitHub Releases 为准。</p>
+        <h2>这次更新对你有什么用</h2>
+        <ul>
+          <li>对话可以归档、还原或永久删除；归档内容仍可保留在本地知识库中。</li>
+          <li>命令行新增纯问答与多步骤智能体两类入口，系统会自动阻止重复且无进展的调用。</li>
+          <li>新增用量账本、六档会员外观与密码加密存档，重要数据更易统计和迁移。</li>
+        </ul>
 
-        <h2>二、AI 对话可以归档、还原与永久删除</h2>
-        <p>不再使用的对话可以归档，归档后不会继续占据 AI 对话标签栏，但内容仍保留在本地知识库中。用户可以在「已归档对话」中查看和还原，也可以执行明确的永久删除。归档、活动会话与知识检索之间保持一致的数据归属。</p>
-
-        <h2>三、ask 与 agent 成为两类明确的 AI 命令</h2>
-        <p><code>ask</code> 是纯 API 问答：问题从命令行输入，结果直接输出到命令行，不打开 AI 对话应用，也不使用截图或 Agent 工具。它适合脚本和自定义软件按需调用 AI。</p>
-        <p><code>agent</code> 则会启动可调用系统命令的子智能体。主 AI 和应用都能调用它完成多步骤工作。系统不再使用固定命令次数或轮数上限，而是实时识别重复调用、无进展循环和应用滥用，在确认异常时自动掐断。</p>
-
-        <h2>四、命令回执改为可读的语义事件</h2>
-        <p>AI 使用命令行时不再只显示笼统的「调用了命令行」。<code>ask</code> 会显示「Agent 问了 AI」，<code>agent</code> 会显示「调用了子智能体」，词库、笔记、窗口、文件与应用命令也会按具体动作生成独立说明，例如新增单词时直接告诉用户 AI 往单词本加入了什么。</p>
-
-        <h2>五、Token 用量与计费账本</h2>
-        <p>新增独立的 Token 用量与计费软件，累计记录历史输入、输出、总 Token、调用来源、模型与单价快照费用。统计不只显示当前对话上下文，而是提供可以长期查看的本地 AI 使用账本，帮助用户理解不同模型和应用实际消耗了多少 AI。</p>
-
-        <h2>六、六档 VIP 月卡与专属完整皮肤</h2>
-        <p>新增青铜、白银、黄金、铂金、黑金、钻石六档 VIP。解锁门槛依次为 Lv.1、Lv.2、Lv.4、Lv.6、Lv.8、Lv.10，月费依次为 200、400、700、1150、1800、2600 积分，均低于 30 天每日积分上限对应的 3600 分理论收入。高级会员可以使用本档及以下的全部 VIP 皮肤，月卡不会自动续费。</p>
-        <p>每档皮肤不仅替换壁纸，也会同步改变按钮、表面材质、强调色和系统氛围。天择网的五套网站皮肤继续全部免费。</p>
-
-        <h2>七、更清晰的背景与专区专属视觉</h2>
-        <p>主页和天择OS背景重新降低信息噪声，各专区拥有自己的专属背景：COC 使用野蛮人等标志性游戏元素，AI 专区融入 GPT、Claude、Gemini、Kimi、GLM 与 DeepSeek 的识别元素，未来新增专区也会按同一规则生成专属视觉。</p>
-
-        <h2>八、加密存档与本地数据保护</h2>
-        <p>全量存档默认使用 PBKDF2 派生密钥与 AES-GCM 加密。包含 AI 配置、对话、笔记、知识库索引、积分和应用数据的导出文件默认不再以明文保存；明文导出仍可执行，但被标记为需要用户明确确认的危险操作。</p>
-
-        <h2>九、下载与体验</h2>
-        <p><a href="https://wjtianze.github.io/os/webos.html">天择OS 网页版 4.1</a>无需安装即可使用；Windows 用户可前往<a href="https://wjtianze.github.io/os/index.html">天择OS 下载页</a>获取 4.1.0 安装包。更新日志现已改为单列折叠结构，并修复首次进入页面时整栏不可见和移动端横向裁切的问题。</p>
+        <h2>如何使用</h2>
+        <p>网页版刷新后即可使用；Windows 用户可从<a href="https://wjtianze.github.io/os/index.html">天择OS 下载页</a>获取 4.1。</p>
       </div>
     </article>
   </main>

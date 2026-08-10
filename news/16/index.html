@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>天择OS 2.0 发布：AI 全链路升级 — 天择网</title>
-  <meta name="description" content="天择OS 2.0 正式发布：AI 记忆、token 用量统计、停止/重新生成/编辑重发、LaTeX 流式实时渲染、浅色主题、浏览器收藏夹、Windows/安卓模拟器、全量存档、在线更新检查等 25 项升级；COC 数据查询与伤害计算器同步修正。" />
+  <title>天择OS 2.0：人工智能对话与系统体验全面升级 — 天择网</title>
+  <meta name="description" content="天择OS 2.0 上线，新增对话记忆、用量显示、消息编辑重发、公式渲染、浅色主题和完整存档。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260807-v5.0.0" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
@@ -36,8 +36,8 @@
   <main>
     <article class="article wrap">
       <div class="article-head reveal">
-        <span class="a-tag">重大更新</span>
-        <h1>天择OS 2.0 发布：AI 全链路升级，25 项改进一次到位</h1>
+        <span class="a-tag">版本更新</span>
+        <h1>天择OS 2.0：人工智能对话与系统体验全面升级</h1>
         <div class="article-meta">
           <span>🗓 发布：2026-07-18</span>
           <span>✍ 作者：天择网</span>
@@ -45,43 +45,17 @@
       </div>
 
       <div class="article-body reveal d1">
-        <p><a href="https://wjtianze.github.io/os/index.html">天择OS</a> 今天正式跨入 <strong>2.0 时代</strong>。本次大版本围绕「AI 更好用、系统更顺手、浏览器更能打」三条主线带来 25 项新功能与修复，并同步修正了 COC 专区的 4 处数据问题。自 2.0 起，天择OS 每次发布更新都会递增版本号，系统启动时自动检查新版本，也可在「系统设置 → 系统版本」手动检查更新。</p>
+        <p>天择OS 2.0 已上线，重点改善人工智能对话和日常使用体验。对话控制、公式显示、浏览器和存档能力都变得更完整。</p>
 
-        <h2>一、AI 对话：看得见、停得下、可重来</h2>
-        <p><strong>深度思考全程可见</strong>：AI 对话、软件商城生成、AI 改进等所有场合，推理模型的思考过程都会实时展示（可折叠），不再黑箱。</p>
-        <p><strong>LaTeX 公式实时渲染</strong>：公式随流式输出即时渲染，不再等整段答完才出现（与 TLH 课本学习助手同一套渲染机制）。</p>
-        <p><strong>停止 / 重新生成 / 编辑重发</strong>：生成中点 ⏹ 随时停止并保留已生成部分；AI 消息可「⟳ 重新生成」，你的消息可「✏️ 编辑重发」——注意，重新生成或编辑重发后，该消息之后的所有消息都会被删除。</p>
-        <p><strong>token 用量统计</strong>：每条 AI 消息下方显示本次消耗的 token 明细（缓存命中 / 缓存写入 / 普通输入 / 输出 / 总量），成本一目了然。</p>
-        <p><strong>AI 记忆</strong>：AI 现在会记住关于你的事实（如「用户是大学生」）。「AI 配置 → AI 记忆」里可手动增删改每条记忆、逐条或批量开关是否注入提示词，也可开关「生成后自动写入记忆」。</p>
+        <h2>这次更新对你有什么用</h2>
+        <ul>
+          <li>支持对话记忆、停止生成、重新生成、编辑后重发和用量显示。</li>
+          <li>Markdown 与 LaTeX 公式可以随回答持续显示，长回答更易阅读。</li>
+          <li>新增浅色主题、浏览器收藏夹、模拟器、导航树、完整存档和更新检查。</li>
+        </ul>
 
-        <h2>二、软件商城：代码更长、更干净、更聪明</h2>
-        <p><strong>自动续写</strong>：输出触及 token 上限时自动断点续写（最多 3 次），「代码写到一半就停」成为历史；「AI 配置」中还新增了最大输出 Token 自定义项。</p>
-        <p><strong>只出代码</strong>：提示词全面加严并配代码清洗，彻底杜绝「好的，以下是你要的 html」这类寒暄混入。</p>
-        <p><strong>生成即能用</strong>：提示词内置 KaTeX 公式、Markdown 渲染与 localStorage 本地存储的写法教程，生成的软件自动具备这些基本功；你的 AI 配置（URL / Key / Model）也会写入提示词，想要带 AI 功能的软件开箱即用。</p>
-        <p><strong>深度思考状态透明</strong>：生成过程会显示当前生效模型与深度思考开关状态，修复了豆包模式下「尚未配置 API Key」的误报——所有 AI 功能现在始终使用「AI 配置」里的通用配置。</p>
-
-        <h2>三、系统体验：主题、桌面与导航</h2>
-        <p><strong>浅色 / 深色主题</strong>：任务栏 🌓 按钮或系统设置一键切换，全系统即时生效。</p>
-        <p><strong>Windows 风格补完</strong>：窗口的最小化 / 最大化 / 关闭按钮改为真正的 Windows 样式（矩形悬停高亮，关闭悬停放红）；任务栏最右端新增「显示桌面」细条，点一下最小化全部窗口，再点复原；Windows 任务栏与 macOS Dock 高度统一为 52px。</p>
-        <p><strong>天择导航树</strong>：新增「🌳 天择导航」应用，专区 / 二级专区以树状图直观呈现，点击即开。</p>
-        <p><strong>开始菜单分类</strong>：应用按分类分组显示，不再一股脑堆叠；快捷面板关闭后的小悬浮球现在可以随便拖。</p>
-
-        <h2>四、浏览器：标签、收藏与链接</h2>
-        <p><strong>标签页栏并入标题栏</strong>：浏览器标签页与窗口标题栏合并，标签直接显示网页自带的标题。</p>
-        <p><strong>收藏夹书签</strong>：☆ 收藏当前页，📑 管理收藏；支持导入 / 导出书签文件，兼容 Chrome / Edge / Firefox 的 Netscape 书签格式。</p>
-        <p><strong>外链修复</strong>：网页里的 window.open 按钮在 OS 内不再「点了没反应」，一律转为系统内新标签页打开；点击网页区域即视为点击了该应用，窗口自动置顶、Ctrl+Q 全屏等快捷键恢复生效。</p>
-
-        <h2>五、新应用：Windows 模拟器 & 安卓模拟器</h2>
-        <p>桌面新增「模拟器」分类，内置两款<strong>免费、纯浏览器运行</strong>的真实 x86 模拟器（基于开源 v86 项目）：<strong>Windows 98</strong> 与 <strong>Android x86</strong>，开机即用。</p>
-
-        <h2>六、数据与配置：一个都不少</h2>
-        <p><strong>全量存档</strong>：存档导出 / 导入现在覆盖本机全部数据——AI 配置、系统设置、已装软件、对话历史、收藏夹、AI 记忆、背单词等天择网各应用数据（localStorage + IndexedDB）。</p>
-        <p><strong>AI 配置统一</strong>：天择背单词及今后所有需要 AI 的天择网功能，在天择OS 内一律自动使用 OS 的通用 AI 配置，不再单开配置。</p>
-
-        <h2>七、COC 专区同步修正</h2>
-        <p>① 伤害计算器补上<strong>助燃器</strong>与<strong>火箭背包</strong>两件装备的技能伤害（数值取自游戏原始数据与公开装备表）；② 数据查询页的装备详情现在完整展示主 / 副技能的全等级数据表；③ 附属单位（如小戈仑石人）不再单独成卡——概览中并入主单位卡片下部，详情中显示在主单位右侧并带「附属单位」标识；④ 伤害计算器按真实机制处理法术免疫：资源储罐（储金罐 / 圣水瓶 / 暗黑重油罐）对所有法术免疫，部落城堡与大本营对雷电免疫但不免疫地震；顺带修复了按大本营等级一键填充时大本营自身等级错位的问题。</p>
-
-        <blockquote>打开 <a href="https://wjtianze.github.io/os/index.html">天择OS</a> 体验 2.0，或在系统内「玩机技巧」查看全部新功能用法。网页版用户下次启动即自动获取更新。</blockquote>
+        <h2>如何使用</h2>
+        <p>网页版刷新后即可使用；桌面版用户可从<a href="https://wjtianze.github.io/os/index.html">天择OS 页面</a>获取对应版本。</p>
       </div>
 
       <div class="article-foot">

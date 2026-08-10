@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>天择OS 3.1 发布：悬浮窗修复、命令行重构、COC 工作台 — 天择网</title>
-  <meta name="description" content="天择OS 3.1：修复时钟秒停与 AI 悬浮窗清空/切豆包/记忆状态；天择网系列精简，COC 与背单词归入实用工具并自动读写本地数据；命令行 coc-data 读写玩家存档、coc-game 查询游戏数据、words 支持例句；COC 专区主页重构为实时存档分析工作台。" />
+  <title>天择OS 3.1：工具本地化，COC 工作台更完整 — 天择网</title>
+  <meta name="description" content="天择OS 3.1 将 COC 与背单词工具改为本地运行，整合村庄分析，并改善悬浮窗和命令行。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260807-v5.0.0" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
@@ -26,8 +26,8 @@
   <main>
     <article class="article wrap">
       <div class="article-head reveal">
-        <span class="a-tag">修复与功能增强</span>
-        <h1>天择OS 3.1 发布：悬浮窗修复、命令行重构、COC 工作台</h1>
+        <span class="a-tag">版本更新</span>
+        <h1>天择OS 3.1：工具本地化，COC 工作台更完整</h1>
         <div class="article-meta">
           <span>🗓 发布：2026-07-22</span>
           <span>✍ 作者：天择网</span>
@@ -35,53 +35,17 @@
       </div>
 
       <div class="article-body reveal d1">
-        <p><a href="https://wjtianze.github.io/os/index.html">天择OS</a> <strong>3.1</strong> 是一次聚焦「修 bug + 重新整理」的版本。3.0 上线后，几个体验问题被集中修复，命令行按用途重新拆分，COC 专区也改成了更顺手的形态。<b>（本页已于 07-23 更新：补充 3.1 修订版内容——实用工具全面本地化、村庄存档分析并入 COC 首页、AI 对话 agent 式命令交错、悬浮窗与主对话互通。）</b></p>
+        <p>天择OS 3.1 把常用工具进一步搬到本地运行。COC、背单词和命令行之间的数据衔接更顺畅，离线使用也更可靠。</p>
 
-        <h2>〇、3.1 修订版（07-23）：七项改进</h2>
+        <h2>这次更新对你有什么用</h2>
         <ul>
-          <li><strong>实用工具全面本地化</strong>：COC 专区、升级规划、伤害计算、背单词不再实时连接线上天择网，全部作为本地页面打包进天择OS（桌面版通过内置协议加载）。存档直接同源写入：村庄 JSON 存 localStorage、词库存 IndexedDB，OS 命令行与工具页面即时互通，离线也能用。</li>
-          <li><strong>AI 悬浮窗修复 + 与主对话互通</strong>：修复悬浮窗执行 <code>words</code>/<code>coc-game</code> 等命令报 failed to fetch（悬浮窗此前没有桌面桥接且数据路径错误），修复词库读取永远返回示例数据（词库结构升级后读取键未同步）。OS 对话窗口与悬浮窗现在<strong>共享同一份对话记录</strong>：工具栏新增 🔄 同步按钮，并每 4 秒自动同步；深度思考、自定义/豆包选择、截图开关则各自独立，互不干扰。</li>
-          <li><strong>村庄存档分析并入 COC 首页</strong>：独立「村庄分析」应用下线，其完整分析界面（村庄概况、剩余升级时间总览、家乡/夜世界分类）直接搬进 COC 专区首页，旧链接自动跳转。</li>
-          <li><strong>升级规划/伤害计算修复</strong>：修复首页浅存档与工具读取冲突导致的「建筑工人 NaN、夜世界丢失、槽位失效」；修复建筑工人小屋按座数导入（此前 5 座只算 1 座）。</li>
-          <li><strong>AI 命令行模式不再限 3 轮</strong>：取消单轮对话最多 3 次命令的限制（仅保留防失控保险）；「调用了 N 条命令行」卡片从对话底部改为<strong>内联在所属回答下方</strong>——思考过程 → 回答 → 命令卡片 → 思考 → 回答……像标准 agent 工具一样交错展示。</li>
-          <li><strong>联系开发者页修复</strong>：修正页面 hero 占满全屏、内容被挤出首屏的问题，现在一屏展示全部联系方式。</li>
-          <li><strong>稳定性修复</strong>：修复 3.1 初版清空对话/切换开关时可能栈溢出的隐藏递归。</li>
+          <li>COC、升级规划、伤害计算和背单词使用本地页面，不再依赖在线站点加载。</li>
+          <li>村庄存档分析并入 COC 首页，存档可直接供规划器、计算器和命令行使用。</li>
+          <li>主对话与悬浮窗可以同步内容，命令调用记录按回答顺序显示。</li>
         </ul>
 
-        <h2>一、AI 悬浮窗：四项修复</h2>
-        <ul>
-          <li><strong>只留一个关闭按钮</strong>：之前顶栏和配置栏各有一个关闭按钮，现在只保留顶栏那个，不再重复。</li>
-          <li><strong>清空对话修复</strong>：根因是悬浮窗里调用的 <code>refreshOpenApp('ai-chat')</code> 找不到对应窗口（悬浮窗不是 ai-chat 应用），清空后界面不刷新。现在改用统一的 <code>refreshChatView()</code>，悬浮窗模式下重新渲染整个对话区。</li>
-          <li><strong>切换豆包修复</strong>：同样是刷新失效导致切不动，修复方式同上。</li>
-          <li><strong>记忆状态</strong>：关闭悬浮窗时记住位置与大小，下次打开恢复原样（桌面版持久化到本地文件，网页版存 localStorage）。对话内容本就共享，无需额外处理。</li>
-        </ul>
-
-        <h2>二、天择OS 系统修复与精简</h2>
-        <ul>
-          <li><strong>时钟不再走 1 秒就停</strong>：根因是用了已废弃的 <code>DOMNodeRemoved</code> 事件，窗口内容刷新时会误触发清除定时器。改为每秒自检「自身是否还在 DOM 里」，不在就停。</li>
-          <li><strong>天择网系列应用精简</strong>：开始菜单的「天择网」分类只保留「天择网主页」和「天择导航」两个入口，其余板块（新闻/博客/AI 专区等）通过天择导航树或主页访问。</li>
-          <li><strong>COC 专区与背单词归入「实用工具」</strong>：它们会自动读取本地保存的玩家村庄 JSON 和词库并填入——因为天择OS、COC 页面、背单词页面同源，浏览器 localStorage 与 IndexedDB 本就共享，无需额外接口。</li>
-        </ul>
-
-        <h2>三、命令行：按用途拆分</h2>
-        <ul>
-          <li><strong>coc-data</strong>：改为读写<strong>本地玩家村庄存档</strong>。<code>coc-data</code> 看摘要，<code>coc-data json</code> 输出原始 JSON，<code>coc-data save &lt;JSON&gt;</code> 保存，<code>coc-data clear</code> 清除。</li>
-          <li><strong>coc-game</strong>（新）：查询<strong>游戏静态数据</strong>（兵种/建筑/法术等）。<code>coc-game search 名字</code>、<code>coc-game th 等级</code>、<code>coc-game cat 类别</code>、<code>coc-game json</code> 输出原始数据。</li>
-          <li><strong>words</strong>：导入单词时支持例句——<code>words add 单词|词性|释义|英文::中文</code>，多个例句用 <code>||</code> 分隔。</li>
-          <li><strong>浏览器 ↗ 按钮</strong>：改为在系统外（系统默认浏览器）打开当前网址，而不是在 OS 内新开标签页。</li>
-        </ul>
-
-        <h2>四、COC 专区主页：村庄存档分析工作台</h2>
-        <p>COC 专区主页即「村庄存档分析」工作台：顶部是「数据查询 / 升级规划 / 伤害计算」三个导航按钮；下方粘贴村庄 JSON 后，即时输出村庄概况（大本等级、工人数量、待升级任务）、剩余升级时间总览（含按工人数折算的墙钟时间）与家乡/夜世界分类明细，并自动保存到本地（升级规划器、伤害计算器与 <code>coc-data</code> 命令直接读取同一份存档）。</p>
-
-        <h2>五、天择OS 官网与联系开发者</h2>
-        <ul>
-          <li>官网改为<strong>电脑端 / 网页端 / 更新日志</strong>三栏布局，不再提供历史版本下载，想下载历史版本请联系开发者。</li>
-          <li>全站页眉最右侧新增「<a href="https://wjtianze.github.io/contact/index.html">联系开发者</a>」入口，附 QQ 与邮箱。站内意见箱已有计划，但需要买服务器，会视使用人数决定是否开发。</li>
-        </ul>
-
-        <h2>六、升级方式</h2>
-        <blockquote>网页版下次启动自动获取 3.1；桌面版请前往<a href="https://wjtianze.github.io/os/index.html">天择OS 入口</a>下载 3.1 安装包覆盖安装。修订版更换了桌面版本地页面加载协议（首次启动如看不到旧数据：在旧版「系统设置 → 存档管理」导出存档，再到新版导入即可完整迁移，AI 配置、对话、软件、词库都在其中）。</blockquote>
+        <h2>如何使用</h2>
+        <p>覆盖升级后即可使用。若旧版桌面数据未自动出现，请先在旧版导出完整存档，再到新版导入。</p>
       </div>
 
       <div class="article-foot">

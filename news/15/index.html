@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>COC 专区伤害计算器上线 — 天择网</title>
-  <meta name="description" content="兑现昨日预告，COC 专区上线「法术伤害计算器」：基于雷电法术、地震法术与英雄装备技能伤害数据，计算给定法术空间内的最高伤害、摧毁建筑所需最少法术，支持从村庄存档一键导入等级。仅适用于家乡。" />
+  <title>COC 法术伤害计算器上线 — 天择网</title>
+  <meta name="description" content="COC 法术伤害计算器上线，可计算最高伤害、摧毁建筑所需最少法术和自定义组合。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260807-v5.0.0" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
@@ -36,8 +36,8 @@
   <main>
     <article class="article wrap">
       <div class="article-head reveal">
-        <span class="a-tag">新功能上线</span>
-        <h1>COC 专区「法术伤害计算器」上线</h1>
+        <span class="a-tag">工具上线</span>
+        <h1>COC 法术伤害计算器上线</h1>
         <div class="article-meta">
           <span>🗓 发布：2026-07-17</span>
           <span>✍ 作者：天择网</span>
@@ -45,28 +45,17 @@
       </div>
 
       <div class="article-body reveal d1">
-        <p>兑现昨日新闻的预告，COC 专区今天正式上线「<a href="https://wjtianze.github.io/coc/dmg-calc/index.html">法术伤害计算器</a>」。<strong>仅适用于家乡</strong>，基于雷电法术、地震法术各等级伤害数据与英雄装备主动技能伤害数据，帮助玩家更直观地估算法术与装备组合下的伤害表现，辅助配兵与进攻决策。</p>
+        <p>COC 专区新增法术伤害计算器，帮助玩家在进攻前比较雷电、地震和英雄装备的伤害组合。</p>
 
-        <h2>一、四大功能，一页完成</h2>
-        <p>计算器在单页内集成四大功能，无需跳转：</p>
-        <p><strong>① 最高伤害计算器</strong>：给定法术空间上限，自动遍历雷电与地震的数量组合，找出在该空间内能对目标建筑造成的最高伤害及最优法术配置方案。因为雷电是固定线性增长、地震是递减增长，算法会自动权衡二者的配比。</p>
-        <p><strong>② 摧毁建筑最少法术计算器</strong>：给定目标建筑及等级，计算将其彻底摧毁（总伤害 ≥ 生命值）所需的最少法术空间，并给出具体的雷电、地震搭配方案与逐次伤害明细。</p>
-        <p><strong>③ 等级导入</strong>：装备与法术等级支持手动逐项设定，也可从「村庄存档分析」页解析的村庄数据一键导入。只需先在村庄存档分析页粘贴并解析村庄 JSON，回到伤害计算器点「从村庄存档分析导入」即可自动填充装备、法术、建筑等级与大本营等级。</p>
-        <p><strong>④ 建筑等级设置</strong>：支持手动逐项设定，也可选择大本营等级，一键将所有建筑等级填充为该大本营下可支持的最高级（依据游戏数据中的所需大本营等级字段）。</p>
+        <h2>这次更新对你有什么用</h2>
+        <ul>
+          <li>在限定法术空间内寻找总伤害更高的组合。</li>
+          <li>按目标建筑生命值计算摧毁所需的最少法术。</li>
+          <li>可从村庄存档导入法术与装备等级，并按大本营等级匹配建筑。</li>
+        </ul>
 
-        <h2>二、法术机制：按游戏真实数据计算</h2>
-        <p>计算严格依据本地游戏数据，并按玩家确认的机制实现：</p>
-        <p><strong>雷电法术</strong>造成固定数值伤害，每次施放对目标建筑的伤害相同，等于该等级面板伤害值，不随次数变化。</p>
-        <p><strong>地震法术</strong>造成基于建筑最大生命值的百分比伤害，对同一建筑重复施放伤害递减：第 1 次为全额，第 n（n≥2）次为全额 × 1/(2n−1)，即第 2 次为 1/3、第 3 次为 1/5、第 4 次为 1/7。该百分比对所有建筑统一，5 级及以上地震全额为 29%，1 级为 14.5%。</p>
-        <p><strong>英雄装备</strong>的主动技能提供额外固定伤害，不占用法术空间。本次从游戏原始技能数据中提取了 7 件带直接伤害的装备（尖刺足球、巨大火球、寻踪飞盾、巨型箭矢、雷电獠牙、冷冽冰晶、暗黑魔球）的各等级技能伤害值，作为新的「技能伤害」字段接入。装备支持勾选——只有勾选的装备才会计入总伤害，默认全不勾选，方便灵活组合。</p>
-
-        <h2>三、数据查询同步更新</h2>
-        <p>本次新增的「技能伤害」字段已同步加入 <a href="https://wjtianze.github.io/coc/data/index.html">COC 数据查询页</a>。点开上述 7 件装备中的任意一件，即可在等级数值表中看到「技能伤害」列，对应每个装备等级下的主动技能直接伤害值，便于单独查阅。</p>
-
-        <h2>四、入口与使用</h2>
-        <p>伤害计算器入口位于 <a href="https://wjtianze.github.io/coc/index.html">COC 专区首页</a>的二级专区（第四张卡片「💥 伤害计算器」），<a href="https://wjtianze.github.io/os/index.html">天择OS</a>桌面也已同步新增「伤害计算」应用图标。所有计算均在浏览器本地完成，不调用任何外部接口，不涉及玩家或部落信息查询。</p>
-
-        <blockquote>前往 <a href="https://wjtianze.github.io/coc/dmg-calc/index.html">法术伤害计算器</a> 立即体验，或在 <a href="https://wjtianze.github.io/coc/village/index.html">村庄存档分析</a> 解析村庄后一键导入等级。如对计算口径或希望支持的装备范围有建议，欢迎随时反馈。</blockquote>
+        <h2>如何使用</h2>
+        <p>进入<a href="https://wjtianze.github.io/coc/dmg-calc/index.html">法术伤害计算器</a>即可使用。本工具面向家乡玩法，计算前请确认等级与目标建筑。</p>
       </div>
 
       <div class="article-foot">

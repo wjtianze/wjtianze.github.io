@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>COC 伤害计算器新增分享链接：一键分享计算结果，好友打开只读查看 — 天择网</title>
-  <meta name="description" content="COC 法术伤害计算器新增分享链接：三种计算模式的结果页底部一键复制链接，链接内含法术/装备/目标建筑/回血小屋等级与计算模式，纯前端编码、不经过任何服务器；好友打开进入只读视图，不读取、不改写对方本地保存的数据，一键返回自己的计算器。" />
+  <title>COC 伤害计算结果可以一键分享 — 天择网</title>
+  <meta name="description" content="COC 伤害计算器新增分享链接，好友可只读查看配置与完整计算结果。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260807-v5.0.0" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
@@ -26,8 +26,8 @@
   <main>
     <article class="article wrap">
       <div class="article-head reveal">
-        <span class="a-tag">新功能上线</span>
-        <h1>COC 伤害计算器新增分享链接：一键分享计算结果，好友打开只读查看</h1>
+        <span class="a-tag">工具更新</span>
+        <h1>COC 伤害计算结果可以一键分享</h1>
         <div class="article-meta">
           <span>🗓 发布：2026-07-30</span>
           <span>✍ 作者：天择网</span>
@@ -35,27 +35,17 @@
       </div>
 
       <div class="article-body reveal d1">
-        <p>「几闪几震能劈掉这座塔？」——以后讨论这种问题，直接把计算结果发给对方看。<a href="https://wjtianze.github.io/coc/dmg-calc/index.html">法术伤害计算器</a>新增<strong>分享链接</strong>功能：算完之后点一下「复制分享链接」，把链接发给好友，对方在浏览器里打开就能看到和你屏幕上一模一样的计算结果。全程纯前端实现，<strong>不经过任何服务器、不需要注册登录</strong>。</p>
+        <p>COC 伤害计算器新增“复制分享链接”。算好法术方案后，可以把配置与结果直接发给好友，不必再逐项截图说明。</p>
 
-        <h2>一、怎么用：算完点一下，发给好友</h2>
-        <p>三种计算模式——<strong>最高伤害、摧毁建筑最少法术、自定义闪震数量</strong>——的结果页底部都有「🔗 复制分享链接」按钮。点击后链接自动复制，发给好友即可；对方也可以继续转发，链接在任何人手里打开看到的内容都一样。</p>
-        <p>链接里打包的<strong>只有计算用到的数据</strong>：雷电/地震法术等级、勾选计入的装备及其等级、目标建筑与它的等级、参与回血的建筑工人小屋数量与等级，以及计算模式和对应参数（法术空间上限、自定义的闪震数量）。编码后通常不到两百个字符，和普通网址一样好发。</p>
-
-        <h2>二、好友看到什么：只读视图，不动他自己的数据</h2>
-        <p>好友打开链接，进入的是专门的<strong>「分享查看模式」</strong>：顶部横幅列出这份计算的全部配置摘要（模式、目标、法术与装备等级、回血小屋、空间上限），下方直接呈现完整结果——总伤害、逐瓶地震明细、占建筑生命值比例、回血容错时间，一项不少。所有设置区与操作控件一律不显示，是一份纯粹的「结果报告」。</p>
-        <p>关键设计是<strong>只读保护</strong>：分享视图完全不读取、更不会改写好友自己浏览器里保存的等级设置——他自己的数据从头到尾一个字节都不会变。看完点横幅上的「← 返回我的计算器」，就回到他自己的计算器，之前保存的一切原样还在。如果链接被截断损坏，也会看到明确的提示与返回按钮，而不是一个空白页。</p>
-
-        <h2>三、原理：数据放在网址里，所以不需要服务器</h2>
-        <p>分享数据经过压缩编码后放在网址的 <code>#</code> 后面。这个部分有个特性：<strong>它只留在浏览器里，永远不会被发送到服务器</strong>。所以即使本站只是纯静态托管，也能实现「带数据的链接」——打开页面时由页面自己把数据读出来、重新算一遍并展示。这也保证了链接里看到的结果永远基于当前最新的游戏数据，不存在「过期缓存」。</p>
-
-        <h2>四、适合的场景</h2>
+        <h2>这次更新对你有什么用</h2>
         <ul>
-          <li>部落战前讨论：「这个等级的投石炮，我的闪震配置能不能稳拿？」算完直接把链接甩进群里。</li>
-          <li>把自己的满级方案分享给速本好友：他打开看到的是你的等级下的结果，他自己的进度不受影响。</li>
-          <li>跨设备搬运：在电脑上算好，链接发到自己手机浏览器打开对照。</li>
+          <li>最高伤害、最少法术和自定义闪震三种模式都可分享。</li>
+          <li>链接只包含计算所需的法术、装备、目标建筑、回血小屋等级和模式。</li>
+          <li>好友打开后进入只读页面，不会读取或改写其本地村庄存档。</li>
         </ul>
 
-        <p>现在就可以去 <a href="https://wjtianze.github.io/coc/dmg-calc/index.html">伤害计算器</a> 算一把试试——结果页底部的分享按钮等着你。</p>
+        <h2>如何使用</h2>
+        <p>在<a href="https://wjtianze.github.io/coc/dmg-calc/index.html">伤害计算器</a>完成计算，点击结果下方的“复制分享链接”即可。</p>
       </div>
     </article>
   </main>

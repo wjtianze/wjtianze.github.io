@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>天择OS 2.2 发布：修复桌面版四大痛点，COC 伤害计算器新增回血容错 — 天择网</title>
-  <meta name="description" content="天择OS 2.2 正式发布：修复桌面版 AI 停止未真正中断、自动截图 TypeError、长对话双进度条、终端 gethtml 输出截断四项问题；COC 伤害计算器新增建筑工人小屋回血量与当前法术方案回血容错时间，并加固城墙三震不毁、四震必毁规则。" />
+  <title>天择OS 2.2：桌面版更稳定，COC 计算新增回血容错 — 天择网</title>
+  <meta name="description" content="天择OS 2.2 改善停止生成、截图、长对话和终端输出，并为 COC 计算器新增回血容错。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260807-v5.0.0" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
@@ -36,8 +36,8 @@
   <main>
     <article class="article wrap">
       <div class="article-head reveal">
-        <span class="a-tag">修复与功能增强</span>
-        <h1>天择OS 2.2 发布：修复桌面版四大痛点，COC 伤害计算器新增回血容错</h1>
+        <span class="a-tag">体验更新</span>
+        <h1>天择OS 2.2：桌面版更稳定，COC 计算新增回血容错</h1>
         <div class="article-meta">
           <span>🗓 发布：2026-07-19</span>
           <span>✍ 作者：天择网</span>
@@ -45,31 +45,17 @@
       </div>
 
       <div class="article-body reveal d1">
-        <p>2.1 上线后收到一批反馈：桌面版 AI 偶尔"按了停止还在输出"、自动截图报错、长对话出现两个进度条、命令行 gethtml 看不到完整代码。本次 <a href="https://wjtianze.github.io/os/index.html">天择OS</a> <strong>2.2</strong> 一次性把这几项全部修掉，并顺手把 COC 伤害计算器的回血机制补完整——建筑工人小屋的容错时间现在可以实时看到。</p>
+        <p>天择OS 2.2 主要改善桌面版稳定性，并补充 COC 法术伤害计算中的建筑工人小屋回血因素。</p>
 
-        <h2>一、AI 停止生成：点了就停</h2>
-        <p>之前点"停止"只会发一个 abort 信号，UI 要等异步生成流程跑完 catch/finally 才更新按钮和气泡内容，给人"按了没反应"的错觉。<strong>2.2 把停止改造为同步执行</strong>：按下停止的瞬间，气泡立刻被打上"⏹ 已停止生成"标记、按钮立刻变回 ➤，主进程的 reader.cancel 通过原有 IPC 链路到达，新生成的 chunk 不再写入气泡。</p>
+        <h2>这次更新对你有什么用</h2>
+        <ul>
+          <li>停止生成会真正终止请求，关闭窗口时也不会留下后台任务。</li>
+          <li>截图、长对话进度和终端长输出更加稳定。</li>
+          <li>COC 计算器可显示建筑工人小屋回血量与当前方案的容错时间。</li>
+        </ul>
 
-        <h2>二、桌面版自动截图：告别 TypeError</h2>
-        <p>之前 setDisplayMediaRequestHandler 在某些环境下给 Electron 传了一个非法的 video（既不是 WebFrameMain 也不是合法 DesktopCapturerSource），主进程直接抛 <code>TypeError: video must be a WebFrameMain or DesktopCapturerSource</code>，截图功能彻底不可用。<strong>2.2 改用 BrowserWindow.getMediaSourceId() 精确匹配自身窗口</strong>，名称兜底，并对每个 source 做形状校验；任何分支都至少回退到 <code>{}</code>，绝不让主进程崩。</p>
-
-        <h2>三、长对话双进度条：归一为单指示</h2>
-        <p>2.1 在深度思考开启时，气泡里既显示 typing-dots（三个跳动小点），又显示"🧠 思考过程（进行中…）"details 标题，两个东西一起跳动，看起来像两个进度条。<strong>2.2 用一行轻量占位文字"正在等待 AI 思考…"替代 typing-dots</strong>，思考过程 details 作为唯一进度指示；reasoning 结束后主体直接显示实际内容，不再有重复指示。</p>
-
-        <h2>四、命令行 gethtml：完整输出不再被截断</h2>
-        <p>之前 <code>gethtml 应用id</code> 输出的数 MB HTML 一次性塞进一个 div，浏览器渲染队列被拖垮，往往只看到开头几百 KB。<strong>2.2 让超过 5000 字符的输出自动折叠为可展开的代码块</strong>（<code>&lt;details&gt;&lt;pre&gt;</code>），默认收起，需要时点开就能看到完整代码，长 HTML 也不会拖累终端整体响应。</p>
-
-        <h2>五、COC 伤害计算器：建筑工人小屋回血容错时间</h2>
-        <p>家乡法术伤害计算器新增"🔨 建筑工人小屋回血量计算"区块。设置实际参与修复的小屋数量与各自等级后，每座小屋按自身等级读取数据中的 <code>BuilderRepairPerSecond</code>（每秒回复量）求和，再用当前法术方案（默认 11 格法术 + 选定目标建筑）相对目标生命值的<strong>溢出伤害</strong>除以总回复速度，得到<strong>回血容错时间</strong>（秒）——即溢出伤害能"白嫖"这些建筑工人小屋回复多少秒。</p>
-        <p>调小屋数量/等级、切换目标建筑、改法术等级时，容错时间都会实时刷新；从村庄存档分析一键导入时会自动填入实际的小屋数量与等级。计算结果与"最高伤害"、"摧毁所需最少法术"两个计算器共用同一份目标设定。</p>
-
-        <h2>六、城墙规则加固：3 震不毁，4 震必毁</h2>
-        <p>这次顺手把城墙的固定规则做了完整验证：无论城墙等级、无论地震等级，<strong>3 瓶地震绝对不能单独摧毁城墙，4 瓶地震绝对能</strong>。实现上前 3 瓶按真实递减累加且严格小于 H，第 4 瓶直接补足剩余 HP，于是累计正好等于 H。已用 Node 在 7 个地震等级 × 5 个 HP 的组合上跑过，结论一致。</p>
-
-        <h2>七、其它</h2>
-        <p>同步修正了 COC 伤害计算器页面标题与描述文案；按工作流本次为修复 + 功能增强，理论上不算"站点级重大动态"，但考虑到桌面版用户受影响较大，仍以一条新闻统一说明，便于回溯。新闻条目之外的细节请直接看<a href="https://wjtianze.github.io/os/index.html">天择OS</a>内的「💡 玩机技巧」与「⌨️ 命令行」help。</p>
-
-        <blockquote>网页版用户下次启动天择OS 即自动获取 2.2；桌面版用户请前往<a href="https://wjtianze.github.io/os/index.html">天择OS 入口</a>获取新版安装包（首次安装或覆盖升级均可，本地存档不会丢失）。</blockquote>
+        <h2>如何使用</h2>
+        <p>更新天择OS 后即可获得稳定性改进；COC 用户可直接打开<a href="https://wjtianze.github.io/coc/dmg-calc/index.html">伤害计算器</a>查看新结果。</p>
       </div>
 
       <div class="article-foot">

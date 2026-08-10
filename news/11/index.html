@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>天择网全站 UI 重构完成：高级科技杂志式体验正式上线 — 天择网</title>
-  <meta name="description" content="天择网在保留原有配色的基础上完成全站 UI 重构，统一公共设计系统，升级 COC 工具、绩点战争与 TLH 外层入口，并完善移动端、键盘操作和动效降级。" />
+  <title>天择网全站界面升级：各专区体验更统一 — 天择网</title>
+  <meta name="description" content="天择网完成全站界面统一，首页、内容页、COC 工具和游戏页面拥有一致的导航与阅读体验。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260807-v5.0.0" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
@@ -37,7 +37,7 @@
     <article class="article wrap">
       <div class="article-head reveal">
         <span class="a-tag">全站升级</span>
-        <h1>天择网全站 UI 重构完成：高级科技杂志式体验正式上线</h1>
+        <h1>天择网全站界面升级：各专区体验更统一</h1>
         <div class="article-meta">
           <span>🗓 发布：2026-07-14</span>
           <span>⏰ 时间：10:42（UTC+8）</span>
@@ -46,27 +46,17 @@
       </div>
 
       <div class="article-body reveal d1">
-        <p>天择网完成了迄今规模最大的一次界面重构。在保留原有配色的前提下，主站被重新设计为更有层次的<strong>高级科技杂志式界面</strong>：标题、信息密度、内容网格、卡片表面、按钮反馈和空间节奏都经过重新梳理，网站的各个板块终于拥有了一套统一而清晰的视觉语言。</p>
+        <p>天择网完成一次全站级界面升级。首页、新闻、长文、COC 工具与游戏页面采用更统一的设计语言，跨专区浏览时不再有明显割裂感。</p>
 
-        <h2>普通页面：从“页面集合”变成统一的网站</h2>
-        <p>首页、新闻、博客、数据开源、AI 专区、COC 专区、游戏专区和 404 页面全部完成升级。新版强化了内容层级与编辑式排版，让重要信息更容易被看到，同时保留原有内容和访问路径，不用重新学习网站的使用方式。</p>
-        <p>公共导航也进行了完整重构：移动端菜单会正确反馈开关状态，支持点击外部和 Escape 键关闭；键盘焦点更清晰，关闭菜单后会回到原按钮。背景视差和页面动效不再互相覆盖，并会在系统开启“减少动态效果”时自动降级。</p>
+        <h2>这次更新对你有什么用</h2>
+        <ul>
+          <li>公共导航、按钮、表单、卡片和弹窗的样式与操作方式更加一致。</li>
+          <li>COC 数据、村庄分析、升级规划和游戏页面重新整理信息层级。</li>
+          <li>电脑与手机端都加强了可读性，课本学习助手的既有演示界面保持不变。</li>
+        </ul>
 
-        <h2>COC 三大工具：信息密集，但不再拥挤</h2>
-        <p>游戏数据查询、村庄存档分析和升级规划器拥有了统一的工具型界面。分类筛选、搜索、数据卡、详情弹窗、结果区、标签页和甘特图都重新组织了信息层级，并补充了键盘操作、焦点管理和状态播报。</p>
-        <p>升级规划器在重构期间还修复了三项排程逻辑：同槽任务冲突判断、前置依赖结束时间约束，以及英雄数量超过专用工人槽时的重叠问题。现在自动排程与拖动后的结果更加可靠。</p>
-
-        <h2>《绩点战争》：战术控制台式界面与核心规则修复</h2>
-        <p>《绩点战争：GPA 4.3》从普通网页游戏界面升级为战术控制台：玩家、AI、阶段、手牌、商店、技能和战况日志被重新放入更清晰的战场布局；手机端的手牌与商店改为横向滑动，复杂信息在小屏幕上也能保持可玩。</p>
-        <p>发布前复验发现并修复了玩家行动阶段不可达、护盾提前清空、后手补偿未实现和 AI 连续出牌索引漂移等核心问题。现在先手首回合为 3 能量，后手首回合为 4 能量；之后每个自身回合正常补给 3 能量，护盾会保留到对手行动并在持有者下次回合开始时清空。</p>
-
-        <h2>TLH：只升级外层入口，演示界面保持原版</h2>
-        <p>课本学习助手的介绍、API Key 输入和在线体验入口随主站完成了视觉升级，但<strong>狭义相对论演示界面本身完全保持原版，没有改变任何一个字、布局或交互</strong>。发布前已通过二进制和 SHA256 校验确认其与原版逐字一致。</p>
-
-        <h2>验证与兼容</h2>
-        <p>本次更新完成了全站本地链接检查、核心 JavaScript 语法检查、COC 规划器定向逻辑测试、绩点战争先后手与回合交替测试，以及 TLH 演示页原版一致性校验。普通页面也对桌面、平板和手机宽度进行了响应式检查。</p>
-
-        <blockquote>配色没有变，内容没有被重写，但天择网从视觉、交互到复杂工具的可用性都重新做了一遍。欢迎从 <a href="https://wjtianze.github.io/index.html">新版首页</a> 开始浏览，或直接体验 <a href="https://wjtianze.github.io/coc/data/index.html">COC 数据查询</a> 与 <a href="https://wjtianze.github.io/game/gpa-card/index.html">绩点战争</a>。</blockquote>
+        <h2>如何使用</h2>
+        <p>无需进行设置，刷新页面即可使用新版界面。</p>
       </div>
 
       <div class="article-foot">

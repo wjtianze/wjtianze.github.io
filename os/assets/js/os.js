@@ -4578,7 +4578,7 @@ const BUILTIN_APP_CMDS = {
     if (sub === 'open') { launchApp('tz-coc'); return '已打开 COC 专区（含村庄存档分析）'; }
     if (sub === 'tutorial' || sub === 'guide') {
       const action = String(args || 'open').trim().toLowerCase() || 'open';
-      if (action === 'info') return 'COC教程：天择网 COC 专区的教程与攻略栏目；当前内容为“敬请期待”，以后会持续增加文章。';
+      if (action === 'info') return 'COC教程：天择网 COC 专区的教程与攻略栏目；现已收录都城突袭混合矿工完整攻略，以后会持续增加文章。';
       if (action === 'open') { launchApp('tz-coc-tutorial'); return '已打开 COC教程'; }
       throw new Error('用法：coc tutorial [open|info]');
     }

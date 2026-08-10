@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>整站性能大优化 · 天择OS 桌面端上线 · COC 新功能预告 — 天择网</title>
-  <meta name="description" content="天择网整站性能大优化，背单词模块 7000 词导入从卡死到百毫秒级；天择OS 桌面端（Windows）正式上线；COC 专区应玩家要求将于明日推出装备闪震伤害计算功能。" />
+  <title>天择网提速，天择OS 桌面版上线 — 天择网</title>
+  <meta name="description" content="天择网完成性能优化，天择OS Windows 桌面版与存档迁移功能同步上线。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260807-v5.0.0" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
@@ -37,7 +37,7 @@
     <article class="article wrap">
       <div class="article-head reveal">
         <span class="a-tag">站点升级</span>
-        <h1>整站性能大优化 · 天择OS 桌面端上线 · COC 新功能预告</h1>
+        <h1>天择网提速，天择OS 桌面版上线</h1>
         <div class="article-meta">
           <span>🗓 发布：2026-07-16</span>
           <span>✍ 作者：天择网</span>
@@ -45,25 +45,17 @@
       </div>
 
       <div class="article-body reveal d1">
-        <p>今天带来三项重要更新：整站完成一次以背单词模块为切入口的性能大优化；天择OS 正式推出 Windows 桌面端，并在 <code>/os</code> 提供版本选择页；同时应玩家要求，COC 专区将于明日上线装备闪震伤害计算功能。</p>
+        <p>本次更新同时改善网站速度，并带来天择OS Windows 桌面版。需要长期使用或独立窗口体验的用户，现在可以安装桌面版本。</p>
 
-        <h2>一、整站性能大优化：从「卡死」到「百毫秒」</h2>
-        <p>此次优化以背单词模块导入大规模词库时卡死的问题为切入点，定位并修复了两个深层瓶颈，整站数据底层也随之升级。</p>
-        <p>第一个瓶颈是数据存储：原本整个词库与学习记录都塞在浏览器 localStorage 的一个键里，导入数千词条时需要把几 MB 数据一次性序列化、同步写盘，主线程被长时间锁死，还可能撞上 localStorage 的容量上限直接失败。本次把体量最大的<strong>词库</strong>与<strong>学习记录</strong>迁移到了浏览器内置的 IndexedDB 异步数据库——读写不再阻塞界面、容量也不再受 5MB 限制，并保留内存缓存让读取仍是瞬时完成；配置、统计等小体量数据仍留在 localStorage，旧数据会在首次启动时自动迁移，无需手动操作。</p>
-        <p>第二个瓶颈更隐蔽：分批导入时让主线程「喘口气」的机制原本依赖 <code>requestAnimationFrame</code>，而该接口在窗口最小化或标签页切到后台时会被浏览器节流到约每秒一次，导致大批量导入每批都要等上一秒。改用零延迟的 MessageChannel 调度后，这一问题彻底消失。</p>
-        <p>实测 7000 个单词（约 1MB、含例句）的完整导入流程，从原先的 20 余秒卡死<strong>降至约 116 毫秒</strong>，提速约 282 倍，首屏渲染与数据落盘均正常。这次改造也为后续承接更大规模数据打下了基础。</p>
+        <h2>这次更新对你有什么用</h2>
+        <ul>
+          <li>大型词库导入改用更适合批量数据的本地存储，等待时间明显缩短。</li>
+          <li>天择OS 新增 Windows 桌面版，可作为独立应用运行。</li>
+          <li>网页端与桌面端都可导出、导入完整存档，方便迁移个人数据。</li>
+        </ul>
 
-        <h2>二、天择OS 桌面端上线</h2>
-        <p>天择OS 是一个在浏览器中运行的全屏模拟操作系统，预装天择网全部功能与 AI 代码生成引擎。今天起，它不仅能在浏览器里打开，还提供了<strong>Windows 桌面版</strong>。</p>
-        <p>桌面版以原生应用形式独立运行，不占用浏览器标签；可以把天择OS 设为系统默认浏览器，让其它程序点出的链接自动在天择OS 内置浏览器中打开；AI 接口调用也绕过了浏览器跨域限制，更稳定。网页版则保持免安装、跨平台、即开即用的特点。</p>
-        <p>访问 <a href="https://wjtianze.github.io/os/index.html"><code>/os</code></a> 现在会先看到一个版本选择页，可以按需<strong>下载桌面端安装包</strong>或<strong>进入网页版</strong>。两个版本的数据各自独立，可分别使用；首次使用桌面版需在「🔑 AI 配置」中单独填入 API Key。</p>
-        <p>此外，天择OS 本次还新增了<strong>存档导入导出</strong>功能：在「系统设置」中可一键导出当前设备的全部数据（已装软件、AI 配置、对话历史、图标布局等）为备份文件，也可从备份文件恢复，方便换机或迁移。</p>
-
-        <h2>三、COC 专区预告：装备闪震伤害计算</h2>
-        <p>应部落冲突玩家要求，COC 专区计划于<strong>明日（7 月 17 日）</strong>推出「装备闪震伤害计算」功能。它将帮助玩家更直观地估算特定装备与法术组合下的伤害表现，辅助配兵与进攻决策。</p>
-        <p>功能尚在最后打磨，敬请期待。如对计算口径或希望支持的装备范围有建议，欢迎随时反馈。</p>
-
-        <blockquote>前往 <a href="https://wjtianze.github.io/os/index.html">天择OS 入口</a> 选择适合你的版本，或进入 <a href="https://wjtianze.github.io/english/words/index.html">天择背单词</a> 实测大规模词库的流畅导入。COC 专区新功能明日上线，我们明天见。</blockquote>
+        <h2>如何使用</h2>
+        <p>前往<a href="https://wjtianze.github.io/os/index.html">天择OS 页面</a>选择网页版或桌面版；升级前建议先导出一份存档。</p>
       </div>
 
       <div class="article-foot">

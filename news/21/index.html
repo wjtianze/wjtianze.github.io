@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>天择OS 3.0 发布：AI 悬浮窗到来，Ctrl+1 一键召唤 — 天择网</title>
-  <meta name="description" content="天择OS 3.0 正式发布：新增 AI 悬浮窗，独立于 OS 主窗口之外，按 Ctrl+1 一键召唤。桌面版为独立的始终置顶 Electron 窗口（无边框、可拖拽可缩放），网页版为页面固定覆盖层；功能与天择 AI 助手完全同步，共享同一份 AI 配置和对话历史，支持联网搜索、文件上传、深度思考与记忆。悬浮窗采用 Electron 原生拖拽，丝滑无跳跃。" />
+  <title>天择OS 3.0：按 Ctrl+1 随时打开人工智能悬浮窗 — 天择网</title>
+  <meta name="description" content="天择OS 3.0 新增可拖动、可缩放的人工智能悬浮窗，桌面版支持 Ctrl+1 全局快捷键。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260807-v5.0.0" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
@@ -36,8 +36,8 @@
   <main>
     <article class="article wrap">
       <div class="article-head reveal">
-        <span class="a-tag">重大更新</span>
-        <h1>天择OS 3.0 发布：AI 悬浮窗到来，Ctrl+1 一键召唤</h1>
+        <span class="a-tag">版本更新</span>
+        <h1>天择OS 3.0：按 Ctrl+1 随时打开人工智能悬浮窗</h1>
         <div class="article-meta">
           <span>🗓 发布：2026-07-21</span>
           <span>✍ 作者：天择网</span>
@@ -45,37 +45,17 @@
       </div>
 
       <div class="article-body reveal d1">
-        <p><a href="https://wjtianze.github.io/os/index.html">天择OS</a> <strong>3.0</strong> 带来了自 2.0 AI 全链路升级以来最大的一次能力跃迁：AI 对话不再被关在 OS 主窗口里，而是拥有了一个可以随时召唤、始终置顶、独立成窗的<strong>悬浮窗</strong>。无论你正在 OS 里做什么——查数据、看文档、逛浏览器，按一下 <code>Ctrl+1</code>，AI 就浮现在手边。</p>
+        <p>天择OS 3.0 带来独立的人工智能悬浮窗。即使正在浏览文档或使用其他工具，也能按 <code>Ctrl+1</code> 随时打开对话。</p>
 
-        <h2>一、AI 悬浮窗：独立于主窗口之外</h2>
-        <p>悬浮窗是一个独立的天择 AI 对话窗口，它和主窗口里的 AI 助手<strong>共享同一份配置和对话历史</strong>，但形态完全不同：</p>
+        <h2>这次更新对你有什么用</h2>
         <ul>
-          <li><strong>桌面版</strong>：一个独立的 Electron 窗口，始终置顶在所有程序最上层，无边框设计，可拖拽移动、可自由缩放。即使天择OS 主窗口被最小化，悬浮窗依然可用。</li>
-          <li><strong>网页版</strong>：一个固定在页面上的覆盖层，同样可拖拽、可缩放，关闭后随时再召唤。</li>
+          <li>桌面版悬浮窗可以置顶、拖动和缩放，主窗口最小化后仍可使用。</li>
+          <li>网页版提供页面内悬浮形态，适合边看内容边提问。</li>
+          <li>悬浮窗与主对话共享配置和历史，联网、文件、思考与记忆能力保持一致。</li>
         </ul>
-        <p>两种形态都复用了主 AI 对话的<strong>全部能力</strong>：联网搜索、图片与文件上传、深度思考、AI 记忆、Markdown 与 LaTeX 渲染、停止与重新生成，一个不少。你在悬浮窗里说的话，主窗口里也能看到；反过来也一样。</p>
 
-        <h2>二、Ctrl+1 全局快捷键：随时召唤</h2>
-        <p>按下 <code>Ctrl+1</code> 即可切换悬浮窗的显示与隐藏：</p>
-        <ul>
-          <li><strong>没开</strong> → 一键创建并显示</li>
-          <li><strong>已显示</strong> → 一键关闭</li>
-          <li><strong>桌面版</strong>：即使天择OS 主窗口最小化到任务栏，Ctrl+1 依然能调出悬浮窗——它注册在系统全局快捷键层，不依赖主窗口是否聚焦。</li>
-        </ul>
-        <p>悬浮窗专注纯对话体验，不启用命令行模式（tzcli），避免在紧凑窗口里塞入过多控件。如果你需要命令行，随时回到主窗口的 AI 助手即可。</p>
-
-        <h2>三、原生拖拽：丝滑无跳跃</h2>
-        <p>悬浮窗的标题栏拖拽采用了 Electron 官方推荐的原生方案（<code>-webkit-app-region: drag</code>），由浏览器引擎直接接管，不经过任何中间脚本：</p>
-        <ul>
-          <li>按下标题栏任意位置拖动，窗口<strong>跟随鼠标</strong>，不会"跳"到鼠标中心</li>
-          <li>鼠标移动再快也不会脱手，拖拽不会中途断掉</li>
-          <li>关闭按钮单独标记为"不可拖拽区"，点击关闭不受影响</li>
-          <li>窗口禁用了最大化，双击标题栏不会把悬浮窗撑满屏幕</li>
-        </ul>
-        <p>这一版替换了 3.0 首发版本里一套自研的"JS 监听鼠标 + 主进程移动窗口"方案——旧方案存在窗口跳跃、鼠标脱离标题栏后拖拽中断两个问题，已彻底移除。</p>
-
-        <h2>四、升级方式</h2>
-        <blockquote>网页版用户下次启动天择OS 即自动获取 3.0；桌面版用户请前往<a href="https://wjtianze.github.io/os/index.html">天择OS 入口</a>获取 3.0 安装包（首次安装或覆盖升级均可，本地存档不会丢失）。已安装旧版的用户直接运行新安装包覆盖即可。</blockquote>
+        <h2>如何使用</h2>
+        <p>桌面版按 <code>Ctrl+1</code> 显示或隐藏；网页版可从天择OS 界面打开。</p>
       </div>
 
       <div class="article-foot">

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>天择OS 上线并开源：浏览器里运行的 AI 操作系统 — 天择网</title>
-  <meta name="description" content="天择网推出天择OS——一个在浏览器中全屏运行的模拟操作系统，预装天择网全部功能，内置 AI 对话与代码生成引擎，输入一句话即可生成新软件。全部源代码已在「数据开源」板块开源，免费、不限用途。" />
+  <title>天择OS 1.0 上线并开放源代码 — 天择网</title>
+  <meta name="description" content="天择OS 1.0 正式上线，在浏览器中提供窗口、任务栏、人工智能对话和站内工具，并开放源代码。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260807-v5.0.0" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
@@ -35,8 +35,8 @@
   <main>
     <article class="article wrap">
       <div class="article-head reveal">
-        <span class="a-tag">重磅上线·开源</span>
-        <h1>天择OS 上线并开源：浏览器里运行的 AI 操作系统</h1>
+        <span class="a-tag">正式上线</span>
+        <h1>天择OS 1.0 上线并开放源代码</h1>
         <div class="article-meta">
           <span>🗓 发布：2026-07-14</span>
           <span>⏰ 时间：12:30（UTC+8）</span>
@@ -45,30 +45,17 @@
       </div>
 
       <div class="article-body reveal d1">
-        <p>天择网推出了一个全新项目：<strong>天择OS</strong>——一个在浏览器中全屏运行的模拟操作系统。它不是天择网的又一个子页面，而是一个独立的、沉浸式的操作系统体验，部署在 <a href="https://wjtianze.github.io/os/index.html">wjtianze.github.io/os</a>，与天择网共享同一套紫-蓝-绿配色，但拥有完全独立的界面与交互体系。</p>
+        <p>天择OS 1.0 正式上线。这是一套可在浏览器中运行的桌面式工作台，把天择网工具、人工智能对话和软件管理放进统一界面。</p>
 
-        <h2>它是什么</h2>
-        <p>天择OS 用纯前端技术模拟了一个完整的桌面操作系统：开机动画、桌面图标、任务栏、窗口管理、开始菜单、右键菜单、通知中心——这些标准 OS 元素都在浏览器里被重新实现。打开它就像启动一台虚拟电脑，但它不需要安装任何东西，打开网页就能用。</p>
-        <p>天择网的所有功能被预装为系统应用：新闻、博客、数据开源、AI 专区、COC 数据查询、村庄分析、升级规划器、绩点战争游戏，都变成桌面上的图标，双击就能在窗口里打开。你不再需要通过导航栏来回切换页面，而是像使用真正的电脑一样，同时打开多个窗口。</p>
+        <h2>这次更新对你有什么用</h2>
+        <ul>
+          <li>支持窗口、任务栏、开始菜单和电脑、手机自适应布局。</li>
+          <li>预装天择网主要专区，可在系统内直接打开。</li>
+          <li>内置人工智能对话和软件商城，也可生成并安装自己的小工具。</li>
+        </ul>
 
-        <h2>核心：AI 代码生成引擎</h2>
-        <p>天择OS 最特别的地方是<strong>软件商城</strong>。你只需要用一句话描述你想要的软件——比如"一个贪吃蛇游戏"或"一个番茄钟计时器"——AI 会先帮你把模糊的想法优化成一份清晰的软件规格，然后直接生成完整的可运行代码，并自动安装到桌面上。</p>
-        <p>生成的软件在一个安全的沙箱窗口中运行，不会影响系统本身。你可以随时打开、关闭或卸载它们。所有生成的软件都保存在你的浏览器本地，下次打开天择OS 时依然存在。</p>
-        <p>此外还有<strong>AI 对话</strong>应用，可以像使用普通 AI 助手一样与它聊天、问问题、写代码，对话历史会自动保存。</p>
-
-        <h2>桌面风格：PC 与移动端自适应</h2>
-        <p>天择OS 会自动检测你的设备类型。在电脑上，默认呈现 Windows 风格的桌面（底部任务栏 + 桌面图标网格），也可以一键切换为 macOS 风格（顶部菜单栏 + 红黄绿窗口控制按钮）。在手机上，则会自动切换为类似 iOS 的主屏 + 底部 Dock 布局，应用全屏打开，底部保留 Home 条手势区。</p>
-        <p>窗口支持拖拽移动、八方向缩放、最小化、最大化、关闭。任务栏显示所有正在运行的应用，可以点击切换。开始菜单支持应用搜索。桌面和图标都支持右键菜单。</p>
-
-        <h2>数据全在本地</h2>
-        <p>天择OS 不依赖任何服务器。你的 AI 配置（API Key）、已安装的软件、对话历史、桌面偏好，全部通过浏览器 localStorage 保存在你自己的设备上。关闭浏览器、重启电脑，数据都还在。当然，这也意味着清理浏览器数据会清空天择OS——请在「系统设置」中谨慎使用重置功能。</p>
-        <p>AI 功能需要你自行配置一个 OpenAI 兼容的 API 接口。我们内置了 DeepSeek、OpenAI、硅基流动、智谱 GLM 等常用服务的预设，填入自己的 Key 即可。你的 Key 只保存在本地，不会经过天择网的服务器。</p>
-
-        <h2>现已开源</h2>
-        <p>天择OS 的<strong>全部源代码</strong>已在天择网「<a href="https://wjtianze.github.io/open/index.html">数据开源</a>」板块开放下载——三个文件、约 2700 行、纯前端单文件架构，无任何后端依赖。任何人都可以免费下载、查看、学习、修改、二次开发，用于任何目的，无需署名、无需告知。窗口管理、AI 对话与代码生成引擎、软件商城、桌面系统、多风格主题、浏览器应用等全部模块均含完整中文注释，清晰可读。</p>
-        <p>点击<a href="https://wjtianze.github.io/open/index.html">这里</a>前往「数据开源」页面下载完整源码包，或单独下载 <code>index.html</code>、<code>os.css</code>、<code>os.js</code> 三个文件。</p>
-
-        <blockquote>天择OS 是天择网对"个人网站"的一次重新想象——它不只是页面，而是一个可以生长的环境。输入一句话，让 AI 为你生成新的软件，装进你的桌面。访问 <a href="https://wjtianze.github.io/os/index.html">天择OS</a> 开始体验。</blockquote>
+        <h2>如何使用</h2>
+        <p>前往<a href="https://wjtianze.github.io/os/index.html">天择OS</a>进入网页版或查看开放的源代码。</p>
       </div>
 
       <div class="article-foot">

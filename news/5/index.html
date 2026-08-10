@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>数据开源正式创建：让数据自由流动 — 天择网</title>
-  <meta name="description" content="天择网新增「数据开源」，将本站自制的数据与服务以开源形式发布，供所有人免费、不限用途使用。本文介绍专区的定位与宗旨。" />
+  <title>数据开源专区上线：本站自制数据免费开放 — 天择网</title>
+  <meta name="description" content="数据开源专区正式上线，集中提供天择网整理的数据与相关工具。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260807-v5.0.0" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
@@ -30,8 +30,8 @@
   <main>
     <article class="article wrap">
       <div class="article-head reveal">
-        <span class="a-tag">专区公告</span>
-        <h1>数据开源正式创建：让数据自由流动</h1>
+        <span class="a-tag">专区上线</span>
+        <h1>数据开源专区上线：本站自制数据免费开放</h1>
         <div class="article-meta">
           <span>🗓 发布：2026-07-10</span>
           <span>⏰ 时间：16:50（UTC+8）</span>
@@ -40,39 +40,17 @@
       </div>
 
       <div class="article-body reveal d1">
-        <p>天择网今天新增了一个板块——<strong>数据开源</strong>。这个板块的定位很简单：天择网上所有我自己制作的服务数据，都会开源在这里，供大家免费、不限用途地使用。</p>
+        <p>天择网新增数据开源专区。本站自行整理、适合复用的数据会在这里集中提供，让查询、研究和二次开发都能直接使用。</p>
 
-        <h2>为什么要做数据开源</h2>
-        <p>我坚信，知识和信息不应被一个人独占，而应被全人类共享，以此推动人类的进步。</p>
-        <p>这句话听起来有点大，但落到实际就是一件具体的事：当我花时间整理出一份有用的数据——比如把一个游戏的全部单位属性整理成结构化的 JSON——与其把它锁在自己手里，不如直接公开出来。可能有人想用它做查询站，可能有人想拿来做数据分析，可能有人只是好奇想看看，这些都很好。数据被用起来，才产生价值；闲着，就只是几个字节。</p>
-
-        <h2>专区里会有什么</h2>
-        <p>只要是「天择网自制」的数据，都会放进来。第一批上架的是：</p>
+        <h2>这次更新对你有什么用</h2>
         <ul>
-          <li><strong>《部落冲突》单位完整数据</strong>（<code>单位完整数据.json</code>，约 1.9 MB）——覆盖 272 个单位，含兵种、法术、英雄、战宠、装备、建筑、陷阱、守卫、帮手等全部类型，每条带中文介绍、所有等级数值、所需大本营等级与装备技能。</li>
-        </ul>
-        <p>这份数据正是 COC 专区数据查询页所使用的同一份数据源——你在查询页看到的每一个数字，都能在这里下载到原始版本。后续如果有新的自制数据，也会陆续放到这里。</p>
-
-        <h2>使用规则</h2>
-        <ul>
-          <li><strong>免费</strong>：不收费，不需要注册，不需要登记。</li>
-          <li><strong>不限用途</strong>：个人学习、研究、二次开发、商业用途、做成自己的网站或工具，都可以。</li>
-          <li><strong>不附条件</strong>：不要求署名、不要求开源你的衍生作品、不要求反馈。当然，如果你愿意注明数据来源或告诉我你用它做了什么，我会很高兴，但这完全自愿。</li>
-        </ul>
-        <blockquote>唯一的小提醒：数据本身按「现状」提供，不对其准确性或完整性作担保；如果你发现数据有误，欢迎反馈，我会更正后重新发布。</blockquote>
-
-        <h2>技能也开源</h2>
-        <p>除了数据，产出这些数据的「生产工具」也一并开源了。这次上架 AI 专区技能板块的 <strong>coc-units-data-exporter</strong>，就是上面那份《部落冲突》数据的提取工具。任何人都能下载它，用它从任意版本的《部落冲突》安装包里提取数据。工具和数据，两边都开放。</p>
-        <p>关于技能上架的详情，可以看上一篇公告：<a href="https://wjtianze.github.io/news/4/index.html" style="color:var(--c-sky); text-decoration:underline;">COC 数据查询页升级，AI 专区上线开源数据导出技能</a>。</p>
-
-        <h2>从哪里进入</h2>
-        <ul>
-          <li>数据开源：<a href="https://wjtianze.github.io/open/index.html" style="color:var(--c-sky); text-decoration:underline;">前往数据开源</a></li>
-          <li>数据提取技能：<a href="https://wjtianze.github.io/ai/skill/coc-units-data-exporter/index.html" style="color:var(--c-sky); text-decoration:underline;">AI 专区 → 技能 → COC 单位数据导出器</a></li>
-          <li>数据查询页（使用同一份数据）：<a href="https://wjtianze.github.io/coc/data/index.html" style="color:var(--c-sky); text-decoration:underline;">COC 专区 → 游戏数据查询</a></li>
+          <li>首批开放《部落冲突》单位完整数据，覆盖主要单位类型和等级属性。</li>
+          <li>数据可免费下载，无需注册，也不限制个人学习或二次开发用途。</li>
+          <li>与数据配套的导出工具会尽量一并开放，方便跟随游戏版本更新。</li>
         </ul>
 
-        <p style="margin-top:28px; color:var(--ink-faint); font-size:15px;">知识共享，信息自由。这是数据开源的全部宗旨，也是天择网会一直坚持的事。</p>
+        <h2>如何使用</h2>
+        <p>前往<a href="https://wjtianze.github.io/open/index.html">数据开源</a>查看当前可下载内容。数据按现状提供，如发现错误可联系开发者。</p>
       </div>
 
       <div class="article-foot">

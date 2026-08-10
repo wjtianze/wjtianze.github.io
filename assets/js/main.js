@@ -1274,7 +1274,7 @@
         if (/^天择OS\s+\d+(?:\.\d+)*$/u.test(lead)) lead += " 发布";
         return lead;
       }
-      if (node.path === "/blog/1/") return "混合矿工攻略";
+      if (node.path === "/coc/tutorial/1/") return "混合矿工攻略";
       return title;
     }
 

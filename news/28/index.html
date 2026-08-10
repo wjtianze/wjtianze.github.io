@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>天择网与天择OS 5.0 正式发布：原生浏览器、文件管理、本地模型与 Responses API — 天择网</title>
-  <meta name="description" content="天择网与天择OS 5.0 正式发布：新增 DeepSeek Responses API、原生网页视图、内部文件资源管理器、Windows 应用管理器、内置 Python、本地模型路由、Ollama 自动识别与上下文压缩。" />
+  <title>天择网与天择OS 5.0：浏览器、文件、本地模型与响应接口 — 天择网</title>
+  <meta name="description" content="天择网与天择OS 5.0 正式发布，新增真实网页视图、内部文件空间、本地模型、上下文压缩、Windows 应用和内置 Python。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260807-v5.0.0" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
@@ -27,7 +27,7 @@
     <article class="article wrap">
       <div class="article-head reveal">
         <span class="a-tag">正式发布</span>
-        <h1>天择网与天择OS 5.0 正式发布：原生浏览器、文件管理、本地模型与 Responses API</h1>
+        <h1>天择网与天择OS 5.0：浏览器、文件、本地模型与响应接口</h1>
         <div class="article-meta">
           <span>发布：2026-08-07</span>
           <span>作者：天择网</span>
@@ -35,46 +35,18 @@
       </div>
 
       <div class="article-body reveal d1">
-        <p>天择网与天择OS <strong>5.0.0</strong> 现已正式发布，Windows 安装包与网页版同步开放。5.0 不只是一次界面更新：浏览器、AI、文件、应用、Python、COC 工具和命令行都进入同一套可实际使用、可验证的工作流。</p>
+        <p>天择网与天择OS 5.0 正式发布。新版把网页浏览、文件、知识库、云端模型、本地模型和 Windows 工具进一步整合到同一套工作流中。</p>
 
-        <h2>一、Windows 5.0 安装包正式开放</h2>
-        <p>Windows 用户可以从<a href="https://wjtianze.github.io/os/index.html">天择OS 下载页</a>获取 <strong>tianze-os-setup-5.0.0.exe</strong>，也可以直接前往 <a href="https://github.com/wjtianze/wjtianze.github.io/releases/tag/v5.0.0">GitHub Release</a>。安装包 SHA-256 为 <code>C6F6118F9CCF324217D6F9230AC35DD2EA40D0710A26746F3A7889013F6699A3</code>。</p>
-        <p>本次安装包仍未购买商业代码签名证书，Windows 可能显示 SmartScreen 提示。安装来源、文件大小和校验值以 GitHub Releases 为准。</p>
+        <h2>这次更新对你有什么用</h2>
+        <ul>
+          <li>桌面版使用真实 Chromium 网页视图，可打开拒绝嵌入的网站，并提供多个网页版人工智能入口。</li>
+          <li>内部文件空间统一管理浏览器下载、知识库和智能体文件，支持导入、预览、编辑、搜索与回收站。</li>
+          <li>人工智能支持云端、本地和自动降级三种路由，可识别 Ollama 模型并压缩长对话上下文。</li>
+          <li>Windows 版新增应用管理器和内置 Python；COC 分享配置与教程入口也同步完善。</li>
+        </ul>
 
-        <h2>二、DeepSeek V4 Flash 升级到 Responses API</h2>
-        <p>系统预设的 DeepSeek V4 Flash 已从旧对话接口升级为 Responses API，支持普通响应、语义化流式事件、思考内容、用量统计与服务端联网搜索。旧版精确默认配置会自动迁移，用户自己的自定义配置不会被强行覆盖。</p>
-        <p>天择网站点助手也恢复了流式输出和可开关的深度思考。切换页面时，助手的展开状态与当前聚焦对话会保留；Markdown 会随文本持续渲染，完整 LaTeX 公式一生成完就立即排版，不再等待整段回答结束。</p>
-
-        <h2>三、云端、本地与自动降级三档 AI 路由</h2>
-        <p>AI 应用现在可以选择「始终使用 API」「始终使用本地部署」或「API 连接异常时自动切换本地模型」。本地模型拥有独立的地址、模型名、接口类型、最大输出、上下文长度、图片、文件和深度思考配置。</p>
-        <p>Ollama 可以自动读取本机已安装模型，并在支持时继续读取上下文长度与模型能力；例如本机的 <code>qwen3.5:4b</code> 可以直接选用。自动降级只在网络、超时或明确的临时服务错误发生且云端尚未输出正文时触发；认证错误、参数错误、限流或生成中途失败不会偷偷换模型。成功降级后，消息上方会持久显示「云端模型访问错误（错误码），已降级至本地模型本地模型名」。</p>
-
-        <h2>四、上下文压缩让长对话继续工作</h2>
-        <p>新增自动与手动上下文压缩。系统会按当前路由中最小的已知上下文窗口保留安全输出空间，把较早对话压缩成可信摘要，并继续携带最近原文。压缩只改变发给模型的上下文，界面中的完整聊天记录不会被删掉；历史前缀被修改时，旧摘要会立即失效并重新生成。</p>
-
-        <h2>五、浏览器不再依赖容易被封锁的 iframe</h2>
-        <p>桌面版内置浏览器和网页版 AI 栏改用真正的 Chromium 网页视图，因此 DeepSeek 等禁止 iframe 嵌入的网站也能像在普通浏览器中一样打开。网页版 AI 可在设置中多选豆包、千问国内版、千问国际版、DeepSeek、Kimi、智谱清言、智谱国际版、ChatGPT、Claude、Gemini 与 Grok。</p>
-        <p>ChatGPT、Claude、Gemini 与 Grok 在中国大陆通常需要可用的国际网络环境，选择或加载前会明确提示需要 VPN。普通网页版受浏览器自身安全边界限制，原生网页视图能力以 Windows 桌面版为准。</p>
-
-        <h2>六、独立文件资源管理器与知识库合并</h2>
-        <p>5.0 新增天择OS内部文件空间。文件资源管理器、浏览器下载、知识库和 Agent 文件工具现在使用同一份内部数据：可以从 Windows 导入或导出，创建文件与文件夹，预览、编辑、重命名、复制、移动、搜索，并通过两阶段回收站确认删除。浏览器下载默认进入内部文件空间，适合直接交给 AI 读取或加入知识库。</p>
-        <p>网页版本不会获得任意 Windows 文件权限；完整导入导出和本机文件桥只在桌面版中开放。</p>
-
-        <h2>七、Windows 应用管理器与内置 Python</h2>
-        <p>新增独立应用管理器，可选择 Windows 上已有的软件，也可以归档 EXE 安装包并在明确确认后启动安装或运行。Windows 原生软件遵循操作系统与 Chromium 的安全边界，以独立顶层窗口运行，由天择OS统一选择、登记和启动，而不会伪装成可任意嵌入的网页窗口。</p>
-        <p>Windows 安装包内置官方 Python 3.13 运行时。用户可以在天择OS中创建与编辑 Python 脚本、传入参数、运行或停止任务，并查看完整输出；AI Agent 调用 Python 或其他高权限主机能力时必须逐次获得用户确认。Python 是本机执行环境，不是安全沙箱，请只运行可信代码。</p>
-
-        <h2>八、COC 分享配置与教程入口</h2>
-        <p>COC 伤害计算器的分享页新增「复制配置到我的计算器」：打开分享链接后，可以把其中的法术、装备、目标建筑、回血小屋等级与计算模式直接带回自己的计算器主页继续编辑。COC 专区还新增二级「COC教程」，博客栏也可直接进入；教程内容当前显示「敬请期待」，之后会持续增加文章。</p>
-
-        <h2>九、命令行、图标与完整回归</h2>
-        <p>本轮对整个天择OS命令注册表做了运行时审计，清理真正重复项、保留必要兼容别名，并统一帮助、参数、错误信息和用户 / Agent / 应用权限。最终覆盖 <strong>166 条命令、47 个兼容别名和 213 条可达路径</strong>，没有发现命令冲突、缺失入口或孤立别名。文件、本地模型、上下文压缩、Windows 应用、Python 与 COC教程也都拥有对应命令。</p>
-        <p>AI 生成应用的沙箱 localStorage 现在按应用隔离并由系统持久化：关闭重开后数据仍在，应用不能伪造其他 appId 写入，卸载时会同步清理对应本地数据。</p>
-        <p>桌面窗口、任务栏、安装包和快捷方式已统一使用天择OS自己的图标，不再出现 Electron 默认图标。</p>
-
-        <h2>十、验收与下载</h2>
-        <p>发布前已完成网站链接、JSON、版本一致性、JavaScript 语法、AI 协议、命令行、文件与知识库、浏览器、下载、Windows 应用、Python、COC、桌面桥和打包产物的完整回归。所有 AI 自动检查均使用本地 Mock 与协议夹具，没有读取用户 API Key，也没有消耗用户 AI 额度；联网站点检查只验证页面可加载，没有发送消息。</p>
-        <p><a href="https://wjtianze.github.io/os/webos.html">天择OS 网页版 5.0</a>可以免安装体验共享的系统与 AI 能力；需要原生浏览器、Windows 文件、应用管理器、本地模型桥或内置 Python 时，请从<a href="https://wjtianze.github.io/os/index.html">天择OS 下载页</a>安装 Windows 5.0 正式版。</p>
+        <h2>如何使用</h2>
+        <p>可先打开<a href="https://wjtianze.github.io/os/webos.html">网页版 5.0</a>体验；需要真实网页视图、Windows 文件、应用管理器或内置 Python 时，请从<a href="https://wjtianze.github.io/os/index.html">下载页</a>安装桌面版。</p>
       </div>
     </article>
   </main>

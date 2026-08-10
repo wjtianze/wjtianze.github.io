@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>COC 数据查询页升级，AI 专区上线开源数据导出技能 — 天择网</title>
-  <meta name="description" content="天择网 COC 专区数据查询页升级数据源至 272 条单位含中文介绍与大本营等级；AI 专区技能板块新增「COC 单位数据导出器」并以开源形式发布。" />
+  <title>COC 数据查询升级：更完整的数据与开源导出工具 — 天择网</title>
+  <meta name="description" content="COC 数据查询升级至更完整的数据源，并开放可从游戏安装包导出结构化数据的工具。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260807-v5.0.0" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
@@ -30,8 +30,8 @@
   <main>
     <article class="article wrap">
       <div class="article-head reveal">
-        <span class="a-tag">更新公告</span>
-        <h1>COC 数据查询页升级，AI 专区上线开源数据导出技能</h1>
+        <span class="a-tag">数据更新</span>
+        <h1>COC 数据查询升级：更完整的数据与开源导出工具</h1>
         <div class="article-meta">
           <span>🗓 发布：2026-07-10</span>
           <span>⏰ 时间：16:40（UTC+8）</span>
@@ -40,36 +40,17 @@
       </div>
 
       <div class="article-body reveal d1">
-        <p>这次更新一次性带来两件事：COC 专区的数据查询页换了更完整的数据源，AI 专区新增了一个开源数据导出技能。两件事其实是同一件事的两面——技能产出数据，查询页消费数据，而数据本身开源。</p>
+        <p>COC 数据查询换用了更完整的数据源，条目、中文介绍和等级字段都得到补充；生成这份数据的导出工具也同步开放。</p>
 
-        <h2>COC 数据查询页升级</h2>
-        <p>游戏数据查询页的数据源从旧版本换成了用「COC 单位数据导出器」重新提取的完整数据。相比旧版，这次的数据：</p>
+        <h2>这次更新对你有什么用</h2>
         <ul>
-          <li><strong>更全</strong>：覆盖 272 个单位，新增了帮手角色、夜世界英雄与建筑大师基地的更多条目；</li>
-          <li><strong>更细</strong>：每条单位都带<strong>中文介绍</strong>（之前没有），等级表里新增<strong>所需大本营等级</strong>，装备还展示了<strong>满级技能</strong>；</li>
-          <li><strong>更新</strong>：数据版本对应 v18.400.9，含新英雄「飞龙公爵」、龙王装备等最新内容。</li>
+          <li>查询范围扩展到 272 个单位，包含更多夜世界、英雄、装备和帮手内容。</li>
+          <li>等级表补充所需大本营等级，装备可查看满级技能。</li>
+          <li>需要自行整理其他版本时，可下载本地运行的数据导出工具。</li>
         </ul>
-        <p>查询页的交互保持一致：分类标签筛选、关键词搜索、点击卡片查看详情。分类从原来的 9 类微调为更贴合新数据的 9 个大类（兵种、法术、英雄、战宠、装备、建筑、陷阱、守卫、帮手），每个大类下自动包含夜世界等细分。</p>
-        <blockquote>查询页底部新增了一个入口，可直接跳转到「数据开源」下载这份原始 JSON。</blockquote>
 
-        <h2>AI 专区上线开源技能：COC 单位数据导出器</h2>
-        <p>这次上架的技能叫 <strong>coc-units-data-exporter</strong>，作用是把一份《部落冲突》APK 安装包里的全部单位游戏数据提取成结构化 JSON。它就是上面那份新数据源的「生产工具」。</p>
-        <p>技能特点：</p>
-        <ul>
-          <li>一条命令完成提取、解密、解析、命名映射、导出五步，输出 <code>单位完整数据.json</code>；</li>
-          <li>覆盖兵种/法术/英雄/战宠/装备/建筑/陷阱/守卫/帮手等全部单位类型，含夜世界与超级兵；</li>
-          <li>每条单位含中文介绍、所有等级数值、所需大本营等级、装备技能；</li>
-          <li>内置默认名称表，开箱即用，也可用自定义名称表覆盖；</li>
-          <li>纯本地解析，不联网、不调用任何外部 API、不读取凭据。</li>
-        </ul>
-        <p>技能以<strong>开源</strong>形式发布——技能包可直接下载，任何人都能用它提取任意版本的部落冲突数据，不限用途。提取出的数据本身也已开源在天择网「数据开源」（详见下一篇公告）。</p>
-
-        <h2>从哪里进入</h2>
-        <ul>
-          <li>COC 数据查询页：<a href="https://wjtianze.github.io/coc/data/index.html" style="color:var(--c-sky); text-decoration:underline;">COC 专区 → 游戏数据查询</a></li>
-          <li>技能主页与下载：<a href="https://wjtianze.github.io/ai/skill/coc-units-data-exporter/index.html" style="color:var(--c-sky); text-decoration:underline;">AI 专区 → 技能 → COC 单位数据导出器</a></li>
-          <li>开源数据下载：<a href="https://wjtianze.github.io/open/index.html" style="color:var(--c-sky); text-decoration:underline;">数据开源</a></li>
-        </ul>
+        <h2>如何使用</h2>
+        <p>玩家可直接使用<a href="https://wjtianze.github.io/coc/data/index.html">数据查询</a>；需要原始数据或工具时，前往<a href="https://wjtianze.github.io/open/index.html">数据开源</a>。</p>
       </div>
 
       <div class="article-foot">

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>天择OS 2.6 发布：窗口置顶、文档缩放与命令行全面扩展 — 天择网</title>
-  <meta name="description" content="天择OS 2.6 正式发布：支持将任意软件窗口置顶到最上层，提供标题栏图钉按钮、标题栏右键菜单、任务栏右键菜单与命令行 pin/top/unpin/pinned 四种操作方式；文档阅读器新增缩放功能，支持 ± 按钮、Ctrl+滚轮、自定义百分比、页宽填充与整页填充五种缩放方式；命令行全面扩展，每个自有软件均有顶层命令，coc-data 输出 COC 中文数据、coc-json 输出原始 JSON、words 输出单词本 JSON，新增 chat/store/files/settings/about/home/news/blog/coc/dmg/village/planner/gpa/tree/tips/docs/browser 等近 30 个软件命令；修复置顶窗口层级过高遮挡任务栏与快捷面板的问题。" />
+  <title>天择OS 2.6：窗口置顶、文档缩放与命令扩展 — 天择网</title>
+  <meta name="description" content="天择OS 2.6 新增窗口置顶、文档缩放和更多站内工具命令。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260807-v5.0.0" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
@@ -36,8 +36,8 @@
   <main>
     <article class="article wrap">
       <div class="article-head reveal">
-        <span class="a-tag">重大更新</span>
-        <h1>天择OS 2.6 发布：窗口置顶、文档缩放与命令行全面扩展</h1>
+        <span class="a-tag">版本更新</span>
+        <h1>天择OS 2.6：窗口置顶、文档缩放与命令扩展</h1>
         <div class="article-meta">
           <span>🗓 发布：2026-07-20</span>
           <span>✍ 作者：天择网</span>
@@ -45,70 +45,17 @@
       </div>
 
       <div class="article-body reveal d1">
-        <p><a href="https://wjtianze.github.io/os/index.html">天择OS</a> <strong>2.6</strong> 聚焦"窗口层级"、"文件阅读"与"命令行生态"三个高频场景：任何软件窗口都可以一键置顶到最上层，文档阅读器迎来了完整的缩放能力，命令行则把每个自有软件都接了进来。</p>
+        <p>天择OS 2.6 让多窗口使用和文档阅读更方便，同时为站内主要工具补齐了可直接调用的命令。</p>
 
-        <h2>一、窗口置顶：四种方式，随你喜欢</h2>
-        <p>现在你可以把任意窗口固定在最上层，即使点击其他窗口，它也不会被压下去。天择OS 提供了四种操作方式：</p>
+        <h2>这次更新对你有什么用</h2>
         <ul>
-          <li><strong>标题栏图钉按钮</strong>：每个窗口标题栏新增一枚图钉，点一下置顶，再点一下取消。</li>
-          <li><strong>标题栏右键菜单</strong>：在标题栏空白处右键，选择"置顶窗口"或"取消置顶"，同时还能快速最小化、最大化、关闭。</li>
-          <li><strong>任务栏右键菜单</strong>：右键任务栏上正在运行的应用图标，选择"置顶窗口"或"取消置顶窗口"。</li>
-          <li><strong>命令行</strong>：打开命令行终端，输入 <code>pin 应用id</code>、<code>top 应用id</code>、<code>unpin 应用id</code>，或 <code>pinned</code> 查看当前所有置顶窗口。AI 命令行模式也已同步支持这些命令。</li>
-        </ul>
-        <p>置顶窗口会自动获得紫色高亮边框，层级独立于普通窗口。本次同步修复了 2.6 首发版本中"置顶窗口层级过高、遮挡任务栏与快捷面板"的问题——现在置顶窗口始终位于任务栏、开始菜单与快捷面板之下，不会再挡住系统操作区。</p>
-
-        <h2>二、文档阅读器缩放：像专业阅读器一样看文件</h2>
-        <p>文档阅读器新增完整的缩放工具栏，支持 PDF、Word（docx）、PPT（pptx）、Excel（xlsx）、HTML、txt、markdown 全部格式：</p>
-        <ul>
-          <li><strong>± 按钮</strong>：工具栏左侧缩小、右侧放大，每次 10%。</li>
-          <li><strong>Ctrl + 滚轮</strong>：在阅读区域按住 Ctrl 滚动鼠标滚轮，即可快速缩放，习惯与浏览器一致。</li>
-          <li><strong>自定义百分比</strong>：在工具栏输入框直接输入 10%–500% 的任意数值，回车生效。</li>
-          <li><strong>页宽填充</strong>：让内容宽度刚好填满阅读区域，适合阅读文字为主的文档。</li>
-          <li><strong>整页填充</strong>：让完整一页同时适应阅读区域的宽和高，适合快速预览整页排版。</li>
-        </ul>
-        <p>每个打开的标签页独立记忆自己的缩放方式，切换标签时工具栏会自动同步当前文档的缩放状态。</p>
-
-        <h2>三、命令行全面扩展：每个软件都有自己的命令</h2>
-        <p>2.6 把"自有软件"全部接入了命令行：每个内置与预装应用都有自己的顶层命令，<strong>无需 <code>cmd</code> 前缀</strong>，输入 <code>help</code> 即可一键查找全部用法。命令行引擎也升级为支持异步命令（fetch / IndexedDB），终端与 AI 命令行模式均已适配。</p>
-
-        <h3>3.1 数据类命令：直接输出，不再打开应用</h3>
-        <ul>
-          <li><code>coc-data</code> 输出 COC 中文数据摘要（含版本、单位总数、分类统计、单位列表），不再打开应用</li>
-          <li><code>coc-data search 野蛮人</code> 按中英文名搜索单位详情（HP/DPS/升级花费/所需大本）</li>
-          <li><code>coc-data th 13</code> 列出大本 13 级可解锁的所有单位</li>
-          <li><code>coc-data cat 圣水兵</code> 按类别过滤；<code>coc-data count</code> 仅看分类统计</li>
-          <li><code>coc-json</code> 输出 COC 原始 JSON 完整数据（约 2MB，终端会自动折叠）</li>
-          <li><code>words</code> 输出当前单词本 JSON（同源时读 IndexedDB 真实词库，跨域时回退示例词库）</li>
-          <li><code>words add hypothesis|n.|假设</code> 添加单词；<code>words list 20</code> 列出前 20 个；<code>words count</code> 计数；<code>words find 关键词</code> 查找；<code>words del 编号</code> 删除</li>
+          <li>任意窗口都可通过图钉、右键菜单或命令行保持置顶。</li>
+          <li>文档阅读器支持按钮缩放、快捷键缩放、页宽和整页显示。</li>
+          <li>COC、背单词、游戏、人工智能专区和模拟器等均有更直接的命令入口。</li>
         </ul>
 
-        <h3>3.2 软件直达与信息查询命令</h3>
-        <ul>
-          <li><strong>AI 对话</strong>：<code>chat clear|history|last</code> 清空 / 看历史 / 看 AI 最后回复</li>
-          <li><strong>软件商城</strong>：<code>store open|tutorial|idea</code> 打开 / 教程 / 创意建议</li>
-          <li><strong>我的软件</strong>：<code>files list|export 应用id|size</code> 已安装列表 / 导出 HTML / 大小</li>
-          <li><strong>系统设置</strong>：<code>settings info|storage|reset</code> 系统信息 / 存储 / 重置布局</li>
-          <li><strong>关于</strong>：<code>about info|changelog|credits</code> 详情 / 更新日志 / 致谢</li>
-          <li><strong>浏览器</strong>：<code>browser tabs|closeall|home</code> 标签页 / 全关 / 主页</li>
-          <li><strong>玩机技巧</strong>：<code>tips</code> 列出全部，<code>tips 3</code> 查看第 3 条详情</li>
-          <li><strong>天择导航</strong>：<code>tree</code> 看分类，<code>tree system</code> 看该分类下应用</li>
-          <li><strong>文档阅读器</strong>：<code>docs open URL|recent</code> 在线打开 / 最近记录</li>
-        </ul>
-
-        <h3>3.3 天择网专区直达</h3>
-        <ul>
-          <li><strong>主页</strong>：<code>home sections|open 板块</code></li>
-          <li><strong>新闻 / 博客</strong>：<code>news</code> 与 <code>blog</code> 自动 fetch 列表，<code>news 5</code> 打开第 5 条</li>
-          <li><strong>COC 专区</strong>：<code>coc list|open</code> 专区板块与入口</li>
-          <li><strong>村庄分析 / 升级规划 / 伤害计算</strong>：<code>village</code> / <code>planner</code> / <code>dmg</code> 各自的 info 与 open；<code>dmg quake 5000 4</code> 还能直接告诉你"4 瓶地震必毁城墙"</li>
-          <li><strong>游戏专区</strong>：<code>game list|open</code> 与 <code>gpa info|open|rules</code> 查看绩点战争规则</li>
-          <li><strong>英语 / AI / 数据开源</strong>：<code>english</code> / <code>ai-zone</code> / <code>open-data</code> 各自的 list 与 open</li>
-          <li><strong>模拟器</strong>：<code>emu-win</code> / <code>emu-win10</code> / <code>emu-android</code> 的 info 与 open</li>
-        </ul>
-
-        <p>用户安装的 AI 软件仍可用 <code>cmd 应用id 指令</code> 调用各自注册的命令包（<code>cmd list</code> 查看全部）。AI 命令行模式的提示词也已同步更新，AI Agent 可以直接调用上述所有命令。</p>
-
-        <blockquote>网页版用户下次启动天择OS 即自动获取 2.6；桌面版用户请前往<a href="https://wjtianze.github.io/os/index.html">天择OS 入口</a>获取新版安装包（首次安装或覆盖升级均可，本地存档不会丢失）。</blockquote>
+        <h2>如何使用</h2>
+        <p>在窗口标题栏使用图钉即可置顶；打开终端输入 <code>help</code> 可查看当前命令。</p>
       </div>
 
       <div class="article-foot">
