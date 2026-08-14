@@ -860,7 +860,8 @@ body[data-workspace-page="os"] .os-card {
 }
 
 body[data-workspace-page="os"] .os-card.d,
-body[data-workspace-page="os"] .os-card.w { grid-column: span 6; }
+body[data-workspace-page="os"] .os-card.c,
+body[data-workspace-page="os"] .os-card.w { grid-column: span 4; }
 body[data-workspace-page="os"] .os-card.cl { grid-column: 1 / -1; }
 
 body[data-workspace-page="os"] .changelog {
@@ -945,6 +946,7 @@ body[data-workspace-page="os"] .cl-item > ul[hidden] { display: none; }
   .wp-toc { position: relative; top: auto; max-height: none; }
   .wp-toc nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   body[data-workspace-page="os"] .os-card.d,
+  body[data-workspace-page="os"] .os-card.c,
   body[data-workspace-page="os"] .os-card.w { grid-column: 1 / -1; }
 }
 

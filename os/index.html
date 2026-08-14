@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>天择OS · 天择网</title>
-  <meta name="description" content="天择OS 5.0 —— 本地优先的网页与 Windows 工作台，提供 Responses API、原生浏览器、内部文件空间、本地模型、应用管理器、Python 与 AI Agent。" />
+  <meta name="description" content="天择OS 5.0 提供网页与 Windows 普通 API 版，并新增可并存的 v5.0-codex 桌面版：用户登录自己的 ChatGPT 账号即可使用 Codex 模型与智能体能力。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260807-v5.0.0" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/workspace-pages.css?v=20260802-v4.1.7" />
@@ -30,7 +30,7 @@
       <div class="tz-os-hero-copy reveal in">
         <span class="tz-os-kicker">EVOLUTION SHELL · GENERATIVE WORKSPACE</span>
         <h1><span class="grad">天择OS</span><span class="tz-os-version">v5.0.0</span></h1>
-        <p>一套在浏览器与 Windows 桌面运行的本地优先工作台。5.0 引入真实 Chromium 网页视图、内部文件与知识库一体化管理、本地模型与上下文压缩、Windows 应用管理器和内置 Python，并把 DeepSeek V4 Flash 升级到 Responses API。</p>
+        <p>一套在浏览器与 Windows 桌面运行的本地优先工作台。普通 API 版继续同时支持网页与桌面；新增的 v5.0-codex 是可并存安装的 Windows 开发者版，用用户自己的 ChatGPT 账号驱动全部 AI 与智能体能力。</p>
         <div class="tz-os-hero-actions">
           <a class="btn" href="https://wjtianze.github.io/os/webos.html"><span>进入网页版</span><span data-ui-icon="right" aria-hidden="true"></span></a>
           <a class="btn btn--ghost" href="#downloads"><span>查看桌面版本</span><span data-ui-icon="download" aria-hidden="true"></span></a>
@@ -38,26 +38,26 @@
       </div>
       <div class="tz-os-hero-node reveal in d2" aria-hidden="true">
         <div class="tz-os-hero-icon" data-ui-icon="monitor"></div>
-        <div class="tz-os-node-meta"><span>WEB / READY</span><span>DESKTOP / 5.0</span><span>FILES / NATIVE</span><span>SHELL / 5.0</span></div>
+        <div class="tz-os-node-meta"><span>WEB / API</span><span>DESKTOP / API</span><span>CODEX / DESKTOP</span><span>FILES / NATIVE</span></div>
       </div>
     </section>
 
     <section class="section wrap tz-workspace-section" id="downloads">
       <div class="section-head reveal">
         <h2><span class="bar"></span>运行方式与版本演进</h2>
-        <span class="more">网页端 5.0 · Windows 安装包 5.0</span>
+        <span class="more">API 版 5.0 · Codex 桌面版 v5.0-codex</span>
       </div>
       <div class="os-pick">
         <div class="card os-card tz-workspace-card d reveal d1">
           <div class="oc-icon" data-ui-icon="windows" aria-hidden="true"></div>
-          <h3>电脑端</h3>
+          <h3>电脑端 · API 版</h3>
           <p class="oc-tag">Windows 原生应用 · 当前安装包 v5.0.0</p>
           <ul>
             <li>独立窗口运行，不占浏览器标签</li>
             <li>真实 Chromium 网页视图兼容拒绝 iframe 的网站</li>
             <li>内部文件空间统一浏览器下载、知识库与 Agent 文件工具</li>
             <li>内置 Python 3.13，并支持 Ollama 等本地部署模型</li>
-            <li>5.0 安装包已公开发布，可直接下载并覆盖安装旧版本</li>
+            <li>使用 DeepSeek 等云端 API 或本机 Ollama，可直接覆盖升级普通版</li>
           </ul>
           <a class="btn" id="os-dl-btn"
              href="https://github.com/wjtianze/wjtianze.github.io/releases/download/v5.0.0/tianze-os-setup-5.0.0.exe"
@@ -68,22 +68,41 @@
           </a>
           <div class="dl-meta" id="os-dl-meta">正在检测实际已发布的桌面安装包…</div>
         </div>
-        <div class="card os-card tz-workspace-card w reveal d2">
+        <div class="card os-card tz-workspace-card c reveal d2">
+          <div class="oc-icon" data-ui-icon="terminal" aria-hidden="true"></div>
+          <h3>电脑端 · Codex 版</h3>
+          <p class="oc-tag">Windows 开发者版 · v5.0-codex</p>
+          <ul>
+            <li>用户直接绑定并登录自己的 ChatGPT 账号，不保存传统 API Key</li>
+            <li>模型、思考强度、可选回答速度和额度均从 Codex App Server 读取</li>
+            <li>思考摘要、计划、命令、文件修改、工具与图片按智能体过程显示</li>
+            <li>Codex 默认操作天择OS文件管理器，保留完整 tzcli 系统控制能力</li>
+            <li>与普通 API 版使用独立应用编号和数据目录，可同时安装</li>
+          </ul>
+          <a class="btn" id="os-codex-dl-btn"
+             href="https://github.com/wjtianze/wjtianze.github.io/releases/download/v5.0-codex/tianze-os-codex-setup-5.0.0-codex.exe"
+             download>
+            <span>下载 Codex 桌面版（v5.0-codex）</span><span data-ui-icon="download" aria-hidden="true"></span>
+          </a>
+          <div class="dl-meta">仅 Windows 桌面端 · 需要用户自己的 ChatGPT 账号</div>
+        </div>
+        <div class="card os-card tz-workspace-card w reveal d3">
           <div class="oc-icon" data-ui-icon="globe" aria-hidden="true"></div>
-          <h3>网页端 5.0</h3>
-          <p class="oc-tag">免安装 · 本次更新的完整体验</p>
+          <h3>网页端 5.0 · API 版</h3>
+          <p class="oc-tag">免安装 · 浏览器继续使用 API</p>
           <ul>
             <li>无需下载，打开网页即可使用</li>
             <li>跨平台，手机/平板/电脑都能跑</li>
             <li>数据存浏览器本地，隐私可控</li>
-            <li>完整 AI 对话、命令行、COC 与站内应用体验</li>
+            <li>完整 API 对话、命令行、COC 与站内应用体验</li>
             <li>Windows 文件、原生应用与内置 Python 仅桌面版可用</li>
+            <li>浏览器不能启动本机 Codex App Server，因此不提供 Codex 网页版</li>
           </ul>
           <a class="btn btn--ghost" href="https://wjtianze.github.io/os/webos.html">
             <span>进入网页版</span><span data-ui-icon="right" aria-hidden="true"></span>
           </a>
         </div>
-        <div class="card os-card tz-workspace-card cl reveal d3">
+        <div class="card os-card tz-workspace-card cl reveal d4">
           <h3><span data-ui-icon="clock" aria-hidden="true"></span>更新日志</h3>
           <p class="oc-tag">自 1.0 至今的版本演进</p>
           <div class="changelog">
@@ -111,7 +130,7 @@
                 <li>主页与天择OS采用更简洁的图片背景，各专区使用带标志性元素的专属背景</li>
                 <li>AI 对话支持<b>归档、查看、还原与永久删除</b>；归档对话仍保留在本地知识库</li>
                 <li>AI Agent 可调用包括 <code>ask</code> 与 <code>agent</code> 子智能体在内的全部系统命令；无次数/轮数硬限制，由系统自动检测并掐断无进展循环</li>
-                <li>新增<b>Token 用量与计费</b>软件，累计统计历史输入、输出、总 Token 与单价快照费用</li>
+                <li>新增<b>词元用量与计费</b>软件，累计统计历史输入、输出、总词元与单价快照费用</li>
                 <li>新增青铜至钻石六档积分 VIP 月卡及六套专属完整皮肤；等级门槛为 Lv.1–10、月费为 200–2600 分，均低于 30 天 3600 分的理论上限；高档权益包含本档及以下皮肤，不会自动续费</li>
                 <li>全量存档默认使用 PBKDF2 + AES-GCM 密码加密；明文导出改为显式危险操作</li>
                 <li>天择网移动端与首页树状导航完成适配；网页版与桌面工程已更新至 4.1.0</li>
@@ -134,7 +153,7 @@
                 <li>AI 对话工具栏新增「🌐 联网」「⌨️ 命令行」开关，不用进设置即可切换</li>
                 <li>纯文本模型支持上传图片：本地 <b>OCR</b> 识别成文字随消息发送（不上传图片本身）；文本类文件（txt/md/json/代码等）直接读取内容发送，不再发 base64</li>
                 <li>AI 软件可反向调用系统命令行：软件内 <code>await TZOS_CMD.exec('命令')</code> 即可执行任意系统命令并拿到输出</li>
-                <li>修复上下文用量条刷新页面后数值大幅缩水：持久化上一轮真实 token 用量，历史未变时刷新后显示与刷新前一致；估算器改为中英文分别计权并计入系统提示词与图片</li>
+                <li>修复上下文用量条刷新页面后数值大幅缩水：持久化上一轮真实词元用量，历史未变时刷新后显示与刷新前一致；估算器改为中英文分别计权并计入系统提示词与图片</li>
               </ul>
             </div>
             <div class="cl-item">
@@ -209,14 +228,14 @@
               <div class="cl-date">2026-07-18</div>
               <ul>
                 <li>新增命令行终端与 AI 命令行模式（Agent 直接改系统）</li>
-                <li>对话自动截图、token 费用统计、消息复制；修复双滚动条、浅色模式白字等 9 处</li>
+                <li>对话自动截图、词元费用统计、消息复制；修复双滚动条、浅色模式白字等 9 处</li>
               </ul>
             </div>
             <div class="cl-item">
               <div class="cl-ver">v2.0</div>
               <div class="cl-date">2026-07-18</div>
               <ul>
-                <li>AI 全链路升级：记忆、token 统计、停止/重发、LaTeX 流式渲染</li>
+                <li>AI 全链路升级：记忆、词元统计、停止/重发、LaTeX 流式渲染</li>
                 <li>浅色主题、浏览器收藏夹、模拟器；全量存档导入导出、在线更新检查</li>
               </ul>
             </div>
@@ -232,7 +251,7 @@
         </div>
       </div>
 
-      <p class="os-note">网页端与桌面版数据各自独立，可分别使用。<b>当前网页端、桌面工程与公开安装包均为 5.0.0</b>，下载按钮会自动校验 GitHub Releases 中实际存在的最新版本。<br/>安装包未进行商业代码签名，Windows 可能显示 SmartScreen 提示；Python 和 Agent 的高权限操作需要逐次确认。首次使用云端模型仍需在「AI 配置」中填写自己的 API Key。</p>
+      <p class="os-note">网页端、普通桌面版与 Codex 桌面版数据各自独立，可按需并存。<b>网页端只能使用普通 API 版；Codex 版仅适用于 Windows 桌面。</b><br/>普通版首次使用云端模型仍需在“AI 配置”中填写自己的 API Key；Codex 版请在“Codex 管理”中登录自己的 ChatGPT 账号。安装包未进行商业代码签名，Windows 可能显示 SmartScreen 提示；高权限操作仍受 Codex 审批与系统权限约束。</p>
     </section>
   </main>
 

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Codex App Server 桌面应用开发技能 — 天择网</title>
+  <meta name="description" content="可下载的 Codex App Server 桌面应用开发技能：涵盖协议、ChatGPT 登录、模型与思考强度、智能体 UI、审批、文件、图片、测试与发布。" />
+  <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260814-codex" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/workspace-pages.css?v=20260814-codex" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M8 9h16v14H8z' fill='none' stroke='white' stroke-width='2'/%3E%3Cpath d='M11 13l3 3-3 3M16 19h5' fill='none' stroke='white' stroke-width='2'/%3E%3C/svg%3E" />
+</head>
+<body data-workspace-page="skills">
+  <a class="wp-skip" href="#main-content">跳到主要内容</a>
+  <div class="bg-mesh"></div>
+
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="https://wjtianze.github.io/index.html" aria-label="天择网首页">
+        <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/></svg></span>
+        <span class="logo-text">天择网</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-label="菜单" data-ui-icon="menu"></button>
+      <nav class="nav"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html" class="active"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a></nav>
+    </div>
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    <section class="wp-hero wrap" aria-labelledby="cas-title">
+      <div>
+        <div class="wp-kicker">DESKTOP AGENT INTEGRATION</div>
+        <h1 id="cas-title">把 <span class="grad">Codex</span> 装进你的软件</h1>
+        <p>这套技能把 Codex App Server 的协议、Windows 启动、ChatGPT 登录、智能体事件、工具审批、文件与图片、原生对话 UI 和零额度测试整理成一条可复用的开发规范。</p>
+        <div class="wp-chip-row"><span class="wp-chip">桌面端专用</span><span class="wp-chip">用户自己的 ChatGPT 账号</span><span class="wp-chip">无传统 API Key</span><span class="wp-chip">含可运行模板</span></div>
+        <div class="wp-actions"><a class="btn" href="https://wjtianze.github.io/ai/skill/codex-app-server/build-codex-app-server-apps.zip" download data-ui-icon="download">下载开发技能 ZIP</a><a class="btn btn--ghost" href="https://learn.chatgpt.com/docs/app-server.md" target="_blank" rel="noopener" data-ui-icon="document">官方 App Server 文档</a></div>
+      </div>
+      <div class="wp-hero-visual" aria-hidden="true"><span data-ui-icon="terminal"></span></div>
+    </section>
+
+    <section class="wp-section wrap" aria-labelledby="cas-why">
+      <div class="wp-card wp-prose reveal">
+        <div class="wp-section-head"><div><div class="wp-kicker">WHY IT MATTERS</div><h2 id="cas-why">一份订阅，把模型和智能体能力带进桌面软件</h2></div></div>
+        <p>Codex App Server 是 Codex 面向原生客户端的双向控制层。它不只是“发一句、回一句”的聊天接口：应用可以读取账号与可用模型，启动和恢复多轮任务，接收思考摘要、计划、命令、文件修改、网页搜索、扩展工具和图片等实时事件，并处理用户审批。</p>
+        <p>对已经订阅 ChatGPT Plus、Pro 等合资格套餐的用户尤其有吸引力：直接登录自己的账号，就能使用套餐当前包含的 Codex 用量，把强大模型、终端、文件操作和智能体工作流接进自己的桌面软件，不必再单独粘贴传统 API Key，也不会消耗开发者的账号额度。套餐范围、可用模型、使用上限和额外点数以每个账号当时显示为准。</p>
+        <div class="wp-notice" data-tone="success"><span class="wp-notice-icon" aria-hidden="true"><span data-ui-icon="shield"></span></span><div><strong>账号归用户，能力归应用。</strong>每位用户直接完成 ChatGPT 登录；应用不读取账号文件、Cookie 或访问令牌，也不共享、转售任何人的订阅。</div></div>
+        <div class="wp-actions"><a class="btn btn--ghost" href="https://openai.com/index/introducing-the-codex-app/" target="_blank" rel="noopener" data-ui-icon="right">了解 Codex 与套餐内用量</a><a class="btn btn--ghost" href="https://openai.com/chatgpt/pricing" target="_blank" rel="noopener" data-ui-icon="right">查看当前套餐</a></div>
+      </div>
+    </section>
+
+    <section class="wp-section wrap" aria-labelledby="cas-capabilities">
+      <div class="wp-section-head reveal"><div><div class="wp-kicker">WHAT YOU CAN BUILD</div><h2 id="cas-capabilities">可以接入的能力</h2></div><p>全部按本机版本动态发现</p></div>
+      <div class="wp-grid">
+        <article class="wp-card wp-feature-card reveal d1"><div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="user"></span></div><h3>ChatGPT 账号与额度</h3><p>内置登录、退出、套餐状态、额度窗口、重置时间和词元用量，不保存传统 API Key。</p></article>
+        <article class="wp-card wp-feature-card reveal d2"><div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="ai"></span></div><h3>模型、思考与速度</h3><p>从 App Server 读取可用模型、思考档位、图片能力与可选速度档，不把易过时的名称写死。</p></article>
+        <article class="wp-card wp-feature-card reveal d2"><div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="terminal"></span></div><h3>完整智能体过程</h3><p>把思考摘要、计划、命令、文件修改、搜索、工具和审批做成清晰的过程卡，而不是一大段调试文字。</p></article>
+        <article class="wp-card wp-feature-card reveal d3"><div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="folder"></span></div><h3>文件与应用工作区</h3><p>Codex 默认操作应用自己的文件管理器目录，图片、附件和生成文件通过受控本地桥安全流转。</p></article>
+        <article class="wp-card wp-feature-card reveal d3"><div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="monitor"></span></div><h3>原生多对话 UI</h3><p>后台对话继续生成、切回后内容完整恢复；发送/停止跟随当前对话，滚动视角不会被强行拖走。</p></article>
+        <article class="wp-card wp-feature-card reveal d4"><div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="settings"></span></div><h3>兼容与零额度回归</h3><p>附版本结构生成器、Node 客户端、假 App Server、冒烟测试和 UI 模板，专门规避旧字段、审批卡死与 Windows 启动错误。</p></article>
+      </div>
+    </section>
+
+    <section class="wp-section wrap" aria-labelledby="cas-download">
+      <div class="wp-section-head reveal"><div><div class="wp-kicker">DOWNLOAD</div><h2 id="cas-download">技能包内容</h2></div></div>
+      <div class="wp-card wp-download-card reveal">
+        <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="file"></span></div>
+        <div><h3>build-codex-app-server-apps</h3><p>包含完整 SKILL.md、协议/Windows/UI/测试参考、可复用 Node JSONL 客户端、原生智能体对话 UI、当前版本结构生成器和零额度假服务测试。</p><div class="wp-card-meta"><span class="wp-chip">约 32 KB</span><span class="wp-chip">无账号秘密</span><span class="wp-chip">可离线自测</span></div></div>
+        <div class="wp-actions"><a class="btn" href="https://wjtianze.github.io/ai/skill/codex-app-server/build-codex-app-server-apps.zip" download data-ui-icon="download">下载 ZIP</a></div>
+      </div>
+      <div class="wp-card wp-prose reveal d2">
+        <h3>怎么用</h3>
+        <ol><li>解压到 Codex 的技能目录，或把技能文件夹交给 Codex。</li><li>要求 Codex“使用 build-codex-app-server-apps 把这个桌面应用的 AI 重构为 Codex App Server”。</li><li>技能会先检查真实源码和本机协议结构，再实现账号、模型、UI、审批、文件与测试；网页/API 版保持原样。</li></ol>
+        <p>该技能面向应用开发者，不是浏览器端接口。自动测试不会调用真实模型或消耗你的 Codex 用量。</p>
+      </div>
+    </section>
+  </main>
+
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260814-codex"></script>
+</body>
+</html>

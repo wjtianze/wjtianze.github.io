@@ -35,11 +35,11 @@
       <div>
         <div class="wp-kicker">AI SKILL · INTERACTIVE LEARNING</div>
         <h1 id="tlh-title">课本学习助手 <span class="grad">TLH</span></h1>
-        <p>把教材章节生成一个可离线打开、可与 AI 对话的交互式 HTML 学习页。知识点、教材原文、测验、错题本、批阅数据与交互演示都在同一工作区。</p>
+        <p>把教材章节生成一个可离线打开、可与 AI 对话的交互式 HTML 学习页。普通 API 版与 L7.0-codex 桌面版并行提供，知识点、教材原文、测验、错题本、批阅数据与交互演示都在同一工作区。</p>
         <div class="wp-chip-row">
-          <span class="wp-chip">版本 L7.0</span>
+          <span class="wp-chip">L7.0 API 版</span>
+          <span class="wp-chip">L7.0-codex 桌面版</span>
           <span class="wp-chip">完全开源</span>
-          <span class="wp-chip">DeepSeek API</span>
           <span class="wp-chip">离线 HTML</span>
         </div>
       </div>
@@ -85,17 +85,17 @@
         <article class="wp-card wp-feature-card reveal d3">
           <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="ai"></span></div>
           <h3>DeepSeek 对话</h3>
-          <p>V4 Flash / V4 Pro，可调思考强度与理解强度，支持出题、AI 详解、AI 重写纠错、引用知识点。</p>
+          <p>API 版使用 DeepSeek；Codex 版登录用户自己的 ChatGPT 账号，并从 App Server 动态读取模型、思考强度、可选速度和图片能力。</p>
         </article>
         <article class="wp-card wp-feature-card reveal d3">
           <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="burst"></span></div>
           <h3>公式 + LaTeX 助手</h3>
-          <p>全程 Markdown + KaTeX 渲染；点击任意公式复制 LaTeX 源码；标题栏 LaTeX 助手弹窗按学科 × 难度分类。</p>
+          <p>全程 Markdown + KaTeX 渲染；按鼠标中键复制任意公式的 LaTeX 源码；标题栏 LaTeX 助手按学科 × 难度分类。</p>
         </article>
         <article class="wp-card wp-feature-card reveal d4">
           <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="save"></span></div>
           <h3>状态持久化</h3>
-          <p>作答 / 批阅 / 对话 / 滚动位置 / demo 代码全部存入 localStorage，刷新回到原位；Token 统计与余额查询。</p>
+          <p>作答、批阅、对话、滚动位置和演示代码持久保存；Codex 版还显示智能体过程、工具调用、词元与账号额度。</p>
         </article>
       </div>
       <div class="wp-actions"><a class="btn btn--ghost" href="https://wjtianze.github.io/ai/skill/tlh/about/index.html" data-ui-icon="document">查看 API 级详细使用教程</a></div>
@@ -104,22 +104,34 @@
     <!-- 下载 -->
     <section class="wp-section wrap" aria-labelledby="tlh-download">
       <div class="wp-section-head reveal"><div><div class="wp-kicker">DOWNLOAD</div><h2 id="tlh-download">下载技能</h2></div></div>
-      <div class="wp-card wp-download-card reveal">
-        <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="file"></span></div>
-        <div>
-          <h3>textbook-learning-helper L7.0</h3>
-          <p>完整技能包，含 SKILL.md、README.md、模板 template.html 与注入脚本 inject.py。放入 AI Agent 技能目录即可使用。</p>
-          <div class="wp-card-meta"><span class="wp-chip">约 137 KB</span><span class="wp-chip">含 references/</span><span class="wp-chip">L7.0</span></div>
+      <div class="wp-grid">
+        <div class="wp-card wp-download-card reveal d1">
+          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="globe"></span></div>
+          <div>
+            <h3>textbook-learning-helper L7.0 · API 版</h3>
+            <p>网页与桌面均可用。学习页直接连接用户自己的 DeepSeek API Key，保留在线体验与普通 HTML 使用方式。</p>
+            <div class="wp-card-meta"><span class="wp-chip">约 137 KB</span><span class="wp-chip">网页可用</span><span class="wp-chip">DeepSeek API</span></div>
+          </div>
+          <div class="wp-actions"><a class="btn" href="https://wjtianze.github.io/ai/skill/tlh/textbook-learning-helper-L7.0.zip" download data-ui-icon="download">下载 API 版</a></div>
         </div>
-        <div class="wp-actions"><a class="btn" href="https://wjtianze.github.io/ai/skill/tlh/textbook-learning-helper-L7.0.zip" download data-ui-icon="download">下载 ZIP</a></div>
+        <div class="wp-card wp-download-card reveal d2">
+          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="terminal"></span></div>
+          <div>
+            <h3>textbook-learning-helper L7.0-codex</h3>
+            <p>仅桌面端。配套本地启动器连接 Codex App Server，用户登录自己的 ChatGPT 账号；支持模型、思考强度、额度、工具过程、图片与文件。</p>
+            <div class="wp-card-meta"><span class="wp-chip">约 1.1 MB</span><span class="wp-chip">Windows 桌面</span><span class="wp-chip">无需传统 API Key</span></div>
+          </div>
+          <div class="wp-actions"><a class="btn" href="https://wjtianze.github.io/ai/skill/tlh/textbook-learning-helper-L7.0-codex.zip" download data-ui-icon="download">下载 Codex 版</a></div>
+        </div>
       </div>
+      <div class="wp-notice" data-tone="warning"><span class="wp-notice-icon" aria-hidden="true"><span data-ui-icon="monitor"></span></span><div><strong>网页版仍使用 API 版。</strong>浏览器不能安全启动本机 Codex App Server；L7.0-codex 必须解压后从配套桌面启动脚本进入。</div></div>
     </section>
 
     <!-- 在线体验 -->
     <section class="wp-section wrap" aria-labelledby="tlh-demo">
       <div class="wp-section-head reveal">
-        <div><div class="wp-kicker">LIVE DEMO</div><h2 id="tlh-demo">在线体验</h2></div>
-        <p>预设教材：狭义相对论入门教学</p>
+        <div><div class="wp-kicker">LIVE DEMO · API EDITION</div><h2 id="tlh-demo">API 版在线体验</h2></div>
+        <p>Codex 版仅支持桌面端</p>
       </div>
 
       <div class="wp-card wp-api-console reveal">
@@ -171,10 +183,10 @@
           <p>API 文档级别的详细说明：参数、调用方式、输入输出格式、源文件结构。</p>
           <span class="wp-action-link">查看教程 <span data-ui-icon="right" aria-hidden="true"></span></span>
         </a>
-        <a class="wp-card wp-catalog-card reveal d2" href="https://wjtianze.github.io/ai/skill/tlh/textbook-learning-helper-L7.0.zip" download>
+        <a class="wp-card wp-catalog-card reveal d2" href="https://wjtianze.github.io/ai/skill/tlh/textbook-learning-helper-L7.0-codex.zip" download>
           <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="file"></span></div>
-          <h3>下载技能包</h3>
-          <p>获取完整 L7.0 技能压缩包，放入你的 AI Agent 即可生成任意章节学习页。</p>
+          <h3>下载 Codex 桌面版</h3>
+          <p>获取 L7.0-codex 技能与本地启动器，用自己的 ChatGPT 账号完成对话、批阅、图片和文件任务。</p>
           <span class="wp-action-link">立即下载 <span data-ui-icon="download" aria-hidden="true"></span></span>
         </a>
         <a class="wp-card wp-catalog-card reveal d3" href="https://platform.deepseek.com" target="_blank" rel="noopener">
