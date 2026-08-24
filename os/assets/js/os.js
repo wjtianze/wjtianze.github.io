@@ -10,7 +10,8 @@
 'use strict';
 
 /* 系统版本（每次发布更新必须同步递增，并更新 dev/os/version.json） */
-const OS_VERSION = '5.2.0';
+const OS_VERSION = '5.2.1';
+const OS_RELEASE_DATE = '2026-08-24';
 
 /* 网页 AI 站点目录。桌面版通过主进程的原生 Chromium WebContentsView 加载，
  * 绝不把第三方登录页放进 iframe；网页版只能提供限制说明与外部打开入口。 */
@@ -4863,7 +4864,9 @@ const BUILTIN_APP_CMDS = {
   about: (r) => {
     if (!r) return 'about 用法：\n  about info  系统详细信息\n  about changelog  查看当前版本更新日志\n  about history  查看完整历史版本\n  about credits  致谢';
     const { sub } = splitSub(r);
-    if (sub === 'info') return '天择OS v' + OS_VERSION + '\n发布日期：2026-08-23\n版本代号：Evolution Shell\n作者：天择网\n构建：浏览器内操作系统（Web + Electron 桌面版）\n视觉：简洁系统壁纸、专区专属背景与统一图片图标图集\nAI：默认 Gemini 3.7 Flash Free 安全受管通道、站内与 COC 只读工具、断线重试；Codex 版使用用户自己的 ChatGPT 账号\n开源：https://wjtianze.github.io/open/';
+    if (sub === 'info') return '天择OS v' + OS_VERSION + '\n发布日期：' + OS_RELEASE_DATE + '\n版本代号：Evolution Shell\n作者：天择网\n构建：浏览器内操作系统（Web + Electron 桌面版）\n视觉：简洁系统壁纸、专区专属背景与统一图片图标图集\nAI：默认 Gemini 3.7 Flash Free 安全受管通道、站内与 COC 只读工具、断线重试；Codex 版使用用户自己的 ChatGPT 账号\n开源：https://wjtianze.github.io/open/';
+    if (sub === 'changelog' && OS_VERSION === '5.2.1') return 'v5.2.1（2026-08-24）：修复 COC 云端实时查询首次请求失败；玩家资料可直接进入当前部落，部落成员概况也可继续进入玩家查询；补齐连续查询竞态、失败后陈旧操作和键盘导航保护，并统一正式发布日期。\n\n历史版本：v5.2.0（COC 18.400.22 数据、稳本规划、安全受管 AI、coc.py 实时查询、AI 原生 CLI 工具链与文档权限加固）、v5.1、v5.0、v4.1、v4.0、v3.5、v3.2、v3.1、v3.0、v2.x、v1.0。';
+    if (sub === 'history' && OS_VERSION === '5.2.1') return 'v5.2.1（2026-08-24）：COC 云端查询修复；玩家、部落与成员互跳；请求竞态与陈旧操作保护；发布日期统一\nv5.2.0（2026-08-24）：安全受管 Gemini 3.7 Flash Free 默认通道、AI 断线重试与只读工具；AI Agent 原生 CLI 工具链；COC v18.400.22 数据、官方实时查询和六类工具入口；文档阅读器与命令权限加固\nv5.1（2026-08-20）：桌面加密恢复中心、普通版到 Codex 版迁移、Python 完整工作流、逐对话 AI 配置与签名更新\nv5.0（2026-08-07）：Responses API、站点 AI、API/本地/自动回退、真实网页视图、内部文件、Windows 应用、Python 3.13、上下文压缩与 COC 教程\nv4.1（2026-08-01）：统一命令中心与 Evolution Shell 完善\nv4.0（2026-07-31）：Evolution Shell 重构\nv3.5（2026-07-25）：等级积分与应用命令桥\nv3.2、v3.1、v3.0、v2.x、v1.0。';
     if (sub === 'changelog') return 'v5.2（2026-08-24）：AI 助手新增由 Cloudflare Worker Secret 安全托管的 Gemini 3.7 Flash Free 默认通道、断线自动重试、天择网站内检索、天择 COC 静态数据和 coc.py 官方实时查询工具；修复 AI Agent 调用 CLI 时只能依赖文本代码块、工具结果难以稳定回传的问题。COC 数据更新到 v18.400.22，并补齐实时查询、数据查询、升级规划、伤害计算、教程和国际服安装入口；文档阅读器与命令权限边界同步加固。\n\n历史版本：v5.1（桌面加密恢复、普通版到 Codex 版迁移、Python 完整工作流、逐对话 AI 配置与签名更新）、v5.0（Responses API、站点 AI、API/本地/自动回退、真实网页视图、内部文件、Windows 应用、Python 3.13、上下文压缩与 COC 教程）、v4.1（统一命令中心与 Evolution Shell 完善）、v4.0（Evolution Shell 重构）、v3.5（等级积分与应用命令桥）、v3.2、v3.1、v3.0、v2.x、v1.0。';
     if (sub === 'history') return 'v5.2（2026-08-24）：安全受管 Gemini 3.7 Flash Free 默认通道、AI 断线重试与只读工具；AI Agent 原生 CLI 工具调用链；COC v18.400.22 数据、官方实时查询和六类工具入口；文档阅读器与命令权限加固\nv5.1（2026-08-20）：桌面加密恢复中心、普通版到 Codex 版安全迁移、Python 多轮输入/EOF/参数/工作目录/日志/重跑、逐对话 AI 配置、签名更新与旧包回滚\nv5.0（2026-08-07）：Responses API、站点 AI、API/本地/自动回退、真实网页视图、内部文件、Windows 应用、Python 3.13、上下文压缩与 COC 教程\nv4.1（2026-08-01）：主页与OS背景简化；各专区启用标志性专属背景；移动端与首页一屏树状导航完成适配；AI 对话支持归档、查看、还原与永久删除，归档内容仍进入知识库；命令行升级为统一注册中心并支持桌面 PowerShell/CMD；ask 为纯 API 问答，agent 为可调用命令的子智能体，二者均可被主 AI 和应用调用；取消 Agent 次数/轮数硬限制，改用无进展循环检测；应用 AI 调用加入实时滥用监管；新增 Token 用量与计费账本\nv4.0（2026-07-31）：Evolution Shell 全面重构；新增顶部态势线与系统轨道；冷/中/暖三套生成式星图壁纸、图片按钮与表面材质；统一 8×8 图片图标图集并兼容旧 installedApps emoji 数据；网页与独立 AI 悬浮窗视觉同步；独立悬浮窗可通过代理执行主桌面 Agent 命令\nv3.5（2026-07-25）：用户等级与积分（加密存储、随存档迁移）、冷/中/暖配色皮肤（OS 内积分解锁，天择网全免费）、AI 对话工具栏联网与命令行开关、纯文本模型图片 OCR 与文本文件直读、软件可调用系统命令行（TZOS_CMD.exec）、修复上下文用量刷新后缩水\nv3.2（2026-07-24）：笔记编号固定化 + view/edit/undo、COC 伤害自定义闪震、官网版本探测修复、悬浮窗命令修复\nv3.1.1（2026-07-23）：修复 AI 软件命令包注册失效、新增命令行笔记应用、文档阅读器标签并入标题栏、命令行输入输出取消字符限制、AI 提示词补全\nv3.1（2026-07-22）：实用工具全面本地化、AI 对话与悬浮窗互通、命令行重构\nv3.0（2026-07-21）：AI 悬浮窗（Ctrl+1）、窗口层级体系、桌面版自定义协议\nv2.6（2026-07-20）：窗口置顶、文档缩放、命令行扩展\nv2.5（2026-07-20）：联网搜索、文件上传、命令行全面开放\nv2.2（2026-07-19）：桌面版四大痛点修复\nv2.1（2026-07-18）：命令行终端与 AI Agent\nv2.0（2026-07-18）：AI 全链路升级\nv1.0（2026-07-14）：首个版本发布';
     if (sub === 'credits') return '天择OS 致谢：\n· DeepSeek / OpenAI / GLM / MiMo 等 AI 服务商\n· Electron 跨平台桌面框架\n· 所有开源项目（marked/highlight.js/pdf.js 等）\n· 天择网用户的支持与反馈';
@@ -13399,7 +13402,7 @@ function renderAbout() {
   <div class="app-workspace app-workspace--about about-v4">
     ${appWorkspaceHeaderHTML('crystal', '关于天择OS', '面向天择网服务与本地 AI 工作流的 Evolution Shell', {
       eyebrow: 'SYSTEM IDENTITY',
-      meta: `<span class="app-badge is-live">v${OS_VERSION}</span><span class="app-badge">2026-08-23</span>`,
+      meta: `<span class="app-badge is-live">v${OS_VERSION}</span><span class="app-badge">${OS_RELEASE_DATE}</span>`,
       actions: `<button class="btn sm ghost tz-icon-label" onclick="TZOS.checkUpdate()">${uiIconHTML('refresh')}<span>检查更新</span></button>`
     })}
     <main class="app-workspace__main app-workspace__main--scroll about-main">
@@ -15865,7 +15868,7 @@ function createFloatOverlay() {
   chatFrame.style.cssText = 'flex:1;min-height:0;border:none;background:transparent';
   chatFrame.addEventListener('load', syncFloatOverlayTheme);
   // 网页浮层也复用完整悬浮对话页：多会话标签、能力开关和主对话保持同一套实现。
-  chatFrame.src = 'float-chat.html?embedded=1&v=5.2.0';
+  chatFrame.src = 'float-chat.html?embedded=1&v=5.2.1';
   overlay.append(titleBar, chatFrame);
   document.body.appendChild(overlay);
   // v3.1：大小变化时保存位置/大小

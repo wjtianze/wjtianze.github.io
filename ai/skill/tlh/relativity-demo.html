@@ -2325,10 +2325,19 @@ function sQ(){
   if(aiList.length>0)gradeSubjective(aiList);else finalizeAnalysis();
 }
 function scoreVerdict(s){return s>=9?'correct':s>=5?'partial':'wrong'}
+function normalizeEssayScore(q,v,score){
+  var sc=Number(score);if(!q||q.type!=='essay'||!isFinite(sc)||sc>=10)return sc;
+  var parts=[v&&v.feedback,v&&v.comment];if(v&&typeof v.verdict==='string'&&isNaN(Number(v.verdict)))parts.push(v.verdict);if(v&&typeof v.result==='string'&&isNaN(Number(v.result)))parts.push(v.result);
+  var text=parts.filter(function(item){return item!=null&&String(item).trim()}).join(' ').replace(/\s+/g,' ').trim();if(!text)return sc;
+  var riskText=text.replace(/(?:不|未)(?:属于|构成|反映|涉及).{0,12}(?:实质性)?(?:概念性错误|概念误解)/g,'');
+  var substantive=/(?:最终)?(?:答案|结论|结果)(?:本身)?(?:是|为)?(?:错误|不正确|有误|不成立|不完整|缺失|未给出|没有给出)/.test(riskText)||/(?:存在|属于|构成|反映|暴露|包含|出现).{0,12}(?:实质性|概念性|关键性).{0,8}(?:错误|误解|问题)/.test(riskText)||/(?:关键步骤|核心推导|主要论证).{0,12}(?:错误|有误|不成立|缺失|无法成立)/.test(riskText)||/(?:无法|不能).{0,8}(?:推出|证明|得到).{0,8}(?:最终)?(?:答案|结论|结果)/.test(riskText)||/(?:多个|多处|若干).{0,8}(?:错误|问题|漏洞)/.test(riskText)||/(?:另外|另有|此外|同时|并且|以及).{0,20}(?:错误|有误|问题|缺失|不完整|不成立)/.test(riskText);if(substantive)return sc;
+  var explicitCorrect=/(?:最终)?(?:答案|结论|结果)(?:本身|总体)?(?:是|为)?(?:完全|确实|总体上|仍然|依然)?(?:正确|无误|成立)/.test(text)||/(?:答案|结论|结果).{0,6}(?:与参考答案等价|等价于参考答案)/.test(text)||/(?:只|仅).{0,8}(?:写|给|给出|写出).{0,8}(?:正确|无误|等价)(?:的)?(?:最终)?(?:答案|结论|结果)/.test(text);if(!explicitCorrect)return sc;
+  return 10;
+}
 async function gradeSubjective(idxList,extraNote){
   var all=allQ();
   function needsScore(q){return(q.type==='fill'||q.type==='essay')&&!(q.__verdict==='correct'||q.__verdict==='partial'||q.__verdict==='wrong'||q.__verdict==='ungraded')}
-  var sys2='你是严格而公正的阅卷老师，同时也是耐心的学习伙伴。请始终用简体中文输出。下面是若干道题，每题可能要求你做两件事：\n（1）【打分】仅对标注「需打分」的填空/解答题：满分 10 分，给一个 0~10 的整数。填空题看关键结果是否正确（等价写法算对，完全正确给 10，完全错误或空白给 0）；解答题按关键步骤与最终结论的正确与完整程度按比例给分，允许合理的不同解法。\n（2）【点评看法】仅对提供了「学生的看法」的题：分析该看法是否正确、有无误区、如何改进（这是头脑风暴，不影响分数）。\n只输出一个 JSON 数组，不要任何多余文字，不要 ``` 代码围栏。每个元素：{"idx":整数题号(与给定一致),"score":整数0~10(仅需打分的题才给，否则省略),"feedback":"对作答的简短点评(仅需打分的题才给)","viewComment":"对学生看法的评价(仅当提供了看法时才给)"}。\nMarkdown 规范：需要换行就真正换行；所有数学符号必须包在 $...$ 内，不得有反斜杠命令裸露在 $...$ 之外。\n【L6.0 行内公式格式铁律】行内公式 $...$：① 仅当含 \\sum \\int \\lim \\prod 等大型运算符时才加 \\displaystyle；② 含 \\frac 的（除上下标小字外）一律改 \\dfrac；③ 行间公式 $$...$$ 内不要写 \\displaystyle 或 \\dfrac，分数用 \\frac。\n【乘号铁律】乘号一律且只能用 \\cdot，严禁写 \\cdotp。输出前请逐字检查，确保全文没有任何一个 \\cdotp。\n【L6.1 长度命令铁律】严禁使用 LaTeX 长度/间距命令：\\\\[4pt]、\\\\[2ex]、\\vspace{...}、\\hspace{...}、\\vskip、\\hskip、\\smallskip、\\medskip、\\bigskip、\\vfill、\\hfill、\\newline 等——会破坏 Markdown 渲染、导致整段文字显示乱码。需要换行就真正换行（\\n 或空行）。';
+  var sys2='你是公正、宽容的阅卷老师，同时也是耐心的学习伙伴。请始终用简体中文输出。下面是若干道题，每题可能要求你做两件事：\n（1）【打分】仅对标注「需打分」的填空/解答题：满分 10 分，给一个 0~10 的整数。填空题看关键结果是否正确，等价写法算对，完全正确给 10，完全错误或空白给 0。解答题采用“结果优先”的宽容规则：最终答案正确或与参考答案等价，就是满分 10 分；只写正确答案、没有写推导过程，也必须给 10 分。孤立的抄写笔误、符号小错、行列写错一处、某一项局部写错或非关键步骤瑕疵，只要结合上下文可判断为笔误、不改变最终答案且不反映实质性概念误解，也必须给 10 分，可在评语中温和指出但不得扣分。只有最终答案错误、不完整，或错误会实质改变结论时，才按影响程度扣分。允许合理的不同解法。\n（2）【点评看法】仅对提供了「学生的看法」的题：分析该看法是否正确、有无误区、如何改进（这是头脑风暴，不影响分数）。\n只输出一个 JSON 数组，不要任何多余文字，不要 ``` 代码围栏。每个元素：{"idx":整数题号(与给定一致),"score":整数0~10(仅需打分的题才给，否则省略),"feedback":"对作答的简短点评(仅需打分的题才给)","viewComment":"对学生看法的评价(仅当提供了看法时才给)"}。\nMarkdown 规范：需要换行就真正换行；所有数学符号必须包在 $...$ 内，不得有反斜杠命令裸露在 $...$ 之外。\n【L6.0 行内公式格式铁律】行内公式 $...$：① 仅当含 \\sum \\int \\lim \\prod 等大型运算符时才加 \\displaystyle；② 含 \\frac 的（除上下标小字外）一律改 \\dfrac；③ 行间公式 $$...$$ 内不要写 \\displaystyle 或 \\dfrac，分数用 \\frac。\n【乘号铁律】乘号一律且只能用 \\cdot，严禁写 \\cdotp。输出前请逐字检查，确保全文没有任何一个 \\cdotp。\n【L6.1 长度命令铁律】严禁使用 LaTeX 长度/间距命令：\\\\[4pt]、\\\\[2ex]、\\vspace{...}、\\hspace{...}、\\vskip、\\hskip、\\smallskip、\\medskip、\\bigskip、\\vfill、\\hfill、\\newline 等——会破坏 Markdown 渲染、导致整段文字显示乱码。需要换行就真正换行（\\n 或空行）。';
   var body='请按要求批阅/点评以下题目：\n';
   if(extraNote&&extraNote.trim())body+='\n【教师/学生本次的额外要求或意见，请重点参考】'+extraNote.trim()+'\n';
   for(var j=0;j<idxList.length;j++){var i=idxList[j],q=all[i];var ns=needsScore(q);
@@ -2348,7 +2357,7 @@ async function gradeSubjective(idxList,extraNote){
     var mp={};for(var k=0;k<arr.length;k++){var v=arr[k],id=(v.idx!=null?v.idx:(v.index!=null?v.index:v.no));mp[parseInt(id)]=v}
     for(var j=0;j<idxList.length;j++){var i=idxList[j],q=all[i],v=mp[i];
       if(needsScore(q)){
-        if(v&&(v.score!=null||v.verdict!=null||v.result!=null)){var raw=(v.score!=null?v.score:(v.verdict!=null?v.verdict:v.result));var sc=parseFloat(raw);if(isNaN(sc)){var vd0=String(raw||'').toLowerCase();sc=/partial|部分|半|缺/.test(vd0)?6:/correct|正确|对|full/.test(vd0)?10:0}if(sc<=1&&sc>0&&!Number.isInteger(sc))sc=Math.round(sc*10);sc=Math.round(sc);if(sc<0)sc=0;if(sc>10)sc=10;q.__score10=sc;q.__score=sc/10;q.__verdict=scoreVerdict(sc);q.__feedback=nm(applyDisplayStyle(v.feedback||v.comment||''));}
+        if(v&&(v.score!=null||v.verdict!=null||v.result!=null)){var raw=(v.score!=null?v.score:(v.verdict!=null?v.verdict:v.result));var sc=parseFloat(raw);if(isNaN(sc)){var vd0=String(raw||'').toLowerCase();sc=/partial|部分|半|缺/.test(vd0)?6:/correct|正确|对|full/.test(vd0)?10:0}if(sc<=1&&sc>0&&!Number.isInteger(sc))sc=Math.round(sc*10);sc=Math.round(sc);if(sc<0)sc=0;if(sc>10)sc=10;sc=normalizeEssayScore(q,v,sc);q.__score10=sc;q.__score=sc/10;q.__verdict=scoreVerdict(sc);q.__feedback=nm(applyDisplayStyle(v.feedback||v.comment||''));}
         else{q.__verdict='ungraded';q.__score10=null;q.__score=0;q.__feedback='（AI 未返回该题评分，可在右侧追问 AI）'}
       }
       if(q.__view&&q.__view.trim()){q.__viewEval=nm(applyDisplayStyle((v&&(v.viewComment||v.view||v.viewcomment))||'（AI 未对看法作出评价）'))}

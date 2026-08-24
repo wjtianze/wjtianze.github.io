@@ -4,7 +4,10 @@
 
   var CLOUD_ROOT = "https://tianze-coc-query.xia-xilin-sgy.workers.dev";
   var connected = false, capabilities = null, connectionPromise = null, lastResult = null, lastAction = "", currentKind = "player", transport = "cloud";
+  var queryGeneration = 0, connectionGeneration = 0;
   var COC_TAG_CHARACTERS = "0289PYLQGRJCUV";
+  var LIVE_KINDS = ["player", "clan", "advanced"];
+  var STALE_QUERY = {};
   var ACTION_DEFAULTS = {
     player: { action: "get_player", params: { player_tag: "#" } },
     clan: { action: "get_clan", params: { tag: "#" } },
@@ -26,6 +29,10 @@
   function normalizeTagInput(input) {
     if (!input || !String(input.value || "").trim()) return;
     try { input.value = normalizeCocTag(input.value, input.id === "cocClanTag" ? "部落标签" : "玩家标签"); } catch (_error) {}
+  }
+  function normalizedLinkedTag(value, noun) {
+    if (typeof value !== "string") return "";
+    try { return normalizeCocTag(value, noun); } catch (_error) { return ""; }
   }
   function setStatus(text, tone) {
     var el = $("cocLiveStatus"); if (!el) return;
@@ -143,23 +150,36 @@
       return item && /^[a-z][a-z0-9_]{1,80}$/.test(String(item.action || "")) && item.action !== "verify_player_token" && item.status !== "unsupported" && secrets.length === 0;
     });
   }
+  function connectionIsCurrent(generation, targetTransport) {
+    return generation === connectionGeneration && targetTransport === transport;
+  }
+  function staleConnectionError() {
+    var error = new Error("连接方式已经切换");
+    error.staleConnection = true;
+    return error;
+  }
   function connect() {
     if (connectionPromise) return connectionPromise;
-    setStatus(transport === "local" ? "正在连接本机 coc.py…" : "正在连接天择云端…");
-    var task = transport === "local"
+    var generation = connectionGeneration, targetTransport = transport;
+    setStatus(targetTransport === "local" ? "正在连接本机 coc.py…" : "正在连接天择云端…");
+    var task = targetTransport === "local"
       ? desktopRpc({ operation: "session.status" }).then(function (status) {
           if (!status || (!status.connected && !status.remembered)) throw new Error("本机 COC 服务尚未登录，请先在天择OS中完成本机配置");
           return status;
         })
       : cloudRequest("/api/health", { method: "GET" }, false);
     var pending = task.then(function () {
+      if (!connectionIsCurrent(generation, targetTransport)) throw staleConnectionError();
       connected = true;
-      return loadCapabilities();
+      return loadCapabilities(targetTransport, generation);
     }).then(function () {
-      setStatus(transport === "local" ? "本机 coc.py 已连接" : "天择云端已连接", "ok");
+      if (!connectionIsCurrent(generation, targetTransport)) throw staleConnectionError();
+      setStatus(targetTransport === "local" ? "本机 coc.py 已连接" : "云端服务在线，等待首次真实查询", targetTransport === "local" ? "ok" : "");
     }).catch(function (error) {
+      if (error && error.staleConnection) throw error;
+      if (!connectionIsCurrent(generation, targetTransport)) throw staleConnectionError();
       connected = false;
-      setStatus(transport === "local" ? "本机服务不可用" : "云端暂不可用", "error");
+      setStatus(targetTransport === "local" ? "本机服务不可用" : "云端暂不可用", "error");
       $("cocLiveError").textContent = errorText(error);
       throw error;
     });
@@ -167,11 +187,14 @@
     pending.then(function () { if (connectionPromise === pending) connectionPromise = null; }, function () { if (connectionPromise === pending) connectionPromise = null; });
     return pending;
   }
-  function loadCapabilities() {
-    var task = transport === "local"
+  function loadCapabilities(targetTransport, generation) {
+    targetTransport = targetTransport || transport;
+    generation = typeof generation === "number" ? generation : connectionGeneration;
+    var task = targetTransport === "local"
       ? desktopRpc({ operation: "capabilities.get" })
       : cloudRequest("/api/coc/capabilities", { method: "GET" }, true);
     return task.then(function (result) {
+      if (!connectionIsCurrent(generation, targetTransport)) throw staleConnectionError();
       var filtered = safeActions(result);
       capabilities = Object.assign({}, result, { readOnlyActions: filtered, events: [] });
       renderActions();
@@ -212,8 +235,13 @@
     $("cocActionHelp").textContent = spec ? "可用参数：" + (specList(spec, "allowedParams", "allowed_params").join("、") || "无") + "；必填：" + (specList(spec, "requiredParams", "required_params").join("、") || "无") + (spec.notes ? "。" + spec.notes : "") : "";
   }
   function setKind(kind) {
+    if (LIVE_KINDS.indexOf(kind) < 0) return;
     currentKind = kind;
-    document.querySelectorAll("[data-live-kind]").forEach(function (button) { button.setAttribute("aria-selected", String(button.getAttribute("data-live-kind") === kind)); });
+    document.querySelectorAll("[data-live-kind]").forEach(function (button) {
+      var selected = button.getAttribute("data-live-kind") === kind;
+      button.setAttribute("aria-selected", String(selected));
+      button.tabIndex = selected ? 0 : -1;
+    });
     $("cocPlayerFields").hidden = kind !== "player";
     $("cocClanFields").hidden = kind !== "clan";
     $("cocAdvancedFields").hidden = kind !== "advanced";
@@ -222,6 +250,18 @@
       if ((capabilities.readOnlyActions || []).some(function (item) { return item.action === preferred; })) $("cocAction").value = preferred;
       actionChanged();
     }
+  }
+  function handleKindKeydown(event) {
+    if (["ArrowLeft", "ArrowRight", "Home", "End"].indexOf(event.key) < 0) return;
+    var buttons = Array.prototype.slice.call(document.querySelectorAll("[data-live-kind]"));
+    var current = buttons.indexOf(event.currentTarget);
+    if (current < 0 || !buttons.length) return;
+    event.preventDefault();
+    var next = event.key === "Home" ? 0 : event.key === "End" ? buttons.length - 1 :
+      (current + (event.key === "ArrowRight" ? 1 : -1) + buttons.length) % buttons.length;
+    var button = buttons[next];
+    setKind(button.getAttribute("data-live-kind"));
+    button.focus();
   }
   function parseParams() {
     var text = $("cocParams").value.trim();
@@ -236,24 +276,44 @@
     paragraph.textContent = text;
     container.appendChild(paragraph);
   }
-  function invokeQuery(action, params, button) {
-    if (button) button.disabled = true;
-    $("cocLiveError").textContent = "";
+  function setResultBusy(busy) {
+    $("cocFriendlyResult").setAttribute("aria-busy", String(Boolean(busy)));
+  }
+  function resetResultState(meta) {
+    lastResult = null;
+    lastAction = "";
     $("cocResult").textContent = "";
     $("cocRawJsonDetails").open = false;
+    $("cocResultMeta").textContent = meta || "尚未查询";
+    $("cocImportPlayer").hidden = true;
+    $("cocCopyResult").disabled = true;
+    $("cocDownloadResult").disabled = true;
+    setResultBusy(false);
+  }
+  function invokeQuery(action, params, button) {
+    var generation = ++queryGeneration;
+    var queryTransport = transport;
+    var queryConnectionGeneration = connectionGeneration;
+    if (button) button.disabled = true;
+    $("cocLiveError").textContent = "";
+    resetResultState("正在查询…");
+    setResultBusy(true);
     setFriendlyMessage("正在查询，请稍候…");
     var ready = capabilities ? Promise.resolve() : connect();
     return ready.then(function () {
+      if (generation !== queryGeneration || queryTransport !== transport || queryConnectionGeneration !== connectionGeneration) return STALE_QUERY;
       if (!actionSpec(action)) throw new Error("该查询动作不在云端白名单中");
-      return transport === "local"
+      return queryTransport === "local"
         ? desktopRpc({ operation: "query.invoke", action: action, params: params })
         : cloudRequest("/api/coc/query", { method: "POST", body: JSON.stringify({ action: action, params: params }) }, true);
     }).then(function (result) {
+      if (result === STALE_QUERY || generation !== queryGeneration || queryTransport !== transport || queryConnectionGeneration !== connectionGeneration) return result;
       showResult(result, action);
-      setStatus("查询完成", "ok");
+      setStatus(queryTransport === "local" ? "本机查询完成" : "云端实时查询可用", "ok");
       return result;
     }).catch(function (error) {
-      $("cocResult").textContent = "";
+      if (generation !== queryGeneration || queryTransport !== transport || queryConnectionGeneration !== connectionGeneration || error && error.staleConnection) return;
+      resetResultState("查询失败");
       setFriendlyMessage(errorText(error), "error");
       $("cocLiveError").textContent = errorText(error);
       setStatus("查询失败", "error");
@@ -261,21 +321,29 @@
   }
   function queryAdvanced() {
     var action = $("cocAction").value, params;
-    try { params = parseParams(); } catch (error) { $("cocLiveError").textContent = error.message; return; }
+    try { params = parseParams(); } catch (error) {
+      resetResultState("查询未开始");
+      setFriendlyMessage(error.message, "error");
+      $("cocLiveError").textContent = error.message;
+      $("cocParams").focus();
+      return;
+    }
     invokeQuery(action, params, $("cocRun"));
   }
   function queryTag(kind) {
-    var player = kind === "player", input = $(player ? "cocPlayerTag" : "cocClanTag"), tag;
+    var player = kind === "player", input = $(player ? "cocPlayerTag" : "cocClanTag"), button = $(player ? "cocQueryPlayer" : "cocQueryClan"), tag;
+    if (button.disabled) return;
     try {
       tag = normalizeCocTag(input.value, player ? "玩家标签" : "部落标签");
     } catch (error) {
+      resetResultState("查询未开始");
       $("cocLiveError").textContent = error.message;
       setFriendlyMessage(error.message, "error");
       input.focus();
       return;
     }
     input.value = tag;
-    invokeQuery(player ? "get_player" : "get_clan", player ? { player_tag: tag } : { tag: tag }, $(player ? "cocQueryPlayer" : "cocQueryClan"));
+    invokeQuery(player ? "get_player" : "get_clan", player ? { player_tag: tag } : { tag: tag }, button);
   }
   function valueAt(object, path) {
     return String(path || "").split(".").reduce(function (value, key) {
@@ -357,6 +425,46 @@
     item.appendChild(element("strong", "coc-profile-stat-value", value));
     grid.appendChild(item);
   }
+  function playerClan(data) {
+    var clan = valueAt(data, "clan");
+    if (!clan || typeof clan !== "object") return null;
+    var tag = normalizedLinkedTag(clan.tag, "部落标签");
+    return tag ? Object.assign({}, clan, { tag: tag }) : null;
+  }
+  function clanMembers(data) {
+    var members = firstValue(data, ["memberList", "member_list"]);
+    return Array.isArray(members) ? members.reduce(function (clean, member) {
+      if (!member || typeof member !== "object") return clean;
+      var tag = normalizedLinkedTag(member.tag, "玩家标签");
+      if (tag) clean.push(Object.assign({}, member, { tag: tag }));
+      return clean;
+    }, []) : [];
+  }
+  function openLinkedQuery(kind, tag) {
+    var player = kind === "player", input = $(player ? "cocPlayerTag" : "cocClanTag");
+    try {
+      input.value = normalizeCocTag(tag, player ? "玩家标签" : "部落标签");
+    } catch (error) {
+      $("cocLiveError").textContent = error.message;
+      input.focus();
+      return;
+    }
+    setKind(kind);
+    try { input.focus({ preventScroll: true }); } catch (_error) { input.focus(); }
+    queryTag(kind);
+  }
+  function appendDrilldownStat(grid, label, value, kind, tag) {
+    var button = element("button", "coc-profile-stat coc-profile-drilldown");
+    button.type = "button";
+    button.setAttribute("data-query-kind", kind);
+    button.setAttribute("data-query-tag", tag);
+    button.setAttribute("aria-label", "查询" + (kind === "player" ? "玩家" : "部落") + " " + value);
+    button.appendChild(element("span", "coc-profile-stat-label", label));
+    button.appendChild(element("strong", "coc-profile-stat-value", value));
+    button.appendChild(element("span", "coc-profile-drilldown-hint", "点击查看详情"));
+    button.addEventListener("click", function () { openLinkedQuery(kind, tag); });
+    grid.appendChild(button);
+  }
   function appendProfileHeader(card, data, imageUrl, eyebrow) {
     var header = element("div", "coc-profile-head");
     appendAvatar(header, imageUrl, firstValue(data, ["name", "tag"]) || "?");
@@ -385,8 +493,9 @@
     appendStat(grid, "当前奖杯", firstValue(data, ["trophies"]));
     appendStat(grid, "最高奖杯", firstValue(data, ["bestTrophies", "best_trophies"]));
     appendStat(grid, "个人排位联赛（新版）", displayPlayerLeagueTierName(data));
-    var clan = firstValue(data, ["clan"]);
-    appendStat(grid, "所属部落", clan ? ((namedValue(clan) || "—") + (clan.tag ? " · " + clan.tag : "")) : "未加入部落");
+    var clan = playerClan(data);
+    if (clan) appendDrilldownStat(grid, "所属部落", (namedValue(clan) || "—") + " · " + clan.tag, "clan", clan.tag);
+    else appendStat(grid, "所属部落", "未加入部落");
     appendStat(grid, "战争之星", firstValue(data, ["warStars", "war_stars"]));
     appendStat(grid, "赛季进攻胜场", firstValue(data, ["attackWins", "attack_wins"]));
     appendStat(grid, "赛季防守胜场", firstValue(data, ["defenseWins", "defense_wins"]));
@@ -424,6 +533,44 @@
     card.appendChild(grid);
     var description = firstValue(data, ["description"]);
     if (description) card.appendChild(element("p", "coc-profile-description", description));
+    var memberList = clanMembers(data);
+    var memberSection = element("section", "coc-member-section");
+    memberSection.appendChild(element("h4", "coc-member-title", "成员概况"));
+    memberSection.appendChild(element("p", "coc-member-help", memberList.length ? "共 " + memberList.length + " 位成员，点击任意成员查看完整玩家资料。" : "官方接口没有返回成员列表。"));
+    if (memberList.length) {
+      var list = element("ol", "coc-member-list");
+      memberList.forEach(function (member) {
+        var item = element("li", "coc-member-item");
+        var button = element("button", "coc-member-button");
+        var memberName = firstValue(member, ["name"]) || "未命名成员";
+        var memberTag = firstValue(member, ["tag"]);
+        button.type = "button";
+        button.setAttribute("data-query-kind", "player");
+        button.setAttribute("data-query-tag", memberTag);
+        button.setAttribute("aria-label", "查询玩家 " + memberName + " " + memberTag);
+        appendAvatar(button, firstValue(member, ["leagueTier.iconUrls.small", "leagueTier.iconUrls.large", "leagueTier.icon_urls.small", "leagueTier.icon_urls.large"]), memberName);
+        var identity = element("span", "coc-member-identity");
+        identity.appendChild(element("strong", "coc-member-name", memberName));
+        identity.appendChild(element("span", "coc-member-tag", memberTag));
+        var role = { leader: "首领", coLeader: "副首领", admin: "长老", member: "成员" }[firstValue(member, ["role"])] || "成员";
+        var townHall = firstValue(member, ["townHallLevel", "town_hall_level"]);
+        identity.appendChild(element("span", "coc-member-meta", role + (townHall === undefined ? "" : " · " + townHall + " 本") + " · " + displayPlayerLeagueTierName(member)));
+        button.appendChild(identity);
+        var overview = element("span", "coc-member-overview");
+        var rank = firstValue(member, ["clanRank", "clan_rank"]);
+        var trophies = firstValue(member, ["trophies"]);
+        var donations = firstValue(member, ["donations"]);
+        overview.appendChild(element("span", "", rank === undefined ? "成员" : "第 " + rank + " 名"));
+        if (trophies !== undefined) overview.appendChild(element("span", "", "奖杯 " + trophies));
+        if (donations !== undefined) overview.appendChild(element("span", "", "捐兵 " + donations));
+        button.appendChild(overview);
+        button.addEventListener("click", function () { openLinkedQuery("player", memberTag); });
+        item.appendChild(button);
+        list.appendChild(item);
+      });
+      memberSection.appendChild(list);
+    }
+    card.appendChild(memberSection);
     container.appendChild(card);
   }
   function genericLabel(key) {
@@ -471,6 +618,9 @@
     var labels = { get_player: "玩家资料", get_clan: "部落资料" };
     $("cocResultMeta").textContent = (labels[action] || action) + " · " + new Date().toLocaleString("zh-CN");
     $("cocImportPlayer").hidden = action !== "get_player" || !result;
+    $("cocCopyResult").disabled = !result;
+    $("cocDownloadResult").disabled = !result;
+    setResultBusy(false);
   }
   function resultPayload() {
     return payloadFrom(lastResult);
@@ -500,7 +650,11 @@
   }
   function toggleTransport() {
     if (!desktopBridge("cocQuery")) return;
+    queryGeneration += 1;
+    connectionGeneration += 1;
     transport = transport === "cloud" ? "local" : "cloud"; connected = false; capabilities = null; connectionPromise = null;
+    resetResultState("尚未查询");
+    setFriendlyMessage("切换完成后，请重新查询玩家或部落资料。");
     $("cocUseLocal").textContent = transport === "local" ? "改用天择云端" : "改用本机服务";
     $("cocConnect").textContent = transport === "local" ? "重新连接本机" : "重新连接云端";
     connect().catch(function () {});
@@ -515,7 +669,10 @@
     var localButton = $("cocUseLocal"); localButton.hidden = !desktopBridge("cocQuery");
     if (!localButton.hidden) { localButton.textContent = "改用本机服务"; $("cocConnect").textContent = "重新连接云端"; }
     document.querySelectorAll("[data-coc-source]").forEach(function (button) { button.addEventListener("click", function () { switchSource(button.getAttribute("data-coc-source")); }); });
-    document.querySelectorAll("[data-live-kind]").forEach(function (button) { button.addEventListener("click", function () { setKind(button.getAttribute("data-live-kind")); }); });
+    document.querySelectorAll("[data-live-kind]").forEach(function (button) {
+      button.addEventListener("click", function () { setKind(button.getAttribute("data-live-kind")); });
+      button.addEventListener("keydown", handleKindKeydown);
+    });
     $("cocConnect").addEventListener("click", function () { connect().catch(function () {}); }); localButton.addEventListener("click", toggleTransport);
     $("cocAction").addEventListener("change", actionChanged); $("cocRun").addEventListener("click", queryAdvanced); $("cocCopyResult").addEventListener("click", copyResult); $("cocDownloadResult").addEventListener("click", downloadResult); $("cocImportPlayer").addEventListener("click", importPlayer);
     $("cocQueryPlayer").addEventListener("click", function () { queryTag("player"); });
@@ -528,6 +685,7 @@
         queryTag(input.id === "cocClanTag" ? "clan" : "player");
       });
     });
+    resetResultState("尚未查询");
     setKind("player");
   }
   window.__cocLiveQueryTest = {
@@ -541,6 +699,8 @@
     playerLeagueTierName: playerLeagueTierName,
     displayPlayerLeagueTierName: displayPlayerLeagueTierName,
     clanCapitalHallLevel: clanCapitalHallLevel,
+    playerClan: playerClan,
+    clanMembers: clanMembers,
     renderFriendlyResult: renderFriendlyResult,
     cloudErrorRetryable: cloudErrorRetryable,
     errorText: errorText

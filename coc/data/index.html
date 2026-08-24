@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260824-v5.2.0" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css?v=20260801-v4.1.6" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-workspace.css?v=20260801-v4.1.6" />
-  <link rel="stylesheet" href="https://wjtianze.github.io/coc/data/live-query.css?v=20260824a" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/coc/data/live-query.css?v=20260824c" />
   <style>
     /* CSS 自定义属性中的相对网址会在内联规则使用处按本文档解析，
        因此为这个两级路由提供文档相对的纹理地址。 */
@@ -205,6 +205,10 @@
       from { opacity:0; transform:translate3d(22px,0,0); }
       to { opacity:1; transform:translate3d(0,0,0); }
     }
+    @keyframes cocContentInMobile {
+      from { opacity:0; transform:translate3d(0,12px,0); }
+      to { opacity:1; transform:translate3d(0,0,0); }
+    }
     @keyframes cocDataCardIn {
       from { opacity:0; transform:translateY(10px) scale(.985); }
       to { opacity:1; transform:translateY(0) scale(1); }
@@ -230,6 +234,7 @@
     }
     @media (max-width:680px) {
       .coc-data-layout { width:min(100% - 24px,1260px); gap:12px; margin-top:14px; }
+      .coc-data-content { animation-name:cocContentInMobile; }
       .coc-data-tool .coc-data-layout .coc-data-brief { padding:20px!important; border-radius:17px; }
       .coc-data-tool .coc-data-layout .coc-data-brief h1 { font-size:30px; }
       .coc-data-brief-meta { grid-template-columns:1fr; margin-top:18px; }
@@ -343,12 +348,12 @@
 
         <article class="card coc-live-card">
           <div class="coc-live-head"><div><h3>输入标签即可查询</h3><p class="coc-live-help" id="cocCapabilityNote">玩家和部落查询不用填写 JSON；静态游戏数据始终使用天择网自己的 18.400.22 目录。</p></div></div>
-          <div class="coc-live-tabs" role="tablist" aria-label="实时查询类型">
-            <button type="button" data-live-kind="player" aria-selected="true">玩家</button>
-            <button type="button" data-live-kind="clan" aria-selected="false">部落</button>
-            <button type="button" data-live-kind="advanced" aria-selected="false">开发者高级查询</button>
+          <div class="coc-live-tabs" role="tablist" aria-label="实时查询类型" aria-orientation="horizontal">
+            <button type="button" id="cocPlayerTab" role="tab" data-live-kind="player" aria-selected="true" aria-controls="cocPlayerFields" tabindex="0">玩家</button>
+            <button type="button" id="cocClanTab" role="tab" data-live-kind="clan" aria-selected="false" aria-controls="cocClanFields" tabindex="-1">部落</button>
+            <button type="button" id="cocAdvancedTab" role="tab" data-live-kind="advanced" aria-selected="false" aria-controls="cocAdvancedFields" tabindex="-1">开发者高级查询</button>
           </div>
-          <div class="coc-live-basic" id="cocPlayerFields">
+          <div class="coc-live-basic" id="cocPlayerFields" role="tabpanel" aria-labelledby="cocPlayerTab">
             <label class="coc-live-label" for="cocPlayerTag">玩家标签</label>
             <div class="coc-live-tag-row">
               <input id="cocPlayerTag" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" maxlength="16" placeholder="例如 #2PP" aria-describedby="cocPlayerTagHelp" />
@@ -356,7 +361,7 @@
             </div>
             <p class="coc-live-help" id="cocPlayerTagHelp">可以带或不带 #；网页会自动大写、补上 #，并把容易混淆的字母 O 改为数字 0。按回车也能查询。</p>
           </div>
-          <div class="coc-live-basic" id="cocClanFields" hidden>
+          <div class="coc-live-basic" id="cocClanFields" role="tabpanel" aria-labelledby="cocClanTab" hidden>
             <label class="coc-live-label" for="cocClanTag">部落标签</label>
             <div class="coc-live-tag-row">
               <input id="cocClanTag" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" maxlength="16" placeholder="例如 #2PP" aria-describedby="cocClanTagHelp" />
@@ -364,7 +369,7 @@
             </div>
             <p class="coc-live-help" id="cocClanTagHelp">可以带或不带 #；网页会自动大写、补上 #，并把容易混淆的字母 O 改为数字 0。按回车也能查询。</p>
           </div>
-          <div class="coc-live-advanced" id="cocAdvancedFields" hidden>
+          <div class="coc-live-advanced" id="cocAdvancedFields" role="tabpanel" aria-labelledby="cocAdvancedTab" hidden>
             <p class="coc-live-warning">这里面向熟悉 coc.py 和官方接口的开发者。普通玩家查询、部落查询请使用上面的标签页，不需要编写 JSON。</p>
             <div class="coc-live-grid">
               <div class="coc-live-field"><label for="cocAction">官网查询动作</label><select id="cocAction"><option>连接后加载</option></select></div>
@@ -377,13 +382,13 @@
 
         <article class="card coc-live-card">
           <div class="coc-live-result-tools">
-            <span class="coc-live-result-meta" id="cocResultMeta">尚未查询</span>
+            <span class="coc-live-result-meta" id="cocResultMeta" role="status" aria-live="polite">尚未查询</span>
             <div class="coc-live-actions" style="margin-top:0"><button class="btn btn--sm btn--primary" type="button" id="cocImportPlayer" hidden>导入玩家快照</button><a class="btn btn--sm" id="cocOpenParser" href="https://wjtianze.github.io/coc/index.html" hidden>打开村庄解析器</a><a class="btn btn--sm" id="cocOpenPlanner" href="https://wjtianze.github.io/coc/planner/index.html" hidden>打开升级规划器</a></div>
           </div>
-          <div class="coc-friendly-result" id="cocFriendlyResult" aria-live="polite"><p class="coc-friendly-empty">查询后的玩家或部落资料会显示在这里。</p></div>
+          <div class="coc-friendly-result" id="cocFriendlyResult" aria-label="查询结果" aria-busy="false"><p class="coc-friendly-empty">查询后的玩家或部落资料会显示在这里。</p></div>
           <details class="coc-live-json-details" id="cocRawJsonDetails">
             <summary>查看原始 JSON（高级）</summary>
-            <div class="coc-live-json-tools"><button class="btn btn--sm" type="button" id="cocCopyResult">复制 JSON</button><button class="btn btn--sm" type="button" id="cocDownloadResult">下载 JSON</button></div>
+            <div class="coc-live-json-tools"><button class="btn btn--sm" type="button" id="cocCopyResult" disabled>复制 JSON</button><button class="btn btn--sm" type="button" id="cocDownloadResult" disabled>下载 JSON</button></div>
             <pre class="coc-live-result" id="cocResult" tabindex="0" aria-label="查询结果 JSON"></pre>
           </details>
           <p class="coc-live-help">官方玩家接口没有建筑、陷阱、工人、资源和升级计时。导入时只更新接口实际返回的兵种、法术、英雄和装备；已有完整村庄数据不会被删除，规划器会清楚标示资料覆盖范围。</p>
@@ -402,7 +407,7 @@
 
   <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260824-v5.2.0"></script>
   <script defer src="https://wjtianze.github.io/coc/shared/snapshot-v2.js?v=20260823a"></script>
-  <script defer src="https://wjtianze.github.io/coc/data/live-query.js?v=20260824a"></script>
+  <script defer src="https://wjtianze.github.io/coc/data/live-query.js?v=20260824c"></script>
   <script>
   (function () {
     "use strict";

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>天择OS · 天择网</title>
-  <meta name="description" content="天择OS 5.2 提供网页与 Windows 普通版，并新增可并存的 v5.2-codex 桌面版：用户登录自己的 ChatGPT 账号即可使用 Codex 模型与智能体能力。" />
+  <meta name="description" content="天择OS 5.2.1 提供网页与 Windows 普通版，并提供可并存的 v5.2-codex 桌面版：修复 COC 云端查询，支持玩家、部落与成员直接互跳。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260824-v5.2.0" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/workspace-pages.css?v=20260802-v4.1.7" />
@@ -29,7 +29,7 @@
     <section class="tz-page-hero tz-os-landing-hero wrap">
       <div class="tz-os-hero-copy reveal in">
         <span class="tz-os-kicker">EVOLUTION SHELL · GENERATIVE WORKSPACE</span>
-        <h1><span class="grad">天择OS</span><span class="tz-os-version">v5.2.0</span></h1>
+        <h1><span class="grad">天择OS</span><span class="tz-os-version">v5.2.1</span></h1>
         <p>一套在浏览器与 Windows 桌面运行的本地优先工作台。普通版继续同时支持网页与桌面；可并存安装的 v5.2-codex 开发者版则用用户自己的 ChatGPT 账号驱动 Codex 模型与智能体能力。</p>
         <div class="tz-os-hero-actions">
           <a class="btn" href="https://wjtianze.github.io/os/webos.html"><span>进入网页版</span><span data-ui-icon="right" aria-hidden="true"></span></a>
@@ -45,13 +45,13 @@
     <section class="section wrap tz-workspace-section" id="downloads">
       <div class="section-head reveal">
         <h2><span class="bar"></span>运行方式与版本演进</h2>
-        <span class="more">普通版 5.2 · Codex 桌面版 v5.2-codex</span>
+        <span class="more">普通版 5.2.1 · Codex 桌面版 v5.2-codex（5.2.1 构建）</span>
       </div>
       <div class="os-pick">
         <div class="card os-card tz-workspace-card d reveal d1">
           <div class="oc-icon" data-ui-icon="windows" aria-hidden="true"></div>
           <h3>电脑端 · 普通版</h3>
-          <p class="oc-tag">Windows 原生应用 · 当前安装包 v5.2.0</p>
+          <p class="oc-tag">Windows 原生应用 · 当前安装包 v5.2.1</p>
           <ul>
             <li>独立窗口运行，不占浏览器标签</li>
             <li>真实 Chromium 网页视图兼容拒绝 iframe 的网站</li>
@@ -60,18 +60,18 @@
             <li>默认使用安全托管的免费 AI，亦可添加自己的云端接口或本机 Ollama</li>
           </ul>
           <a class="btn" id="os-dl-btn"
-             href="https://github.com/wjtianze/wjtianze.github.io/releases/download/v5.2.0/tianze-os-setup-5.2.0.exe"
+             href="https://github.com/wjtianze/wjtianze.github.io/releases/download/v5.2.1/tianze-os-setup-5.2.1.exe"
              download
-             data-fallback-url="https://github.com/wjtianze/wjtianze.github.io/releases/download/v5.2.0/tianze-os-setup-5.2.0.exe"
-             data-fallback-ver="v5.2.0">
-            <span id="os-dl-text">下载 Windows 安装包（v5.2.0）</span><span data-ui-icon="download" aria-hidden="true"></span>
+             data-fallback-url="https://github.com/wjtianze/wjtianze.github.io/releases/download/v5.2.1/tianze-os-setup-5.2.1.exe"
+             data-fallback-ver="v5.2.1">
+            <span id="os-dl-text">下载 Windows 安装包（v5.2.1）</span><span data-ui-icon="download" aria-hidden="true"></span>
           </a>
           <div class="dl-meta" id="os-dl-meta">正在检测实际已发布的桌面安装包…</div>
         </div>
         <div class="card os-card tz-workspace-card c reveal d2">
           <div class="oc-icon" data-ui-icon="terminal" aria-hidden="true"></div>
           <h3>电脑端 · Codex 版</h3>
-          <p class="oc-tag">Windows 开发者版 · v5.2-codex</p>
+          <p class="oc-tag">Windows 开发者版 · v5.2-codex（5.2.1 构建）</p>
           <ul>
             <li>用户直接绑定并登录自己的 ChatGPT 账号，不保存传统 API Key</li>
             <li>模型、思考强度、可选回答速度和额度均从 Codex App Server 读取</li>
@@ -80,9 +80,9 @@
             <li>与普通 API 版使用独立应用编号和数据目录，可同时安装</li>
           </ul>
           <a class="btn" id="os-codex-dl-btn"
-             href="https://github.com/wjtianze/wjtianze.github.io/releases/download/v5.2-codex/tianze-os-codex-setup-5.2.0-codex.exe"
+             href="https://github.com/wjtianze/wjtianze.github.io/releases/download/v5.2.1-codex/tianze-os-codex-setup-5.2.1-codex.exe"
              download>
-            <span>下载 Codex 桌面版（v5.2-codex）</span><span data-ui-icon="download" aria-hidden="true"></span>
+            <span>下载 Codex 桌面版（v5.2-codex · 5.2.1 构建）</span><span data-ui-icon="download" aria-hidden="true"></span>
           </a>
           <div class="dl-meta">仅 Windows 桌面端 · 需要用户自己的 ChatGPT 账号</div>
         </div>
@@ -107,7 +107,16 @@
           <p class="oc-tag">自 1.0 至今的版本演进</p>
           <div class="changelog">
             <div class="cl-item">
-              <div class="cl-ver">v5.2.0 <span class="cl-badge">最新</span></div>
+              <div class="cl-ver">v5.2.1 <span class="cl-badge">最新</span></div>
+              <div class="cl-date">2026-08-24</div>
+              <ul>
+                <li>修复 COC 云端实时查询首次请求失败，玩家资料可直接进入当前部落，部落成员概况也可继续进入玩家查询</li>
+                <li>修复连续快速查询时旧响应覆盖新结果、失败后旧数据操作仍可用的问题，并补齐键盘页签与焦点导航</li>
+                <li>统一天择OS 5.2 的正式发布日期显示</li>
+              </ul>
+            </div>
+            <div class="cl-item">
+              <div class="cl-ver">v5.2.0</div>
               <div class="cl-date">2026-08-24</div>
               <ul>
                 <li>COC 数据中心升级至国际服 18.400.22：补齐超级充能、反击卡组与按等级计算的城墙地震伤害；现在可直接查询玩家、部落和公开赛季资料，并把结果带入村庄分析和升级规划</li>
