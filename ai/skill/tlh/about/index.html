@@ -6,7 +6,7 @@
   <title>使用教程 · 课本学习助手 (TLH) — 天择网</title>
   <meta name="description" content="textbook-learning-helper 使用教程：API 文档级别的详细说明，涵盖参数、调用方式、输入输出格式、源文件结构与注入脚本。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260807-v5.0.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260824-v5.2.0" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/workspace-pages.css?v=20260801-v4.1.6" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
 </head>
@@ -39,7 +39,7 @@
         <div class="wp-reader-meta" aria-label="文档元信息">
           <span>VERSION / L7.0</span>
           <span>SKILL / textbook-learning-helper</span>
-          <span>PROVIDER / DeepSeek API</span>
+          <span>运行方式 / 本地 API 与在线后端</span>
         </div>
       </header>
 
@@ -47,7 +47,7 @@
 
         <p>本教程以 API 文档的详细程度，说明 <code>textbook-learning-helper</code>（课本学习助手，简称 TLH）的全部用法：技能如何被触发、生成学习页的六步流程、五个源文件的字段规范、六大题型的输入输出格式、公式与演示的书写规则，以及注入脚本 <code>inject.py</code> 的参数与行为。</p>
 
-        <blockquote>本技能是<b>普通版（L7.0）</b>。生成可用的 HTML <b>必须</b>由用户提供有效的 DeepSeek API Key。开发者版（L7.0-d）已内置开发者 Key，无需用户提供。</blockquote>
+        <blockquote><b>请区分两种运行方式：</b>下载后的 L7.0 与 L7.0-d 是自包含的本地 API 技能包，生成时必须由当前用户提供自己的 DeepSeek API Key，生成页会直接调用该接口；两个技能包都不再预置开发者 Key。本站的「在线体验」则走天择后端代理，无需填写或保存 API Key。</blockquote>
 
         <h2><span class="bar"></span>1. 触发与生成总览</h2>
         <p>当用户对 AI Agent 说「学习第 X 节」「帮我整理第 X 章知识点并出题」或类似表述时，Agent 自动调用本技能。整个生成流程分六步，<b>顺序不可颠倒</b>：</p>
@@ -57,7 +57,7 @@
           <li><b>分文件写出五类源文件</b>（见第 3 节）：<code>meta.json</code>、<code>fulltext.md</code>、<code>kp.json</code>、<code>questions.json</code>、<code>demos/{ci}_{ii}.html</code>。</li>
           <li><b>演示强制性铁律</b>：<code>kp.json</code> 里<b>每一个 item</b> 都必须有对应的 <code>demos/{ci}_{ii}.html</code>，inject.py 会校验，缺任何一个都报错退出。</li>
           <li><b>注入并校验</b>：<code>python3 inject.py data "输出.html" --key sk-你的Key</code>。</li>
-          <li><b>呈现</b>：用 present_files 把生成的 HTML 交付给用户，并附上 API Key 清除提醒。</li>
+          <li><b>呈现</b>：用 present_files 把生成的 HTML 交付给用户，并提醒用户：本地 API 版分享前必须移除已注入的 API Key。</li>
         </ol>
 
         <h2><span class="bar"></span>2. 目录结构</h2>
@@ -255,7 +255,7 @@
           <tr><td><code>&lt;input_dir&gt;</code></td><td>是</td><td>源文件目录（含 meta.json / fulltext.md / kp.json / questions.json / demos/）。</td></tr>
           <tr><td><code>&lt;output.html&gt;</code></td><td>是</td><td>输出 HTML 文件路径。命名格式：<code>技能版本_教材_章节.html</code>（如 <code>L7.0_大学物理_狭义相对论基础.html</code>）。</td></tr>
           <tr><td><code>[template.html]</code></td><td>否</td><td>可选，默认用脚本同目录下的 <code>template.html</code>。</td></tr>
-          <tr><td><code>--key &lt;api-key&gt;</code></td><td>是（普通版）</td><td>把模板中的 <code>&lt;your-api-key&gt;</code> 替换为真实 Key。若模板仍含占位符且未传此参数，脚本报错退出。</td></tr>
+          <tr><td><code>--key &lt;api-key&gt;</code></td><td>是（L7.0 / L7.0-d）</td><td>把模板中的 <code>&lt;your-api-key&gt;</code> 替换为当前用户提供的真实 Key。若模板仍含占位符且未传此参数，脚本报错退出；两个技能包均不预置开发者 Key。</td></tr>
         </table>
         <h3>脚本流程</h3>
         <ol>
@@ -311,11 +311,11 @@
           <li>演示 HTML 文件里直接写正常的 <code>&lt;/script&gt;</code>，inject.py 会自动转义。<b>不要</b>在演示文件里写 <code>&lt;\/script&gt;</code>。</li>
           <li><code>fulltext.md</code> / <code>kp.json</code> / <code>questions.json</code> 中<b>不得出现字面量 <code>&lt;/script&gt;</code></b>——inject.py 会拦截并报错。</li>
           <li>不要在生成的 Markdown 中使用 LaTeX 长度命令（<code>\[4pt]</code>、<code>\vspace</code>、<code>\hspace</code> 等），会破坏渲染。</li>
-          <li>模板内嵌的 DeepSeek API Key 会随 HTML 分发，<b>分享前提醒用户更换</b>（在文件中搜索 <code>var KEY='sk-</code> 即可定位）。</li>
+          <li>仅针对下载后生成的本地 API 页：注入的 DeepSeek API Key 会随 HTML 分发，<b>分享前必须删除</b>（在文件中搜索 <code>var KEY='sk-</code> 即可定位）。本站在线体验不注入、保存或暴露任何 API Key。</li>
           <li>若打开后页面为空或行为异常：点页面左上角的「🗑 清除缓存」按钮清掉所有 localStorage 后重载。</li>
         </ul>
 
-        <blockquote>⚠️ <b>API Key 提醒</b>：生成的 HTML 文件内嵌了你提供的 DeepSeek API Key。分享该文件前，请先用文本编辑器打开，找到 <code>var KEY=</code> 那一行，把引号内的 Key 值删除或替换为空字符串，否则任何拿到文件的人都能看到并消耗你的 API 额度。</blockquote>
+        <blockquote>⚠️ <b>本地 API 页的 Key 提醒</b>：这条提醒只适用于下载后用 <code>--key</code> 生成的 L7 页面。分享前请先用文本编辑器打开，找到 <code>var KEY=</code> 那一行，把引号内的 Key 值删除或替换为空字符串；本站在线体验没有这个字段，也不需要用户提供 Key。</blockquote>
 
         <h2><span class="bar"></span>11. AI 能力要求</h2>
         <p>运行本技能需要至少达到 <b>Claude Sonnet 4.6</b> 水平的 AI。经实测，DeepSeek V4 Flash 和 Claude Haiku 4.5 运行效果较差，不推荐使用。</p>
@@ -329,7 +329,7 @@
     </article>
   </main>
 
-  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260807-v5.0.0"></script>
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260824-v5.2.0"></script>
   <script>
   (function () {
     var reader = document.getElementById('tutorial-content');

@@ -3,18 +3,23 @@
   "use strict";
 
   var EQUIP_MAP = {
-    90000000:{zh:"野蛮人木偶",hero:"蛮王"},90000001:{zh:"狂暴药水瓶",hero:"蛮王"},90000002:{zh:"弓箭手木偶",hero:"女王"},90000003:{zh:"隐形药水瓶",hero:"女王"},90000004:{zh:"永恒书卷",hero:"永王"},90000005:{zh:"生命宝石",hero:"永王"},90000006:{zh:"寻踪飞盾",hero:"闰土"},90000007:{zh:"皇家宝石",hero:"闰土"},90000008:{zh:"地震金靴",hero:"蛮王"},90000009:{zh:"野猪骑士木偶",hero:"闰土"},90000010:{zh:"巨型手套",hero:"蛮王"},90000011:{zh:"治疗胡须",hero:"蛮王"},90000012:{zh:"急速药水瓶",hero:"闰土"},90000013:{zh:"火箭飞矛",hero:"闰土"},90000014:{zh:"尖刺足球",hero:"蛮王"},90000015:{zh:"冰封箭矢",hero:"女王"},90000016:{zh:"擎天箭矢",hero:"女王"},90000017:{zh:"巨型箭矢",hero:"女王"},90000019:{zh:"英雄火炬",hero:"永王"},90000020:{zh:"天使木偶",hero:"女王"},90000022:{zh:"巨大火球",hero:"永王"},90000024:{zh:"狂暴宝石",hero:"永王"},90000032:{zh:"灵蛇手镯",hero:"蛮王"},90000034:{zh:"治疗书卷",hero:"永王"},90000035:{zh:"暗黑皇冠",hero:"王子"},90000039:{zh:"克隆魔镜",hero:"女王"},90000040:{zh:"雷电战靴",hero:"闰土"},90000041:{zh:"熔岩气球玩偶",hero:"永王"},90000042:{zh:"护卫玩偶",hero:"王子"},90000043:{zh:"暗黑魔球",hero:"王子"},90000044:{zh:"铁甲短裤",hero:"王子"},90000045:{zh:"MP Trap Shield",hero:"王子"},90000046:{zh:"Punch Arrow",hero:"女王"},90000047:{zh:"贵族哑铃",hero:"王子"},90000048:{zh:"动作人偶",hero:"女王"},90000049:{zh:"陨石法杖",hero:"王子"},90000050:{zh:"冷冽冰晶",hero:"闰土"},90000051:{zh:"木棍马驹",hero:"蛮王"},90000052:{zh:"烈焰之心",hero:"龙王"},90000053:{zh:"火箭背包",hero:"龙王"},90000056:{zh:"爆震器",hero:"龙王"},90000057:{zh:"助燃器",hero:"龙王"},90000059:{zh:"雷电獠牙",hero:"龙王"},90000060:{zh:"Draconic Counter",hero:"龙王"}
+    90000000:{zh:"野蛮人木偶",hero:"蛮王"},90000001:{zh:"狂暴药水瓶",hero:"蛮王"},90000002:{zh:"弓箭手木偶",hero:"女王"},90000003:{zh:"隐形药水瓶",hero:"女王"},90000004:{zh:"永恒书卷",hero:"永王"},90000005:{zh:"生命宝石",hero:"永王"},90000006:{zh:"寻踪飞盾",hero:"闰土"},90000007:{zh:"皇家宝石",hero:"闰土"},90000008:{zh:"地震金靴",hero:"蛮王"},90000009:{zh:"野猪骑士木偶",hero:"闰土"},90000010:{zh:"巨型手套",hero:"蛮王"},90000011:{zh:"治疗胡须",hero:"蛮王"},90000012:{zh:"急速药水瓶",hero:"闰土"},90000013:{zh:"火箭飞矛",hero:"闰土"},90000014:{zh:"尖刺足球",hero:"蛮王"},90000015:{zh:"冰封箭矢",hero:"女王"},90000016:{zh:"擎天箭矢",hero:"女王"},90000017:{zh:"巨型箭矢",hero:"女王"},90000019:{zh:"英雄火炬",hero:"永王"},90000020:{zh:"天使木偶",hero:"女王"},90000022:{zh:"巨大火球",hero:"永王"},90000024:{zh:"狂暴宝石",hero:"永王"},90000032:{zh:"灵蛇手镯",hero:"蛮王"},90000034:{zh:"治疗书卷",hero:"永王"},90000035:{zh:"暗黑皇冠",hero:"王子"},90000039:{zh:"克隆魔镜",hero:"女王"},90000040:{zh:"雷电战靴",hero:"闰土"},90000041:{zh:"熔岩气球玩偶",hero:"永王"},90000042:{zh:"护卫玩偶",hero:"王子"},90000043:{zh:"暗黑魔球",hero:"王子"},90000044:{zh:"铁甲短裤",hero:"王子"},90000045:{zh:"MP Trap Shield",hero:"王子"},90000046:{zh:"Punch Arrow",hero:"女王"},90000047:{zh:"贵族哑铃",hero:"王子"},90000048:{zh:"动作人偶",hero:"女王"},90000049:{zh:"陨石法杖",hero:"王子"},90000050:{zh:"冷冽冰晶",hero:"闰土"},90000051:{zh:"木棍马驹",hero:"蛮王"},90000052:{zh:"烈焰之心",hero:"龙王"},90000053:{zh:"火箭背包",hero:"龙王"},90000056:{zh:"爆震器",hero:"龙王"},90000057:{zh:"助燃器",hero:"龙王"},90000059:{zh:"雷电獠牙",hero:"龙王"},90000060:{zh:"反击卡组",en:"Revenge Deck",internal:"Draconic Counter",hero:"龙王"}
   };
   var HELPER_MAP = { 93000000:{zh:"建筑工人学徒",type:"建筑"}, 93000001:{zh:"实验助手",type:"研究"}, 93000002:{zh:"炼金术士",type:"炼金"}, 93000003:{zh:"探矿者",type:"探矿"} };
 
-  var G = null, IDMAP = {}, V = null, TH = 0, BH = 0, TASKS = [];
+  var G = null, IDMAP = {}, V = null, TH = 0, BH = 0, TASKS = [], SNAPSHOT_COVERAGE = null;
   var GOB_WORKER = 0, GOB_LAB = 0;
+  var VILLAGE_ARRAY_FIELDS = ["helpers","buildings","traps","decos","obstacles","units","siege_machines","heroes","spells","pets","equipment","house_parts","skins","sceneries","buildings2","traps2","units2","heroes2"];
+  var VILLAGE_OBJECT_ARRAY_FIELDS = ["helpers","buildings","traps","decos","obstacles","units","siege_machines","heroes","spells","pets","equipment","buildings2","traps2","units2","heroes2"];
 
   function $(id){ return document.getElementById(id); }
+  function esc(value){ return String(value==null?"":value).replace(/[&<>"']/g,function(ch){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch];}); }
   function uiGlyph(key){ return '<span data-ui-icon="'+key+'" aria-hidden="true"></span>'; }
   function fmtDur(sec){ sec=Math.max(0,Math.round(sec)); var d=Math.floor(sec/86400),h=Math.floor(sec%86400/3600),m=Math.floor(sec%3600/60),s=sec%60,p=[]; if(d)p.push(d+"天"); if(h)p.push(h+"时"); if(m)p.push(m+"分"); if(!p.length)p.push(s+"秒"); return p.join(""); }
   function num(v){ v=parseInt(v,10); return isNaN(v)?0:v; }
-  function nameOf(id){ var u=IDMAP[String(id)]; if(u&&u.chineseName)return u.chineseName; if(EQUIP_MAP[id])return EQUIP_MAP[id].zh; if(HELPER_MAP[id])return HELPER_MAP[id].zh; return "ID"+id; }
+  function safeCount(v){ var n=num(v); return Math.max(1,Math.min(n||1,1000)); }
+  function safeId(id){ var value=String(id==null?"":id).trim(); return /^-?\d+$/.test(value)?value:"未知"; }
+  function nameOf(id){ var u=IDMAP[String(id)]; if(u&&u.chineseName)return u.chineseName; if(EQUIP_MAP[id])return EQUIP_MAP[id].zh; if(HELPER_MAP[id])return HELPER_MAP[id].zh; return "ID"+safeId(id); }
   function unitOf(id){ return IDMAP[String(id)]||null; }
   function catOf(id){ var u=IDMAP[String(id)]; return u?u.category:""; }
   function isBBcat(c){ return c&&c.indexOf("夜世界")===0; }
@@ -30,6 +35,26 @@
     if(left>0&&cur<tgt)return left+upgradeSec(unit,cur+1,tgt,isBuilding);
     return upgradeSec(unit,cur,tgt,isBuilding);
   }
+  function superchargeLevelOf(item){
+    var keys=["mini_level","mini_lvl","miniLevel","supercharge_level","superchargeLevel","supercharge"];
+    for(var i=0;i<keys.length;i++){
+      var value=item&&item[keys[i]];
+      if(value!=null&&typeof value!=="object")return Math.max(0,num(value));
+    }
+    return 0;
+  }
+  function superchargeTimeSec(row){ return buildTimeSec(row); }
+  function superchargeUpgradeSec(unit,cur,tgt,timer){
+    if(!unit||!unit.supercharge||!unit.supercharge.levels)return 0;
+    var lmap={}; unit.supercharge.levels.forEach(function(row){lmap[num(row.level)]=row;});
+    var total=0;
+    for(var level=cur+1;level<=tgt;level++)total+=superchargeTimeSec(lmap[level]);
+    if(num(timer)>0&&cur<tgt){
+      total-=superchargeTimeSec(lmap[cur+1]);
+      total+=num(timer);
+    }
+    return Math.max(0,total);
+  }
 
   /* 新分工：研究员=兵种/法术/攻城机器，战宠研究员=战宠，建筑工人=英雄/建筑/陷阱/其他 */
   function laneOf(cat, world){
@@ -40,16 +65,35 @@
   }
 
   function loadGame(cb){
-    fetch("data/all_game_data_zh.json").then(function(r){return r.json();}).then(function(d){
+    fetch("data/all_game_data_zh.json?v=18.400.22").then(function(r){return r.json();}).then(function(d){
       G=d; d.units.forEach(function(u){ var g=String(u.globalID||"").trim(); if(g)IDMAP[g]=u; }); cb();
     }).catch(function(e){ showError("游戏数据加载失败："+e.message+"（请通过 http 访问本页）"); });
   }
-  function parseVillage(text){ try{ return JSON.parse(text); }catch(e){ showError("JSON 格式错误："+e.message); return null; } }
+  function parseVillage(text){
+    try{
+      if(typeof text!=="string"||text.length>10*1024*1024)throw new Error("文件超过 10 MB 安全上限");
+      var value=JSON.parse(text);
+      if(!value||typeof value!=="object"||Array.isArray(value))throw new Error("顶层必须是对象");
+      var expandedEntities=0;
+      VILLAGE_ARRAY_FIELDS.forEach(function(key){
+        if(value[key]!=null&&!Array.isArray(value[key]))throw new Error("字段 "+key+" 必须是数组");
+        if(Array.isArray(value[key])&&VILLAGE_OBJECT_ARRAY_FIELDS.indexOf(key)!==-1){
+          if(value[key].length>10000)throw new Error("字段 "+key+" 项目过多");
+          value[key].forEach(function(item,index){
+            if(!item||typeof item!=="object"||Array.isArray(item))throw new Error("字段 "+key+" 的第 "+(index+1)+" 项必须是对象");
+            expandedEntities+=safeCount(item.cnt);
+            if(expandedEntities>20000)throw new Error("村庄实体数量超过 20000 项安全上限");
+          });
+        }
+      });
+      return value;
+    }catch(e){ showError("JSON 格式或结构错误："+e.message); return null; }
+  }
 
-  function detectTH(v){ var th=0; (v.buildings||[]).forEach(function(b){ if(b.weapon!=null)th=b.lvl; }); if(!th)(v.buildings||[]).forEach(function(b){ if(/大本营/.test(nameOf(b.data)))th=b.lvl; }); return th; }
-  function detectBH(v){ var bh=0; (v.buildings2||[]).forEach(function(b){ if(/大本营/.test(nameOf(b.data)))bh=b.lvl; }); return bh; }
-  function builderCount(v){ var n=0; (v.buildings||[]).forEach(function(b){ if(/建筑工人小屋|小博木屋/.test(nameOf(b.data)))n+=b.cnt||1; }); return n; }
-  function bbBuilderCount(v){ var n=1; (v.buildings2||[]).forEach(function(b){ if(/奥仔哨站|博仔棚屋/.test(nameOf(b.data)))n+=b.cnt||1; }); return n; }
+  function detectTH(v){ var th=num(v&&v.townHallLevel); (v.buildings||[]).forEach(function(b){ if(b.weapon!=null)th=Math.max(th,num(b.lvl)); }); if(!th)(v.buildings||[]).forEach(function(b){ if(/大本营/.test(nameOf(b.data)))th=num(b.lvl); }); return th; }
+  function detectBH(v){ var bh=num(v&&v.builderHallLevel); (v.buildings2||[]).forEach(function(b){ if(/大本营/.test(nameOf(b.data)))bh=Math.max(bh,num(b.lvl)); }); return bh; }
+  function builderCount(v){ var n=0; (v.buildings||[]).forEach(function(b){ if(/建筑工人小屋|小博木屋/.test(nameOf(b.data)))n+=safeCount(b.cnt); }); return n; }
+  function bbBuilderCount(v){ var n=1; (v.buildings2||[]).forEach(function(b){ if(/奥仔哨站|博仔棚屋/.test(nameOf(b.data)))n+=safeCount(b.cnt); }); return n; }
   function hasPetHouse(v){ return (v.buildings||[]).some(function(b){ return /战宠/.test(nameOf(b.data)); }); }
 
   /* 工人/研究员数量（含哥布林选项） */
@@ -63,7 +107,7 @@
     };
   }
 
-  function m(l,v,s){ return '<div class="v-metric"><div class="vm-label">'+l+'</div><div class="vm-value">'+v+'</div>'+(s?'<div class="vm-sub">'+s+'</div>':'')+'</div>'; }
+  function m(l,v,s){ return '<div class="v-metric"><div class="vm-label">'+esc(l)+'</div><div class="vm-value">'+esc(v)+'</div>'+(s?'<div class="vm-sub">'+esc(s)+'</div>':'')+'</div>'; }
 
   function renderMetrics(){
     var ts=V.timestamp||0, d=ts?new Date(ts*1000):null;
@@ -79,17 +123,19 @@
   }
 
   function renderItem(it){
-    var nm=nameOf(it.data), tags="";
+    var nm=esc(nameOf(it.data)), tags="";
     if(it.gear_up)tags+='<span class="vi-tag v-tag-gear">改造</span>';
-    if(it.weapon!=null)tags+='<span class="vi-tag v-tag-gear">武器'+it.weapon+'</span>';
+    if(it.weapon!=null)tags+='<span class="vi-tag v-tag-gear">武器'+num(it.weapon)+'</span>';
     if(it.extra)tags+='<span class="vi-tag v-tag-extra">超级兵</span>';
+    var superchargeLevel=superchargeLevelOf(it);
+    if(superchargeLevel)tags+='<span class="vi-tag v-tag-gear">超级充能 '+superchargeLevel+'级</span>';
     if(it.timer)tags+='<span class="vi-tag v-tag-up">升级中 '+fmtDur(it.timer)+'</span>';
-    var cnt=it.cnt?'<span class="vi-cnt">×'+it.cnt+'</span>':'';
-    return '<div class="v-item"><span class="vi-name">'+nm+cnt+'</span><span class="vi-meta"><span class="vi-lvl">'+it.lvl+'级</span>'+tags+'</span></div>';
+    var cnt=num(it.cnt)>0?'<span class="vi-cnt">×'+safeCount(it.cnt)+'</span>':'';
+    return '<div class="v-item"><span class="vi-name">'+nm+cnt+'</span><span class="vi-meta"><span class="vi-lvl">'+num(it.lvl)+'级</span>'+tags+'</span></div>';
   }
   function renderCat(title,iconKey,items){
-    if(!items||!items.length)return '<div class="v-cat"><div class="v-cat-head"><span class="vc-emoji" data-ui-icon="'+iconKey+'" aria-hidden="true"></span>'+title+'</div><div class="v-empty">无</div></div>';
-    var h='<div class="v-cat"><div class="v-cat-head"><span class="vc-emoji" data-ui-icon="'+iconKey+'" aria-hidden="true"></span>'+title+' <span class="vc-count">'+items.length+' 项</span></div><div class="v-cat-grid">';
+    if(!items||!items.length)return '<div class="v-cat"><div class="v-cat-head"><span class="vc-emoji" data-ui-icon="'+esc(iconKey)+'" aria-hidden="true"></span>'+esc(title)+'</div><div class="v-empty">无</div></div>';
+    var h='<div class="v-cat"><div class="v-cat-head"><span class="vc-emoji" data-ui-icon="'+esc(iconKey)+'" aria-hidden="true"></span>'+esc(title)+' <span class="vc-count">'+items.length+' 项</span></div><div class="v-cat-grid">';
     items.forEach(function(it){ h+=renderItem(it); }); h+='</div></div>'; return h;
   }
   function renderHome(){
@@ -102,7 +148,7 @@
     var eqs=v.equipment||[];
     if(eqs.length){
       h+='<div class="v-cat"><div class="v-cat-head"><span class="vc-emoji" data-ui-icon="shield" aria-hidden="true"></span>英雄装备 <span class="vc-count">'+eqs.length+' 件</span></div><div class="v-cat-grid">';
-      eqs.forEach(function(e){ var info=EQUIP_MAP[e.data]||{zh:"ID"+e.data,hero:"?"}; h+='<div class="v-item"><span class="vi-name">'+info.zh+' <span class="vi-cnt">'+info.hero+'</span></span><span class="vi-meta"><span class="vi-lvl">'+e.lvl+'级</span>'+(e.lvl>=18?'<span class="vi-tag v-tag-done">满级</span>':'')+'</span></div>'; });
+      eqs.forEach(function(e){ var info=EQUIP_MAP[e.data]||{zh:nameOf(e.data),hero:"?"}; var level=num(e.lvl), unit=unitOf(e.data), maximum=maxLevelForTH(unit,99)||18; h+='<div class="v-item"><span class="vi-name">'+esc(info.zh)+' <span class="vi-cnt">'+esc(info.hero)+'</span></span><span class="vi-meta"><span class="vi-lvl">'+level+'级</span>'+(level>=maximum?'<span class="vi-tag v-tag-done">满级</span>':'')+'</span></div>'; });
       h+='</div></div>';
     }
     h+=renderCat("建筑","home",v.buildings||[]);
@@ -110,7 +156,7 @@
     var hs=v.helpers||[];
     if(hs.length){
       h+='<div class="v-cat"><div class="v-cat-head"><span class="vc-emoji" data-ui-icon="settings" aria-hidden="true"></span>帮手 <span class="vc-count">'+hs.length+' 个</span></div><div class="v-cat-grid">';
-      hs.forEach(function(it){ var info=HELPER_MAP[it.data]||{zh:"ID"+it.data}; var cd=it.helper_cooldown?'<span class="vi-tag v-tag-up">冷却 '+fmtDur(it.helper_cooldown)+'</span>':''; h+='<div class="v-item"><span class="vi-name">'+info.zh+'</span><span class="vi-meta"><span class="vi-lvl">'+it.lvl+'级</span>'+cd+'</span></div>'; });
+      hs.forEach(function(it){ var info=HELPER_MAP[it.data]||{zh:nameOf(it.data)}; var cd=it.helper_cooldown?'<span class="vi-tag v-tag-up">冷却 '+fmtDur(it.helper_cooldown)+'</span>':''; h+='<div class="v-item"><span class="vi-name">'+esc(info.zh)+'</span><span class="vi-meta"><span class="vi-lvl">'+num(it.lvl)+'级</span>'+cd+'</span></div>'; });
       h+='</div></div>';
     }
     $("vHome").innerHTML=h;
@@ -129,16 +175,28 @@
     function push(item, isBuilding, world){
       var unit=unitOf(item.data);
       if(!unit||!unit.levels||!unit.levels.length)return;
-      var cur=item.lvl;
+      var cur=num(item.lvl);
       var maxL=maxLevelForTH(unit, world==="bb"?BH:TH);
-      if(maxL<=0||cur>=maxL)return;
       // 官方存档会把同级实体压成 cnt；时间总览必须按实体展开，timer 只属于其中第一个。
-      var cnt=Math.max(1,num(item.cnt)||1), timer=num(item.timer);
-      for(var inst=0;inst<cnt;inst++){
-        var upgrading=timer>0&&inst===0;
-        // 城墙等即时升级也属于待升级实体；保留 0 秒任务，数量统计才不会再次漏掉 cnt。
-        var sec=Math.max(0,remainingUpgradeSec(unit,cur,maxL,isBuilding,upgrading?timer:0));
-        bid++; TASKS.push({id:bid,name:nameOf(item.data),curLvl:cur,maxLvl:maxL,sec:sec,isBuilding:isBuilding,cat:catOf(item.data),world:world,upgrading:upgrading,instance:inst,count:cnt});
+      var cnt=safeCount(item.cnt), timer=num(item.timer);
+      if(maxL>0&&cur<maxL){
+        for(var inst=0;inst<cnt;inst++){
+          var upgrading=timer>0&&inst===0;
+          // 城墙等即时升级也属于待升级实体；保留 0 秒任务，数量统计才不会再次漏掉 cnt。
+          var sec=Math.max(0,remainingUpgradeSec(unit,cur,maxL,isBuilding,upgrading?timer:0));
+          bid++; TASKS.push({id:bid,name:nameOf(item.data),curLvl:cur,maxLvl:maxL,sec:sec,isBuilding:isBuilding,cat:catOf(item.data),world:world,upgrading:upgrading,instance:inst,count:cnt});
+        }
+      }
+      // 超级充能只属于家乡满级建筑，阶段由 APK 的 buildings.MiniLevels 活动关联提供。
+      var supercharge=unit.supercharge, superchargeLevel=superchargeLevelOf(item);
+      var superchargeMax=supercharge&&supercharge.levels?supercharge.levels.length:0;
+      var requiredTH=supercharge?num(supercharge.requiredTownHallLevel):99;
+      if(isBuilding&&world==="home"&&cur>=maxL&&TH>=requiredTH&&superchargeLevel<superchargeMax){
+        for(var miniInst=0;miniInst<cnt;miniInst++){
+          var miniUpgrading=timer>0&&miniInst===0;
+          var miniSec=superchargeUpgradeSec(unit,superchargeLevel,superchargeMax,miniUpgrading?timer:0);
+          bid++; TASKS.push({id:bid,name:nameOf(item.data)+" · 超级充能",curLvl:superchargeLevel,maxLvl:superchargeMax,sec:miniSec,isBuilding:true,isSupercharge:true,cat:catOf(item.data),world:world,upgrading:miniUpgrading,instance:miniInst,count:cnt});
+        }
       }
     }
     (V.units||[]).forEach(function(it){ push(it,false,"home"); });
@@ -183,7 +241,16 @@
   function saveToStorage(){
     try{
       var base={ home_builder:builderCount(V), home_lab:1, home_pet:hasPetHouse(V)?1:0, bb_builder:bbBuilderCount(V), bb_lab:1 };
-      localStorage.setItem("tz_coc_village", JSON.stringify({village:V,th:TH,bh:BH,baseWC:base,gobWorker:GOB_WORKER,gobLab:GOB_LAB,tasks:TASKS,ts:Date.now()}));
+      var legacy={village:V,th:TH,bh:BH,baseWC:base,gobWorker:GOB_WORKER,gobLab:GOB_LAB,tasks:TASKS,ts:Date.now()};
+      if(SNAPSHOT_COVERAGE){legacy.coverage=SNAPSHOT_COVERAGE;legacy.missingFields=Object.keys(SNAPSHOT_COVERAGE).filter(function(key){return !SNAPSHOT_COVERAGE[key];});}
+      if(window.TianzeCocSnapshot&&!(SNAPSHOT_COVERAGE&&SNAPSHOT_COVERAGE.buildings===false)){
+        var snapshot=window.TianzeCocSnapshot.fromFullAccount(V,{townHallLevel:TH,builderHallLevel:BH,provider:"game-account-json"});
+        var previous=window.TianzeCocSnapshot.load();
+        if(previous&&previous.officialRaw&&String(previous.profile&&previous.profile.tag||"")===String(snapshot.profile.tag||""))snapshot.officialRaw=previous.officialRaw;
+        window.TianzeCocSnapshot.save(snapshot);
+      }
+      // v2 保存器只负责兼容骨架；这里写回真实工人数、任务和用户选择，供规划器直接使用。
+      localStorage.setItem("tz_coc_village", JSON.stringify(legacy));
     }catch(e){}
   }
 
@@ -226,7 +293,7 @@
         clearError();
         var text=$("vJsonInput").value.trim();
         if(!text){ showError("请先粘贴村庄 JSON 数据。"); return; }
-        V=parseVillage(text); if(!V)return;
+        V=parseVillage(text); if(!V)return; SNAPSHOT_COVERAGE=null;
         TH=detectTH(V); BH=detectBH(V);
         computeTasks(); render();
       });
@@ -238,8 +305,9 @@
       try {
         var saved = JSON.parse(localStorage.getItem("tz_coc_village") || "null");
         if (saved && saved.village) {
-          $("vJsonInput").value = typeof saved.village === "string" ? saved.village : JSON.stringify(saved.village);
-          V = (typeof saved.village === "string") ? parseVillage(saved.village) : saved.village;
+          var savedText = typeof saved.village === "string" ? saved.village : JSON.stringify(saved.village);
+          $("vJsonInput").value = savedText;
+          V = parseVillage(savedText); SNAPSHOT_COVERAGE=saved.coverage||null;
           if (V) { TH = detectTH(V); BH = detectBH(V); GOB_WORKER = saved.gobWorker||0; GOB_LAB = saved.gobLab||0; $("vGobWorker").checked = !!GOB_WORKER; $("vGobLab").checked = !!GOB_LAB; computeTasks(); render({reveal:false}); }
         }
       } catch (e) {}

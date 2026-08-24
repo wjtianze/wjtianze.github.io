@@ -21,6 +21,46 @@
   background-color: #08111f;
 }
 
+/* COC 规划器：仅保留稳本/速本两套持久方案。 */
+.vp-snapshot-console {
+  margin-top: 14px;
+  padding: 18px;
+  border: 1px solid var(--coc-stroke);
+  border-radius: 16px;
+  background: var(--glass-strong);
+}
+.vp-snapshot-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.vp-snapshot-head h2 { margin: 3px 0 0; font-size: 18px; color: var(--ink); }
+.vp-snapshot-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.vp-snapshot-status { min-height: 22px; margin: 12px 0 0; color: var(--ink-dim); font-size: 13px; line-height: 1.65; }
+.vp-snapshot-status.is-warning { color: #fde68a; }
+.vp-snapshot-status.is-error { color: #fecaca; }
+.vp-compare { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+.vp-compare article {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  gap: 4px 12px;
+  padding: 13px 15px;
+  border: 1px solid var(--coc-stroke);
+  border-radius: 12px;
+  background: var(--glass);
+}
+.vp-compare article.active { border-color: rgba(var(--c-blue-rgb), .62); box-shadow: inset 0 0 0 1px rgba(var(--c-blue-rgb), .16); }
+.vp-compare article span { color: var(--ink-faint); font-size: 12px; }
+.vp-compare article b { color: var(--ink); text-align: right; }
+.vp-compare article small { grid-column: 1 / -1; color: var(--ink-dim); line-height: 1.55; }
+@media (max-width: 720px) {
+  .vp-compare { grid-template-columns: 1fr; }
+  .vp-snapshot-actions .btn { flex: 1 1 145px; }
+}
+
 html[data-palette="mid"] .coc-tool {
   --coc-canvas: #0d1d29;
   --coc-panel: #142c3a;

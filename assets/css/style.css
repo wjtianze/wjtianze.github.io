@@ -89,6 +89,45 @@
   --t-reveal: 0.75s;
 }
 
+/* 全站本地数据入口与 PWA 更新提示。 */
+.tz-data-center-link {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--ink-dim);
+  background: var(--glass);
+  text-decoration: none;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.tz-data-center-link:hover, .tz-data-center-link:focus-visible { color: var(--ink); border-color: rgba(var(--c-blue-rgb), .55); }
+.tz-pwa-update {
+  position: fixed;
+  z-index: 2147482500;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: min(92vw, 620px);
+  padding: 12px 14px;
+  border: 1px solid rgba(var(--c-blue-rgb), .55);
+  border-radius: 14px;
+  background: var(--panel-strong, #102947);
+  color: var(--ink);
+  box-shadow: 0 18px 56px rgba(0,0,0,.38);
+}
+.tz-pwa-update span { flex: 1; }
+.tz-pwa-update button { border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; background: var(--glass); color: var(--ink); cursor: pointer; }
+@media (max-width: 1100px) { .tz-data-center-link__label { display: none; } .tz-data-center-link { width: 38px; padding: 7px; } }
+@media (max-width: 620px) { .tz-pwa-update { align-items: stretch; flex-wrap: wrap; } .tz-pwa-update span { flex-basis: 100%; } }
+
 /* ----------------------- 基础重置 ----------------------- */
 *, *::before, *::after {
   margin: 0;
@@ -7580,3 +7619,14 @@ body.tz-site-shell .tzpal-panel {
   .tzpal-dots { forced-color-adjust: none; }
   :where(a, button, input, select, textarea, [tabindex]):focus-visible { outline-color: Highlight !important; }
 }
+
+.coc-fan-notice {
+  max-width: 1180px;
+  margin: 22px auto 34px;
+  padding: 12px 18px;
+  color: var(--ink-faint);
+  font-size: 12px;
+  line-height: 1.7;
+  text-align: center;
+}
+.coc-fan-notice a { color: var(--ink-dim); text-decoration: underline; text-underline-offset: 3px; }

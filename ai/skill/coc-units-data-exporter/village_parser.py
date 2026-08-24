@@ -53,7 +53,7 @@ EQUIP_MAP = {
     90000044:("铁甲短裤","王子"),90000047:("贵族哑铃","王子"),90000048:("动作人偶","女王"),
     90000049:("陨石法杖","王子"),90000050:("冷冽冰晶","闰土"),90000051:("木棍马驹","蛮王"),
     90000052:("烈焰之心","龙王"),90000053:("火箭背包","龙王"),90000056:("爆震器","龙王"),
-    90000057:("助燃器","龙王"),90000059:("雷电獠牙","龙王"),90000060:("Draconic Counter","龙王"),
+    90000057:("助燃器","龙王"),90000059:("雷电獠牙","龙王"),90000060:("反击卡组","龙王"),
 }
 HELPER_MAP = {
     93000000:"建筑工人学徒", 93000001:"实验助手",
@@ -178,6 +178,36 @@ def upgrade_sec(unit, cur, tgt, is_building):
     return total
 
 
+def remaining_upgrade_sec(unit, cur, tgt, is_building, timer=0):
+    """正在升级时，以存档 timer 替换当前首段的完整时长。"""
+    left = num(timer)
+    if left > 0 and cur < tgt:
+        return left + upgrade_sec(unit, cur + 1, tgt, is_building)
+    return upgrade_sec(unit, cur, tgt, is_building)
+
+
+def supercharge_level_of(item):
+    """兼容当前已知村庄导出器对超级充能阶段的不同字段名。"""
+    for key in ("mini_level", "mini_lvl", "miniLevel", "supercharge_level", "superchargeLevel", "supercharge"):
+        value = item.get(key)
+        if value is not None and not isinstance(value, (dict, list)):
+            return max(0, num(value))
+    return 0
+
+
+def supercharge_upgrade_sec(unit, cur, tgt, timer=0):
+    supercharge = unit.get("supercharge") if unit else None
+    if not supercharge:
+        return 0
+    levels = {num(row.get("level")): row for row in supercharge.get("levels", [])}
+    total = sum(build_time_sec(levels.get(level)) for level in range(cur + 1, tgt + 1))
+    left = num(timer)
+    if left > 0 and cur < tgt:
+        total -= build_time_sec(levels.get(cur + 1))
+        total += left
+    return max(0, total)
+
+
 def lane_of(cat, world):
     bb = is_bb_cat(cat)
     if any(k in cat for k in ("建筑", "陷阱", "守卫")):
@@ -240,17 +270,36 @@ def compute_tasks(v, idm, th, bh):
             return
         cur = item["lvl"]
         max_l = max_level_for_th(unit, bh if world == "bb" else th)
-        if max_l <= 0 or cur >= max_l:
-            return
-        sec = upgrade_sec(unit, cur, max_l, is_building)
-        if sec <= 0:
-            return
-        bid[0] += 1
-        tasks.append({
-            "id": bid[0], "name": name_of(item["data"], idm), "curLvl": cur,
-            "maxLvl": max_l, "sec": sec, "isBuilding": is_building,
-            "cat": cat_of(item["data"], idm), "world": world, "upgrading": upgrading,
-        })
+        count = max(1, num(item.get("cnt", 1)))
+        timer = num(item.get("timer")) if upgrading else 0
+        if max_l > 0 and cur < max_l:
+            for instance in range(count):
+                current_timer = timer if instance == 0 else 0
+                sec = remaining_upgrade_sec(unit, cur, max_l, is_building, current_timer)
+                bid[0] += 1
+                tasks.append({
+                    "id": bid[0], "name": name_of(item["data"], idm), "curLvl": cur,
+                    "maxLvl": max_l, "sec": sec, "isBuilding": is_building,
+                    "cat": cat_of(item["data"], idm), "world": world,
+                    "upgrading": upgrading and instance == 0, "instance": instance, "count": count,
+                })
+        supercharge = unit.get("supercharge")
+        mini_level = supercharge_level_of(item)
+        mini_max = len(supercharge.get("levels", [])) if supercharge else 0
+        required_th = num(supercharge.get("requiredTownHallLevel")) if supercharge else 99
+        if (is_building and world == "home" and cur >= max_l and th >= required_th
+                and mini_level < mini_max):
+            for instance in range(count):
+                current_timer = timer if instance == 0 else 0
+                sec = supercharge_upgrade_sec(unit, mini_level, mini_max, current_timer)
+                bid[0] += 1
+                tasks.append({
+                    "id": bid[0], "name": name_of(item["data"], idm) + " · 超级充能",
+                    "curLvl": mini_level, "maxLvl": mini_max, "sec": sec,
+                    "isBuilding": True, "isSupercharge": True,
+                    "cat": cat_of(item["data"], idm), "world": world,
+                    "upgrading": upgrading and instance == 0, "instance": instance, "count": count,
+                })
 
     for it in v.get("units", []):          push(it, False, "home")
     for it in v.get("siege_machines", []): push(it, False, "home")
@@ -282,7 +331,9 @@ def print_cat(emoji, title, items, idm, is_equipment=False, is_helper=False):
     for it in items:
         if is_equipment:
             info = EQUIP_MAP.get(it["data"], (f"ID{it['data']}", "?"))
-            tag = " 满级" if it["lvl"] >= 18 else ""
+            equipment = unit_of(it["data"], idm)
+            maximum = max((num(row.get("level")) for row in (equipment or {}).get("levels", [])), default=18)
+            tag = " 满级" if it["lvl"] >= maximum else ""
             print(f"     · {info[0]}（{info[1]}）{it['lvl']}级{tag}")
         elif is_helper:
             nm = HELPER_MAP.get(it["data"], f"ID{it['data']}")
@@ -294,6 +345,8 @@ def print_cat(emoji, title, items, idm, is_equipment=False, is_helper=False):
             if it.get("gear_up"): tags.append("改造")
             if "weapon" in it: tags.append(f"武器{it['weapon']}")
             if it.get("extra"): tags.append("超级兵")
+            mini_level = supercharge_level_of(it)
+            if mini_level: tags.append(f"超级充能{mini_level}级")
             if it.get("timer"): tags.append(f"升级中{fmt_dur(it['timer'])}")
             cnt = f" ×{it['cnt']}" if it.get("cnt") and it["cnt"] > 1 else ""
             tagstr = f"  [{','.join(tags)}]" if tags else ""

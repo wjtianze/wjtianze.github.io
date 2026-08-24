@@ -3,13 +3,38 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>游戏数据查询 · COC 专区 · 天择网</title>
-  <meta name="description" content="部落冲突全部单位静态游戏数据查询：兵种、建筑、法术、英雄、战宠、装备、陷阱、守卫、帮手等分类浏览与搜索，含各等级数值与所需大本营等级。" />
+  <title>COC 数据中心 · 静态数据与玩家部落查询 · 天择网</title>
+  <meta name="description" content="天择网 COC 数据中心：查询部落冲突 18.400.22 静态游戏数据，并通过受保护的 coc.py 云端服务查询玩家、部落、战争、联赛、都城与排名；玩家公开资料可导入村庄分析和升级规划。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260807-v5.0.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260824-v5.2.0" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css?v=20260801-v4.1.6" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-workspace.css?v=20260801-v4.1.6" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/coc/data/live-query.css?v=20260824a" />
   <style>
+    /* CSS 自定义属性中的相对网址会在内联规则使用处按本文档解析，
+       因此为这个两级路由提供文档相对的纹理地址。 */
+    :root {
+      --tz-v4-wallpaper:url("../../assets/img/ui-v4/wallpaper-cold.webp");
+      --tz-v4-button:url("../../assets/img/ui-v4/button-cold.webp");
+      --tz-v4-surface:url("../../assets/img/ui-v4/surface-cold.webp");
+      --tz-v4-icon-atlas:url("../../assets/img/ui-v4/icon-atlas-cold.png");
+      --tz-v4-icon-well:url("../../assets/img/ui-v4/icon-well-cold.webp");
+    }
+    html[data-palette="mid"] {
+      --tz-v4-wallpaper:url("../../assets/img/ui-v4/wallpaper-mid.webp");
+      --tz-v4-button:url("../../assets/img/ui-v4/button-mid.webp");
+      --tz-v4-surface:url("../../assets/img/ui-v4/surface-mid.webp");
+      --tz-v4-icon-atlas:url("../../assets/img/ui-v4/icon-atlas-mid.png");
+      --tz-v4-icon-well:url("../../assets/img/ui-v4/icon-well-mid.webp");
+    }
+    html[data-palette="warm"] {
+      --tz-v4-wallpaper:url("../../assets/img/ui-v4/wallpaper-warm.webp");
+      --tz-v4-button:url("../../assets/img/ui-v4/button-warm.webp");
+      --tz-v4-surface:url("../../assets/img/ui-v4/surface-warm.webp");
+      --tz-v4-icon-atlas:url("../../assets/img/ui-v4/icon-atlas-warm.png");
+      --tz-v4-icon-well:url("../../assets/img/ui-v4/icon-well-warm.webp");
+    }
+
     /* 附属单位（仅数据查询页使用，dq-sub- 前缀） */
     .dc-attach { margin-top:8px; font-size:12px; color:var(--ink-faint); line-height:1.6; border-top:1px dashed rgba(255,255,255,.1); padding-top:8px; }
     .dc-attach b { color:var(--ink-dim); font-weight:600; }
@@ -244,19 +269,24 @@
       <div class="crumb reveal in">
         <a href="https://wjtianze.github.io/index.html">主页</a> <span>›</span>
         <a href="https://wjtianze.github.io/coc/index.html">COC 专区</a> <span>›</span>
-        <span>游戏数据查询</span>
+        <span>COC 数据中心</span>
       </div>
-      <div class="coc-kicker reveal in d1">COC Intelligence Console · Local Dataset</div>
-      <h1 class="reveal in d1">游戏数据 <span class="grad">查询</span></h1>
-      <p class="reveal in d2">部落冲突全部单位静态游戏数据，支持分类筛选与关键词搜索。点击任意条目查看中文介绍、基础属性与各等级数值（含所需大本营等级、升级花费与时间）。数据均来自本地整理，不查询玩家信息，不调用任何外部接口。</p>
+      <div class="coc-kicker reveal in d1">COC Intelligence Console · Static + Live</div>
+      <h1 class="reveal in d1">COC 数据 <span class="grad">中心</span></h1>
+      <p class="reveal in d2">一个入口同时查 18.400.22 静态游戏数值与玩家、部落、战争、联赛、都城、排名等实时公开资料。静态数据离线可用；实时查询由受 Turnstile 保护的 coc.py 云端服务完成，部署方凭据只保存在 Cloudflare 机密变量中。玩家结果可保存为部分快照，并与游戏内完整账号 JSON 无损合并后交给解析器和规划器。</p>
       <div class="coc-data-brief-meta" aria-label="数据集信息">
-        <span><span class="tz-icon" data-icon="folder" aria-hidden="true"></span>本地静态数据</span>
-        <span><span class="tz-icon" data-icon="search" aria-hidden="true"></span>分类与全文检索</span>
-        <span><span class="tz-icon" data-icon="shield" aria-hidden="true"></span>不读取玩家信息</span>
+        <span><span class="tz-icon" data-icon="folder" aria-hidden="true"></span>APK 权威静态数据</span>
+        <span><span class="tz-icon" data-icon="search" aria-hidden="true"></span>官方 API 全能力查询</span>
+        <span><span class="tz-icon" data-icon="shield" aria-hidden="true"></span>凭据不进入网页前端</span>
       </div>
     </section>
 
     <div class="coc-data-content">
+    <div class="coc-source-switch" role="tablist" aria-label="数据来源">
+      <button type="button" role="tab" data-coc-source="static" aria-selected="true" aria-controls="dqStaticPanel">静态游戏数据</button>
+      <button type="button" role="tab" data-coc-source="live" aria-selected="false" aria-controls="cocLivePanel">玩家与部落实时查询</button>
+    </div>
+    <div class="coc-static-panel" id="dqStaticPanel" role="tabpanel">
     <section class="section coc-data-results-section">
       <div class="dq-toolbar reveal">
         <div class="dq-search" role="search">
@@ -289,20 +319,90 @@
         <div class="coc-link-icon" data-ui-icon="folder" aria-hidden="true"></div>
         <div class="coc-data-open-copy">
           <h3>本页数据已开源</h3>
-          <p>本查询页使用的全部游戏数据来自天择网「数据开源」，可免费下载、不限用途。前往数据开源查看与下载原始 JSON。</p>
+          <p>前往「数据开源」下载可复现的 18.400.22 JSON 与解析工具。代码按各自开源许可证提供；《部落冲突》名称、数据与素材权利仍归其权利人所有。</p>
         </div>
         <span class="btn btn--sm coc-data-open-action"><span>前往数据开源</span><span class="tz-icon" data-icon="right" aria-hidden="true"></span></span>
       </a>
     </section>
     </div>
+
+    <section class="coc-live-panel" id="cocLivePanel" role="tabpanel" hidden>
+      <div class="coc-live-stack">
+        <article class="card coc-live-card">
+          <div class="coc-live-head">
+            <div><h2>天择 COC 云端查询</h2><p class="coc-live-help">网页只把查询动作与公开标签发送给天择的只读 Cloudflare Worker；部署方凭据保存在云端机密变量中，不会进入网页源码、浏览器存储或查询结果。</p></div>
+            <span class="coc-live-status" id="cocLiveStatus" aria-live="polite">正在连接</span>
+          </div>
+          <div class="coc-live-actions">
+            <button class="btn btn--sm btn--primary" type="button" id="cocConnect">重新连接云端</button>
+            <button class="btn btn--sm" type="button" id="cocUseLocal" hidden>改用本机服务</button>
+          </div>
+          <p class="coc-live-help">普通访客无需填写邮箱、密码或 API Key。自行部署时，请打开 <a href="https://developer.clashofclans.com/" target="_blank" rel="noopener noreferrer">部落冲突开发者门户</a>注册并验证账号，再把邮箱和密码写入 Worker Secrets；coc.py 会创建或复用仅允许 RoyaleAPI 固定代理地址使用的官方 API Key。邮箱密码只发送给开发者门户；代理会看到 API Token、公开查询及结果，但看不到账号密码。</p>
+          <p class="coc-live-warning" id="cocLiveError" role="status" aria-live="polite">这里只开放 coc.py 的无秘密、只读官网查询；玩家验证令牌、静态游戏数据和账户管理不会发送到云端。</p>
+        </article>
+
+        <article class="card coc-live-card">
+          <div class="coc-live-head"><div><h3>输入标签即可查询</h3><p class="coc-live-help" id="cocCapabilityNote">玩家和部落查询不用填写 JSON；静态游戏数据始终使用天择网自己的 18.400.22 目录。</p></div></div>
+          <div class="coc-live-tabs" role="tablist" aria-label="实时查询类型">
+            <button type="button" data-live-kind="player" aria-selected="true">玩家</button>
+            <button type="button" data-live-kind="clan" aria-selected="false">部落</button>
+            <button type="button" data-live-kind="advanced" aria-selected="false">开发者高级查询</button>
+          </div>
+          <div class="coc-live-basic" id="cocPlayerFields">
+            <label class="coc-live-label" for="cocPlayerTag">玩家标签</label>
+            <div class="coc-live-tag-row">
+              <input id="cocPlayerTag" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" maxlength="16" placeholder="例如 #2PP" aria-describedby="cocPlayerTagHelp" />
+              <button class="btn btn--sm btn--primary" type="button" id="cocQueryPlayer">查询玩家</button>
+            </div>
+            <p class="coc-live-help" id="cocPlayerTagHelp">可以带或不带 #；网页会自动大写、补上 #，并把容易混淆的字母 O 改为数字 0。按回车也能查询。</p>
+          </div>
+          <div class="coc-live-basic" id="cocClanFields" hidden>
+            <label class="coc-live-label" for="cocClanTag">部落标签</label>
+            <div class="coc-live-tag-row">
+              <input id="cocClanTag" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" maxlength="16" placeholder="例如 #2PP" aria-describedby="cocClanTagHelp" />
+              <button class="btn btn--sm btn--primary" type="button" id="cocQueryClan">查询部落</button>
+            </div>
+            <p class="coc-live-help" id="cocClanTagHelp">可以带或不带 #；网页会自动大写、补上 #，并把容易混淆的字母 O 改为数字 0。按回车也能查询。</p>
+          </div>
+          <div class="coc-live-advanced" id="cocAdvancedFields" hidden>
+            <p class="coc-live-warning">这里面向熟悉 coc.py 和官方接口的开发者。普通玩家查询、部落查询请使用上面的标签页，不需要编写 JSON。</p>
+            <div class="coc-live-grid">
+              <div class="coc-live-field"><label for="cocAction">官网查询动作</label><select id="cocAction"><option>连接后加载</option></select></div>
+              <div class="coc-live-field is-wide"><label for="cocParams">参数 JSON（开发者高级功能）</label><textarea id="cocParams" spellcheck="false">{"name":"","limit":20}</textarea></div>
+            </div>
+            <p class="coc-live-capability" id="cocActionHelp"></p>
+            <div class="coc-live-actions"><button class="btn btn--sm btn--primary" type="button" id="cocRun">执行高级查询</button></div>
+          </div>
+        </article>
+
+        <article class="card coc-live-card">
+          <div class="coc-live-result-tools">
+            <span class="coc-live-result-meta" id="cocResultMeta">尚未查询</span>
+            <div class="coc-live-actions" style="margin-top:0"><button class="btn btn--sm btn--primary" type="button" id="cocImportPlayer" hidden>导入玩家快照</button><a class="btn btn--sm" id="cocOpenParser" href="https://wjtianze.github.io/coc/index.html" hidden>打开村庄解析器</a><a class="btn btn--sm" id="cocOpenPlanner" href="https://wjtianze.github.io/coc/planner/index.html" hidden>打开升级规划器</a></div>
+          </div>
+          <div class="coc-friendly-result" id="cocFriendlyResult" aria-live="polite"><p class="coc-friendly-empty">查询后的玩家或部落资料会显示在这里。</p></div>
+          <details class="coc-live-json-details" id="cocRawJsonDetails">
+            <summary>查看原始 JSON（高级）</summary>
+            <div class="coc-live-json-tools"><button class="btn btn--sm" type="button" id="cocCopyResult">复制 JSON</button><button class="btn btn--sm" type="button" id="cocDownloadResult">下载 JSON</button></div>
+            <pre class="coc-live-result" id="cocResult" tabindex="0" aria-label="查询结果 JSON"></pre>
+          </details>
+          <p class="coc-live-help">官方玩家接口没有建筑、陷阱、工人、资源和升级计时。导入时只更新接口实际返回的兵种、法术、英雄和装备；已有完整村庄数据不会被删除，规划器会清楚标示资料覆盖范围。</p>
+        </article>
+      </div>
+    </section>
+    </div>
     </div>
   </main>
+
+  <footer class="coc-fan-notice">本页是非官方玩家内容，未经 Supercell 认可或赞助。详见 <a href="https://supercell.com/en/fan-content-policy/" target="_blank" rel="noopener noreferrer">Supercell 玩家内容政策</a>。</footer>
 
   <div class="dq-overlay" id="dqOverlay" aria-hidden="true">
     <div class="dq-modal" id="dqModal" role="dialog" aria-modal="true" aria-labelledby="dqDialogTitle" tabindex="-1"></div>
   </div>
 
-  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260807-v5.0.0"></script>
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260824-v5.2.0"></script>
+  <script defer src="https://wjtianze.github.io/coc/shared/snapshot-v2.js?v=20260823a"></script>
+  <script defer src="https://wjtianze.github.io/coc/data/live-query.js?v=20260824a"></script>
   <script>
   (function () {
     "use strict";
@@ -452,10 +552,11 @@
       grid.setAttribute("aria-busy", "true");
       empty.style.display = "none";
       document.getElementById("dqCount").textContent = "加载中…";
-      fetch("all_game_data_zh.json?v=20260718a", { cache: "default" })
+      fetch("all_game_data_zh.json?v=20260823a", { cache: "default" })
         .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
         .then(function (d) {
           UNITS = (d && d.units) ? d.units : [];
+          window.__TIANZE_COC_STATIC_UNITS__ = UNITS;
           buildSubIndex();
           renderCats();
           render();
@@ -541,6 +642,13 @@
       return true;
     }
 
+    function displayText(value) {
+      var openQuote = true;
+      return String(value || "")
+        .replace(/\\q/g, function () { var quote = openQuote ? "“" : "”"; openQuote = !openQuote; return quote; })
+        .replace(/\\n/g, "\n");
+    }
+
     function render() {
       // 附属单位不单独成卡，合并到主单位卡片中展示
       var list = UNITS.filter(function (u) { return !isSub(u); }).filter(match);
@@ -553,7 +661,7 @@
         var bm = bigMeta(SUB2BIG[u.category] || "");
         var zh = u.chineseName || u.englishName || "(未命名)";
         var en = u.englishName || "";
-        var desc = u.description || "";
+        var desc = displayText(u.description);
         var stats = cardStats(u);
         var statsHtml = stats.map(function (s) { return '<span class="dc-stat">' + esc(s.k) + ' <b>' + esc(String(s.v)) + '</b></span>'; }).join("");
         // 附属单位概览：显示在主单位卡片下部
@@ -593,7 +701,7 @@
       var lvs = u.levels || [];
       var zh = u.chineseName || u.englishName || "(未命名)";
       var en = u.englishName || "";
-      var desc = u.description || "";
+      var desc = displayText(u.description);
 
       // 基础属性（白名单）
       var attrs = [];

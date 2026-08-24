@@ -1,0 +1,26 @@
+{
+  "id": "./",
+  "name": "天择网",
+  "short_name": "天择网",
+  "description": "新闻、开源数据、COC、英语学习、原创游戏与天择OS组成的本地优先工具站。",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#08111f",
+  "theme_color": "#102947",
+  "categories": ["education", "games", "utilities"],
+  "icons": [
+    { "src": "assets/img/pwa/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/img/pwa/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/img/pwa/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "本地数据中心", "short_name": "数据中心", "url": "open/data-center/", "icons": [{ "src": "assets/img/pwa/icon-192.png", "sizes": "192x192" }] },
+    { "name": "COC 工具", "short_name": "COC", "url": "coc/", "icons": [{ "src": "assets/img/pwa/icon-192.png", "sizes": "192x192" }] },
+    { "name": "英语学习", "short_name": "英语", "url": "english/words/", "icons": [{ "src": "assets/img/pwa/icon-192.png", "sizes": "192x192" }] },
+    { "name": "绩点战争", "short_name": "游戏", "url": "game/gpa-card/", "icons": [{ "src": "assets/img/pwa/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

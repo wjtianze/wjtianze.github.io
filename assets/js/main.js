@@ -5,6 +5,44 @@
 (function () {
   "use strict";
 
+  /* 普通站点页按需复用共享 Turnstile 契约；模块本身只有在请求令牌时才加载组件。 */
+  (function loadSharedCloudSecurity() {
+    if (typeof document === "undefined" ||
+        (window.TZCloudSecurity && typeof window.TZCloudSecurity.getToken === "function")) return;
+    var current = document.currentScript;
+    if (!current || !current.src || document.querySelector('script[data-tz-cloud-security="1"]')) return;
+    try {
+      var resolveReady;
+      var ready = new Promise(function (resolve) { resolveReady = resolve; });
+      var proxy = Object.freeze({
+        __tzLoaderProxy: true,
+        getToken: function (action) {
+          return ready.then(function (security) {
+            if (!security || security === proxy || typeof security.getToken !== "function") {
+              throw new Error("云端安全验证组件加载失败，请刷新页面后重试");
+            }
+            return security.getToken(action);
+          });
+        }
+      });
+      window.TZCloudSecurity = proxy;
+      var script = document.createElement("script");
+      script.src = new URL("cloud-security.js", current.src).href;
+      script.async = false;
+      script.dataset.tzCloudSecurity = "1";
+      script.addEventListener("load", function () { resolveReady(window.TZCloudSecurity); }, { once: true });
+      script.addEventListener("error", function () { resolveReady(null); }, { once: true });
+      (document.head || document.documentElement).appendChild(script);
+    } catch (e) { window.TZCloudSecurity = undefined; }
+  })();
+
+  var TZ_MANAGED_AI_PROXY_URL = "https://tianze-ai-proxy.xia-xilin-sgy.workers.dev/api/ai/chat";
+  var TZ_MANAGED_AI_MODEL = "gemini-3.7-flash-free";
+  var TZ_MANAGED_AI_DEFAULT_TOKENS = 65536;
+  var TZ_LEGACY_GLM_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions";
+  var TZ_LEGACY_GLM_PROXY_URL = "https://tianze-glm-proxy.xia-xilin-sgy.workers.dev/api/ai/chat";
+  var TZ_LEGACY_GLM_MODEL = "glm-4.7-flash";
+
   /* ============================================================
      TZAI · 全站统一 AI 配置助手
      天择网内任何需要 AI 的页面一律通过 TZAI.config() 取配置：
@@ -12,6 +50,80 @@
      独立访问（不在 OS 内）返回 null，由页面自身决定是否提供本地配置入口。
      ============================================================ */
   window.TZAI = {
+    defaultCloudConfig: function () {
+      return {
+        url: TZ_MANAGED_AI_PROXY_URL,
+        key: "",
+        model: TZ_MANAGED_AI_MODEL,
+        api: "chat-completions",
+        maxTokens: TZ_MANAGED_AI_DEFAULT_TOKENS,
+        managedProxy: true
+      };
+    },
+    isLegacyBlankDefault: function (config) {
+      var c = config || {};
+      if (String(c.key || "").trim()) return false;
+      var url = String(c.url || "").replace(/\/+$/, "").toLowerCase();
+      var model = String(c.model || "").toLowerCase();
+      if (model === TZ_LEGACY_GLM_MODEL && url === TZ_LEGACY_GLM_URL) return true;
+      if (model === TZ_MANAGED_AI_MODEL && url === "https://aihubmix.com/v1/chat/completions") return true;
+      if (model !== "deepseek-v4-flash") return false;
+      return [
+        "https://api.deepseek.com/responses",
+        "https://api.deepseek.com/v1/chat/completions",
+        "https://api.deepseek.com/chat/completions"
+      ].indexOf(url) >= 0;
+    },
+    isLegacyManagedProxyPreset: function (config) {
+      var c = config || {};
+      if (String(c.key || "").trim()) return false;
+      try {
+        var parsed = new URL(String(c.url || ""));
+        var loopback = ["127.0.0.1", "localhost", "[::1]"].indexOf(parsed.hostname.toLowerCase()) >= 0;
+        return String(c.model || "") === TZ_LEGACY_GLM_MODEL && !parsed.username && !parsed.password && !parsed.search && !parsed.hash &&
+          (parsed.href === TZ_LEGACY_GLM_PROXY_URL || (!!c.managedProxy && loopback && (parsed.protocol === "http:" || parsed.protocol === "https:")));
+      } catch (e) { return false; }
+    },
+    isManagedAIProxyPreset: function (config) {
+      var c = config || {};
+      try {
+        return new URL(String(c.url || "")).href === TZ_MANAGED_AI_PROXY_URL &&
+          String(c.model || "") === TZ_MANAGED_AI_MODEL;
+      } catch (e) { return false; }
+    },
+    normalizeCloudConfig: function (config) {
+      if (!config) return this.defaultCloudConfig();
+      if (this.isManagedAIProxyPreset(config)) {
+        return {
+          url: TZ_MANAGED_AI_PROXY_URL,
+          key: "",
+          model: TZ_MANAGED_AI_MODEL,
+          api: "chat-completions",
+          maxTokens: TZ_MANAGED_AI_DEFAULT_TOKENS,
+          managedProxy: true
+        };
+      }
+      if (this.isLegacyBlankDefault(config) || this.isLegacyManagedProxyPreset(config)) return this.defaultCloudConfig();
+      return config;
+    },
+    migrateSiteConversationDefaults: function () {
+      try {
+        var key = "tz_site_ai_chat_v1";
+        var state = JSON.parse(localStorage.getItem(key) || "null");
+        if (!state || !Array.isArray(state.chatSessions)) return false;
+        var changed = false;
+        state.chatSessions.forEach(function (session) {
+          var profile = session && session.aiProfile;
+          if (!profile || typeof profile !== "object") return;
+          var model = String(profile.apiModel || "").trim().toLowerCase();
+          if (["deepseek-v4-flash", TZ_LEGACY_GLM_MODEL].indexOf(model) < 0) return;
+          profile.apiModel = TZ_MANAGED_AI_MODEL;
+          changed = true;
+        });
+        if (changed) localStorage.setItem(key, JSON.stringify(state));
+        return changed;
+      } catch (e) { return false; }
+    },
     // 是否在天择OS内运行（被 iframe 嵌入且能读到 OS 状态）
     inOS: function () {
       try { return window.parent !== window && !!localStorage.getItem("tzos_state_v1"); }
@@ -21,10 +133,24 @@
     osConfig: function () {
       try {
         var s = JSON.parse(localStorage.getItem("tzos_state_v1") || "{}");
-        var c = s.aiConfig || {};
+        var saved = s.aiConfig;
+        var migrateLegacyDefault = !!saved &&
+          (this.isLegacyBlankDefault(saved) || this.isLegacyManagedProxyPreset(saved));
+        var c = this.normalizeCloudConfig(saved);
+        if (JSON.stringify(c) !== JSON.stringify(saved) &&
+            (!saved || this.isManagedAIProxyPreset(saved) || this.isLegacyBlankDefault(saved) || this.isLegacyManagedProxyPreset(saved))) {
+          s.aiConfig = c;
+          localStorage.setItem("tzos_state_v1", JSON.stringify(s));
+          if (migrateLegacyDefault) this.migrateSiteConversationDefaults();
+        }
         var local = s.aiLocalConfig || { url: "http://127.0.0.1:11434", model: "qwen3.5:4b", api: "ollama", provider: "ollama" };
         var mode = ["api", "local", "auto"].indexOf(s.aiRoutingMode) >= 0 ? s.aiRoutingMode : "api";
-        var apiReady = Boolean(c.url && c.key && c.model);
+        var targetsProxy = false;
+        try {
+          var configUrl = new URL(String(c.url || "")).href;
+          targetsProxy = configUrl === TZ_MANAGED_AI_PROXY_URL || configUrl === TZ_LEGACY_GLM_PROXY_URL;
+        } catch (e) {}
+        var apiReady = Boolean(c.url && c.model && (!targetsProxy || c.managedProxy) && (c.key || c.managedProxy));
         var localReady = Boolean(local.url && local.model);
         if ((mode === "api" && !apiReady) || (mode === "local" && !localReady) || (mode === "auto" && !(apiReady && localReady))) return null;
         var active = mode === "local" ? local : c;
@@ -34,6 +160,7 @@
           model: active.model,
           maxTokens: active.maxTokens || 0,
           api: active.api || (/\/responses\/?(?:[?#].*)?$/i.test(active.url) ? "responses" : "chat-completions"),
+          managedProxy: mode !== "local" && !!active.managedProxy,
           routeMode: mode,
           apiConfig: c,
           localConfig: local,
@@ -254,11 +381,11 @@
   };
 
   /* ============================================================
-     Tianze Web 5.0 · Evolution Shell
+     Tianze Web 5.2 · Evolution Shell
      The shared status line and command palette are generated
      once here so all existing static pages inherit the same shell.
      ============================================================ */
-  var TZ_SITE_VERSION = "5.0";
+  var TZ_SITE_VERSION = "5.2";
 
   function getTzSiteRoot() {
     var scripts = document.querySelectorAll('script[src*="assets/js/main.js"]');
@@ -407,6 +534,20 @@
         commandTrigger.appendChild(shortcut);
         var navToggle = topbar.querySelector(".nav-toggle");
         topbarInner.insertBefore(commandTrigger, navToggle || topbar.querySelector(".nav"));
+      }
+
+      if (/^(?:https?:|file:)$/.test(location.protocol) && !topbar.querySelector(".tz-data-center-link")) {
+        var dataCenterLink = document.createElement("a");
+        dataCenterLink.className = "tz-data-center-link";
+        dataCenterLink.href = new URL("open/data-center/index.html", rootUrl).href;
+        dataCenterLink.setAttribute("aria-label", "打开本地数据中心与离线内容管理");
+        appendTzIcon(dataCenterLink, "save");
+        var dataCenterText = document.createElement("span");
+        dataCenterText.className = "tz-data-center-link__label";
+        dataCenterText.textContent = "本地数据";
+        dataCenterLink.appendChild(dataCenterText);
+        var shellCommand = topbar.querySelector(".tz-command-trigger");
+        topbarInner.insertBefore(dataCenterLink, shellCommand || topbar.querySelector(".nav-toggle") || topbar.querySelector(".nav"));
       }
 
       topbar.querySelectorAll(".nav a").forEach(function (link) {
@@ -1221,7 +1362,7 @@
       "/english/words/": "英语学习控制台",
       "/words/": "背单词兼容入口",
       "/os/": "天择OS",
-      "/os/webos.html": "天择OS 5.0",
+      "/os/webos.html": "天择OS 5.2",
       "/contact/": "联系开发者"
     };
     var iconByRoot = {
@@ -1908,7 +2049,7 @@
     appendTzIcon(setup, "key");
     var setupCopy = document.createElement("span");
     setupCopy.appendChild(makeTzText("strong", "", "尚未配置 AI"));
-    setupCopy.appendChild(makeTzText("small", "", "可先搜索本站，或进入天择OS配置 API 或本地模型。"));
+    setupCopy.appendChild(makeTzText("small", "", "可先搜索本站，或进入天择OS配置自定义 API 或本地模型。"));
     setup.appendChild(setupCopy);
     var setupActions = document.createElement("span");
     setupActions.className = "tz-site-ai-setup__actions";
@@ -1931,7 +2072,7 @@
     frame.title = "天择网 AI 对话";
     frame.loading = "lazy";
     frame.setAttribute("allow", "clipboard-read; clipboard-write; display-capture");
-    frame.src = new URL("os/float-chat.html?embedded=1&site=1", rootUrl).href;
+    frame.dataset.src = new URL("os/float-chat.html?embedded=1&site=1", rootUrl).href;
     dock.appendChild(frame);
 
     var backdrop = document.createElement("div");
@@ -2019,12 +2160,17 @@
       }, location.origin);
     }
 
+    function ensureFrameLoaded() {
+      if (!frame.getAttribute("src") && frame.dataset.src) frame.src = frame.dataset.src;
+    }
+
     function setOpen(open, options) {
       options = options || {};
       open = !!open;
       if (!options.restoring) writeTzSiteAssistantUiState({ open: open });
       launcher.setAttribute("aria-expanded", open ? "true" : "false");
       if (open) {
+        ensureFrameLoaded();
         syncAISetup();
         dock.hidden = false;
         dock.setAttribute("aria-hidden", "false");
@@ -2182,6 +2328,21 @@
     initTzUiV4();
     initTzSiteMotion();
     initTzSiteAssistant();
+    initTzPwaClientLazy();
+  }
+
+  function initTzPwaClientLazy() {
+    if (!document.body || (location.protocol !== "https:" && location.protocol !== "http:") || window !== window.top || window.TZPWA) return;
+    var load = function () {
+      if (window.TZPWA || document.querySelector('script[data-tz-pwa-client]')) return;
+      var script = document.createElement("script");
+      script.src = new URL("assets/js/pwa-client.js", getTzSiteRoot()).href;
+      script.defer = true;
+      script.setAttribute("data-tz-pwa-client", "true");
+      document.head.appendChild(script);
+    };
+    if ("requestIdleCallback" in window) window.requestIdleCallback(load, { timeout: 1800 });
+    else window.setTimeout(load, 700);
   }
 
   if (document.body) bootTzUiV4();
@@ -2404,7 +2565,8 @@
           o.appendChild(dots);
           o.appendChild(copy);
           o.appendChild(cost);
-          o.addEventListener("click", function () {
+          o.addEventListener("click", function (event) {
+            event.stopPropagation();
             var persisted = TZPAL.select(id);
             liveStatus.textContent = "已切换到“" + s.name + "”" + (persisted ? "" : "；本次浏览有效，浏览器未允许持久保存");
             renderPanel(id);

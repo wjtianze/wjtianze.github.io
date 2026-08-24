@@ -1,12 +1,12 @@
 {
   "schemaVersion": 2,
   "source": "天择网本地静态页面",
-  "generatedAt": "2026-08-14T14:23:25.965Z",
-  "entryCount": 57,
+  "generatedAt": "2026-08-24T03:51:48.209Z",
+  "entryCount": 60,
   "entries": [
     {
       "url": "/",
-      "title": "天择网 5.0 · Evolution Network",
+      "title": "天择网 5.2 · Evolution Network",
       "description": "这里是天择网：记录思考，分享创作，安放热爱。",
       "headings": [
         "这里是天择网",
@@ -21,15 +21,15 @@
         "游戏专区",
         "英语专区",
         "最新动态",
-        "天择网与天择OS 5.0 正式发布",
+        "天择网与天择OS 5.2 正式发布",
         "天择OS 4.1 正式发布",
         "天择网与天择OS 4.0",
         "笔记命令与 COC 自定义闪震",
         "混合矿工宝典：从路线到法术时机的完整攻略",
         "不是信息仓库，是一套选择系统"
       ],
-      "text": "天择网 5.0 · Evolution Network 天择网 EVOLUTION NETWORK · 5.0 网络矩阵 · 在线 2026.08 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 物竞天择 · 适者生存 NETWORK 5.0 这里是天择网 记录思考，分享创作，安放热爱。 新闻、博客、开源数据、AI 实践、游戏与学习工具在这里彼此连接，也持续生长。 进入内容矩阵 启动天择OS 5.0 内容域 09 站点资讯 28 开源技能 02 当前代际 5.0 LIVE TOPOLOGY 网络态势 正在连接节点索引 正在生成全站星图 主页居中 · 分层连接 · 28 个精选节点 01 内容持续同步 02 五套免费外观 03 OS / Web 联动 最新公告 · 2026-08-07 天择网与天择OS 5.0：网页浏览、文件管理与本地模型 阅读更新 DOMAIN MATRIX / 01 内容矩阵 每个板块都是独立入口，也能在天择OS中作为应用运行。 OS / 5.0 EVOLUTION SHELL 天择OS 在浏览器与桌面端运行的完整工作台，整合本站应用、AI 对话、命令行与软件生态。 启动系统 01 SIGNAL FEED 新闻 站点动态与重要更新的第一发布现场。 浏览信号 02 LONGFORM 博客 更长篇幅的思考、随笔、攻略与创作。 打开文库 03 OPEN DATA 数据开源 自制数据与服务免费开放，不限制使用方向。 读取资源 04 INTELLIGENCE AI 专区 人工智能工具、技能、实践与前沿观察。 进入专区 05 COC LAB COC 专区 村庄存档分析、升级规划、伤害计算与本地游戏数据工具。 进入实验室 06 PLAYGROUND 游戏专区 天择网原创网页游戏与可直接运行的互动作品。 开始游玩 07 LEARNING DECK 英语专区 四阶段词汇训练、AI 出题与自定义词库组成的学习工作台。 开始训练 最新动态 / 02 最新动态 查看全部新闻 08.07 正式发布 · 最新 天择网与天择OS 5.0 正式发布 网页浏览、文件管理、本地模型与 Windows 工具进一步整合，常用能力更容易找到和使用。 08.02 正式发布 天择OS 4.1 正式发布 对话归档、智能体、用量统计、会员外观和加密存档同步上线。 07.31 正式发布 天择网与天择OS 4.0 全站工作台、人工智能多会话、知识库、COC 与英语学习体验统一升级。 07.24 版本更新 笔记命令与 COC 自定义闪震 笔记管理更直接，COC 伤害方案可按自定义雷电与地震数量计算。 COC 教程 混合矿工宝典：从路线到法术时机的完整攻略 都城突袭 · 2026-07-12 NETWORK MANIFEST 不是信息仓库，是一套选择系统 在信息过载的时代做减法：只保留真正经得起时间筛选、又能继续生长的内容。 联系开发者",
-      "updatedAt": "2026-08-10T05:19:25.114Z"
+      "text": "天择网 5.2 · Evolution Network 天择网 EVOLUTION NETWORK · 5.2 网络矩阵 · 在线 2026.08 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 物竞天择 · 适者生存 NETWORK 5.2 这里是天择网 记录思考，分享创作，安放热爱。 新闻、博客、开源数据、AI 实践、游戏与学习工具在这里彼此连接，也持续生长。 进入内容矩阵 启动天择OS 5.2 内容域 09 站点资讯 29 开源技能 02 当前代际 5.2 LIVE TOPOLOGY 网络态势 正在连接节点索引 正在生成全站星图 主页居中 · 分层连接 · 29 个精选节点 01 内容持续同步 02 五套免费外观 03 OS / Web 联动 最新公告 · 2026-08-24 天择网与天择OS 5.2：COC 数据中心与安全 AI 后端上线 阅读更新 DOMAIN MATRIX / 01 内容矩阵 每个板块都是独立入口，也能在天择OS中作为应用运行。 OS / 5.2 EVOLUTION SHELL 天择OS 在浏览器与桌面端运行的完整工作台，整合本站应用、AI 对话、命令行与软件生态。 启动系统 01 SIGNAL FEED 新闻 站点动态与重要更新的第一发布现场。 浏览信号 02 LONGFORM 博客 更长篇幅的思考、随笔、攻略与创作。 打开文库 03 OPEN DATA 数据开源 自制数据与服务免费开放，不限制使用方向。 读取资源 04 INTELLIGENCE AI 专区 人工智能工具、技能、实践与前沿观察。 进入专区 05 COC LAB COC 专区 村庄存档分析、升级规划、伤害计算与本地游戏数据工具。 进入实验室 06 PLAYGROUND 游戏专区 天择网原创网页游戏与可直接运行的互动作品。 开始游玩 07 LEARNING DECK 英语专区 四阶段词汇训练、AI 出题与自定义词库组成的学习工作台。 开始训练 最新动态 / 02 最新动态 查看全部新闻 08.24 正式发布 · 最新 天择网与天择OS 5.2 正式发布 COC 数据中心能直接查玩家与部落，AI 也有了不把密钥留在浏览器里的稳定后端。 08.02 正式发布 天择OS 4.1 正式发布 对话归档、智能体、用量统计、会员外观和加密存档同步上线。 07.31 正式发布 天择网与天择OS 4.0 全站工作台、人工智能多会话、知识库、COC 与英语学习体验统一升级。 07.24 版本更新 笔记命令与 COC 自定义闪震 笔记管理更直接，COC 伤害方案可按自定义雷电与地震数量计算。 COC 教程 混合矿工宝典：从路线到法术时机的完整攻略 都城突袭 · 2026-07-12 NETWORK MANIFEST 不是信息仓库，是一套选择系统 在信息过载的时代做减法：只保留真正经得起时间筛选、又能继续生长的内容。 联系开发者",
+      "updatedAt": "2026-08-24T03:43:51.673Z"
     },
     {
       "url": "/404.html",
@@ -39,7 +39,7 @@
         "这一页，未被自然选择保留"
       ],
       "text": "404 · 页面未找到 — 天择网 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 ROUTE CHECK · NO MATCH 404 这一页，未被自然选择保留 你访问的页面不存在，或已被移动。 / 返回上一页 回到主页",
-      "updatedAt": "2026-08-07T10:49:31.155Z"
+      "updatedAt": "2026-08-24T03:43:51.662Z"
     },
     {
       "url": "/ai/",
@@ -52,7 +52,7 @@
         "技能"
       ],
       "text": "AI 专区 · 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 AI 专区 · Artificial Intelligence 探索 人工智能 的第一线 这里是天择网的 AI 专区——汇聚实用工具、动手实践与前沿观察。我们相信，理解智能，是理解未来最重要的一课。 关于本专区 AI 专区是天择网的一个兴趣方向，用来存放人工智能相关的工具评测、动手实践与前沿观察。 这里的内容会随整个站点一起慢慢充实——当你告诉我「有相关计划」时，新的篇章就会写进来。 二级专区 前往你感兴趣的方向 技能 收录可直接上手使用的 AI 技能，每一个都附带在线体验与详细使用说明。 进入技能专区 →",
-      "updatedAt": "2026-08-07T10:49:31.167Z"
+      "updatedAt": "2026-08-24T03:43:51.674Z"
     },
     {
       "url": "/ai/skill/",
@@ -67,12 +67,12 @@
         "词库转 JSON"
       ],
       "text": "技能 · AI 专区 — 天择网 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS AI SKILL REGISTRY · 04 READY AI 技能 这里收录可直接上手的 AI 工作流。每个技能都提供明确的输入、输出、运行方式与可下载资源。 选择技能 → 查看能力边界 → 下载或进入在线体验 SKILL CATALOG 已发布技能 4 个技能 · 持续更新 课本学习助手 (TLH) 把教材章节转化为可离线打开的交互式 HTML 学习页：知识点演示、六大题型测验、错题本和 AI 对话全部内置。 API + Codex 双版本 在线体验 L7.0 进入技能工作区 Codex App Server 桌面应用开发 把用户自己的 ChatGPT 账号、Codex 模型与智能体能力接进桌面软件，附协议兼容、原生 UI、Windows 启动和零额度测试规范。 桌面端 ChatGPT 登录 Agent UI 查看规范并下载 COC 单位数据导出器 从部落冲突 APK 提取完整游戏数据，并配套村庄存档解析脚本，计算剩余升级时间，生成结构化中文报告。 Python JSON 本地运行 进入技能工作区 词库转 JSON 把 TXT、CSV、Excel、Word、PDF 或 Markdown 词库转换为天择背单词标准 JSON，并处理一词多义与重复项。 6 种输入 标准化 自动去重 查看技能详情",
-      "updatedAt": "2026-08-14T14:04:15.715Z"
+      "updatedAt": "2026-08-24T03:43:51.675Z"
     },
     {
       "url": "/ai/skill/coc-units-data-exporter/",
       "title": "COC 单位数据导出器 · 技能 — 天择网",
-      "description": "coc-units-data-exporter：从部落冲突 APK 中提取全部单位完整游戏数据，输出结构化 JSON，含中文介绍、所需大本营等级、装备技能。开源发布。",
+      "description": "COC 本地数据导出器：校验部落冲突 18.400.22 APK 签名并生成 273 个精选单位的结构化 JSON，包含中文介绍、超级充能、装备技能和反击卡组。",
       "headings": [
         "COC 单位数据 导出器",
         "这个技能做什么",
@@ -90,8 +90,8 @@
         "village_parser.py",
         "已用本技能生成的数据"
       ],
-      "text": "COC 单位数据导出器 · 技能 — 天择网 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS AI SKILL · LOCAL DATA PIPELINE COC 单位数据 导出器 一套针对《部落冲突》的本地数据工作流：从 APK 提取完整单位数据，也能解析村庄存档、计算剩余升级时间并输出中文报告。 v18.400.9 数据源 完全开源 coc_pipeline.py village_parser.py PURPOSE 这个技能做什么 本技能包含两个独立可用的 Python 脚本： coc_pipeline.py 给定一份《部落冲突》APK，自动完成提取、解密、解析、命名映射和导出，产出覆盖全部单位的 单位完整数据.json ； village_parser.py 读取你的村庄存档 JSON，结合前者的游戏数据，按家乡与夜世界分类输出村庄完整信息，并计算各类单位达到当前大本营满级的剩余升级时间。 全程本地运行。 两个脚本都内置默认名称表与 ID 映射，不需要账号、API Key 或联网服务。 CAPABILITIES 核心功能 一条命令完成全部提取 全量单位覆盖 兵种、法术、英雄、战宠、英雄装备、建筑、陷阱、守卫、帮手等全部单位类型，共 272 条，含夜世界单位与超级兵。 所有等级数值 每个单位每级的生命值、DPS、伤害、升级花费与时间、所需大本营等级、装备技能等，全部结构化输出。 中文介绍 从 APK 内置本地化文件提取每条单位的中文介绍文本，无需手动翻译，直接可用。 名称表可替换 内置默认名称表覆盖家乡/夜世界/都城全部单位；也可提供自定义 xlsx 覆盖，灵活适配游戏版本更新。 无联网无密钥 纯本地解析，不调用任何外部 API，不读取凭据，不联网。只需 APK 文件即可运行。 结构化输出 标准 JSON 格式，含 meta 元信息与 units 列表，可直接被网页、App、数据分析工具消费。 PIPELINE 01 从 APK 导出完整数据 Python 3.10+ 下载技能包解压后，安装 sc_compression 与 openpyxl ，然后运行提取脚本： PowerShell / Terminal 复制命令 # 基本用法（使用内置名称表） python scripts/coc_pipeline.py \"你的APK文件路径.apk\" # 指定自定义单位名称表 python scripts/coc_pipeline.py \"APK.apk\" \"名称表.xlsx\" # 指定输出目录 python scripts/coc_pipeline.py \"APK.apk\" \"名称表.xlsx\" \"输出目录/\" 脚本会自动从 APK 中提取并解密 91 张数值表与本地化文件，解析宽表结构，匹配单位名称，输出 单位完整数据.json 。技能包内附 references/data_structure.md 说明内部结构与解析规则。 PIPELINE 02 解析村庄存档 village_parser.py 输入从游戏导出的村庄存档 JSON，脚本会结合 单位完整数据.json ，输出村庄概况、家乡与夜世界完整清单，以及各类单位达到当前大本营满级的剩余升级时间。 PowerShell / Terminal 复制命令 # 基本用法（默认读取同目录 ../data/all_game_data_zh.json） python scripts/village_parser.py \"村庄存档.json\" # 指定游戏数据文件路径 python scripts/village_parser.py \"村庄.json\" \"单位完整数据.json\" 脚本内置装备与帮手的 ID 到中文名映射，并正确处理夜世界兵种等级不连续的情况。也可以前往 村庄存档分析 在线体验，或在 升级规划器 用甘特图排程。 DOWNLOADS 下载技能包 完全开源 · 免费使用 coc-units-data-exporter.zip 技能完整包，含 coc_pipeline.py（APK 提取）、village_parser.py（村庄解析）、默认名称表、参考文档。 ZIP · 48 KB v18.400.9 数据源 下载技能包 village_parser.py 村庄存档解析脚本单独下载，可独立运行，输入村庄 JSON 即输出中文报告与剩余升级时间。 Python 单文件 本地运行 下载脚本 LIVE OUTPUT 已用本技能生成的数据 最新导出的 272 条单位数据已经开源，并驱动 COC 专区的游戏数据查询页。 前往数据开源 在线查询",
-      "updatedAt": "2026-08-07T10:49:31.171Z"
+      "text": "COC 单位数据导出器 · 技能 — 天择网 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 本地数据技能 · 可复现流水线 COC 单位数据 导出器 一套针对《部落冲突》的本地数据工作流：从 APK 提取完整单位数据，也能解析村庄存档、计算剩余升级时间并输出中文报告。 18.400.22 数据源 源码可查 apk_data_pipeline.py village_parser.py PURPOSE 这个技能做什么 本技能包含两个独立可用的 Python 脚本： apk_data_pipeline.py 给定一份《部落冲突》APK，先验证 Android v2/v3 签名，再完成解码、解析、命名映射和导出，产出 单位完整数据.json ； village_parser.py 读取你的游戏内账号 JSON，结合前者的数据计算普通升级与超级充能的剩余时间。 全程本地运行。 脚本不会下载 APK、不会访问账号、不会联网或自动安装依赖；默认名称表随技能包提供。 CAPABILITIES 核心功能 一条命令完成全部提取 全量单位覆盖 兵种、法术、英雄、战宠、英雄装备、建筑、陷阱、守卫与帮手共 273 条；包含 16 组有效超级充能及反击卡组。 所有等级数值 共 3491 行逐级数据与 42 件装备；生命值、伤害、升级花费与时间、所需大本营等级和技能均结构化输出。 中文介绍 从 APK 内置本地化文件提取每条单位的中文介绍文本，无需手动翻译，直接可用。 名称表可替换 内置默认名称表覆盖家乡、夜世界与都城精选项目；也可用 --roster-xlsx 提供自定义表。 无联网无密钥 纯本地解析，不调用 coc.py 静态目录或外部 API，不读取凭据。缺少依赖时明确停止，不会自行联网安装。 结构化输出 标准 JSON 格式，含 meta 元信息与 units 列表，可直接被网页、App、数据分析工具消费。 流水线 01 从 APK 导出完整数据 Python 3.10+ 下载技能包解压后，按 requirements.txt 安装密码学依赖，然后运行提取脚本： PowerShell / 终端 复制命令 # 只读解析并验证签名，不写文件 python apk_data_pipeline.py --apk \"你的APK文件路径.apk\" # 生成 JSON python apk_data_pipeline.py --apk \"APK.apk\" --output \"单位完整数据.json\" # 使用自定义精选名称表 python apk_data_pipeline.py --apk \"APK.apk\" --roster-xlsx \"名称表.xlsx\" --output \"单位完整数据.json\" 脚本会读取 APK 内的数值表与简体中文本地化，显式解析每张表的等级列，并输出带文件散列、签名证书、数据聚合散列和统计摘要的 单位完整数据.json 。 流水线 02 解析村庄存档 village_parser.py 输入从游戏导出的村庄存档 JSON，脚本会结合 单位完整数据.json ，输出村庄概况、家乡与夜世界完整清单，以及各类单位达到当前大本营满级的剩余升级时间。 PowerShell / 终端 复制命令 # 第一个参数是账号 JSON，第二个参数是本流水线生成的游戏数据 python village_parser.py \"村庄存档.json\" \"单位完整数据.json\" 脚本内置装备与帮手的 ID 到中文名映射，并正确处理夜世界兵种等级不连续的情况。也可以前往 村庄存档分析 在线体验，或在 升级规划器 用甘特图排程。 下载 下载技能包 本地运行 · 附第三方许可证 coc-units-data-exporter.zip 技能完整包，含 apk_data_pipeline.py、village_parser.py、默认名称表、依赖文件、第三方许可证与使用说明。 ZIP · 57 KB 18.400.22 数据源 下载技能包 village_parser.py 村庄存档解析脚本单独下载，无需额外 Python 包；运行时同时传入村庄 JSON 与本流水线生成的单位完整数据 JSON，即可输出中文报告与剩余升级时间。 Python 单文件 本地运行 下载脚本 当前产物 已用本技能生成的数据 最新导出的 273 条精选单位数据已经更新，并驱动 COC 专区的静态查询、村庄解析、升级规划与伤害计算。 前往数据开源 在线查询 本页是非官方玩家内容，未经 Supercell 认可或赞助。详见 Supercell 玩家内容政策 。",
+      "updatedAt": "2026-08-24T03:43:51.676Z"
     },
     {
       "url": "/ai/skill/codex-app-server/",
@@ -111,13 +111,13 @@
         "build-codex-app-server-apps",
         "怎么用"
       ],
-      "text": "Codex App Server 桌面应用开发技能 — 天择网 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS DESKTOP AGENT INTEGRATION 把 Codex 装进你的软件 这套技能把 Codex App Server 的协议、Windows 启动、ChatGPT 登录、智能体事件、工具审批、文件与图片、原生对话 UI 和零额度测试整理成一条可复用的开发规范。 桌面端专用 用户自己的 ChatGPT 账号 无传统 API Key 含可运行模板 下载开发技能 ZIP 官方 App Server 文档 WHY IT MATTERS 一份订阅，把模型和智能体能力带进桌面软件 Codex App Server 是 Codex 面向原生客户端的双向控制层。它不只是“发一句、回一句”的聊天接口：应用可以读取账号与可用模型，启动和恢复多轮任务，接收思考摘要、计划、命令、文件修改、网页搜索、扩展工具和图片等实时事件，并处理用户审批。 对已经订阅 ChatGPT Plus、Pro 等合资格套餐的用户尤其有吸引力：直接登录自己的账号，就能使用套餐当前包含的 Codex 用量，把强大模型、终端、文件操作和智能体工作流接进自己的桌面软件，不必再单独粘贴传统 API Key，也不会消耗开发者的账号额度。套餐范围、可用模型、使用上限和额外点数以每个账号当时显示为准。 账号归用户，能力归应用。 每位用户直接完成 ChatGPT 登录；应用不读取账号文件、Cookie 或访问令牌，也不共享、转售任何人的订阅。 了解 Codex 与套餐内用量 查看当前套餐 WHAT YOU CAN BUILD 可以接入的能力 全部按本机版本动态发现 ChatGPT 账号与额度 内置登录、退出、套餐状态、额度窗口、重置时间和词元用量，不保存传统 API Key。 模型、思考与速度 从 App Server 读取可用模型、思考档位、图片能力与可选速度档，不把易过时的名称写死。 完整智能体过程 把思考摘要、计划、命令、文件修改、搜索、工具和审批做成清晰的过程卡，而不是一大段调试文字。 文件与应用工作区 Codex 默认操作应用自己的文件管理器目录，图片、附件和生成文件通过受控本地桥安全流转。 原生多对话 UI 后台对话继续生成、切回后内容完整恢复；发送/停止跟随当前对话，滚动视角不会被强行拖走。 兼容与零额度回归 附版本结构生成器、Node 客户端、假 App Server、冒烟测试和 UI 模板，专门规避旧字段、审批卡死与 Windows 启动错误。 DOWNLOAD 技能包内容 build-codex-app-server-apps 包含完整 SKILL.md、协议/Windows/UI/测试参考、可复用 Node JSONL 客户端、原生智能体对话 UI、当前版本结构生成器和零额度假服务测试。 约 32 KB 无账号秘密 可离线自测 下载 ZIP 怎么用 解压到 Codex 的技能目录，或把技能文件夹交给 Codex。 要求 Codex“使用 build-codex-app-server-apps 把这个桌面应用的 AI 重构为 Codex App Server”。 技能会先检查真实源码和本机协议结构，再实现账号、模型、UI、审批、文件与测试；网页/API 版保持原样。 该技能面向应用开发者，不是浏览器端接口。自动测试不会调用真实模型或消耗你的 Codex 用量。",
-      "updatedAt": "2026-08-14T14:03:43.315Z"
+      "text": "Codex App Server 桌面应用开发技能 — 天择网 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS DESKTOP AGENT INTEGRATION 把 Codex 装进你的软件 这套技能把 Codex App Server 的协议、Windows 启动、ChatGPT 登录、智能体事件、工具审批、文件与图片、原生对话 UI 和零额度测试整理成一条可复用的开发规范。 桌面端专用 用户自己的 ChatGPT 账号 无传统 API Key 含可运行模板 下载开发技能 ZIP 官方 App Server 文档 WHY IT MATTERS 一份订阅，把模型和智能体能力带进桌面软件 Codex App Server 是 Codex 面向原生客户端的双向控制层。它不只是“发一句、回一句”的聊天接口：应用可以读取账号与可用模型，启动和恢复多轮任务，接收思考摘要、计划、命令、文件修改、网页搜索、扩展工具和图片等实时事件，并处理用户审批。 对已经订阅 ChatGPT Plus、Pro 等合资格套餐的用户尤其有吸引力：直接登录自己的账号，就能使用套餐当前包含的 Codex 用量，把强大模型、终端、文件操作和智能体工作流接进自己的桌面软件，不必再单独粘贴传统 API Key，也不会消耗开发者的账号额度。套餐范围、可用模型、使用上限和额外点数以每个账号当时显示为准。 账号归用户，能力归应用。 每位用户直接完成 ChatGPT 登录；应用不读取账号文件、Cookie 或访问令牌，也不共享、转售任何人的订阅。 了解 Codex 与套餐内用量 查看当前套餐 WHAT YOU CAN BUILD 可以接入的能力 全部按本机版本动态发现 ChatGPT 账号与额度 内置登录、退出、套餐状态、额度窗口、重置时间和词元用量，不保存传统 API Key。 模型、思考与速度 从 App Server 读取可用模型、思考档位、图片能力与可选速度档，不把易过时的名称写死。 完整智能体过程 把思考摘要、计划、命令、文件修改、搜索、工具和审批做成清晰的过程卡，而不是一大段调试文字。 文件与应用工作区 Codex 默认操作应用自己的文件管理器目录，图片、附件和生成文件通过受控本地桥安全流转。 原生多对话 UI 后台对话继续生成、切回后内容完整恢复；发送/停止跟随当前对话，滚动视角不会被强行拖走。 兼容与零额度回归 附版本结构生成器、Node 客户端、假 App Server、冒烟测试和 UI 模板，专门规避旧字段、审批卡死与 Windows 启动错误。 DOWNLOAD 技能包内容 build-codex-app-server-apps 包含完整 SKILL.md、协议/Windows/UI/测试参考、可复用 Node JSONL 客户端、原生智能体对话 UI、当前版本结构生成器和零额度假服务测试，并附最新的兼容性排错、提示词分区、并行任务、审批与媒体渲染规范。 约 34 KB 无账号秘密 可离线自测 下载 ZIP 怎么用 解压到 Codex 的技能目录，或把技能文件夹交给 Codex。 要求 Codex“使用 build-codex-app-server-apps 把这个桌面应用的 AI 重构为 Codex App Server”。 技能会先检查真实源码和本机协议结构，再实现账号、模型、UI、审批、文件与测试；网页/API 版保持原样。 该技能面向应用开发者，不是浏览器端接口。自动测试不会调用真实模型或消耗你的 Codex 用量。",
+      "updatedAt": "2026-08-17T13:15:04.549Z"
     },
     {
       "url": "/ai/skill/tlh/",
       "title": "课本学习助手 (TLH) · 技能 — 天择网",
-      "description": "textbook-learning-helper（课本学习助手）：把教材章节一键转化为可离线打开的交互式 HTML 学习页，内置知识点演示、六大题型测验、错题本与 DeepSeek 对话。",
+      "description": "textbook-learning-helper（课本学习助手）：把教材章节一键转化为可离线打开的交互式 HTML 学习页，内置知识点演示、章节切换器、测验、错题本与 Codex 对话。",
       "headings": [
         "课本学习助手 TLH",
         "功能定位与适用场景",
@@ -129,22 +129,22 @@
         "五视图两栏布局",
         "六大题型 + 判分",
         "交互式演示",
-        "DeepSeek 对话",
+        "AI 对话",
         "公式 + LaTeX 助手",
         "状态持久化",
         "下载技能",
         "textbook-learning-helper L7.0 · API 版",
-        "textbook-learning-helper L7.0-codex",
-        "API 版在线体验",
-        "填入你的 DeepSeek API Key",
+        "textbook-learning-helper L8.0-codex",
+        "在线体验",
+        "无需填写 API Key",
         "体验区尚未启动",
         "继续使用",
         "使用教程",
         "下载 Codex 桌面版",
-        "获取 API Key"
+        "离线 API 版说明"
       ],
-      "text": "课本学习助手 (TLH) · 技能 — 天择网 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS AI SKILL · INTERACTIVE LEARNING 课本学习助手 TLH 把教材章节生成一个可离线打开、可与 AI 对话的交互式 HTML 学习页。普通 API 版与 L7.0-codex 桌面版并行提供，知识点、教材原文、测验、错题本、批阅数据与交互演示都在同一工作区。 L7.0 API 版 L7.0-codex 桌面版 完全开源 离线 HTML LEARNING LOOP 功能定位与适用场景 课本学习助手会分析教材（包括数理化 PDF 与扫描件）、提取指定章节知识点并生成自包含的交互式 HTML，把“读教材—理知识点—做题—对答案—问 AI”浓缩为一个文件。 自学理工科教材 把数学、物理、化学等章节变成带交互演示的知识点与题库。 期末复习与章节精练 一屏一题，答题卡与错题本自动收集结果，AI 批阅主观题。 教师与助教 批量生成指定章节的课后练习、演示与讲解页。 开发者二次开发 基于完全开源的模板与注入脚本定制功能，包括商业用途。 CAPABILITIES 核心功能 更多细节见使用教程 五视图两栏布局 左栏切换知识点 / 教材原文 / 测验 / 错题本 / 批阅数据，右栏 DeepSeek 对话；列宽可拖动。 六大题型 + 判分 单选/多选/不定项/判断/填空/解答；客观题本地判分，主观题 AI 批阅；多选漏选但没错选得一半分。 交互式演示 每个知识点强制附 HTML+JS 交互演示，sandboxed iframe 渲染，自动注入 KaTeX + Markdown。 DeepSeek 对话 API 版使用 DeepSeek；Codex 版登录用户自己的 ChatGPT 账号，并从 App Server 动态读取模型、思考强度、可选速度和图片能力。 公式 + LaTeX 助手 全程 Markdown + KaTeX 渲染；按鼠标中键复制任意公式的 LaTeX 源码；标题栏 LaTeX 助手按学科 × 难度分类。 状态持久化 作答、批阅、对话、滚动位置和演示代码持久保存；Codex 版还显示智能体过程、工具调用、词元与账号额度。 查看 API 级详细使用教程 DOWNLOAD 下载技能 textbook-learning-helper L7.0 · API 版 网页与桌面均可用。学习页直接连接用户自己的 DeepSeek API Key，保留在线体验与普通 HTML 使用方式。 约 137 KB 网页可用 DeepSeek API 下载 API 版 textbook-learning-helper L7.0-codex 仅桌面端。配套本地启动器连接 Codex App Server，用户登录自己的 ChatGPT 账号；支持模型、思考强度、额度、工具过程、图片与文件。 约 1.1 MB Windows 桌面 无需传统 API Key 下载 Codex 版 网页版仍使用 API 版。 浏览器不能安全启动本机 Codex App Server；L7.0-codex 必须解压后从配套桌面启动脚本进入。 LIVE DEMO · API EDITION API 版在线体验 Codex 版仅支持桌面端 填入你的 DeepSeek API Key 启动后，下方会加载针对「狭义相对论基础」生成的完整学习页。知识点、演示、测验、教材原文与 AI 对话均可体验。 只保存在当前设备。 本站为纯前端，不会把 Key 发送到天择网服务器；AI 调用由浏览器直接请求 DeepSeek。 DeepSeek API Key sk- 启动体验 清除 Key 尚未启动 · Key 仅保存在本机 localStorage 没有 Key？前往 DeepSeek 开放平台 创建。输入框接受完整 Key，也接受去掉 sk- 后的部分。 体验区尚未启动 在上方填入你的 DeepSeek API Key 并点击「启动体验」，即可加载狭义相对论学习页。知识点、演示、测验无需 Key 即可查看；AI 对话与批阅功能需要 Key。 全屏 NEXT ACTIONS 继续使用 使用教程 API 文档级别的详细说明：参数、调用方式、输入输出格式、源文件结构。 查看教程 下载 Codex 桌面版 获取 L7.0-codex 技能与本地启动器，用自己的 ChatGPT 账号完成对话、批阅、图片和文件任务。 立即下载 获取 API Key 前往 DeepSeek 开放平台创建 API Key，体验 AI 对话与批阅功能。 前往平台",
-      "updatedAt": "2026-08-14T14:05:18.307Z"
+      "text": "课本学习助手 (TLH) · 技能 — 天择网 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS AI SKILL · INTERACTIVE LEARNING 课本学习助手 TLH 把教材章节生成一个可离线打开、可与 AI 对话的交互式 HTML 学习页。普通 API 版与 L8.0-codex 桌面版并行提供，知识点、章节摘要、教材原文、测验、错题本、批阅数据与交互演示都在同一工作区。 L7.0 API 版 L8.0-codex 桌面版 完全开源 离线 HTML LEARNING LOOP 功能定位与适用场景 课本学习助手会分析教材（包括数理化 PDF 与扫描件）、提取指定章节知识点并生成自包含的交互式 HTML，把“读教材—理知识点—做题—对答案—问 AI”浓缩为一个文件。 自学理工科教材 把数学、物理、化学等章节变成带交互演示的知识点与题库。 期末复习与章节精练 一屏一题，答题卡与错题本自动收集结果，AI 批阅主观题。 教师与助教 批量生成指定章节的课后练习、演示与讲解页。 开发者二次开发 基于完全开源的模板与注入脚本定制功能，包括商业用途。 CAPABILITIES 核心功能 更多细节见使用教程 五视图两栏布局 左栏切换知识点 / 教材原文 / 测验 / 错题本 / 批阅数据，右栏 AI 对话；列宽可拖动。 六大题型 + 判分 单选/多选/不定项/判断/填空/解答；客观题本地判分，主观题 AI 批阅；多选漏选但没错选得一半分。 交互式演示 每个知识点强制附 HTML+JS 交互演示，sandboxed iframe 渲染，自动注入 KaTeX + Markdown。 AI 对话 在线体验由天择后端代管模型调用；Codex 版登录用户自己的 ChatGPT 账号，并从 App Server 动态读取模型、思考强度、可选速度和图片能力。 公式 + LaTeX 助手 全程 Markdown + KaTeX 渲染；按鼠标中键复制任意公式的 LaTeX 源码；标题栏 LaTeX 助手按学科 × 难度分类。 状态持久化 作答、批阅、对话、滚动位置和演示代码持久保存；Codex 版还显示智能体过程、工具调用、词元与账号额度。 查看 API 级详细使用教程 DOWNLOAD 下载技能 textbook-learning-helper L7.0 · API 版 网页与桌面均可用。下载后是自包含的普通 API 技能包：需要自行配置兼容接口与密钥；本站在线体验则使用天择后端，无需填写密钥。 约 153 KB 网页可用 DeepSeek API 下载 API 版 textbook-learning-helper L8.0-codex 仅桌面端。配套本地启动器连接 Codex App Server，用户登录自己的 ChatGPT 账号；支持模型、思考强度、额度、工具过程、图片与文件。 约 728 KB Windows 桌面 无需传统 API Key 下载 Codex 版 网页版仍使用 API 版。 浏览器不能安全启动本机 Codex App Server；L8.0-codex 必须解压后从配套桌面启动脚本进入。 LIVE DEMO · MANAGED AI 在线体验 Codex 版仅支持桌面端 无需填写 API Key 启动后，下方会加载针对「狭义相对论基础」生成的完整学习页。知识点、演示、测验、教材原文、AI 对话与批阅均可体验。 前端不接触任何模型密钥。 浏览器只获取一次性人机验证令牌，再请求天择 AI 后端；后端使用代管模型服务，遇到限流或瞬时断线会按安全规则重试或切换独立回退通道。 启动体验 尚未启动 · 在线体验无需 API Key 体验区尚未启动 点击上方「启动体验」即可加载狭义相对论学习页。知识点、演示、测验、AI 对话与批阅均通过天择后端提供，无需填写 API Key。 全屏 NEXT ACTIONS 继续使用 使用教程 API 文档级别的详细说明：参数、调用方式、输入输出格式、源文件结构。 查看教程 下载 Codex 桌面版 获取 L8.0-codex 技能与本地启动器，用自己的 ChatGPT 账号完成对话、章节引用、图片和文件任务。 立即下载 离线 API 版说明 在线体验无需密钥；如需下载后自行接入模型，请查看普通 API 技能包的配置说明。 查看说明",
+      "updatedAt": "2026-08-24T03:43:51.678Z"
     },
     {
       "url": "/ai/skill/tlh/about/",
@@ -179,8 +179,8 @@
         "10. 注意事项与常见错误",
         "11. AI 能力要求"
       ],
-      "text": "使用教程 · 课本学习助手 (TLH) — 天择网 跳到教程正文 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS DOCUMENTATION · API LEVEL 课本学习助手 · 使用教程 VERSION / L7.0 SKILL / textbook-learning-helper PROVIDER / DeepSeek API 本教程以 API 文档的详细程度，说明 textbook-learning-helper （课本学习助手，简称 TLH）的全部用法：技能如何被触发、生成学习页的六步流程、五个源文件的字段规范、六大题型的输入输出格式、公式与演示的书写规则，以及注入脚本 inject.py 的参数与行为。 本技能是 普通版（L7.0） 。生成可用的 HTML 必须 由用户提供有效的 DeepSeek API Key。开发者版（L7.0-d）已内置开发者 Key，无需用户提供。 1. 触发与生成总览 当用户对 AI Agent 说「学习第 X 节」「帮我整理第 X 章知识点并出题」或类似表述时，Agent 自动调用本技能。整个生成流程分六步， 顺序不可颠倒 ： 提取教材文本 ：判断输入是文本型还是扫描/图像型；图像型先 OCR。 铁律：fulltext 必须忠实保留全部原文 （含例题、注释、表格、公式），不得删减或概括，只允许格式转写。 创建工作目录 data/ 与 data/demos/ 。 分文件写出五类源文件 （见第 3 节）： meta.json 、 fulltext.md 、 kp.json 、 questions.json 、 demos/{ci}_{ii}.html 。 演示强制性铁律 ： kp.json 里 每一个 item 都必须有对应的 demos/{ci}_{ii}.html ，inject.py 会校验，缺任何一个都报错退出。 注入并校验 ： python3 inject.py data \"输出.html\" --key sk-你的Key 。 呈现 ：用 present_files 把生成的 HTML 交付给用户，并附上 API Key 清除提醒。 2. 目录结构 技能包解压后的目录结构： tlh-L7.0/ ├── SKILL.md # AI Agent 读取的技能说明 ├── README.md # 人类用户阅读的说明 └── references/ ├── template.html # 学习页模板（不需要读进上下文） ├── inject.py # 注入与校验脚本 └── CHANGELOG.md # 版本更新记录 生成时，AI 创建的工作目录结构如下（ data/ 是输入， 输出.html 是产物）： data/ ├── meta.json # 元信息 ├── fulltext.md # 教材全文 ├── kp.json # 知识点（不含 demo 字段） ├── questions.json # 题目 └── demos/ ├── 0_0.html # kpData[0].items[0] 的演示 ├── 0_1.html # kpData[0].items[1] 的演示 ├── 1_0.html # kpData[1].items[0] 的演示 └── ... # 每个知识点都必须有 输出.html # inject.py 生成 3. 源文件字段规范 3.1 meta.json 必填 章节元信息，JSON 对象。 字段 类型 必填 说明 book string 是 教材名称。 chapter string 是 章节名称。 summary string 是 章节摘要，可含公式（ $...$ ）与 加粗 。 { \"book\": \"大学物理学（自编讲义）\", \"chapter\": \"狭义相对论基础\", \"summary\": \"本章介绍……其中洛伦兹因子 $\\\\gamma=\\\\dfrac{1}{\\\\sqrt{1-v^2/c^2}}$。\" } ⚠️ JSON 字符串中的反斜杠必须转义： \\dfrac 写作 \\\\dfrac 、 \\sqrt 写作 \\\\sqrt 。下同。 3.2 fulltext.md 必填 教材 全文 ，规范 Markdown（ ## / ### 标题、段落分行、公式遵守第 4 节规则）。 铁律：必须忠实保留全部原文 ，包括正文、例题、定理证明、注释、表格、公式等，只允许做格式转写（如两栏排版 → 单栏）。 特殊内容高亮：blockquote + 标记开头的段落会自动套上彩色边框样式： 写法 效果 > 📖 **定义** ... 蓝色边框「📖 定义」 > 📐 **公式** ... 橙色边框「📐 公式」（居中） > 📊 **定理** ... 紫色边框「📊 定理」 > 📎 **推论** ... 绿色边框「📎 推论」 > 📝 **引理** ... 青色边框「📝 引理」 > 💡 **性质** ... 粉色边框「💡 性质」 > 📖 **例题** ... 或 > 【例 X.Y】 ... 橙色边框「📖 例题」 > 📝 **注释** ... 灰色边框「📝 注释」 ⚠️ fulltext.md 中 不得出现字面量 ——它会被拼进 块，字面量 会让该块提前关闭、页面崩溃。inject.py 会拦截并报错。 3.3 kp.json 必填 知识点分类数组， 不含 demo 字段 （demo 由 demos/ 目录单独提供，inject.py 自动组装）。 字段 类型 必填 说明 cat string 是 分类名。 items array 是 该分类下的知识点数组。 items[].name string 是 知识点名称，可含公式。 items[].desc string 是 知识点简述，可含公式与 加粗 。 [ { \"cat\": \"一、相对论基本原理\", \"items\": [ { \"name\": \"伽利略变换与经典时空观\", \"desc\": \"经典力学中 $x'=x-vt$、$t'=t$……\" }, { \"name\": \"爱因斯坦两条基本假设\", \"desc\": \"**相对性原理**与**光速不变原理**……\" } ] } ] 下标约定： demos/{ci}_{ii}.html 中 {ci} 是分类下标（从 0 开始）， {ii} 是该分类 items 下标。例如 demos/1_2.html 对应 kpData[1].items[2] 。 3.4 questions.json 必填 题目数组，总量建议 6–12 题，六大题型智能搭配。公共字段见下表，各题型差异见第 5 节。 字段 类型 必填 说明 type string 是 题型： single / multiple / indeterminate / judge / fill / essay 。 text string 是 题干，可含公式。选择题题干不含选项。 kp string 是 关联的知识点名称（用于薄弱点统计）。 difficulty string 是 难度： 简单 / 中等 / 困难 。 explanation string 是 解析，可含公式与加粗；选择题逐选项、填空按空、解答按小问讲解。 options object 选择题必填 选项，键 必须是大写字母 A/B/C/D… ，严禁 0/1/2/3 数字键。 answer string/array 是 参考答案，格式随题型（见第 5 节）。 3.5 demos/{ci}_{ii}.html 每个知识点必填 每个知识点的交互式演示， 强制要求 。完整 HTML 文档（ 开头， 结尾），自包含、可在 sandboxed iframe 中独立运行。详细规则见第 6 节。 4. 公式与书写规则 适用于 fulltext.md / kp.json / questions.json ： 数学内容一律用 $...$ （行内）或 $$...$$ （行间）， 绝不用 \\[...\\] 、 \\(...\\) 。 反斜杠命令（ \\frac 、 \\xi 、 \\vec 等）整体包进 $...$ ，不裸露在外。 乘号一律用 \\cdot ，绝不用 \\cdotp （会渲染错误）。 长度命令铁律 ：严禁使用 LaTeX 长度/间距命令—— \\[4pt] 、 \\[2ex] 、 \\vspace{...} 、 \\hspace{...} 、 \\vskip 、 \\hskip 、 \\smallskip 、 \\medskip 、 \\bigskip 、 \\vfill 、 \\hfill 、 \\newline 、 \\par 等。需要换行就真正换行。 选择题 options 的键必须是大写字母 A/B/C/D… ，严禁 0/1/2/3 数字键。 行内公式 ：仅当含 \\sum \\int \\lim \\prod \\oint 等大型运算符时才加 \\displaystyle ；含 \\frac 的（除上下标小字外）一律写 \\dfrac ；上下标内的 \\frac 保持原样。 行间公式 $$...$$ ：不要写 \\displaystyle ，不要写 \\dfrac ，分数用 \\frac 。 生成 JSON 时 无需手动加 \\displaystyle 或 \\dfrac ——页面 applyDisplayStyle 函数会自动按上述规则处理。 5. 六大题型输入输出格式 5.1 single 单选 options 键 A/B/C/D； answer 单个大写字母。本地即时判分。 { \"type\": \"single\", \"text\": \"一飞船以 $v=0.6c$ 飞行，飞船钟走 $1\\\\ \\\\mathrm{s}$，地面测得历时？\", \"options\": { \"A\": \"$0.8\\\\ \\\\mathrm{s}$\", \"B\": \"$1\\\\ \\\\mathrm{s}$\", \"C\": \"$1.25\\\\ \\\\mathrm{s}$\", \"D\": \"$1.67\\\\ \\\\mathrm{s}$\" }, \"answer\": \"C\", \"kp\": \"时间膨胀（动钟变慢）\", \"difficulty\": \"中等\", \"explanation\": \"$\\\\gamma=\\\\dfrac{1}{\\\\sqrt{1-0.6^2}}=1.25$，故 $\\\\Delta t=1.25\\\\ \\\\mathrm{s}$，选 C。\" } 5.2 multiple 多选 options 同上； answer ≥2 个大写字母的字符串。 漏选但没错选得一半分（partial） ，完全答对得满分，错选或全错得 0 分。 { \"type\": \"multiple\", \"answer\": \"ACD\", ... } 5.3 indeterminate 不定项 options 同上； answer ≥1 个大写字母。 漏选但没错选同样得一半分 （与多选规则一致）。 { \"type\": \"indeterminate\", \"answer\": \"AC\", ... } 5.4 judge 判断 可省 options ； answer 写 \"对\" 或 \"错\" 。 { \"type\": \"judge\", \"text\": \"伽利略变换下 $\\\\Delta t'=\\\\Delta t$、$\\\\Delta x'=\\\\Delta x$。\", \"answer\": \"对\", \"kp\": \"...\", \"difficulty\": \"简单\", \"explanation\": \"伽利略变换 $t'=t$ 给出时间空间绝对……\" } 5.5 fill 填空 无 options ； answer 为参考答案字符串。 { \"type\": \"fill\", \"text\": \"粒子以 $v=0.8c$ 运动，洛伦兹因子 $\\\\gamma=$ ____。\", \"answer\": \"1.67\", \"kp\": \"...\", \"difficulty\": \"中等\", \"explanation\": \"$\\\\gamma=\\\\dfrac{1}{\\\\sqrt{1-0.8^2}}\\\\approx 1.67$。\" } 5.6 essay 解答 无 options ； answer 为分步参考解答。由 AI（max 思考）按 0–10 评分给评语，可「🔄 重新批阅」。 { \"type\": \"essay\", \"text\": \"杆 $L_0=100\\\\ \\\\mathrm{m}$ 以 $v=0.6c$ 运动，求地面测得杆长并说明为何须同时测两端。\", \"answer\": \"$\\\\gamma=1.25$，$L=80\\\\ \\\\mathrm{m}$。测长度需同一时刻记录两端……\", \"kp\": \"...\", \"difficulty\": \"中等\", \"explanation\": \"长度收缩公式 $L=L_0/\\\\gamma$……\" } 6. 演示 HTML 写作规则 适用于 demos/{ci}_{ii}.html ： 必须是完整 HTML 文档： 开头， 结尾；也接受 HTML 片段（页面会自动包装）。 自包含：所有 CSS 写在 内，所有 JS 写在 内；不得引用本地外部文件。 直接写正常的 ，inject.py 会自动转义为 注入到 JSON 字符串里。 绝对不要 在演示文件里写 （反斜杠转义）。 公式与 Markdown 渲染（自动注入） 页面会自动为每个演示注入 KaTeX（公式）与 marked（Markdown）库， 无需手动引入任何 CDN 或调用 renderMathInElement ： 数学公式 ：直接用 $...$ （行内）或 $$...$$ （行间），页面自动用 KaTeX 渲染。 Markdown 文字说明 ：把 Markdown 文本放在带 class=\"md\" 的元素里，页面自动用 marked 渲染（支持标题、列表、表格、代码块、粗体斜体、blockquote 等 GFM 语法）。 动态更新内容后重新渲染 ：若 JS 动态修改了 .md 元素内容或插入了新的 $...$ 公式，调用 window._demoRender() 重新跑一遍 marked + KaTeX。 不要在演示里重复引入 katex/marked CDN （页面已自动注入，重复引入可能导致冲突）。 其他规则 LaTeX 规范：乘号用 \\cdot ，禁止 \\cdotp ；禁止 \\[ \\] 与 \\( \\) ；禁止 LaTeX 长度命令。 必须【交互式】：有滑块、按钮、输入框、下拉框等控件，让学生操作并实时观察结果变化；不能只是静态展示。 视觉美观：现代 CSS（渐变 background、box-shadow、border-radius、平滑 transition）；配色用蓝紫主题（主色 #3a5a9c 、强调 #ff7a45 、背景 #f4f6fb 、文字 #1c2438 ）；字体 system-ui, -apple-system, \"Segoe UI\", sans-serif 。 布局宽敞：内容居中、padding 充足（至少 16px）、控件间距 8~12px。 不要使用 prompt() / alert() / confirm() （sandbox 限制）；用页面内 DOM 显示反馈。 不要访问 document.cookie 、 localStorage 、 parent.xxx （sandbox 限制）。 不要使用 ES module（import/export）——用普通 即可。 控件必须有初始值，JS 放在 body 末尾的 里或用 window.onload 。 7. inject.py 参数与行为 注入脚本把分开写好的源文件整合后注入 template.html ，产出最终学习页。 用法 python3 inject.py [template.html] [--key ] 参数 必填 说明 是 源文件目录（含 meta.json / fulltext.md / kp.json / questions.json / demos/）。 是 输出 HTML 文件路径。命名格式： 技能版本_教材_章节.html （如 L7.0_大学物理_狭义相对论基础.html ）。 [template.html] 否 可选，默认用脚本同目录下的 template.html 。 --key 是（普通版） 把模板中的 替换为真实 Key。若模板仍含占位符且未传此参数，脚本报错退出。 脚本流程 读取并校验所有源文件（meta / fulltext / kp / questions / demos）。 强制演示校验 ：每个 kpData[ci].items[ii] 必须有 demos/{ci}_{ii}.html ，缺任何一个报错退出。 自动把 demo HTML 中的 转义为 （JSON 字符串层面），AI 写演示时可用正常的 。 组装成完整 data 对象 {book, chapter, summary, fulltext, kpData, questions} 。 拦截 fulltext / kp / questions 中可能残留的字面量 。 注入 API Key（若需要）。 把模板中 id=\"learning-data\" 的 块整体替换为真实数据。 写出文件，打印 ✅ 已生成：…（知识点 N 个 / 演示 N 个 / 题目 M 道） 。 校验失败会非零退出并打印原因——据此回到对应源文件修数据即可。 8. 输出格式（最终 JSON 结构） inject.py 组装后注入模板的 块，结构如下： { \"book\": \"教材名\", \"chapter\": \"章节名\", \"summary\": \"摘要（可含公式与 **加粗**）\", \"fulltext\": \"教材全文（Markdown）\", \"kpData\": [ { \"cat\": \"分类名\", \"items\": [ { \"name\": \"知识点名\", \"desc\": \"简述\", \"demo\": \"交互式演示 HTML 代码（已转义）\" } ] } ], \"questions\": [ { \"type\": \"...\", \"text\": \"...\", ... } ] } 9. 页面功能（生成后自动具备） 五视图两栏布局 ：左栏 tab 切换「知识点 / 教材原文 / 测验 / ❌ 错题本 / 批阅数据」，右栏 AI 对话；列宽可拖动。教材原文视图有「📑 目录」浮层按章/节跳转。 知识点单页 ：一页一个知识点，顶部「上一个 / 目录 / 下一个」导航。每个含文字、公式、交互式演示（强制）、可选 AI 详解。演示在 sandboxed iframe 中独立运行，支持编辑/重跑/AI 编辑/全屏。 测验单页 ：一屏一题，「上一题 / 答题卡 / 下一题」切换；底部「🔄 再出几道题 / 📝 批阅本题 / ✅ 全部批阅」。答题卡圆形彩点（白=未做、蓝=做了没批、绿=对、红=错、黄=半对）。单选/多选/不定项可右键排除选项。 错题本 ：自动收集已批阅但未全对的题目，支持「重新作答」「跳到测验」。 批阅数据 ：总分、全对数、答题概览表、错题订正建议、薄弱知识点排名。 DeepSeek 聊天 ：V4 Flash / V4 Pro，思考强度（无/high/max）、理解强度（无/标准/深度）。多对话管理、自动命名（≤7 字）、流式输出与中途停止、重新生成与编辑。 max_tokens 拉满到 384000。 出题模式 ：勾选后发送消息自动加 #出题 指令，AI 以 JSON 数组出题并写入题库。 AI 详解 / 重写纠错 ：知识点与已批阅题目可一键生成详解；可让 AI 检查事实/公式/Markdown 错误并改正。 引用知识点/题目 ：「📎 引用」按钮勾选任意知识点与题目作为本次提问上下文（仅本次有效）。 公式点击复制 LaTeX ：点击页面内任意公式复制其 LaTeX 源码（交互元素内的公式除外）。 LaTeX 公式助手弹窗 ：四学科 tab（通用/数学/物理/化学）× 难度，点击即复制，支持搜索。 Markdown + KaTeX 渲染 ：答案/解析/AI 回复/作答/看法/评语均完整渲染，行内公式智能判断 \\displaystyle 与 \\dfrac 。 Token 统计与余额 ：按模型分桶显示用量与计价，精确到 ¥0.00001；右栏显示当前对话费用、累计费用、API 余额（60 秒缓存）。 状态持久化 ：作答/批阅/对话（含草稿）/设置/滚动位置/索引/demo 代码均存入 localStorage（与文件路径绑定）。左上角「🗑 清除缓存」一键清除。 10. 注意事项与常见错误 知识点与题目务必写进各自源文件（kp.json / questions.json）， 不要写进 JS 字符串/数组 ——公式里的 \\xi 、 \\underline 在 JS 字符串中是非法转义。 演示 HTML 文件里直接写正常的 ，inject.py 会自动转义。 不要 在演示文件里写 。 fulltext.md / kp.json / questions.json 中 不得出现字面量 ——inject.py 会拦截并报错。 不要在生成的 Markdown 中使用 LaTeX 长度命令（ \\[4pt] 、 \\vspace 、 \\hspace 等），会破坏渲染。 模板内嵌的 DeepSeek API Key 会随 HTML 分发， 分享前提醒用户更换 （在文件中搜索 var KEY='sk- 即可定位）。 若打开后页面为空或行为异常：点页面左上角的「🗑 清除缓存」按钮清掉所有 localStorage 后重载。 ⚠️ API Key 提醒 ：生成的 HTML 文件内嵌了你提供的 DeepSeek API Key。分享该文件前，请先用文本编辑器打开，找到 var KEY= 那一行，把引号内的 Key 值删除或替换为空字符串，否则任何拿到文件的人都能看到并消耗你的 API 额度。 11. AI 能力要求 运行本技能需要至少达到 Claude Sonnet 4.6 水平的 AI。经实测，DeepSeek V4 Flash 和 Claude Haiku 4.5 运行效果较差，不推荐使用。 返回课本学习助手主页 下载技能包",
-      "updatedAt": "2026-08-07T10:49:31.180Z"
+      "text": "使用教程 · 课本学习助手 (TLH) — 天择网 跳到教程正文 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS DOCUMENTATION · API LEVEL 课本学习助手 · 使用教程 VERSION / L7.0 SKILL / textbook-learning-helper 运行方式 / 本地 API 与在线后端 本教程以 API 文档的详细程度，说明 textbook-learning-helper （课本学习助手，简称 TLH）的全部用法：技能如何被触发、生成学习页的六步流程、五个源文件的字段规范、六大题型的输入输出格式、公式与演示的书写规则，以及注入脚本 inject.py 的参数与行为。 请区分两种运行方式： 下载后的 L7.0 与 L7.0-d 是自包含的本地 API 技能包，生成时必须由当前用户提供自己的 DeepSeek API Key，生成页会直接调用该接口；两个技能包都不再预置开发者 Key。本站的「在线体验」则走天择后端代理，无需填写或保存 API Key。 1. 触发与生成总览 当用户对 AI Agent 说「学习第 X 节」「帮我整理第 X 章知识点并出题」或类似表述时，Agent 自动调用本技能。整个生成流程分六步， 顺序不可颠倒 ： 提取教材文本 ：判断输入是文本型还是扫描/图像型；图像型先 OCR。 铁律：fulltext 必须忠实保留全部原文 （含例题、注释、表格、公式），不得删减或概括，只允许格式转写。 创建工作目录 data/ 与 data/demos/ 。 分文件写出五类源文件 （见第 3 节）： meta.json 、 fulltext.md 、 kp.json 、 questions.json 、 demos/{ci}_{ii}.html 。 演示强制性铁律 ： kp.json 里 每一个 item 都必须有对应的 demos/{ci}_{ii}.html ，inject.py 会校验，缺任何一个都报错退出。 注入并校验 ： python3 inject.py data \"输出.html\" --key sk-你的Key 。 呈现 ：用 present_files 把生成的 HTML 交付给用户，并提醒用户：本地 API 版分享前必须移除已注入的 API Key。 2. 目录结构 技能包解压后的目录结构： tlh-L7.0/ ├── SKILL.md # AI Agent 读取的技能说明 ├── README.md # 人类用户阅读的说明 └── references/ ├── template.html # 学习页模板（不需要读进上下文） ├── inject.py # 注入与校验脚本 └── CHANGELOG.md # 版本更新记录 生成时，AI 创建的工作目录结构如下（ data/ 是输入， 输出.html 是产物）： data/ ├── meta.json # 元信息 ├── fulltext.md # 教材全文 ├── kp.json # 知识点（不含 demo 字段） ├── questions.json # 题目 └── demos/ ├── 0_0.html # kpData[0].items[0] 的演示 ├── 0_1.html # kpData[0].items[1] 的演示 ├── 1_0.html # kpData[1].items[0] 的演示 └── ... # 每个知识点都必须有 输出.html # inject.py 生成 3. 源文件字段规范 3.1 meta.json 必填 章节元信息，JSON 对象。 字段 类型 必填 说明 book string 是 教材名称。 chapter string 是 章节名称。 summary string 是 章节摘要，可含公式（ $...$ ）与 加粗 。 { \"book\": \"大学物理学（自编讲义）\", \"chapter\": \"狭义相对论基础\", \"summary\": \"本章介绍……其中洛伦兹因子 $\\\\gamma=\\\\dfrac{1}{\\\\sqrt{1-v^2/c^2}}$。\" } ⚠️ JSON 字符串中的反斜杠必须转义： \\dfrac 写作 \\\\dfrac 、 \\sqrt 写作 \\\\sqrt 。下同。 3.2 fulltext.md 必填 教材 全文 ，规范 Markdown（ ## / ### 标题、段落分行、公式遵守第 4 节规则）。 铁律：必须忠实保留全部原文 ，包括正文、例题、定理证明、注释、表格、公式等，只允许做格式转写（如两栏排版 → 单栏）。 特殊内容高亮：blockquote + 标记开头的段落会自动套上彩色边框样式： 写法 效果 > 📖 **定义** ... 蓝色边框「📖 定义」 > 📐 **公式** ... 橙色边框「📐 公式」（居中） > 📊 **定理** ... 紫色边框「📊 定理」 > 📎 **推论** ... 绿色边框「📎 推论」 > 📝 **引理** ... 青色边框「📝 引理」 > 💡 **性质** ... 粉色边框「💡 性质」 > 📖 **例题** ... 或 > 【例 X.Y】 ... 橙色边框「📖 例题」 > 📝 **注释** ... 灰色边框「📝 注释」 ⚠️ fulltext.md 中 不得出现字面量 ——它会被拼进 块，字面量 会让该块提前关闭、页面崩溃。inject.py 会拦截并报错。 3.3 kp.json 必填 知识点分类数组， 不含 demo 字段 （demo 由 demos/ 目录单独提供，inject.py 自动组装）。 字段 类型 必填 说明 cat string 是 分类名。 items array 是 该分类下的知识点数组。 items[].name string 是 知识点名称，可含公式。 items[].desc string 是 知识点简述，可含公式与 加粗 。 [ { \"cat\": \"一、相对论基本原理\", \"items\": [ { \"name\": \"伽利略变换与经典时空观\", \"desc\": \"经典力学中 $x'=x-vt$、$t'=t$……\" }, { \"name\": \"爱因斯坦两条基本假设\", \"desc\": \"**相对性原理**与**光速不变原理**……\" } ] } ] 下标约定： demos/{ci}_{ii}.html 中 {ci} 是分类下标（从 0 开始）， {ii} 是该分类 items 下标。例如 demos/1_2.html 对应 kpData[1].items[2] 。 3.4 questions.json 必填 题目数组，总量建议 6–12 题，六大题型智能搭配。公共字段见下表，各题型差异见第 5 节。 字段 类型 必填 说明 type string 是 题型： single / multiple / indeterminate / judge / fill / essay 。 text string 是 题干，可含公式。选择题题干不含选项。 kp string 是 关联的知识点名称（用于薄弱点统计）。 difficulty string 是 难度： 简单 / 中等 / 困难 。 explanation string 是 解析，可含公式与加粗；选择题逐选项、填空按空、解答按小问讲解。 options object 选择题必填 选项，键 必须是大写字母 A/B/C/D… ，严禁 0/1/2/3 数字键。 answer string/array 是 参考答案，格式随题型（见第 5 节）。 3.5 demos/{ci}_{ii}.html 每个知识点必填 每个知识点的交互式演示， 强制要求 。完整 HTML 文档（ 开头， 结尾），自包含、可在 sandboxed iframe 中独立运行。详细规则见第 6 节。 4. 公式与书写规则 适用于 fulltext.md / kp.json / questions.json ： 数学内容一律用 $...$ （行内）或 $$...$$ （行间）， 绝不用 \\[...\\] 、 \\(...\\) 。 反斜杠命令（ \\frac 、 \\xi 、 \\vec 等）整体包进 $...$ ，不裸露在外。 乘号一律用 \\cdot ，绝不用 \\cdotp （会渲染错误）。 长度命令铁律 ：严禁使用 LaTeX 长度/间距命令—— \\[4pt] 、 \\[2ex] 、 \\vspace{...} 、 \\hspace{...} 、 \\vskip 、 \\hskip 、 \\smallskip 、 \\medskip 、 \\bigskip 、 \\vfill 、 \\hfill 、 \\newline 、 \\par 等。需要换行就真正换行。 选择题 options 的键必须是大写字母 A/B/C/D… ，严禁 0/1/2/3 数字键。 行内公式 ：仅当含 \\sum \\int \\lim \\prod \\oint 等大型运算符时才加 \\displaystyle ；含 \\frac 的（除上下标小字外）一律写 \\dfrac ；上下标内的 \\frac 保持原样。 行间公式 $$...$$ ：不要写 \\displaystyle ，不要写 \\dfrac ，分数用 \\frac 。 生成 JSON 时 无需手动加 \\displaystyle 或 \\dfrac ——页面 applyDisplayStyle 函数会自动按上述规则处理。 5. 六大题型输入输出格式 5.1 single 单选 options 键 A/B/C/D； answer 单个大写字母。本地即时判分。 { \"type\": \"single\", \"text\": \"一飞船以 $v=0.6c$ 飞行，飞船钟走 $1\\\\ \\\\mathrm{s}$，地面测得历时？\", \"options\": { \"A\": \"$0.8\\\\ \\\\mathrm{s}$\", \"B\": \"$1\\\\ \\\\mathrm{s}$\", \"C\": \"$1.25\\\\ \\\\mathrm{s}$\", \"D\": \"$1.67\\\\ \\\\mathrm{s}$\" }, \"answer\": \"C\", \"kp\": \"时间膨胀（动钟变慢）\", \"difficulty\": \"中等\", \"explanation\": \"$\\\\gamma=\\\\dfrac{1}{\\\\sqrt{1-0.6^2}}=1.25$，故 $\\\\Delta t=1.25\\\\ \\\\mathrm{s}$，选 C。\" } 5.2 multiple 多选 options 同上； answer ≥2 个大写字母的字符串。 漏选但没错选得一半分（partial） ，完全答对得满分，错选或全错得 0 分。 { \"type\": \"multiple\", \"answer\": \"ACD\", ... } 5.3 indeterminate 不定项 options 同上； answer ≥1 个大写字母。 漏选但没错选同样得一半分 （与多选规则一致）。 { \"type\": \"indeterminate\", \"answer\": \"AC\", ... } 5.4 judge 判断 可省 options ； answer 写 \"对\" 或 \"错\" 。 { \"type\": \"judge\", \"text\": \"伽利略变换下 $\\\\Delta t'=\\\\Delta t$、$\\\\Delta x'=\\\\Delta x$。\", \"answer\": \"对\", \"kp\": \"...\", \"difficulty\": \"简单\", \"explanation\": \"伽利略变换 $t'=t$ 给出时间空间绝对……\" } 5.5 fill 填空 无 options ； answer 为参考答案字符串。 { \"type\": \"fill\", \"text\": \"粒子以 $v=0.8c$ 运动，洛伦兹因子 $\\\\gamma=$ ____。\", \"answer\": \"1.67\", \"kp\": \"...\", \"difficulty\": \"中等\", \"explanation\": \"$\\\\gamma=\\\\dfrac{1}{\\\\sqrt{1-0.8^2}}\\\\approx 1.67$。\" } 5.6 essay 解答 无 options ； answer 为分步参考解答。由 AI（max 思考）按 0–10 评分给评语，可「🔄 重新批阅」。 { \"type\": \"essay\", \"text\": \"杆 $L_0=100\\\\ \\\\mathrm{m}$ 以 $v=0.6c$ 运动，求地面测得杆长并说明为何须同时测两端。\", \"answer\": \"$\\\\gamma=1.25$，$L=80\\\\ \\\\mathrm{m}$。测长度需同一时刻记录两端……\", \"kp\": \"...\", \"difficulty\": \"中等\", \"explanation\": \"长度收缩公式 $L=L_0/\\\\gamma$……\" } 6. 演示 HTML 写作规则 适用于 demos/{ci}_{ii}.html ： 必须是完整 HTML 文档： 开头， 结尾；也接受 HTML 片段（页面会自动包装）。 自包含：所有 CSS 写在 内，所有 JS 写在 内；不得引用本地外部文件。 直接写正常的 ，inject.py 会自动转义为 注入到 JSON 字符串里。 绝对不要 在演示文件里写 （反斜杠转义）。 公式与 Markdown 渲染（自动注入） 页面会自动为每个演示注入 KaTeX（公式）与 marked（Markdown）库， 无需手动引入任何 CDN 或调用 renderMathInElement ： 数学公式 ：直接用 $...$ （行内）或 $$...$$ （行间），页面自动用 KaTeX 渲染。 Markdown 文字说明 ：把 Markdown 文本放在带 class=\"md\" 的元素里，页面自动用 marked 渲染（支持标题、列表、表格、代码块、粗体斜体、blockquote 等 GFM 语法）。 动态更新内容后重新渲染 ：若 JS 动态修改了 .md 元素内容或插入了新的 $...$ 公式，调用 window._demoRender() 重新跑一遍 marked + KaTeX。 不要在演示里重复引入 katex/marked CDN （页面已自动注入，重复引入可能导致冲突）。 其他规则 LaTeX 规范：乘号用 \\cdot ，禁止 \\cdotp ；禁止 \\[ \\] 与 \\( \\) ；禁止 LaTeX 长度命令。 必须【交互式】：有滑块、按钮、输入框、下拉框等控件，让学生操作并实时观察结果变化；不能只是静态展示。 视觉美观：现代 CSS（渐变 background、box-shadow、border-radius、平滑 transition）；配色用蓝紫主题（主色 #3a5a9c 、强调 #ff7a45 、背景 #f4f6fb 、文字 #1c2438 ）；字体 system-ui, -apple-system, \"Segoe UI\", sans-serif 。 布局宽敞：内容居中、padding 充足（至少 16px）、控件间距 8~12px。 不要使用 prompt() / alert() / confirm() （sandbox 限制）；用页面内 DOM 显示反馈。 不要访问 document.cookie 、 localStorage 、 parent.xxx （sandbox 限制）。 不要使用 ES module（import/export）——用普通 即可。 控件必须有初始值，JS 放在 body 末尾的 里或用 window.onload 。 7. inject.py 参数与行为 注入脚本把分开写好的源文件整合后注入 template.html ，产出最终学习页。 用法 python3 inject.py [template.html] [--key ] 参数 必填 说明 是 源文件目录（含 meta.json / fulltext.md / kp.json / questions.json / demos/）。 是 输出 HTML 文件路径。命名格式： 技能版本_教材_章节.html （如 L7.0_大学物理_狭义相对论基础.html ）。 [template.html] 否 可选，默认用脚本同目录下的 template.html 。 --key 是（L7.0 / L7.0-d） 把模板中的 替换为当前用户提供的真实 Key。若模板仍含占位符且未传此参数，脚本报错退出；两个技能包均不预置开发者 Key。 脚本流程 读取并校验所有源文件（meta / fulltext / kp / questions / demos）。 强制演示校验 ：每个 kpData[ci].items[ii] 必须有 demos/{ci}_{ii}.html ，缺任何一个报错退出。 自动把 demo HTML 中的 转义为 （JSON 字符串层面），AI 写演示时可用正常的 。 组装成完整 data 对象 {book, chapter, summary, fulltext, kpData, questions} 。 拦截 fulltext / kp / questions 中可能残留的字面量 。 注入 API Key（若需要）。 把模板中 id=\"learning-data\" 的 块整体替换为真实数据。 写出文件，打印 ✅ 已生成：…（知识点 N 个 / 演示 N 个 / 题目 M 道） 。 校验失败会非零退出并打印原因——据此回到对应源文件修数据即可。 8. 输出格式（最终 JSON 结构） inject.py 组装后注入模板的 块，结构如下： { \"book\": \"教材名\", \"chapter\": \"章节名\", \"summary\": \"摘要（可含公式与 **加粗**）\", \"fulltext\": \"教材全文（Markdown）\", \"kpData\": [ { \"cat\": \"分类名\", \"items\": [ { \"name\": \"知识点名\", \"desc\": \"简述\", \"demo\": \"交互式演示 HTML 代码（已转义）\" } ] } ], \"questions\": [ { \"type\": \"...\", \"text\": \"...\", ... } ] } 9. 页面功能（生成后自动具备） 五视图两栏布局 ：左栏 tab 切换「知识点 / 教材原文 / 测验 / ❌ 错题本 / 批阅数据」，右栏 AI 对话；列宽可拖动。教材原文视图有「📑 目录」浮层按章/节跳转。 知识点单页 ：一页一个知识点，顶部「上一个 / 目录 / 下一个」导航。每个含文字、公式、交互式演示（强制）、可选 AI 详解。演示在 sandboxed iframe 中独立运行，支持编辑/重跑/AI 编辑/全屏。 测验单页 ：一屏一题，「上一题 / 答题卡 / 下一题」切换；底部「🔄 再出几道题 / 📝 批阅本题 / ✅ 全部批阅」。答题卡圆形彩点（白=未做、蓝=做了没批、绿=对、红=错、黄=半对）。单选/多选/不定项可右键排除选项。 错题本 ：自动收集已批阅但未全对的题目，支持「重新作答」「跳到测验」。 批阅数据 ：总分、全对数、答题概览表、错题订正建议、薄弱知识点排名。 DeepSeek 聊天 ：V4 Flash / V4 Pro，思考强度（无/high/max）、理解强度（无/标准/深度）。多对话管理、自动命名（≤7 字）、流式输出与中途停止、重新生成与编辑。 max_tokens 拉满到 384000。 出题模式 ：勾选后发送消息自动加 #出题 指令，AI 以 JSON 数组出题并写入题库。 AI 详解 / 重写纠错 ：知识点与已批阅题目可一键生成详解；可让 AI 检查事实/公式/Markdown 错误并改正。 引用知识点/题目 ：「📎 引用」按钮勾选任意知识点与题目作为本次提问上下文（仅本次有效）。 公式点击复制 LaTeX ：点击页面内任意公式复制其 LaTeX 源码（交互元素内的公式除外）。 LaTeX 公式助手弹窗 ：四学科 tab（通用/数学/物理/化学）× 难度，点击即复制，支持搜索。 Markdown + KaTeX 渲染 ：答案/解析/AI 回复/作答/看法/评语均完整渲染，行内公式智能判断 \\displaystyle 与 \\dfrac 。 Token 统计与余额 ：按模型分桶显示用量与计价，精确到 ¥0.00001；右栏显示当前对话费用、累计费用、API 余额（60 秒缓存）。 状态持久化 ：作答/批阅/对话（含草稿）/设置/滚动位置/索引/demo 代码均存入 localStorage（与文件路径绑定）。左上角「🗑 清除缓存」一键清除。 10. 注意事项与常见错误 知识点与题目务必写进各自源文件（kp.json / questions.json）， 不要写进 JS 字符串/数组 ——公式里的 \\xi 、 \\underline 在 JS 字符串中是非法转义。 演示 HTML 文件里直接写正常的 ，inject.py 会自动转义。 不要 在演示文件里写 。 fulltext.md / kp.json / questions.json 中 不得出现字面量 ——inject.py 会拦截并报错。 不要在生成的 Markdown 中使用 LaTeX 长度命令（ \\[4pt] 、 \\vspace 、 \\hspace 等），会破坏渲染。 仅针对下载后生成的本地 API 页：注入的 DeepSeek API Key 会随 HTML 分发， 分享前必须删除 （在文件中搜索 var KEY='sk- 即可定位）。本站在线体验不注入、保存或暴露任何 API Key。 若打开后页面为空或行为异常：点页面左上角的「🗑 清除缓存」按钮清掉所有 localStorage 后重载。 ⚠️ 本地 API 页的 Key 提醒 ：这条提醒只适用于下载后用 --key 生成的 L7 页面。分享前请先用文本编辑器打开，找到 var KEY= 那一行，把引号内的 Key 值删除或替换为空字符串；本站在线体验没有这个字段，也不需要用户提供 Key。 11. AI 能力要求 运行本技能需要至少达到 Claude Sonnet 4.6 水平的 AI。经实测，DeepSeek V4 Flash 和 Claude Haiku 4.5 运行效果较差，不推荐使用。 返回课本学习助手主页 下载技能包",
+      "updatedAt": "2026-08-24T03:43:51.683Z"
     },
     {
       "url": "/ai/skill/tlh/relativity-demo.html",
@@ -193,8 +193,8 @@
         "📎 引用知识点 / 题目",
         "∑ LaTeX 公式助手"
       ],
-      "text": "学习测验 🗑 清除缓存 📚 学习测验 ∑ LaTeX 助手 0 道题 · 6 大题型 · 多对话 DeepSeek 助手 由 textbook-learning-helper L7.0 生成 📖 知识点 📝 测验 📑 目录 📖 知识点 📚 教材原文 📝 测验 ❌ 错题本 📊 批阅 ◀ 上一个 📑 目录 下一个 ▶ ◀ 上一题 📊 答题卡 下一题 ▶ 🔄 再出几道题 📝 批阅本题 ✅ 全部批阅 ◀ 上一题 📊 错题卡 下一题 ▶ 🔄 重新作答此题 📝 跳到测验此题 📑 教材目录 ✕ 📖 知识点概览 ✕ 📊 答题卡 ✕ 未做 做了没批 对 错 半对 ❌ 错题卡 ✕ 错题 半对 未判定 🤖 AI 助手 📊 用量统计 🤖 V4 Flash V4 Pro 🌡️ 🎯 P 🧠 无 high max 💡 理解强度 无 标准 深度 📝 出题模式 📎 引用 关闭中：普通对话；开启后：每条消息自动加上 #出题 指令 Markdown 实时预览 发送 💰 当前对话 ¥ 0.00000 📊 全部累计 ¥ 0.00000 💳 余额 ¥ — 📊 Token / 价格统计 ✕ 🌐 全部累计用量（所有对话 + 命名/批阅/重写/讲解） 🔄 再出几道题 🧩 出题方式 智能分配题型 自己选择题量 📊 总题量（AI 自动分配各题型） 道，AI 依知识点与难度智能搭配题型 📊 各题型题量 单选 多选 不定项 判断 填空 解答 合计： 5 道 🎯 难度 简单 中等 困难 混合 🎯 侧重 全部知识点 薄弱知识点 自选知识点（可多选） 📖 勾选要侧重的知识点（可多选） ✍️ 额外要求（可选） 📋 出题 取消 ✍️ 补充要求 可输入你的要求或意见（可留空，直接让 AI 自行处理） ✅ 确定 取消 📎 引用知识点 / 题目 勾选要引用的内容，发送消息后引用会自动清除（不保存到本地）。引用内容会附在你的提问后面，作为 AI 的上下文。 💡 L6.6 新增： 引用按钮右侧的 chip 仅显示一行，可左右滑动查看；点击任意 chip 即可移除该引用。 📖 知识点 📝 题目 ✅ 确定 取消 ∑ LaTeX 公式助手 ✕ 🔍 ✕ 💡 点击任一公式即可复制其 LaTeX 源码到剪贴板；可在输入框中粘贴使用（自行加上 $...$ 或 $$...$$ 包裹）。搜索时跨所有学科与难度匹配。",
-      "updatedAt": "2026-07-14T02:18:11.622Z"
+      "text": "学习测验 🗑 清除缓存 📚 学习测验 ∑ LaTeX 助手 0 道题 · 6 大题型 · 多对话 AI 助手 由 textbook-learning-helper L7.0 生成 📖 知识点 📝 测验 📑 目录 📖 知识点 📚 教材原文 📝 测验 ❌ 错题本 📊 批阅 ◀ 上一个 📑 目录 下一个 ▶ ◀ 上一题 📊 答题卡 下一题 ▶ 🔄 再出几道题 📝 批阅本题 ✅ 全部批阅 ◀ 上一题 📊 错题卡 下一题 ▶ 🔄 重新作答此题 📝 跳到测验此题 📑 教材目录 ✕ 📖 知识点概览 ✕ 📊 答题卡 ✕ 未做 做了没批 对 错 半对 ❌ 错题卡 ✕ 错题 半对 未判定 🤖 AI 助手 📊 用量统计 🤖 天择 AI（自动回退） 🌡️ 🎯 P 🧠 无 high max 💡 理解强度 无 标准 深度 📝 出题模式 📎 引用 关闭中：普通对话；开启后：每条消息自动加上 #出题 指令 Markdown 实时预览 发送 💰 当前对话 ¥ 0.00000 📊 全部累计 ¥ 0.00000 🛡️ 后端代管 📊 Token / 价格统计 ✕ 🌐 全部累计用量（所有对话 + 命名/批阅/重写/讲解） 🔄 再出几道题 🧩 出题方式 智能分配题型 自己选择题量 📊 总题量（AI 自动分配各题型） 道，AI 依知识点与难度智能搭配题型 📊 各题型题量 单选 多选 不定项 判断 填空 解答 合计： 5 道 🎯 难度 简单 中等 困难 混合 🎯 侧重 全部知识点 薄弱知识点 自选知识点（可多选） 📖 勾选要侧重的知识点（可多选） ✍️ 额外要求（可选） 📋 出题 取消 ✍️ 补充要求 可输入你的要求或意见（可留空，直接让 AI 自行处理） ✅ 确定 取消 📎 引用知识点 / 题目 勾选要引用的内容，发送消息后引用会自动清除（不保存到本地）。引用内容会附在你的提问后面，作为 AI 的上下文。 💡 L6.6 新增： 引用按钮右侧的 chip 仅显示一行，可左右滑动查看；点击任意 chip 即可移除该引用。 📖 知识点 📝 题目 ✅ 确定 取消 ∑ LaTeX 公式助手 ✕ 🔍 ✕ 💡 点击任一公式即可复制其 LaTeX 源码到剪贴板；可在输入框中粘贴使用（自行加上 $...$ 或 $$...$$ 包裹）。搜索时跨所有学科与难度匹配。",
+      "updatedAt": "2026-08-24T03:10:23.710Z"
     },
     {
       "url": "/ai/skill/vocab-to-json/",
@@ -222,7 +222,7 @@
         "转换完成后，进入天择背单词"
       ],
       "text": "词库转 JSON · 天择网 AI 技能 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS AI SKILL · VOCABULARY DATA 把零散词库整理成 可直接导入的 JSON 读取常见文档和表格中的单词、释义、音标与例句，统一为天择背单词使用的标准结构，并自动处理一词多义与重复项。 6 种输入格式 标准化输出 自动去重 Codex 工作流 INPUT ADAPTERS 支持的输入格式 文档、表格与纯文本 TXT 纯文本 适合每行一个单词，或使用空格、制表符分隔的简洁词表。 CSV CSV 表格 识别逗号分隔的数据列，保留已有字段并整理标准结构。 XLS Excel 从 XLSX 工作表读取批量词汇、释义及附加信息。 DOC Word 解析 DOCX 文档中的列表或表格形式词库内容。 PDF PDF 提取 PDF 文档中可识别的词汇文本并进行结构化整理。 MD Markdown 支持 Markdown 列表与表格，适合维护在文本仓库中的词库。 WORKFLOW 四步完成转换 在 Codex 对话中使用 提供词库 上传文档，或直接在对话中粘贴词库内容。 触发技能 说“转换词库”“词库转 JSON”或“格式化单词表”。 检查结构 AI 解析字段、拆分多义、保留特殊音标字符并自动去重。 导入学习 下载标准 JSON，在天择背单词的词库管理中完成导入。 OUTPUT SCHEMA 标准输出结构 清晰、可读、可导入 vocabulary.json · JSON 复制示例 [ { \"word\": \"accommodate\", \"phonetic\": \"/əˈkɒmədeɪt/\", \"pos\": \"v.\", \"meaning\": [ \"容纳；提供空间\", \"迁就；照顾\", \"适应\" ], \"examples\": [ {\"en\": \"...\", \"zh\": \"...\"} ], \"tags\": [\"CET-6\"] } ] 数组作为顶层 输出使用 [...] ，每个单词对应一个对象。 多义保持独立 meaning 始终为数组，每条释义单独保存。 内容原样保留 音标中的 ə、ˈ、ɒ 等特殊字符不会被替换。 重复自动合并 同一单词只保留一条有效记录，避免重复学习项。 NEXT STEP 转换完成后，进入天择背单词 在“词库管理”中导入生成的 JSON，即可开始四阶段词汇训练。 打开词汇训练应用",
-      "updatedAt": "2026-08-07T10:49:31.181Z"
+      "updatedAt": "2026-08-24T03:43:51.685Z"
     },
     {
       "url": "/blog/",
@@ -233,7 +233,7 @@
         "COC 教程"
       ],
       "text": "博客 · 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 首页 / 博客 天择 博客 更长篇幅的思考、工具与日常随笔，会安静地生长在这里。 待发布 COC 教程 部落冲突 · 教程 COC 教程 部落冲突配兵、路线、法术时机与实战策略已统一收录到 COC 专区。 →",
-      "updatedAt": "2026-08-10T04:02:41.276Z"
+      "updatedAt": "2026-08-24T03:43:51.690Z"
     },
     {
       "url": "/blog/1/",
@@ -255,20 +255,22 @@
         "前往升级规划器",
         "本页解析脚本已开源"
       ],
-      "text": "COC 专区 · 村庄存档分析 · 天择网 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 Village Intelligence · Local Analysis COC 专区 · 村庄存档 分析 粘贴你的部落冲突村庄 JSON 数据，自动解析并按「家乡」与「夜世界」分类展示完整村庄信息，计算各类单位到达当前大本营满级的剩余升级时间（含按工人数量折算的墙钟时间）。所有解析在浏览器本地完成，数据仅保存在你自己的设备上。 全程本地解析，不上传存档 家乡与夜世界分别整理 结果可直接接入升级规划 数据查询 DATA INDEX 升级规划 TIMELINE 伤害计算 SIMULATOR COC 教程 GUIDES 粘贴村庄 JSON 将游戏中导出的村庄 JSON 粘贴到下方文本框，点击「解析数据」即可。解析结果会自动保存到本地，升级规划器与伤害计算器可直接读取；数据仅在浏览器中处理。 Village JSON Input 解析数据 填入示例 清空 村庄概况 剩余升级时间总览 基于当前大本营等级，逐级累加每项单位从当前等级到当前大本营允许最高等级的升级时长。 墙钟时间 ＝该资源串行总时长 ÷ 对应工人/研究员数量（即并行后实际所需时间）。 可选加成： 哥布林工人（家乡建筑工人 +1） 哥布林研究员（家乡研究员 +1） 分工：研究员（实验室）升级兵种 / 法术 / 攻城机器；战宠研究员升级战宠；建筑工人升级英雄 / 建筑 / 陷阱 / 其他。已满级或尚未解锁的单位不计入；城墙升级无时间成本，不计入。 家乡 Home Village 夜世界 Builder Base 前往升级规划器 基于刚才解析的村庄数据，用甘特图规划升级排程。家乡与夜世界分开，支持稳本 / 速本两种模式，自动安排工人、可拖拽微调。 打开规划器 本页解析脚本已开源 村庄 JSON 解析与升级时间计算的完整逻辑（Python 脚本），可独立运行，输入村庄 JSON 即可输出结构化中文报告。免费、不限用途。 下载 village_parser.py",
-      "updatedAt": "2026-08-07T10:49:31.188Z"
+      "text": "COC 专区 · 村庄存档分析 · 天择网 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 Village Intelligence · Local Analysis COC 专区 · 村庄存档 分析 粘贴你的部落冲突村庄 JSON 数据，自动解析并按「家乡」与「夜世界」分类展示完整村庄信息，计算各类单位到达当前大本营满级的剩余升级时间（含按工人数量折算的墙钟时间）。所有解析在浏览器本地完成，数据仅保存在你自己的设备上。 全程本地解析，不上传存档 家乡与夜世界分别整理 结果可直接接入升级规划 数据查询 DATA INDEX 升级规划 TIMELINE 伤害计算 SIMULATOR COC 教程 GUIDES 国际服安装 OFFICIAL INSTALL 粘贴村庄 JSON 将游戏中导出的村庄 JSON 粘贴到下方文本框，点击「解析数据」即可。解析结果会自动保存到本地，升级规划器与伤害计算器可直接读取；数据仅在浏览器中处理。 Village JSON Input 解析数据 填入示例 清空 村庄概况 剩余升级时间总览 基于当前大本营等级，逐级累加每项单位从当前等级到当前大本营允许最高等级的升级时长。 墙钟时间 ＝该资源串行总时长 ÷ 对应工人/研究员数量（即并行后实际所需时间）。 可选加成： 哥布林工人（家乡建筑工人 +1） 哥布林研究员（家乡研究员 +1） 分工：研究员（实验室）升级兵种 / 法术 / 攻城机器；战宠研究员升级战宠；建筑工人升级英雄 / 建筑 / 陷阱 / 其他。已满级或尚未解锁的单位不计入；城墙升级无时间成本，不计入。 家乡 Home Village 夜世界 Builder Base 前往升级规划器 基于刚才解析的村庄数据，用甘特图规划升级排程。家乡与夜世界分开，支持稳本 / 速本两种模式，自动安排工人、可拖拽微调。 打开规划器 本页解析脚本已开源 村庄 JSON 解析与升级时间计算脚本可独立运行；代码按仓库许可证提供，《部落冲突》名称、数据与素材权利仍归其权利人所有。 下载 village_parser.py 本页是非官方玩家内容，未经 Supercell 认可或赞助。详见 Supercell 玩家内容政策 。",
+      "updatedAt": "2026-08-24T03:43:51.691Z"
     },
     {
       "url": "/coc/data/",
-      "title": "游戏数据查询 · COC 专区 · 天择网",
-      "description": "部落冲突全部单位静态游戏数据查询：兵种、建筑、法术、英雄、战宠、装备、陷阱、守卫、帮手等分类浏览与搜索，含各等级数值与所需大本营等级。",
+      "title": "COC 数据中心 · 静态数据与玩家部落查询 · 天择网",
+      "description": "天择网 COC 数据中心：查询部落冲突 18.400.22 静态游戏数据，并通过受保护的 coc.py 云端服务查询玩家、部落、战争、联赛、都城与排名；玩家公开资料可导入村庄分析和升级规划。",
       "headings": [
-        "游戏数据 查询",
+        "COC 数据 中心",
         "没有找到匹配的数据",
-        "本页数据已开源"
+        "本页数据已开源",
+        "天择 COC 云端查询",
+        "输入标签即可查询"
       ],
-      "text": "游戏数据查询 · COC 专区 · 天择网 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 主页 › COC 专区 › 游戏数据查询 COC Intelligence Console · Local Dataset 游戏数据 查询 部落冲突全部单位静态游戏数据，支持分类筛选与关键词搜索。点击任意条目查看中文介绍、基础属性与各等级数值（含所需大本营等级、升级花费与时间）。数据均来自本地整理，不查询玩家信息，不调用任何外部接口。 本地静态数据 分类与全文检索 不读取玩家信息 加载中… 正在加载游戏数据… 没有找到匹配的数据 换个关键词，或选择「全部」分类试试。 本页数据已开源 本查询页使用的全部游戏数据来自天择网「数据开源」，可免费下载、不限用途。前往数据开源查看与下载原始 JSON。 前往数据开源",
-      "updatedAt": "2026-08-07T10:49:31.190Z"
+      "text": "COC 数据中心 · 静态数据与玩家部落查询 · 天择网 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 主页 › COC 专区 › COC 数据中心 COC Intelligence Console · Static + Live COC 数据 中心 一个入口同时查 18.400.22 静态游戏数值与玩家、部落、战争、联赛、都城、排名等实时公开资料。静态数据离线可用；实时查询由受 Turnstile 保护的 coc.py 云端服务完成，部署方凭据只保存在 Cloudflare 机密变量中。玩家结果可保存为部分快照，并与游戏内完整账号 JSON 无损合并后交给解析器和规划器。 APK 权威静态数据 官方 API 全能力查询 凭据不进入网页前端 静态游戏数据 玩家与部落实时查询 加载中… 正在加载游戏数据… 没有找到匹配的数据 换个关键词，或选择「全部」分类试试。 本页数据已开源 前往「数据开源」下载可复现的 18.400.22 JSON 与解析工具。代码按各自开源许可证提供；《部落冲突》名称、数据与素材权利仍归其权利人所有。 前往数据开源 天择 COC 云端查询 网页只把查询动作与公开标签发送给天择的只读 Cloudflare Worker；部署方凭据保存在云端机密变量中，不会进入网页源码、浏览器存储或查询结果。 正在连接 重新连接云端 改用本机服务 普通访客无需填写邮箱、密码或 API Key。自行部署时，请打开 部落冲突开发者门户 注册并验证账号，再把邮箱和密码写入 Worker Secrets；coc.py 会创建或复用仅允许 RoyaleAPI 固定代理地址使用的官方 API Key。邮箱密码只发送给开发者门户；代理会看到 API Token、公开查询及结果，但看不到账号密码。 这里只开放 coc.py 的无秘密、只读官网查询；玩家验证令牌、静态游戏数据和账户管理不会发送到云端。 输入标签即可查询 玩家和部落查询不用填写 JSON；静态游戏数据始终使用天择网自己的 18.400.22 目录。 玩家 部落 开发者高级查询 玩家标签 查询玩家 可以带或不带 #；网页会自动大写、补上 #，并把容易混淆的字母 O 改为数字 0。按回车也能查询。 部落标签 查询部落 可以带或不带 #；网页会自动大写、补上 #，并把容易混淆的字母 O 改为数字 0。按回车也能查询。 这里面向熟悉 coc.py 和官方接口的开发者。普通玩家查询、部落查询请使用上面的标签页，不需要编写 JSON。 官网查询动作 连接后加载 参数 JSON（开发者高级功能） {\"name\":\"\",\"limit\":20} 执行高级查询 尚未查询 导入玩家快照 打开村庄解析器 打开升级规划器 查询后的玩家或部落资料会显示在这里。 查看原始 JSON（高级） 复制 JSON 下载 JSON 官方玩家接口没有建筑、陷阱、工人、资源和升级计时。导入时只更新接口实际返回的兵种、法术、英雄和装备；已有完整村庄数据不会被删除，规划器会清楚标示资料覆盖范围。 本页是非官方玩家内容，未经 Supercell 认可或赞助。详见 Supercell 玩家内容政策 。",
+      "updatedAt": "2026-08-24T03:43:51.694Z"
     },
     {
       "url": "/coc/dmg-calc/",
@@ -285,8 +287,20 @@
         "建筑工人小屋回血量计算",
         "目标建筑"
       ],
-      "text": "伤害计算器 · COC 专区 · 天择网 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 主页 › COC 专区 › 伤害计算器 Damage Calculator · Home Village Only 法术伤害 计算器 基于雷电法术、地震法术各等级伤害数据与英雄装备数据，计算给定法术空间内对家乡目标建筑能造成的 最高伤害 ，以及 摧毁指定建筑所需的最少法术 。 新增 ：建筑工人小屋回血量与当前方案 回血容错时间 ——溢出伤害除以小屋总回复速度。支持从村庄存档一键导入等级、按大本营等级自动设定建筑等级。所有计算在浏览器本地完成。 闪震、装备与回血统一计算 可从本地村庄存档导入等级 分享链接只读，不改本机数据 分享查看模式 好友分享的计算结果 你正在查看好友通过天择网伤害计算器分享的配置与计算结果。 查看本身只读 ：只有点击“复制到我的计算器”后，才会用这份配置更新你的伤害计算器主页。 复制到我的计算器 保留原配置并返回 法术机制说明 雷电法术（固定伤害） 每次施放对目标建筑造成 固定数值 的生命值扣除，伤害不随施放次数变化，等于该等级雷电法术的面板伤害值。 总伤害 = 数量 × 该等级面板伤害 地震法术（百分比伤害） 普通建筑按最大生命值造成百分比伤害，对同一建筑重复施放时递减。 城墙遵守固定规则：3 瓶地震无论等级都不能单独摧毁，4 瓶无论城墙和地震等级都必定摧毁。 普通建筑第 n 次 = 全额 × 1/(2n−1)；城墙第 4 瓶补足剩余 HP 普通建筑第 2 次 = 1/3，第 3 次 = 1/5……参考：5 级地震全额为 29%，1 级为 14.5%。 英雄装备（技能伤害） 装备主动技能提供额外固定伤害，不占用法术空间。此处取数据中的 技能伤害 （SkillDamage，来自装备 main/extra 技能的直接伤害值，非 DPS），已设定等级的装备伤害将自动累加。 装备总伤害 = Σ 各已设装备当前等级技能伤害 等级设置 设定装备 / 法术 / 建筑等级 支持手动逐项设定，或在「COC 专区首页」解析村庄后，回到本页一键导入装备、法术、建筑等级。 从村庄存档导入（装备 + 法术 + 建筑等级） 从村庄存档导入 清空全部等级 先在「 COC 专区首页 」粘贴并解析村庄 JSON，本页会自动读取其结果一键填充等级。 英雄装备等级 仅列出技能带直接伤害的装备。设定等级后， 勾选 装备才会将其技能伤害计入总伤害（默认全不勾选）；取消勾选即不计入，无需把等级调回「未设」。 装备总伤害：0（未设定任何装备等级） 法术等级 雷电法术等级 地震法术等级 建筑等级 大本营等级 按此大本营一键填充所有建筑为最高可支持等级 依据数据中各等级的 requiredTownHallLevel 字段 建筑工人小屋回血量计算 设置实际参与修复目标建筑的小屋数量与各自等级。每座小屋按自身等级读取数据中的 每秒回复量 （BuilderRepairPerSecond），求和得到总回复速度。然后用当前法术方案（默认 11 格法术 + 选定目标建筑）相对目标生命值的 溢出伤害 除以总回复速度，得到 回血容错时间 （秒）—— 即溢出伤害能\"白嫖\"这些建筑工人小屋回复多少秒。从 COC 专区首页一键导入时会自动填入实际的小屋数量与等级。 参与回血的小屋数量 总回复量：0 生命值/秒 目标建筑 下方两个计算器共用此目标 选择要计算的目标建筑，其等级取自上方建筑等级设置，生命值作为地震百分比伤害的基准。 目标建筑 — 01 最高伤害 02 最少法术 03 自定义闪震 给定法术空间上限，计算在该空间内对目标建筑能造成的最高伤害及最优法术配置。 法术空间上限 计算最高伤害 给定目标建筑，计算将其彻底摧毁（总伤害 ≥ 生命值）所需的最少法术空间及搭配方案。 计算最少法术 自定义雷电与地震的数量（不搜索最优解），按当前雷电/地震等级与目标建筑等级，精确给出总伤害、城墙规则细节和回血容错时间。 雷电数量 地震数量 总法术空间 — 计算伤害",
-      "updatedAt": "2026-08-07T10:49:31.192Z"
+      "text": "伤害计算器 · COC 专区 · 天择网 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 主页 › COC 专区 › 伤害计算器 Damage Calculator · Home Village Only 法术伤害 计算器 基于雷电法术、地震法术各等级伤害数据与英雄装备数据，计算给定法术空间内对家乡目标建筑能造成的 最高伤害 ，以及 摧毁指定建筑所需的最少法术 。 新增 ：建筑工人小屋回血量与当前方案 回血容错时间 ——溢出伤害除以小屋总回复速度。支持从村庄存档一键导入等级、按大本营等级自动设定建筑等级。所有计算在浏览器本地完成。 闪震、装备与回血统一计算 可从本地村庄存档导入等级 分享链接只读，不改本机数据 分享查看模式 好友分享的计算结果 你正在查看好友通过天择网伤害计算器分享的配置与计算结果。 查看本身只读 ：只有点击“复制到我的计算器”后，才会用这份配置更新你的伤害计算器主页。 复制到我的计算器 保留原配置并返回 法术机制说明 雷电法术（固定伤害） 每次施放对目标建筑造成 固定数值 的生命值扣除，伤害不随施放次数变化，等于该等级雷电法术的面板伤害值。 总伤害 = 数量 × 该等级面板伤害 地震法术（百分比伤害） 普通建筑按最大生命值造成百分比伤害，对同一建筑重复施放时递减。 城墙不逐次衰减：若当前等级的全额伤害为 x%，前 3 次各造成 x%，第 4 次补足剩余生命并摧毁城墙。 普通建筑第 n 次 = 全额 × 1/(2n−1)；城墙前 3 次各为 x%，第 4 次为 (100−3x)% 该规则随法术等级读取 x：普通建筑第 2 次 = 1/3、第 3 次 = 1/5……例如 5 级地震的 x = 29%，对城墙四次依次为 29%、29%、29%、13%，合计 100%。 英雄装备（技能伤害） 装备主动技能提供额外固定伤害，不占用法术空间。此处取数据中的 技能伤害 （SkillDamage，来自装备 main/extra 技能的直接伤害值，非 DPS），已设定等级的装备伤害将自动累加。 装备总伤害 = Σ 各已设装备当前等级技能伤害 等级设置 设定装备 / 法术 / 建筑等级 支持手动逐项设定，或在「COC 专区首页」解析村庄后，回到本页一键导入装备、法术、建筑等级。 从村庄存档导入（装备 + 法术 + 建筑等级） 从村庄存档导入 清空全部等级 先在「 COC 专区首页 」粘贴并解析村庄 JSON，本页会自动读取其结果一键填充等级。 英雄装备等级 仅列出技能带直接伤害的装备。设定等级后， 勾选 装备才会将其技能伤害计入总伤害（默认全不勾选）；取消勾选即不计入，无需把等级调回「未设」。 装备总伤害：0（未设定任何装备等级） 法术等级 雷电法术等级 地震法术等级 建筑等级 大本营等级 按此大本营一键填充所有建筑为最高可支持等级 依据数据中各等级的 requiredTownHallLevel 字段 建筑工人小屋回血量计算 设置实际参与修复目标建筑的小屋数量与各自等级。每座小屋按自身等级读取数据中的 每秒回复量 （BuilderRepairPerSecond），求和得到总回复速度。然后用当前法术方案（默认 11 格法术 + 选定目标建筑）相对目标生命值的 溢出伤害 除以总回复速度，得到 回血容错时间 （秒）—— 即溢出伤害能\"白嫖\"这些建筑工人小屋回复多少秒。从 COC 专区首页一键导入时会自动填入实际的小屋数量与等级。 参与回血的小屋数量 总回复量：0 生命值/秒 目标建筑 下方两个计算器共用此目标 选择要计算的目标建筑，其等级取自上方建筑等级设置，生命值作为地震百分比伤害的基准。 目标建筑 — 01 最高伤害 02 最少法术 03 自定义闪震 给定法术空间上限，计算在该空间内对目标建筑能造成的最高伤害及最优法术配置。 法术空间上限 计算最高伤害 给定目标建筑，计算将其彻底摧毁（总伤害 ≥ 生命值）所需的最少法术空间及搭配方案。 计算最少法术 自定义雷电与地震的数量（不搜索最优解），按当前雷电/地震等级与目标建筑等级，精确给出总伤害、城墙规则细节和回血容错时间。 雷电数量 地震数量 总法术空间 — 计算伤害 本页是非官方玩家内容，未经 Supercell 认可或赞助。详见 Supercell 玩家内容政策 。",
+      "updatedAt": "2026-08-24T03:43:51.698Z"
+    },
+    {
+      "url": "/coc/install/",
+      "title": "部落冲突国际服安装与校验 · 天择网",
+      "description": "通过官方商店安装部落冲突国际服，并校验 18.400.22 Android 安装包的版本、包名、文件散列和签名证书。",
+      "headings": [
+        "国际服安装与 文件校验",
+        "从官方商店安装国际服",
+        "18.400.22 校验信息"
+      ],
+      "text": "部落冲突国际服安装与校验 · 天择网 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 国际服 · 官方渠道安装 国际服安装与 文件校验 优先从 Google Play 官方商店安装。下面的指纹用于核对你已经合法取得的 Android 安装包是否与本次解析的数据源一致。 官方商店入口 文件与签名双重校验 不伪装成官方镜像 从官方商店安装国际服 Android 用户可前往 Google Play 的《部落冲突》页面安装或更新。天择网目前没有 Supercell 的客户端再分发授权，因此不托管 APK 镜像；获得明确书面许可前，也不会把第三方文件标成“官方下载”。 前往 Google Play 查看游戏数据 为什么没有直接 APK： 免费、余额为零或已经能从其他网站下载，都不会自动产生客户端再分发权。若站长之后取得明确授权，可再开启本站镜像。 18.400.22 校验信息 本地解析的数据源已通过 Android v2、v3 签名校验。校验散列只能证明文件一致，不能把第三方来源变成官方来源。 包名 com.supercell.clashofclans 版本 18.400.22（180400023） 文件大小 833740335 字节 文件 SHA-256 8BD23251650667B3F07543FE43E0D9283376D545DB64BDCF895B9F6FEC829C20 证书 SHA-256 9EA146D935C0BE2E4B576396E6A5E1DE6DCB69A71AF4E417B0A5B8FE8E0D4D9C 签名方案 APK v2 + v3 签名方案 本页是非官方玩家内容，未经 Supercell 认可或赞助。详见 Supercell 玩家内容政策 。",
+      "updatedAt": "2026-08-23T11:53:59.973Z"
     },
     {
       "url": "/coc/planner/",
@@ -294,10 +308,12 @@
       "description": "基于村庄存档的升级规划器，单级拆分+前置依赖，稳本/速本模式，甘特图缩放滚动，待规划区拖拽安排。",
       "headings": [
         "升级 规划器",
-        "尚未载入村庄数据"
+        "尚未载入村庄数据",
+        "让排程先升级你真正会用的单位",
+        "稳本与速本方案"
       ],
-      "text": "升级规划器 · COC 专区 · 天择网 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 主页 › COC 专区 › 升级规划器 Upgrade Operations · Timeline Engine 升级 规划器 基于村庄存档数据，按单级拆分规划升级。每级一个滑块，自动处理前置依赖（同单位串行、实验室/英雄殿堂/战宠小屋等级要求）。支持稳本/速本模式、甘特图缩放滚动、待规划区拖拽安排。 自动处理逐级与建筑前置 稳本、速本两套排程逻辑 支持拖拽与键盘移除任务 尚未载入村庄数据 请先前往「COC 专区首页」粘贴并解析你的村庄 JSON，解析后数据会自动带到本页。 前往 COC 专区首页 可选加成 哥布林工人（家乡建筑工人 +1） 哥布林研究员（家乡研究员 +1） 规划模式 稳本模式 速本模式 家乡 夜世界 一键全排程 清空规划 100% 重置 待规划任务（点击或拖到上方甘特图即可安排） 一键全排程 清空规划 100% 重置 待规划任务（点击或拖到上方甘特图即可安排） 每级一个滑块，前置依赖自动处理：同单位必须逐级升级；兵种/法术/攻城机器需实验室达到对应等级，战宠需战宠小屋等级，英雄需英雄殿堂等级。下方「待规划区」显示尚未安排的单级任务，可点击或拖到甘特图自动排程（含前置）；甘特图里的滑块可拖回待规划区，键盘用户也可聚焦滑块后按 Delete / Backspace 移除（含其后置等级）。缩放按钮可放大时间轴横向滚动查看。",
-      "updatedAt": "2026-08-07T10:49:31.196Z"
+      "text": "升级规划器 · COC 专区 · 天择网 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 主页 › COC 专区 › 升级规划器 Upgrade Operations · Timeline Engine 升级 规划器 基于村庄存档数据，按单级拆分规划升级。每级一个滑块，自动处理前置依赖（同单位串行、实验室/英雄殿堂/战宠小屋等级要求）。支持稳本/速本模式、甘特图缩放滚动、待规划区拖拽安排。 自动处理逐级与建筑前置 稳本、速本两套排程逻辑 支持拖拽与键盘移除任务 尚未载入村庄数据 请先前往「COC 专区首页」粘贴并解析你的村庄 JSON，解析后数据会自动带到本页。 前往 COC 专区首页 可选加成 哥布林工人（家乡建筑工人 +1） 哥布林研究员（家乡研究员 +1） 规划模式 稳本模式 速本模式 常用配兵优先级 让排程先升级你真正会用的单位 粘贴游戏内“分享配兵”链接，或在下方手动勾选。常用兵种、法术和攻城机器优先进入实验室队列，常用战宠优先进入战宠小屋队列；莱希与大牦仍固定最后。建筑工人数少于已解锁英雄数时，常用英雄会先升级。 游戏配兵链接 导入配兵链接 保存并重建两套方案 清空常用配兵 双方案快照 稳本与速本方案 保存当前方案 重建当前方案 复制到另一方案 导出 JSON 导出日历 稳本方案 正在计算 — 速本方案 正在计算 — 家乡 夜世界 一键全排程 清空规划 100% 重置 待规划任务（点击或拖到上方甘特图即可安排） 一键全排程 清空规划 100% 重置 待规划任务（点击或拖到上方甘特图即可安排） 每级一个滑块，前置依赖自动处理：同单位必须逐级升级；兵种/法术/攻城机器需实验室达到对应等级，战宠需战宠小屋等级，英雄需英雄殿堂等级；超级充能接在所属建筑满级之后，并沿用该建筑的优先档。建筑工人严格按实验室 → 第一优先级 → 第二优先级 → 英雄 → 其它分阶段执行，上一阶段全部结束后才进入下一阶段；同档由多名建筑工人按短时长到长时长分配。下方「待规划区」可点击或拖拽安排；甘特图里的滑块可拖回，也可按 Delete / Backspace 移除。 本页是非官方玩家内容，未经 Supercell 认可或赞助。详见 Supercell 玩家内容政策 。",
+      "updatedAt": "2026-08-24T03:43:51.703Z"
     },
     {
       "url": "/coc/tutorial/",
@@ -307,8 +323,8 @@
         "COC 教程",
         "还在三刀一个子城？混合矿工宝典手把手教你周入三万！"
       ],
-      "text": "COC 教程 · COC 专区 · 天择网 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 首页 / COC 专区 / COC 教程 COC 教程 从配兵到实战路线，把可复用的打法整理成容易查阅的教程。 07-12 2026 都城突袭 · 矿工流 还在三刀一个子城？混合矿工宝典手把手教你周入三万！ 面向 10 级都城与满级矿工的完整攻略：配兵思路、进攻路线、法术时机、各子城打法与陷阱规避一次讲清。 →",
-      "updatedAt": "2026-08-10T04:02:39.901Z"
+      "text": "COC 教程 · COC 专区 · 天择网 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 首页 / COC 专区 / COC 教程 COC 教程 从配兵到实战路线，把可复用的打法整理成容易查阅的教程。 07-12 2026 都城突袭 · 矿工流 还在三刀一个子城？混合矿工宝典手把手教你周入三万！ 面向 10 级都城与满级矿工的完整攻略：配兵思路、进攻路线、法术时机、各子城打法与陷阱规避一次讲清。 → 本页是非官方玩家内容，未经 Supercell 认可或赞助。详见 Supercell 玩家内容政策 。",
+      "updatedAt": "2026-08-24T03:43:51.705Z"
     },
     {
       "url": "/coc/tutorial/1/",
@@ -332,8 +348,8 @@
         "六、几个实用小提示",
         "写在最后"
       ],
-      "text": "还在三刀一个子城？混合矿工宝典手把手教你周入三万！ — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 部落冲突 · 都城攻略 还在三刀一个子城？混合矿工宝典手把手教你周入三万！ 🗓 发布：2026-07-12 ⏰ 时间：20:23（UTC+8） ✍ 作者：天择网 📋 看前声明： 本教程仅适用于 10 级都城 + 满级矿工 ，不保证在 9 级及以下都城的可靠性。 每周一凌晨，你的部落频道是不是总被这样的消息刷屏——「三刀一个子城」「这周又两万出头」？看着排行榜上那些动辄三四万的数字，你是不是也想过： 他们到底在用什么黑科技？ 别急，答案其实一直就在你兵营里躺着—— 矿工 。这个被无数人低估的小家伙，伤害爆炸、自带亡语、还能遁地穿墙，简直就是为都城突袭量身定做的「地下特种部队」。但很多人用不好，不是被范围伤害迅速清场，就是打着打着全灭收场。 今天这篇教程，我会把从配兵选择到路线规划、从法术时机到各子城应对策略，全部掰开揉碎讲给你听。 不需要超高操作，不需要极限手速 ，只要你看完并理解其中的逻辑，周入三万真的不是梦——我两个号靠这套打法包揽部落前二，一个 33000、一个 31000，最高单周还打过 34000。 废话不多说，直接开整。 一、「天择套」—— 配兵方案 图1：「天择套」配兵 —— 10 矿工 + 1 冰冻 + 1 治疗 + 1 小闪 10 个矿工 （核心输出） 1 个冰冻法术 （控场关键） 1 个治疗法术 （续航核心） 1 个闪电法术 （补伤害 / 重置地狱塔） 我把它称为 「天择套」 ——简单、粗暴、够用。 二、先上实力 图2：这周两个号分别 33000 和 31001，包揽部落前二；此前还有过单周 34000 的记录 除了稳定的高分，还创造过 一刀打掉 70%~80% 摧毁率的记录。这不是运气，是这套配兵逻辑自洽的结果。 三、为什么抛弃骷髅法术？—— 一个被忽视的逻辑漏洞 你可能在网上见过另一种流行的矿工配兵： 1 冰冻 + 2 骷髅 。看起来挺合理——骷髅可以拉扯防御、充当肉盾。但在我看来，这个配兵存在一个 致命的逻辑漏洞 。 我们来拆解一下矿工的 生存模型 ： 优势 劣势 伤害极高 身板偏脆 有亡语（死亡后留下炸弹，对周围造成范围伤害） 扎堆移动（容易被范围伤害覆盖） 可遁地（绕开大部分地面防御） 极度害怕范围伤害建筑 矿工真正怕的是什么？ 火箭炮、爆炸强弩、巨型加农炮 这类对群高伤建筑。当这些火力轮番轰炸时，矿工掉血速度极快。 而骷髅法术的问题是——它要 等矿工死了之后才召唤骷髅 。在高额范围伤害的连续轰炸下，第一个矿工倒下的时候，剩下九个也已经残血了。此时召唤出来的骷髅面对满血防御塔，既拉扯不动也扛不住， 形同虚设 。而且带骷髅就意味着没有治疗，矿工在中途没有任何续航手段——这就是个恶性循环。 反观 治疗法术 ：治疗量极高，运用得当可以把半血矿工直接奶满，相当于进攻中途设了一个「加油站」，让矿工能持续输出而不是中途暴毙。 至于闪电法术 ……老实说它主要是个占位的，偶尔蹭点百分比、电一下地狱塔或清掉投矛手，别对它期望太高。 四、通用打法四步走 无论什么阵型，核心思路都一样—— 规划路线 → 选择目标 → 一波下兵 → 法术跟进 。 步骤 1：观察阵型，规划进攻路线 打开敌方子城，先不要急着下兵。花 30 秒做一件事： 找一条收益最大的路线 。 什么叫收益最大？这条路线至少要保证： 子城摧毁率达到 40%+ 主城摧毁率达到 30%+ 图3：以这个阵型为例——从 5 点钟方向下兵，几乎可以白嫖掉一个爆炸强弩 图4：清掉威胁后，大部队的行进路线就很清晰了 步骤 2：判断冰冻目标 路线规划好之后，观察路线上有哪些对矿工有威胁的建筑——重点盯三类： 爆炸弩、巨型加农炮、火箭炮 。 选择冰冻目标的原则只有一个： 哪个建筑的射程覆盖你的路线最长，就冻哪个 。 注意一个常见误区：有些防御扎堆在一起看似很赚（一冰冻住多个），但如果它们的射程根本打不到你的路线上，冻了也是白冻。 图5：上面例子里，路线中间那个爆炸弩威胁最大（射程覆盖最长）；十点钟方向的火箭炮+爆炸弩虽然扎堆，但打不到路线上，所以不冰它们 步骤 3：下兵 一切规划完毕后，在你选定的点位 一口气把 10 个矿工全部丢下去 。 注意： 少数容易分流的密集阵型需要先派 1~2 个矿工「清边」（玩天择套最怕分流，因为分流后治疗就奶不到所有矿工了）。绝大多数情况下直接一波全部下去即可。 步骤 4：丢治疗 当矿工血量降到约 2/3 时，在下一个重火力区域丢下治疗法术。 关键细节： 治疗法术要覆盖整个重火力区域，让矿工在治疗圈内停留尽可能长的时间。不要提前丢也不要拖太晚——太早浪费持续时间，太晚矿工已经撑不住了。 五、各子城应对策略 🟢 野蛮人兵营 / 法师山谷 / 建筑工人工坊 / 气球环礁 / 戈仑石场 / 骷髅公园 正常按通用打法打即可，没有特殊技巧。 闪电法术 不要乱交，最好留着重置地狱塔或者打断撼地巨石。 🟡 哥布林矿井 注意用 闪电法术闪掉尽可能多的投矛手 。投矛手很烦人——数量多、分散、矿工清理起来非常费时间，能提前清掉是最好的。 🔴 都城之巅 都城大本营的自带防御是所有子城里最难处理的——一下打掉矿工大半血，而且还是范围伤害。 如果你的路线在它的射程内， 一定要优先用冰冻冻住它！ 治疗法术也尽可能留到矿工被它打了之后再下。 ⚫ 飞龙悬崖（最难） 这是所有子城里最难打的——超级飞龙伤害高、攻击范围大，而且它是 飞的 。矿工打不到它，炸弹也炸不到它。 推荐策略：两刀流 第一刀 ：使用经典配兵（1 冰冻 + 2 骷髅），不求高摧毁率，打到 30% 左右即可； 第二刀 ：换上「天择套」，开局故意送掉一个矿工——这样那些骷髅兵（第一刀骷髅法术召唤的）就会把飞龙拉走（原理类似皇室战争里的「冰人溜皮卡」名场面）； 进阶技巧： 如果你愿意多花点心思，第二刀可以带几个超蛮 + 攻城锤用来清边、触发陷阱和拉扯骷髅法术，成功率会更高。 六、几个实用小提示 哥布林矿井和骷髅公园只有 4 级 ，打完后给的都城币相对较少，如果追求效率可以跳过这两个子城，优先打高级子城。 小心陷阱阵型！ 我曾经遇到过专门针对矿工的阴间阵——故意卖个破绽，然后在矿工的最优点位埋了俩撼地巨石 + 俩滚木 + 一个超级特斯拉，10 个矿工瞬间被打残，治疗都来不及，最后只打了 12%。遇到这种阵型建议直接放弃，换个目标打（当然这种极端阵型在真实突袭中很少见，更多出现在友谊战里被人坑……比如我就被我自家部落的阵型坑过 😂）。 如果你想追求更高的都城币上限，可以去研究 电车一刀流 ，那个超出了本教程的范围，就不在这里展开了。 写在最后 矿工流的核心逻辑其实很简单： 规避群伤 → 治疗续航 → 持续推进 。不需要极限手速，不需要背复杂公式，你需要的只是每次进攻前多花 30 秒观察阵型，然后果断执行。 希望这篇教程能帮助你在每周突袭中脱颖而出。最后祝大家都能成为你们部落里 突袭最靓的仔 ！💎 ← 返回上一页 返回 COC 教程",
-      "updatedAt": "2026-08-10T04:09:38.155Z"
+      "text": "还在三刀一个子城？混合矿工宝典手把手教你周入三万！ — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 部落冲突 · 都城攻略 还在三刀一个子城？混合矿工宝典手把手教你周入三万！ 🗓 发布：2026-07-12 ⏰ 时间：20:23（UTC+8） ✍ 作者：天择网 📋 看前声明： 本教程仅适用于 10 级都城 + 满级矿工 ，不保证在 9 级及以下都城的可靠性。 每周一凌晨，你的部落频道是不是总被这样的消息刷屏——「三刀一个子城」「这周又两万出头」？看着排行榜上那些动辄三四万的数字，你是不是也想过： 他们到底在用什么黑科技？ 别急，答案其实一直就在你兵营里躺着—— 矿工 。这个被无数人低估的小家伙，伤害爆炸、自带亡语、还能遁地穿墙，简直就是为都城突袭量身定做的「地下特种部队」。但很多人用不好，不是被范围伤害迅速清场，就是打着打着全灭收场。 今天这篇教程，我会把从配兵选择到路线规划、从法术时机到各子城应对策略，全部掰开揉碎讲给你听。 不需要超高操作，不需要极限手速 ，只要你看完并理解其中的逻辑，周入三万真的不是梦——我两个号靠这套打法包揽部落前二，一个 33000、一个 31000，最高单周还打过 34000。 废话不多说，直接开整。 一、「天择套」—— 配兵方案 图1：「天择套」配兵 —— 10 矿工 + 1 冰冻 + 1 治疗 + 1 小闪 10 个矿工 （核心输出） 1 个冰冻法术 （控场关键） 1 个治疗法术 （续航核心） 1 个闪电法术 （补伤害 / 重置地狱塔） 我把它称为 「天择套」 ——简单、粗暴、够用。 二、先上实力 图2：这周两个号分别 33000 和 31001，包揽部落前二；此前还有过单周 34000 的记录 除了稳定的高分，还创造过 一刀打掉 70%~80% 摧毁率的记录。这不是运气，是这套配兵逻辑自洽的结果。 三、为什么抛弃骷髅法术？—— 一个被忽视的逻辑漏洞 你可能在网上见过另一种流行的矿工配兵： 1 冰冻 + 2 骷髅 。看起来挺合理——骷髅可以拉扯防御、充当肉盾。但在我看来，这个配兵存在一个 致命的逻辑漏洞 。 我们来拆解一下矿工的 生存模型 ： 优势 劣势 伤害极高 身板偏脆 有亡语（死亡后留下炸弹，对周围造成范围伤害） 扎堆移动（容易被范围伤害覆盖） 可遁地（绕开大部分地面防御） 极度害怕范围伤害建筑 矿工真正怕的是什么？ 火箭炮、爆炸强弩、巨型加农炮 这类对群高伤建筑。当这些火力轮番轰炸时，矿工掉血速度极快。 而骷髅法术的问题是——它要 等矿工死了之后才召唤骷髅 。在高额范围伤害的连续轰炸下，第一个矿工倒下的时候，剩下九个也已经残血了。此时召唤出来的骷髅面对满血防御塔，既拉扯不动也扛不住， 形同虚设 。而且带骷髅就意味着没有治疗，矿工在中途没有任何续航手段——这就是个恶性循环。 反观 治疗法术 ：治疗量极高，运用得当可以把半血矿工直接奶满，相当于进攻中途设了一个「加油站」，让矿工能持续输出而不是中途暴毙。 至于闪电法术 ……老实说它主要是个占位的，偶尔蹭点百分比、电一下地狱塔或清掉投矛手，别对它期望太高。 四、通用打法四步走 无论什么阵型，核心思路都一样—— 规划路线 → 选择目标 → 一波下兵 → 法术跟进 。 步骤 1：观察阵型，规划进攻路线 打开敌方子城，先不要急着下兵。花 30 秒做一件事： 找一条收益最大的路线 。 什么叫收益最大？这条路线至少要保证： 子城摧毁率达到 40%+ 主城摧毁率达到 30%+ 图3：以这个阵型为例——从 5 点钟方向下兵，几乎可以白嫖掉一个爆炸强弩 图4：清掉威胁后，大部队的行进路线就很清晰了 步骤 2：判断冰冻目标 路线规划好之后，观察路线上有哪些对矿工有威胁的建筑——重点盯三类： 爆炸弩、巨型加农炮、火箭炮 。 选择冰冻目标的原则只有一个： 哪个建筑的射程覆盖你的路线最长，就冻哪个 。 注意一个常见误区：有些防御扎堆在一起看似很赚（一冰冻住多个），但如果它们的射程根本打不到你的路线上，冻了也是白冻。 图5：上面例子里，路线中间那个爆炸弩威胁最大（射程覆盖最长）；十点钟方向的火箭炮+爆炸弩虽然扎堆，但打不到路线上，所以不冰它们 步骤 3：下兵 一切规划完毕后，在你选定的点位 一口气把 10 个矿工全部丢下去 。 注意： 少数容易分流的密集阵型需要先派 1~2 个矿工「清边」（玩天择套最怕分流，因为分流后治疗就奶不到所有矿工了）。绝大多数情况下直接一波全部下去即可。 步骤 4：丢治疗 当矿工血量降到约 2/3 时，在下一个重火力区域丢下治疗法术。 关键细节： 治疗法术要覆盖整个重火力区域，让矿工在治疗圈内停留尽可能长的时间。不要提前丢也不要拖太晚——太早浪费持续时间，太晚矿工已经撑不住了。 五、各子城应对策略 🟢 野蛮人兵营 / 法师山谷 / 建筑工人工坊 / 气球环礁 / 戈仑石场 / 骷髅公园 正常按通用打法打即可，没有特殊技巧。 闪电法术 不要乱交，最好留着重置地狱塔或者打断撼地巨石。 🟡 哥布林矿井 注意用 闪电法术闪掉尽可能多的投矛手 。投矛手很烦人——数量多、分散、矿工清理起来非常费时间，能提前清掉是最好的。 🔴 都城之巅 都城大本营的自带防御是所有子城里最难处理的——一下打掉矿工大半血，而且还是范围伤害。 如果你的路线在它的射程内， 一定要优先用冰冻冻住它！ 治疗法术也尽可能留到矿工被它打了之后再下。 ⚫ 飞龙悬崖（最难） 这是所有子城里最难打的——超级飞龙伤害高、攻击范围大，而且它是 飞的 。矿工打不到它，炸弹也炸不到它。 推荐策略：两刀流 第一刀 ：使用经典配兵（1 冰冻 + 2 骷髅），不求高摧毁率，打到 30% 左右即可； 第二刀 ：换上「天择套」，开局故意送掉一个矿工——这样那些骷髅兵（第一刀骷髅法术召唤的）就会把飞龙拉走（原理类似皇室战争里的「冰人溜皮卡」名场面）； 进阶技巧： 如果你愿意多花点心思，第二刀可以带几个超蛮 + 攻城锤用来清边、触发陷阱和拉扯骷髅法术，成功率会更高。 六、几个实用小提示 哥布林矿井和骷髅公园只有 4 级 ，打完后给的都城币相对较少，如果追求效率可以跳过这两个子城，优先打高级子城。 小心陷阱阵型！ 我曾经遇到过专门针对矿工的阴间阵——故意卖个破绽，然后在矿工的最优点位埋了俩撼地巨石 + 俩滚木 + 一个超级特斯拉，10 个矿工瞬间被打残，治疗都来不及，最后只打了 12%。遇到这种阵型建议直接放弃，换个目标打（当然这种极端阵型在真实突袭中很少见，更多出现在友谊战里被人坑……比如我就被我自家部落的阵型坑过 😂）。 如果你想追求更高的都城币上限，可以去研究 电车一刀流 ，那个超出了本教程的范围，就不在这里展开了。 写在最后 矿工流的核心逻辑其实很简单： 规避群伤 → 治疗续航 → 持续推进 。不需要极限手速，不需要背复杂公式，你需要的只是每次进攻前多花 30 秒观察阵型，然后果断执行。 希望这篇教程能帮助你在每周突袭中脱颖而出。最后祝大家都能成为你们部落里 突袭最靓的仔 ！💎 ← 返回上一页 返回 COC 教程 本页是非官方玩家内容，未经 Supercell 认可或赞助。详见 Supercell 玩家内容政策 。",
+      "updatedAt": "2026-08-24T03:43:51.706Z"
     },
     {
       "url": "/coc/village/",
@@ -343,7 +359,7 @@
         "村庄分析已并入\nCOC 专区首页"
       ],
       "text": "村庄存档分析已并入 COC 专区首页 · 天择网 村庄分析已并入 COC 专区首页 正在立即跳转。若浏览器没有自动前往，请使用下方入口继续。 进入 COC 专区",
-      "updatedAt": "2026-08-07T10:49:31.202Z"
+      "updatedAt": "2026-08-24T03:43:51.710Z"
     },
     {
       "url": "/contact/",
@@ -359,7 +375,7 @@
         "关于站内「意见箱」"
       ],
       "text": "联系开发者 · 天择网 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 CONTACT CONSOLE · ONLINE 找我 聊聊天 有问题想反馈、想聊合作、或者只是想打个招呼——挑下面任何一种方式都行，我都会认真看。 建议附上页面地址、操作步骤与截图，能更快定位问题 DIRECT CHANNELS 选择联系方式 复制完成后会在当前卡片提示 QQ 号已复制 QQ 适合快速反馈与一般交流。添加好友时请备注「天择网」。 3233413314 复制 QQ 号 唤起 QQ 邮箱已复制 邮箱 适合较长说明、附件与合作沟通。邮件主题请包含「天择网」。 3233413314@qq.com 复制邮箱 写邮件 GitHub · wjtianze 查看源码、Issue 与版本发布。打开后会离开本站。 打开 GitHub 天择OS · 反馈与建议 先在桌面版或网页版复现问题，再把具体步骤告诉我。 打开天择OS 页面 关于站内「意见箱」 已有开发计划。 站内意见箱未来可直接提交反馈，无需跳转到外部应用；目前仍需服务器支持，会视使用人数决定开发与上线时间。在那之前，请使用上方 QQ 或邮箱。",
-      "updatedAt": "2026-08-07T10:49:31.206Z"
+      "updatedAt": "2026-08-24T03:43:51.712Z"
     },
     {
       "url": "/english/",
@@ -376,7 +392,7 @@
         "天择背单词"
       ],
       "text": "英语专区 · 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 ENGLISH ZONE 英语学习工作台 把英语， 变成可被 持续训练 的能力。 这里收纳我自己在用的英语学习工具——围绕真实学习需求按需生长，不绑定单一方向。现阶段以词汇训练为核心，用预习、回忆、巩固与拼写组成完整学习闭环，配合 AI 出题与自定义词库；后续会随学习进度逐步补充新的训练模块。 开始背单词 → 查看学习流程 WORD / 001 TODAY'S WORD accommodate /əˈkɒmədeɪt/ · v. 容纳；提供空间 迁就；照顾 适应 LEARN · RECALL · SPELL WORDS 词汇训练为核心 AI 出题解析与例句 ∞ 支持一词多义 JSON 自定义词库导入 词汇训练 · 四阶段学习法 从理解走向主动回忆 01 PREVIEW 英译中预习 先建立单词、音标与中文释义之间的联系。 02 RECALL 中译英回忆 从中文主动提取英文，检验真实掌握程度。 03 REINFORCE 英译中巩固 借助干扰项辨析词义，强化容易混淆的细节。 04 SPELL 完整拼写 用最终拼写训练收尾，让词形进入长期记忆。 当前可用工具 现阶段核心 · 词汇训练 Aa VOCABULARY TRAINER · WEB APP 天择背单词 一套可直接在浏览器使用的词汇训练工具。按四阶段学习法逐步训练，支持自定义词库、一词多义、AI 例句、干扰项和深度解析，数据保存在浏览器本地。 四阶段训练 AI 辅助 自定义词库 浏览器即用 进入学习 →",
-      "updatedAt": "2026-08-07T10:49:31.208Z"
+      "updatedAt": "2026-08-24T03:43:51.713Z"
     },
     {
       "url": "/english/words/",
@@ -403,7 +419,7 @@
         "词库 JSON 示例"
       ],
       "text": "天择背单词 · 天择网 天择网 菜单 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS VOCABULARY STUDIO / LOCAL-FIRST 英语学习控制台 把词库、四阶段训练与复习数据放进同一条学习流。 已学词数 0 累计正确率 0% 连续学习 0 天 本地数据在线 AI 配置 学习流 选择当前任务 词库控制 导入、检索与维护 01 训练舱 四阶段渐进学习 02 数据台 趋势与掌握度 03 复习队列 集中处理错词 04 学习数据仅在此设备处理 MODULE 01 / LIBRARY 词库控制中心 先建立自己的词库，再从检索结果直接进入 AI 解析或例句生成。 本地存储 A / 数据入口 装载词库 JSON 支持数组或对象格式、一词多义和例句字段。导入会合并同名单词，不覆盖已有学习记录。 选择 JSON 文件 粘贴内容 查看格式 维护操作 导出词库 清空数据 正在导入… B / 词库遥测 实时反映当前设备中的词库与掌握状态。 总词数 0 LIBRARY 已学习 0 LEARNED 待复习 0 REVIEW 已掌握 0 MASTERED C / 词条浏览器 检索与学习入口 搜索 还没有词条 从上方装载 JSON 词库后，这里会成为你的学习索引。 MODULE 02 / TRAINING 四阶段训练舱 一次训练按理解、回忆、巩固、拼写推进，阶段成绩会进入本地统计。 自适应流程 训练路径 从识别到主动输出 每一阶段都使用同一批词，逐步提高回忆强度。 01 英译中预习 建立词形与释义联系 02 中译英回忆 由语义主动提取单词 03 英译中巩固 识别多义与相近干扰 04 完整拼写 完成最终主动输出 本轮参数 配置训练 单词数量 每轮 3 至 50 个 仅练错词 从复习队列抽取 AI 干扰项 生成更接近真实语境的选项 启动本轮训练 所有答题记录仅保存在本机 阶段简报 开始本阶段 AI 正在生成干扰项… 1 / 10 听发音 提示首字母 跳过此题 提交答案 下一题 MODULE 03 / INSIGHTS 学习数据台 把学习量、正确率和掌握度拆开观察，快速定位下一轮训练重点。 近 14 天 已学词数 0 LEARNED 累计正确率 0% ACCURACY 连续学习 0 STREAK / DAYS 已掌握词数 0 MASTERED 学习频率 近 14 天学习曲线 每日答题量 能力分层 掌握度分布 风险词条 高频错词 开始复习 MODULE 04 / REVIEW QUEUE 错词复习队列 按错误频率自动排序；连续答对 3 次后，词条会自动离开队列。 训练全部错词 优先级队列 需要再次巩固 可从每个词条直接进入 AI 解析或单词练习。 AI SERVICE 连接模型服务 为例句、深度解析与智能干扰项配置兼容接口。 快速预设 选择后仍可手动修改 DeepSeek V4 Flash 极高性能快速文本 · 自备 Key DeepSeek V4 Pro 超高性能旗舰文本 · 自备 Key MiMo V2.5 中性能快速多模态 · 自备 Key GLM 4.7 Flash 免费文本模型 · 自备 Key GLM 4.6V Flash 免费多模态模型 · 自备 Key API 地址 完整的 Chat Completions 地址 API Key 仅保存到当前设备 模型名 使用接口要求的模型 ID 温度 0 稳定，2 更发散 密钥只保存在本机 localStorage；请求会直接发送到你填写的模型服务。 测试连接 保存配置 AI WORD ANALYSIS AI 解析 关闭 CONTEXT LAB 例句 重新生成 完成 PASTE IMPORT 粘贴 JSON 词库 支持数组或带 vocab 字段的对象格式。 JSON 内容 取消 开始导入 DATA SCHEMA 词库 JSON 示例 复制模板后替换内容，即可导入自己的词库。 word 必填 单词字符串 meaning 必填 释义数组，支持一词多义 phonetic 可选 音标 pos 可选 词性 examples 可选 包含 en、zh 的例句数组 tags 可选 标签数组 复制示例 关闭",
-      "updatedAt": "2026-08-07T10:49:31.215Z"
+      "updatedAt": "2026-08-24T03:43:51.716Z"
     },
     {
       "url": "/game/",
@@ -415,7 +431,7 @@
         "绩点战争：GPA 4.3"
       ],
       "text": "游戏专区 · 天择网 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 天择网原创 · 在线即玩 把规则变成 真正的游戏。 这里收录天择网制作的可玩作品。不是概念图，也不是“稍后开放”——每一个入口都能直接开始。 PLAYABLE / LOCAL 当前可玩作品 01 4.3 目标 GPA 3 初始能量 3 路 攻守与成长 基础题 造成 8 伤害 课间休息 获得 10 护盾 平时作业 GPA +0.1 1.0–4.3 内测版 v0.1 单人对战 AI 约 8–12 分钟 绩点战争：GPA 4.3 在攻击、防守和学习成长之间分配能量。你可以击倒对手，也可以率先把 GPA 推到 4.3——但领先从来不等于安全。 12 张卡牌组成首个测试池 4 个技能提供不同打法 无需登录，进度与战绩只保存在本机 进入内测",
-      "updatedAt": "2026-08-07T10:49:31.218Z"
+      "updatedAt": "2026-08-24T03:43:51.717Z"
     },
     {
       "url": "/game/gpa-card/",
@@ -430,7 +446,7 @@
         "重新开始对局？"
       ],
       "text": "绩点战争：GPA 4.3 · 内测版 — 天择网 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 首页 / 游戏专区 / 绩点战争 ACADEMIC COMBAT SYSTEM 绩点战争： GPA 4.3 BETA v0.1 在攻击、防守与学习成长之间分配有限能量。左侧掌握目标与状态，右侧完成配卡、行动和结算。 12 张战术卡 4 项技能 本地 AI 对战 TACTICAL LINK ONLINE 绩点战争 用能量打出卡牌：攻击对手、防守自保，或专注学习提升 GPA。 把 GPA 推到 4.3 直接获胜，或把对手生命打到 0 。 内测版含 12 张基础牌与 4 个技能，用于验证核心循环。 选择技能（1 主动 + 1 被动） 请选择一项被动技能和一项主动技能。 启动对局 01 配卡 02 补给 03 行动 04 结束 AI 对手 对方手牌 战况日志 你 手牌 战术商店 花费能量购买，永久解锁 刷新 · 消耗 1 能量 结束回合 规则速查 重新开始 胜利！ 再来一局 返回专区 规则速查 核心目标、资源、卡牌与回合规则。 目标： GPA 达到 4.3 直接获胜，或把对手生命降到 0。 能量： 初始 3，每回合 +3，上限 10。用于打出和购买卡牌。 卡牌： 使用成本用于打牌，购买成本用于永久解锁。 护盾： 伤害先扣护盾；护盾在你的回合开始时清空。 GPA： 每回合最多 +0.3。造成 ≥8 伤害、获得 ≥8 护盾/治疗、购买卡牌各可 +0.1。 里程碑： GPA 到达 1.5 / 2.0 / 2.5 / 3.0 / 3.5 / 4.0 时获得一次性奖励。 回合： 依次经过配卡、补给、行动与结束阶段。 先后手： 首回合随机先手，之后交替；后手首回合额外 +1 能量。 关闭 重新开始对局？ 当前对局进度不会保留。你将返回技能选择界面。 继续当前对局 确认重新开始",
-      "updatedAt": "2026-08-07T10:49:31.224Z"
+      "updatedAt": "2026-08-24T03:43:51.719Z"
     },
     {
       "url": "/news/",
@@ -438,6 +454,7 @@
       "description": "天择网新闻列表 —— 建站公告与最新资讯。",
       "headings": [
         "天择 新闻",
+        "把能查、能算、能学的事放到一起：天择网与天择OS 5.2",
         "天择网与天择OS 5.0：网页浏览、文件管理与本地模型",
         "天择OS 4.1：对话归档、智能体、用量账本与会员外观",
         "天择网与天择OS 4.0：全站工作台统一升级",
@@ -467,8 +484,8 @@
         "课本学习助手上线：把教材变成交互式学习页",
         "天择网上线：从这里开始"
       ],
-      "text": "新闻 · 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 首页 / 新闻 天择 新闻 站点公告、功能上线与版本更新都会在这里汇总。 08-07 2026 正式发布 天择网与天择OS 5.0：网页浏览、文件管理与本地模型 天择网与天择OS 5.0 正式发布，让网页浏览、文件管理、本地模型和 Windows 工具更容易使用。 → 08-02 2026 正式发布 天择OS 4.1：对话归档、智能体、用量账本与会员外观 天择OS 4.1 正式发布，新增对话归档、命令行智能体、人工智能用量账本、会员外观和加密存档。 → 07-31 2026 正式发布 天择网与天择OS 4.0：全站工作台统一升级 天择网与天择OS 4.0 正式发布，带来统一工作台、五套站点配色、多会话对话、知识库与专区升级。 → 07-30 2026 工具更新 COC 伤害计算结果可以一键分享 COC 伤害计算器新增分享链接，好友可只读查看配置与完整计算结果。 → 07-25 2026 版本更新 天择OS 3.5：等级积分、配色与图片文字识别 天择OS 3.5 新增等级积分与配色外观，人工智能对话支持图片文字识别和快捷开关。 → 07-24 2026 版本更新 天择OS 3.2：笔记命令和 COC 计算器继续完善 天择OS 3.2 为笔记加入查看、编辑和撤销命令，COC 计算器新增自定义闪震组合。 → 07-22 2026 版本更新 天择OS 3.1：工具本地化，COC 工作台更完整 天择OS 3.1 将 COC 与背单词工具改为本地运行，整合村庄分析，并改善悬浮窗和命令行。 → 07-21 2026 版本更新 天择OS 3.0：按 Ctrl+1 随时打开人工智能悬浮窗 天择OS 3.0 新增可拖动、可缩放的人工智能悬浮窗，桌面版支持 Ctrl+1 全局快捷键。 → 07-20 2026 版本更新 天择OS 2.6：窗口置顶、文档缩放与命令扩展 天择OS 2.6 新增窗口置顶、文档缩放和更多站内工具命令。 → 07-20 2026 版本更新 天择OS 2.5：联网搜索、文件上传与更多系统工具 天择OS 2.5 为人工智能对话加入联网搜索和文件上传，并新增文档阅读器、时钟与更多命令。 → 07-19 2026 体验更新 天择OS 2.2：桌面版更稳定，COC 计算新增回血容错 天择OS 2.2 改善停止生成、截图、长对话和终端输出，并为 COC 计算器新增回血容错。 → 07-18 2026 版本更新 天择OS 2.1：命令行与人工智能智能体上线 天择OS 2.1 新增命令行终端和人工智能命令模式，并改善截图、费用显示和消息操作。 → 07-18 2026 版本更新 天择OS 2.0：人工智能对话与系统体验全面升级 天择OS 2.0 上线，新增对话记忆、用量显示、消息编辑重发、公式渲染、浅色主题和完整存档。 → 07-17 2026 工具上线 COC 法术伤害计算器上线 COC 法术伤害计算器上线，可计算最高伤害、摧毁建筑所需最少法术，并支持从村庄存档导入等级。 → 07-16 2026 站点升级 天择网提速，天择OS 桌面版上线 天择网完成性能优化，天择OS Windows 桌面版与存档迁移功能同步上线。 → 07-15 2026 专区上线 英语专区与天择背单词正式上线 英语专区正式上线，首期提供自定义词库、四阶段训练、复习队列和学习统计。 → 07-14 2026 正式上线 天择OS 1.0 上线并开放源代码 天择OS 1.0 正式上线，在浏览器中提供窗口、任务栏、人工智能对话和站内工具，并开放源代码。 → 07-14 2026 全站升级 天择网全站界面升级：各专区体验更统一 天择网完成全站界面统一，首页、内容页、COC 工具和游戏页面拥有一致的导航与阅读体验。 → 07-13 2026 功能上线 COC 专区新增村庄分析与升级规划 COC 专区新增村庄存档分析和升级规划器，可查看村庄进度并安排建筑工人任务。 → 07-13 2026 专区上线 游戏专区上线：《绩点战争》开放试玩 游戏专区正式上线，原创策略卡牌游戏《绩点战争：GPA 4.3》开放浏览器试玩。 → 07-12 2026 教程更新 COC 教程新增都城矿工完整攻略 COC 教程新增都城突袭矿工流攻略，涵盖配兵、路线、法术时机和各子城应对。 → 07-12 2026 界面更新 天择网界面焕新：阅读更清晰，操作更顺手 天择网完成一轮界面优化，提升文字层次、页面留白、操作反馈和移动端阅读体验。 → 07-12 2026 站点公告 天择网迁至 wjtianze.github.io 天择网已迁移至 wjtianze.github.io，后续更新都将在新地址发布。 → 07-10 2026 专区上线 数据开源专区上线：本站自制数据免费开放 数据开源专区正式上线，集中提供天择网整理的数据与相关工具。 → 07-10 2026 数据更新 COC 数据查询升级：更完整的数据与开源导出工具 COC 数据查询升级至更完整的数据源，并开放可从游戏安装包导出结构化数据的工具。 → 07-09 2026 专区上线 COC 专区上线：游戏数据随手查 COC 专区正式上线，支持兵种、建筑、法术、英雄等游戏数据的分类浏览与关键词搜索。 → 07-09 2026 工具上线 课本学习助手上线：把教材变成交互式学习页 课本学习助手现已上线，可把教材章节整理成带知识点、原文、测验、错题本和人工智能问答的离线学习页。 → 07-09 2026 站点公告 天择网上线：从这里开始 天择网正式上线，这里将持续汇集站点动态、长篇内容与各类实用工具。 → 目前共 28 条资讯 · 持续更新中",
-      "updatedAt": "2026-08-10T05:19:25.113Z"
+      "text": "新闻 · 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 首页 / 新闻 天择 新闻 这里记着天择网一路折腾过的东西：有大更新，也有那些终于修顺手的小毛病。 08-24 2026 终于不用绕路 把能查、能算、能学的事放到一起：天择网与天择OS 5.2 村庄标签能直接查，规划开始记得常用配兵，学习助手也接上后端；这些分散的小麻烦，总算一起收了回来。 → 08-07 2026 这次挺大 天择网与天择OS 5.0：网页浏览、文件管理与本地模型 这版憋了不少日子：网页、文件、本地模型和 Windows 工具终于能在一个工作台里顺畅配合了。 → 08-02 2026 越用越顺 天择OS 4.1：对话归档、智能体、用量账本与会员外观 聊天多了不再乱，用量也终于有账可查；顺便把智能体、外观和加密存档一起收拾妥当。 → 07-31 2026 换了个样 天择网与天择OS 4.0：全站工作台统一升级 不只是换皮肤：工作台、对话、知识库和各个专区都重新理了一遍，用起来更像一个整体。 → 07-30 2026 方便分享 COC 伤害计算结果可以一键分享 算好的闪震方案不用再截图解释了，复制一个链接，朋友打开就能看到同一份配置和结果。 → 07-25 2026 边用边长大 天择OS 3.5：等级积分、配色与图片文字识别 做事会积累等级，界面也能换口味；图片里的文字和常用开关，现在不用绕路就能处理。 → 07-24 2026 继续打磨 天择OS 3.2：笔记命令和 COC 计算器继续完善 笔记终于能安心改错，闪震也不再被固定组合绑住——都是小改，但天天用就很有感觉。 → 07-22 2026 搬回本地 天择OS 3.1：工具本地化，COC 工作台更完整 COC 和背单词不再时时等网络，村庄分析也归到一个入口；悬浮窗和命令行顺手修了不少别扭。 → 07-21 2026 随叫随到 天择OS 3.0：按 Ctrl+1 随时打开人工智能悬浮窗 按一下 Ctrl+1，助手就从角落里冒出来；能拖、能缩，用完关掉也不会打断手头的事。 → 07-20 2026 窗口更听话 天择OS 2.6：窗口置顶、文档缩放与命令扩展 需要盯着的窗口可以钉住，文档大小随手调，常用站内工具也陆续接上了命令行。 → 07-20 2026 能查也能传 天择OS 2.5：联网搜索、文件上传与更多系统工具 助手终于能边查边聊、接住文件；文档阅读器和时钟也补上，桌面开始有了日常工作的样子。 → 07-19 2026 修得更稳 天择OS 2.2：桌面版更稳定，COC 计算新增回血容错 停止生成不再拖泥带水，长对话和终端也稳了些；算 COC 时还会把工人小屋回血考虑进去。 → 07-18 2026 开始会动手 天择OS 2.1：命令行与人工智能智能体上线 助手不只会回答了，它可以通过命令行帮着操作系统；截图、费用和消息细节也一起补齐。 → 07-18 2026 聊天像样了 天择OS 2.0：人工智能对话与系统体验全面升级 会记上下文、能改了重发、公式不再糊成一团，还有浅色主题和完整存档——这才像一次真正的对话。 → 07-17 2026 先算再下法术 COC 法术伤害计算器上线 不用再凭感觉丢闪震：选好等级和建筑，就能看最高伤害、最少用量，还能直接吃进村庄存档。 → 07-16 2026 跑得更轻 天择网提速，天择OS 桌面版上线 页面加载轻快了一截，Windows 桌面版也能用了；原来的存档不用舍不得，跟着一起搬过去。 → 07-15 2026 背词有伴了 英语专区与天择背单词正式上线 把自己的词丢进来，跟着四阶段训练慢慢消化；该复习什么、学了多少，都有人替你记着。 → 07-14 2026 从这里起步 天择OS 1.0 上线并开放源代码 最初的天择OS 很朴素：浏览器里有窗口、任务栏、助手和几样工具，但我们决定从第一天就把代码打开。 → 07-14 2026 终于统一了 天择网全站界面升级：各专区体验更统一 以前每个专区像各过各的，现在导航、内容和工具页终于说同一种设计语言，逛起来不再跳戏。 → 07-13 2026 村庄有计划了 COC 专区新增村庄分析与升级规划 导入村庄就能看清还差多少，再把工人接下来的活排出来，不必靠脑子记一长串升级。 → 07-13 2026 来打一局 游戏专区上线：《绩点战争》开放试玩 第一个能玩的作品来了：《绩点战争：GPA 4.3》直接在浏览器开局，欢迎来把绩点打上去。 → 07-12 2026 矿工怎么挖 COC 教程新增都城矿工完整攻略 矿工流看着莽，路线和法术时机却很讲究；这篇把配兵到各子城的处理一口气拆开讲清。 → 07-12 2026 看着舒服点 天择网界面焕新：阅读更清晰，操作更顺手 字不再挤成一团，留白和反馈也更自然；手机上打开时，终于不用一边看一边和页面较劲。 → 07-12 2026 搬家记 天择网迁至 wjtianze.github.io 天择网搬到了 wjtianze.github.io。门牌换了，里面的人和东西都还在，之后也会继续在这里折腾。 → 07-10 2026 数据拿去用 数据开源专区上线：本站自制数据免费开放 自己整理的数据与工具，与其锁在硬盘里，不如集中摆出来；能帮上你的忙就不算白做。 → 07-10 2026 不只看个大概 COC 数据查询升级：更完整的数据与开源导出工具 COC 数据终于不再缺胳膊少腿，还把从安装包整理结构化数据的工具一并放了出来。 → 07-09 2026 随手查数值 COC 专区上线：游戏数据随手查 查兵种、建筑、法术和英雄不用再翻来翻去，按分类看也行，记得一两个字就能搜。 → 07-09 2026 让课本活起来 课本学习助手上线：把教材变成交互式学习页 课本不该只剩一页页往后翻：知识点、原文、测验、错题和问答被放进同一个离线学习页里。 → 07-09 2026 第一篇 天择网上线：从这里开始 天择网就从这一页开始。以后做成的新工具、写下的长文章和踩过的坑，都会慢慢收进来。 → 目前共 29 条资讯 · 持续更新中",
+      "updatedAt": "2026-08-24T03:43:51.720Z"
     },
     {
       "url": "/news/1/",
@@ -476,11 +493,11 @@
       "description": "天择网正式上线，这里将持续汇集站点动态、长篇内容与各类实用工具。",
       "headings": [
         "天择网上线：从这里开始",
-        "这次更新对你有什么用",
-        "如何使用"
+        "先从哪里逛起",
+        "第一站"
       ],
-      "text": "天择网上线：从这里开始 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 站点公告 天择网上线：从这里开始 🗓 发布：2026-07-09 ⏰ 时间：13:32（UTC+8） ✍ 作者：天择网 天择网正式开放。这里不是只围绕单一主题的网站，而是一处持续生长的个人内容与工具空间。 这次更新对你有什么用 在新闻中查看重要更新，不必翻找零散公告。 在博客中阅读更长篇幅的思考、随笔与创作。 各类兴趣专区和实用工具会陆续加入，首页会持续更新入口。 如何使用 可以从 首页 开始浏览，也欢迎把常用页面加入书签。 ← 返回上一页 返回新闻列表",
-      "updatedAt": "2026-08-10T05:19:25.110Z"
+      "text": "天择网上线：从这里开始 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 站点公告 天择网上线：从这里开始 🗓 发布：2026-07-09 ⏰ 时间：13:32（UTC+8） ✍ 作者：天择网 今天，天择网终于正式开门了。它不想只围着一个主题打转，更像一间会慢慢添置书架和工具台的小屋：个人内容、兴趣专区和实用工具都会在这里继续生长。 先从哪里逛起 想知道网站最近变了什么，可以来新闻里看重要更新，不用四处翻找零散公告。 想安静读点东西，博客会收下更长篇的思考、随笔与创作。 各类兴趣专区和实用工具也会陆续加入，新入口会持续出现在首页。 第一站 第一次来，就从 首页 慢慢看看吧；碰到常用的页面，也欢迎顺手把它加入书签。 ← 返回上一页 返回新闻列表",
+      "updatedAt": "2026-08-24T03:43:51.721Z"
     },
     {
       "url": "/news/10/",
@@ -488,11 +505,11 @@
       "description": "COC 专区新增村庄存档分析和升级规划器，可查看村庄进度并安排建筑工人任务。",
       "headings": [
         "COC 专区新增村庄分析与升级规划",
-        "这次更新对你有什么用",
-        "如何使用"
+        "从存档一路排到时间轴",
+        "存档仍然留在本机"
       ],
-      "text": "COC 专区新增村庄分析与升级规划 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 功能上线 COC 专区新增村庄分析与升级规划 🗓 发布：2026-07-13 ⏰ 时间：19:09（UTC+8） ✍ 作者：天择网 COC 专区新增村庄分析与升级规划。粘贴游戏导出的村庄存档后，可以快速看清当前进度，并把剩余升级任务排成可执行计划。 这次更新对你有什么用 按家乡与夜世界分类查看英雄、兵种、法术、建筑和装备。 统计剩余升级时间，并按建筑工人数换算实际等待时间。 升级规划器支持稳本和速本思路，可在时间轴上调整任务顺序。 如何使用 从 COC 专区 导入村庄存档，再进入 升级规划器 安排任务。存档只保存在当前设备。 ← 返回新闻列表 前往村庄分析 →",
-      "updatedAt": "2026-08-10T04:06:07.184Z"
+      "text": "COC 专区新增村庄分析与升级规划 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 功能上线 COC 专区新增村庄分析与升级规划 🗓 发布：2026-07-13 ⏰ 时间：19:09（UTC+8） ✍ 作者：天择网 村庄发展到中后期，最难的往往不是“还有什么没升”，而是“先升哪个才不浪费工人”。COC 专区现在加入了村庄分析与升级规划：粘贴游戏导出的村庄存档，就能看清进度，再把剩余任务排成一份可执行的计划。 从存档一路排到时间轴 英雄、兵种、法术、建筑和装备会按家乡与夜世界分开呈现。 工具会统计剩余升级时间，并按照建筑工人数换算实际等待时间。 升级规划器同时支持稳本和速本思路，任务顺序还可以直接在时间轴上调整。 存档仍然留在本机 先到 COC 专区 导入村庄存档，再进入 升级规划器 安排任务。整个过程中，存档只保存在当前设备。 ← 返回新闻列表 前往村庄分析 →",
+      "updatedAt": "2026-08-24T03:43:51.724Z"
     },
     {
       "url": "/news/11/",
@@ -500,11 +517,11 @@
       "description": "天择网完成全站界面统一，首页、内容页、COC 工具和游戏页面拥有一致的导航与阅读体验。",
       "headings": [
         "天择网全站界面升级：各专区体验更统一",
-        "这次更新对你有什么用",
-        "如何使用"
+        "这次统一了哪些地方",
+        "不用重新设置"
       ],
-      "text": "天择网全站界面升级：各专区体验更统一 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 全站升级 天择网全站界面升级：各专区体验更统一 🗓 发布：2026-07-14 ⏰ 时间：10:42（UTC+8） ✍ 作者：天择网 天择网完成一次全站级界面升级。首页、新闻、长文、COC 工具与游戏页面采用更统一的设计语言，跨专区浏览时不再有明显割裂感。 这次更新对你有什么用 公共导航、按钮、表单、卡片和弹窗的样式与操作方式更加一致。 COC 数据、村庄分析、升级规划和游戏页面重新整理信息层级。 电脑与手机端都加强了可读性，课本学习助手的既有演示界面保持不变。 如何使用 无需进行设置，刷新页面即可使用新版界面。 ← 返回新闻列表 浏览新版首页 →",
-      "updatedAt": "2026-08-10T04:06:07.185Z"
+      "text": "天择网全站界面升级：各专区体验更统一 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 全站升级 天择网全站界面升级：各专区体验更统一 🗓 发布：2026-07-14 ⏰ 时间：10:42（UTC+8） ✍ 作者：天择网 过去从首页走进不同专区，偶尔会有一种“突然换了个网站”的感觉。这次全站级界面升级，就是想把这种割裂感收起来：主页、新闻、长文、COC 工具和游戏页面，现在使用更统一的设计语言。 这次统一了哪些地方 公共导航、按钮、表单、卡片和弹窗的样式与操作方式变得更一致。 COC 数据、村庄分析、升级规划以及游戏页面都重新梳理了信息层级。 电脑端和手机端的可读性同时加强，课本学习助手原有的演示界面则保持不变。 不用重新设置 这次升级不需要额外操作，刷新页面就能进入新版界面，原来的使用习惯也可以接着保留。 ← 返回新闻列表 浏览新版首页 →",
+      "updatedAt": "2026-08-24T03:43:51.726Z"
     },
     {
       "url": "/news/12/",
@@ -512,11 +529,11 @@
       "description": "天择OS 1.0 正式上线，在浏览器中提供窗口、任务栏、人工智能对话和站内工具，并开放源代码。",
       "headings": [
         "天择OS 1.0 上线并开放源代码",
-        "这次更新对你有什么用",
-        "如何使用"
+        "1.0 里已经能做什么",
+        "现在就开机"
       ],
-      "text": "天择OS 1.0 上线并开放源代码 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 正式上线 天择OS 1.0 上线并开放源代码 🗓 发布：2026-07-14 ⏰ 时间：12:30（UTC+8） ✍ 作者：天择网 天择OS 1.0 正式上线。这是一套可在浏览器中运行的桌面式工作台，把天择网工具、人工智能对话和软件管理放进统一界面。 这次更新对你有什么用 支持窗口、任务栏、开始菜单和电脑、手机自适应布局。 预装天择网主要专区，可在系统内直接打开。 内置人工智能对话和软件商城，也可生成并安装自己的小工具。 如何使用 前往 天择OS 进入网页版或查看开放的源代码。 ← 返回新闻列表 启动天择OS →",
-      "updatedAt": "2026-08-10T04:06:07.187Z"
+      "text": "天择OS 1.0 上线并开放源代码 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 正式上线 天择OS 1.0 上线并开放源代码 🗓 发布：2026-07-14 ⏰ 时间：12:30（UTC+8） ✍ 作者：天择网 浏览器里也能有一张属于自己的桌面。天择OS 1.0 今天正式上线：它是一套在浏览器中运行的桌面式工作台，把天择网工具、人工智能对话和软件管理放进了同一个界面。 1.0 里已经能做什么 窗口、任务栏和开始菜单都已经就位，布局也会适应电脑与手机。 天择网的主要专区预装在系统里，点开就能直接进入。 系统内置人工智能对话和软件商城，还可以生成并安装自己的小工具。 现在就开机 前往 天择OS 即可进入网页版；如果更关心它是怎么做出来的，也可以在那里查看已经开放的源代码。 ← 返回新闻列表 启动天择OS →",
+      "updatedAt": "2026-08-24T03:43:51.727Z"
     },
     {
       "url": "/news/13/",
@@ -524,11 +541,11 @@
       "description": "英语专区正式上线，首期提供自定义词库、四阶段训练、复习队列和学习统计。",
       "headings": [
         "英语专区与天择背单词正式上线",
-        "这次更新对你有什么用",
-        "如何使用"
+        "这套流程怎么走",
+        "带上自己的词库"
       ],
-      "text": "英语专区与天择背单词正式上线 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 专区上线 英语专区与天择背单词正式上线 🗓 发布：2026-07-15 ✍ 作者：天择网 英语专区正式开放，首个工具“天择背单词”把词库管理、训练、复习和统计放进同一条学习流程。 这次更新对你有什么用 支持导入自己的词库，并按关键词查找和维护。 通过理解、回忆、巩固和拼写四个阶段逐步训练。 错词会进入复习队列，学习记录保存在当前设备。 如何使用 前往 英语专区 开始使用。需要人工智能例句或解析时，可在页面中填写自己的模型配置。 ← 返回新闻列表 进入英语专区 →",
-      "updatedAt": "2026-08-10T04:06:07.187Z"
+      "text": "英语专区与天择背单词正式上线 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 专区上线 英语专区与天择背单词正式上线 🗓 发布：2026-07-15 ✍ 作者：天择网 背单词最怕的不是今天记不住，而是词库、训练和复习各管一段，学着学着就断了。新开放的英语专区先带来了“天择背单词”，把词库管理、训练、复习和统计接成一条完整的学习流程。 这套流程怎么走 先导入自己的词库，再按关键词查找、整理和维护。 训练会依次经过理解、回忆、巩固和拼写四个阶段，不必一上来就死磕拼写。 答错的词会自动进入复习队列，学习记录则保存在当前设备。 带上自己的词库 前往 英语专区 就能开始。如果还想要人工智能生成例句或解析，可以在页面里填写自己的模型配置。 ← 返回新闻列表 进入英语专区 →",
+      "updatedAt": "2026-08-24T03:43:51.728Z"
     },
     {
       "url": "/news/14/",
@@ -536,11 +553,11 @@
       "description": "天择网完成性能优化，天择OS Windows 桌面版与存档迁移功能同步上线。",
       "headings": [
         "天择网提速，天择OS 桌面版上线",
-        "这次更新对你有什么用",
-        "如何使用"
+        "速度和桌面版都向前一步",
+        "升级前先留一份备份"
       ],
-      "text": "天择网提速，天择OS 桌面版上线 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 站点升级 天择网提速，天择OS 桌面版上线 🗓 发布：2026-07-16 ✍ 作者：天择网 本次更新同时改善网站速度，并带来天择OS Windows 桌面版。需要长期使用或独立窗口体验的用户，现在可以安装桌面版本。 这次更新对你有什么用 大型词库导入改用更适合批量数据的本地存储，等待时间明显缩短。 天择OS 新增 Windows 桌面版，可作为独立应用运行。 网页端与桌面端都可导出、导入完整存档，方便迁移个人数据。 如何使用 前往 天择OS 页面 选择网页版或桌面版；升级前建议先导出一份存档。 ← 返回新闻列表 前往天择OS →",
-      "updatedAt": "2026-08-10T04:06:07.188Z"
+      "text": "天择网提速，天择OS 桌面版上线 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 站点升级 天择网提速，天择OS 桌面版上线 🗓 发布：2026-07-16 ✍ 作者：天择网 这次有两件让日常使用更舒服的事一起到来：网站速度得到改善，天择OS 也有了 Windows 桌面版。经常使用、又希望拥有独立窗口的用户，现在终于可以直接安装了。 速度和桌面版都向前一步 大型词库导入改用更适合批量数据的本地存储，等待时间明显缩短。 天择OS 新增 Windows 桌面版，可以像普通软件一样独立运行。 网页端和桌面端都支持导出、导入完整存档，迁移个人数据时更省心。 升级前先留一份备份 前往 天择OS 页面 选择网页版或桌面版都可以。准备升级时，仍然建议先导出一份存档，给自己的数据多留一道保险。 ← 返回新闻列表 前往天择OS →",
+      "updatedAt": "2026-08-24T03:43:51.737Z"
     },
     {
       "url": "/news/15/",
@@ -548,11 +565,11 @@
       "description": "COC 法术伤害计算器上线，可计算最高伤害、摧毁建筑所需最少法术，并支持从村庄存档导入等级。",
       "headings": [
         "COC 法术伤害计算器上线",
-        "这次更新对你有什么用",
-        "如何使用"
+        "计算器会替你算什么",
+        "开打前再核对一次"
       ],
-      "text": "COC 法术伤害计算器上线 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 工具上线 COC 法术伤害计算器上线 🗓 发布：2026-07-17 ✍ 作者：天择网 COC 专区新增法术伤害计算器，帮助玩家在进攻前比较雷电、地震和英雄装备的伤害组合。 这次更新对你有什么用 在限定法术空间内寻找总伤害更高的组合。 按目标建筑生命值计算摧毁所需的最少法术。 可从村庄存档导入法术与装备等级，并按大本营等级匹配建筑。 如何使用 进入 法术伤害计算器 即可使用。本工具面向家乡玩法，计算前请确认等级与目标建筑。 ← 返回新闻列表 前往伤害计算器 →",
-      "updatedAt": "2026-08-10T05:19:25.112Z"
+      "text": "COC 法术伤害计算器上线 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 工具上线 COC 法术伤害计算器上线 🗓 发布：2026-07-17 ✍ 作者：天择网 闪震到底够不够，往往不能只凭感觉。COC 专区新增的法术伤害计算器，会在进攻前把雷电、地震和英雄装备的伤害组合摆到一起，方便先算清楚再下法术。 计算器会替你算什么 在限定的法术空间内，寻找总伤害更高的组合。 根据目标建筑生命值，反推摧毁它所需的最少法术。 从村庄存档导入法术与装备等级，并按照大本营等级匹配建筑。 开打前再核对一次 进入 法术伤害计算器 即可开始。本工具面向家乡玩法，正式计算前请确认法术、装备等级和目标建筑都选对了。 ← 返回新闻列表 前往伤害计算器 →",
+      "updatedAt": "2026-08-24T03:43:51.787Z"
     },
     {
       "url": "/news/16/",
@@ -560,11 +577,11 @@
       "description": "天择OS 2.0 上线，新增对话记忆、用量显示、消息编辑重发、公式渲染、浅色主题和完整存档。",
       "headings": [
         "天择OS 2.0：人工智能对话与系统体验全面升级",
-        "这次更新对你有什么用",
-        "如何使用"
+        "对话终于更好掌控",
+        "新版已经就位"
       ],
-      "text": "天择OS 2.0：人工智能对话与系统体验全面升级 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 版本更新 天择OS 2.0：人工智能对话与系统体验全面升级 🗓 发布：2026-07-18 ✍ 作者：天择网 天择OS 2.0 已上线，重点改善人工智能对话和日常使用体验。对话控制、公式显示、浏览器和存档能力都变得更完整。 这次更新对你有什么用 支持对话记忆、停止生成、重新生成、编辑后重发和用量显示。 Markdown 与 LaTeX 公式可以随回答持续显示，长回答更易阅读。 新增浅色主题、浏览器收藏夹、模拟器、导航树、完整存档和更新检查。 如何使用 网页版刷新后即可使用；桌面版用户可从 天择OS 页面 获取对应版本。 ← 返回新闻列表 进入天择OS →",
-      "updatedAt": "2026-08-10T04:06:07.189Z"
+      "text": "天择OS 2.0：人工智能对话与系统体验全面升级 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 版本更新 天择OS 2.0：人工智能对话与系统体验全面升级 🗓 发布：2026-07-18 ✍ 作者：天择网 天择OS 2.0 先把每天最常碰到的对话体验认真整理了一遍。生成到一半想停、改完问题想重发、长回答里的公式不好读，这些细碎却真实的麻烦，现在都有了更完整的处理。 对话终于更好掌控 对话记忆、停止生成、重新生成、编辑后重发和用量显示都已经补齐。 Markdown 与 LaTeX 公式会随着回答持续显示，长回答读起来更顺。 系统还新增浅色主题、浏览器收藏夹、模拟器、导航树、完整存档和更新检查。 新版已经就位 网页版刷新后就能使用；桌面版用户可以从 天择OS 页面 获取对应版本。 ← 返回新闻列表 进入天择OS →",
+      "updatedAt": "2026-08-24T03:43:51.789Z"
     },
     {
       "url": "/news/17/",
@@ -572,11 +589,11 @@
       "description": "天择OS 2.1 新增命令行终端和人工智能命令模式，并改善截图、费用显示和消息操作。",
       "headings": [
         "天择OS 2.1：命令行与人工智能智能体上线",
-        "这次更新对你有什么用",
-        "如何使用"
+        "终端和智能体各做什么",
+        "两种入口，随手选择"
       ],
-      "text": "天择OS 2.1：命令行与人工智能智能体上线 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 版本更新 天择OS 2.1：命令行与人工智能智能体上线 🗓 发布：2026-07-18 ✍ 作者：天择网 天择OS 2.1 新增命令行终端与人工智能命令模式。用户既可以直接输入命令，也可以让人工智能调用系统能力完成操作。 这次更新对你有什么用 命令行可打开应用、查询数据并管理系统功能。 人工智能命令模式能根据用户目标分步调用命令，并把结果显示在对话中。 新增自动截图、费用估算、消息复制和标签页快捷关闭。 如何使用 可在天择OS 中打开“终端”，或在人工智能对话中按需开启命令模式。 ← 返回新闻列表 进入天择OS →",
-      "updatedAt": "2026-08-10T05:19:25.112Z"
+      "text": "天择OS 2.1：命令行与人工智能智能体上线 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 版本更新 天择OS 2.1：命令行与人工智能智能体上线 🗓 发布：2026-07-18 ✍ 作者：天择网 如果不想为了一个操作层层点开菜单，现在可以直接说出来或敲出来。天择OS 2.1 新增命令行终端与人工智能命令模式：既能由用户输入命令，也能让人工智能调用系统能力完成操作。 终端和智能体各做什么 命令行可以打开应用、查询数据，也能管理系统功能。 人工智能命令模式会根据用户目标分步调用命令，并把每一步结果带回对话。 自动截图、费用估算、消息复制和标签页快捷关闭也在这一版加入。 两种入口，随手选择 熟悉命令的话，可以在天择OS 中直接打开“终端”；更想用自然语言完成任务，则在人工智能对话里按需开启命令模式。 ← 返回新闻列表 进入天择OS →",
+      "updatedAt": "2026-08-24T03:43:51.791Z"
     },
     {
       "url": "/news/18/",
@@ -584,11 +601,11 @@
       "description": "天择OS 2.2 改善停止生成、截图、长对话和终端输出，并为 COC 计算器新增回血容错。",
       "headings": [
         "天择OS 2.2：桌面版更稳定，COC 计算新增回血容错",
-        "这次更新对你有什么用",
-        "如何使用"
+        "稳定性和 COC 的两个重点",
+        "更新后就会生效"
       ],
-      "text": "天择OS 2.2：桌面版更稳定，COC 计算新增回血容错 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 体验更新 天择OS 2.2：桌面版更稳定，COC 计算新增回血容错 🗓 发布：2026-07-19 ✍ 作者：天择网 天择OS 2.2 主要改善桌面版稳定性，并补充 COC 法术伤害计算中的建筑工人小屋回血因素。 这次更新对你有什么用 停止生成会真正终止请求，关闭窗口时也不会留下后台任务。 截图、长对话进度和终端长输出更加稳定。 COC 计算器可显示建筑工人小屋回血量与当前方案的容错时间。 如何使用 更新天择OS 后即可获得稳定性改进；COC 用户可直接打开 伤害计算器 查看新结果。 ← 返回新闻列表 进入天择OS →",
-      "updatedAt": "2026-08-10T04:06:07.190Z"
+      "text": "天择OS 2.2：桌面版更稳定，COC 计算新增回血容错 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 体验更新 天择OS 2.2：桌面版更稳定，COC 计算新增回血容错 🗓 发布：2026-07-19 ✍ 作者：天择网 天择OS 2.2 没有塞进一长串新入口，而是把两件真会影响结果的事做好：桌面版运行得更稳，COC 法术伤害计算也终于把建筑工人小屋回血算了进去。 稳定性和 COC 的两个重点 停止生成会真正终止请求，关闭窗口后也不会留下后台任务。 截图、长对话进度以及终端长输出都变得更加稳定。 COC 计算器现在会显示建筑工人小屋回血量，以及当前方案的容错时间。 更新后就会生效 更新天择OS 后即可获得这些稳定性改进；COC 玩家可以直接打开 伤害计算器 查看加入回血因素后的新结果。 ← 返回新闻列表 进入天择OS →",
+      "updatedAt": "2026-08-24T03:43:51.792Z"
     },
     {
       "url": "/news/19/",
@@ -596,11 +613,11 @@
       "description": "天择OS 2.5 为人工智能对话加入联网搜索和文件上传，并新增文档阅读器、时钟与更多命令。",
       "headings": [
         "天择OS 2.5：联网搜索、文件上传与更多系统工具",
-        "这次更新对你有什么用",
-        "如何使用"
+        "对话框里多了什么",
+        "先看看模型是否支持"
       ],
-      "text": "天择OS 2.5：联网搜索、文件上传与更多系统工具 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 版本更新 天择OS 2.5：联网搜索、文件上传与更多系统工具 🗓 发布：2026-07-20 ✍ 作者：天择网 天择OS 2.5 扩展了人工智能对话与系统工具。需要查最新信息、分析图片或读取文本文件时，可以直接在对话中完成。 这次更新对你有什么用 人工智能对话支持联网搜索、图片和文件上传，也可直接粘贴图片。 新增模型能力设置、上下文用量和模型列表读取。 系统新增文档阅读器、时钟、任务栏电量与网络状态，命令行入口也更丰富。 如何使用 联网和文件能力取决于所选模型与接口；请在“人工智能配置”中确认相应开关。 ← 返回新闻列表 进入天择OS →",
-      "updatedAt": "2026-08-10T04:06:07.191Z"
+      "text": "天择OS 2.5：联网搜索、文件上传与更多系统工具 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 版本更新 天择OS 2.5：联网搜索、文件上传与更多系统工具 🗓 发布：2026-07-20 ✍ 作者：天择网 很多问题只靠模型原有知识并不够：最新消息得去网上查，图片要看，文件也得读。天择OS 2.5 把这些能力接进了人工智能对话，同时继续补充系统工具。 对话框里多了什么 人工智能对话支持联网搜索、上传图片和文件，也可以直接粘贴图片。 模型能力设置、上下文用量和模型列表读取都加入了配置界面。 系统新增文档阅读器、时钟、任务栏电量与网络状态，命令行入口也更丰富。 先看看模型是否支持 联网和文件能力取决于所选模型与接口。使用前请到“人工智能配置”中确认相应开关，避免上传后才发现当前模型接不住。 ← 返回新闻列表 进入天择OS →",
+      "updatedAt": "2026-08-24T03:43:51.793Z"
     },
     {
       "url": "/news/2/",
@@ -608,11 +625,11 @@
       "description": "课本学习助手现已上线，可把教材章节整理成带知识点、原文、测验、错题本和人工智能问答的离线学习页。",
       "headings": [
         "课本学习助手上线：把教材变成交互式学习页",
-        "这次更新对你有什么用",
-        "如何使用"
+        "一章教材会变成什么样",
+        "去看看成品"
       ],
-      "text": "课本学习助手上线：把教材变成交互式学习页 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 工具上线 课本学习助手上线：把教材变成交互式学习页 🗓 发布：2026-07-09 ⏰ 时间：14:55（UTC+8） ✍ 作者：天择网 人工智能专区新增“课本学习助手”。它能把教材章节整理成一个可离线打开的学习页，让阅读、练习、纠错和提问集中在同一处。 这次更新对你有什么用 左侧可切换知识点、教材原文、测验、错题本和批阅数据。 知识点配有交互演示，测验覆盖选择、判断、填空和解答等题型。 可接入自己的 DeepSeek 密钥进行对话和主观题批阅；密钥只保存在当前设备。 如何使用 前往 课本学习助手 查看介绍、教程和在线示例。 ← 返回上一页 前往体验 →",
-      "updatedAt": "2026-08-10T04:06:07.179Z"
+      "text": "课本学习助手上线：把教材变成交互式学习页 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 工具上线 课本学习助手上线：把教材变成交互式学习页 🗓 发布：2026-07-09 ⏰ 时间：14:55（UTC+8） ✍ 作者：天择网 翻教材、做练习、整理错题，再切到聊天窗口提问，来回跳转很容易打断思路。新上线的“课本学习助手”把这些环节收进同一个可离线打开的学习页，一章书终于可以从头学到尾。 一章教材会变成什么样 左侧把知识点、教材原文、测验、错题本和批阅数据排在一起，需要哪一块就切到哪一块。 知识点旁边有交互演示，测验则覆盖选择、判断、填空和解答等题型。 如果想对话或批阅主观题，可以接入自己的 DeepSeek 密钥；密钥只保存在当前设备。 去看看成品 课本学习助手 页面已经放好了介绍、教程和在线示例，可以先打开一份示例，感受一下整套学习流程。 ← 返回上一页 前往体验 →",
+      "updatedAt": "2026-08-24T03:43:51.794Z"
     },
     {
       "url": "/news/20/",
@@ -620,11 +637,11 @@
       "description": "天择OS 2.6 新增窗口置顶、文档缩放和更多站内工具命令。",
       "headings": [
         "天择OS 2.6：窗口置顶、文档缩放与命令扩展",
-        "这次更新对你有什么用",
-        "如何使用"
+        "改动不大，日常很实在",
+        "图钉和帮助都在手边"
       ],
-      "text": "天择OS 2.6：窗口置顶、文档缩放与命令扩展 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 版本更新 天择OS 2.6：窗口置顶、文档缩放与命令扩展 🗓 发布：2026-07-20 ✍ 作者：天择网 天择OS 2.6 让多窗口使用和文档阅读更方便，同时为站内主要工具补齐了可直接调用的命令。 这次更新对你有什么用 任意窗口都可通过图钉、右键菜单或命令行保持置顶。 文档阅读器支持按钮缩放、快捷键缩放、页宽和整页显示。 COC、背单词、游戏、人工智能专区和模拟器等均有更直接的命令入口。 如何使用 在窗口标题栏使用图钉即可置顶；打开终端输入 help 可查看当前命令。 ← 返回新闻列表 进入天择OS →",
-      "updatedAt": "2026-08-10T04:06:07.191Z"
+      "text": "天择OS 2.6：窗口置顶、文档缩放与命令扩展 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 版本更新 天择OS 2.6：窗口置顶、文档缩放与命令扩展 🗓 发布：2026-07-20 ✍ 作者：天择网 窗口一多，总有一个想让它别被盖住；文档一长，也总要反复调缩放。天择OS 2.6 就从这些高频小动作入手，让多窗口使用和文档阅读更顺便，也为站内主要工具补齐了可直接调用的命令。 改动不大，日常很实在 任意窗口都可以通过图钉、右键菜单或命令行保持置顶。 文档阅读器支持按钮缩放、快捷键缩放，以及页宽和整页显示。 COC、背单词、游戏、人工智能专区和模拟器等工具，都有了更直接的命令入口。 图钉和帮助都在手边 想让窗口留在最上层，就点标题栏里的图钉；想知道当前有哪些命令，打开终端输入 help 即可查看。 ← 返回新闻列表 进入天择OS →",
+      "updatedAt": "2026-08-24T03:43:51.796Z"
     },
     {
       "url": "/news/21/",
@@ -632,11 +649,11 @@
       "description": "天择OS 3.0 新增可拖动、可缩放的人工智能悬浮窗，桌面版支持 Ctrl+1 全局快捷键。",
       "headings": [
         "天择OS 3.0：按 Ctrl+1 随时打开人工智能悬浮窗",
-        "这次更新对你有什么用",
-        "如何使用"
+        "它不是另一个孤立的对话框",
+        "一个快捷键就够了"
       ],
-      "text": "天择OS 3.0：按 Ctrl+1 随时打开人工智能悬浮窗 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 版本更新 天择OS 3.0：按 Ctrl+1 随时打开人工智能悬浮窗 🗓 发布：2026-07-21 ✍ 作者：天择网 天择OS 3.0 带来独立的人工智能悬浮窗。即使正在浏览文档或使用其他工具，也能按 Ctrl+1 随时打开对话。 这次更新对你有什么用 桌面版悬浮窗可以置顶、拖动和缩放，主窗口最小化后仍可使用。 网页版提供页面内悬浮形态，适合边看内容边提问。 悬浮窗与主对话共享配置和历史，联网、文件、思考与记忆能力保持一致。 如何使用 桌面版按 Ctrl+1 显示或隐藏；网页版可从天择OS 界面打开。 ← 返回新闻列表 进入天择OS →",
-      "updatedAt": "2026-08-10T04:06:07.192Z"
+      "text": "天择OS 3.0：按 Ctrl+1 随时打开人工智能悬浮窗 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 版本更新 天择OS 3.0：按 Ctrl+1 随时打开人工智能悬浮窗 🗓 发布：2026-07-21 ✍ 作者：天择网 灵感或问题冒出来时，不必先找回天择OS 主窗口。天择OS 3.0 带来了独立的人工智能悬浮窗：即使正在浏览文档或使用其他工具，按下 Ctrl+1 就能立刻打开对话。 它不是另一个孤立的对话框 桌面版悬浮窗可以置顶、拖动和缩放，主窗口最小化后仍然能用。 网页版则提供页面内悬浮形态，适合一边看内容一边提问。 悬浮窗与主对话共享配置和历史，联网、文件、思考与记忆能力保持一致。 一个快捷键就够了 桌面版按 Ctrl+1 即可显示或隐藏悬浮窗；网页版则可以从天择OS 界面里打开。 ← 返回新闻列表 进入天择OS →",
+      "updatedAt": "2026-08-24T03:43:51.798Z"
     },
     {
       "url": "/news/22/",
@@ -644,11 +661,11 @@
       "description": "天择OS 3.1 将 COC 与背单词工具改为本地运行，整合村庄分析，并改善悬浮窗和命令行。",
       "headings": [
         "天择OS 3.1：工具本地化，COC 工作台更完整",
-        "这次更新对你有什么用",
-        "如何使用"
+        "这次真正串起来的部分",
+        "旧数据别急着丢"
       ],
-      "text": "天择OS 3.1：工具本地化，COC 工作台更完整 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 版本更新 天择OS 3.1：工具本地化，COC 工作台更完整 🗓 发布：2026-07-22 ✍ 作者：天择网 天择OS 3.1 把常用工具进一步搬到本地运行。COC、背单词和命令行之间的数据衔接更顺畅，离线使用也更可靠。 这次更新对你有什么用 COC、升级规划、伤害计算和背单词使用本地页面，不再依赖在线站点加载。 村庄存档分析并入 COC 首页，存档可直接供规划器、计算器和命令行使用。 主对话与悬浮窗可以同步内容，命令调用记录按回答顺序显示。 如何使用 覆盖升级后即可使用。若旧版桌面数据未自动出现，请先在旧版导出完整存档，再到新版导入。 ← 返回新闻列表 进入天择OS →",
-      "updatedAt": "2026-08-10T04:06:07.192Z"
+      "text": "天择OS 3.1：工具本地化，COC 工作台更完整 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 版本更新 天择OS 3.1：工具本地化，COC 工作台更完整 🗓 发布：2026-07-22 ✍ 作者：天择网 工具能打开，不等于工具之间真的连了起来。天择OS 3.1 继续把常用工具搬到本地运行，也把 COC、背单词和命令行之间的数据衔接理顺了一步，离线使用因此更可靠。 这次真正串起来的部分 COC、升级规划、伤害计算和背单词改用本地页面，不再依赖在线站点加载。 村庄存档分析并入 COC 首页，同一份存档可以直接交给规划器、计算器和命令行使用。 主对话与悬浮窗可以同步内容，命令调用记录也会按照回答顺序显示。 旧数据别急着丢 覆盖升级后即可使用。如果旧版桌面数据没有自动出现，请先回到旧版导出完整存档，再到新版导入。 ← 返回新闻列表 进入天择OS →",
+      "updatedAt": "2026-08-24T03:43:51.799Z"
     },
     {
       "url": "/news/23/",
@@ -656,11 +673,11 @@
       "description": "天择OS 3.2 为笔记加入查看、编辑和撤销命令，COC 计算器新增自定义闪震组合。",
       "headings": [
         "天择OS 3.2：笔记命令和 COC 计算器继续完善",
-        "这次更新对你有什么用",
-        "如何使用"
+        "笔记和计算器都更顺手",
+        "两个入口都很直接"
       ],
-      "text": "天择OS 3.2：笔记命令和 COC 计算器继续完善 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 版本更新 天择OS 3.2：笔记命令和 COC 计算器继续完善 🗓 发布：2026-07-24 ✍ 作者：天择网 天择OS 3.2 继续完善笔记、COC 计算和桌面使用体验。常用操作更直接，已有数据的编号也更稳定。 这次更新对你有什么用 笔记支持命令行查看、整体编辑和撤销，固定编号不会因删除其他笔记而变化。 COC 伤害计算器新增自定义雷电与地震数量，可查看总伤害和逐次伤害。 官网下载页能正确识别公开的最新安装包，悬浮窗调用时钟、浏览器等命令也更稳定。 如何使用 更新后可在终端输入 note 查看笔记命令，或打开 COC 伤害计算器 使用自定义模式。 ← 返回新闻列表 进入天择OS →",
-      "updatedAt": "2026-08-10T04:06:07.193Z"
+      "text": "天择OS 3.2：笔记命令和 COC 计算器继续完善 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 版本更新 天择OS 3.2：笔记命令和 COC 计算器继续完善 🗓 发布：2026-07-24 ✍ 作者：天择网 天择OS 3.2 是一轮偏向高频使用的小更新：笔记操作少绕几步，COC 计算多一点自由，桌面上的细节也继续收紧。变化不算喧闹，但用久了会更顺手。 笔记和计算器都更顺手 笔记支持从命令行查看、整体编辑和撤销，固定编号不会因为删除其他笔记而变化。 COC 伤害计算器可以自定义雷电与地震数量，同时查看总伤害和逐次伤害。 官网下载页能正确识别公开的最新安装包，悬浮窗调用时钟、浏览器等命令时也更稳定。 两个入口都很直接 更新后，在终端输入 note 就能查看笔记命令；想试试新的伤害组合，则打开 COC 伤害计算器 使用自定义模式。 ← 返回新闻列表 进入天择OS →",
+      "updatedAt": "2026-08-24T03:43:51.800Z"
     },
     {
       "url": "/news/24/",
@@ -668,11 +685,11 @@
       "description": "天择OS 3.5 新增等级积分与配色外观，人工智能对话支持图片文字识别和快捷开关。",
       "headings": [
         "天择OS 3.5：等级积分、配色与图片文字识别",
-        "这次更新对你有什么用",
-        "如何使用"
+        "积分、配色和图片文字识别",
+        "去看看自己的进度"
       ],
-      "text": "天择OS 3.5：等级积分、配色与图片文字识别 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 版本更新 天择OS 3.5：等级积分、配色与图片文字识别 🗓 发布：2026-07-25 ✍ 作者：天择网 天择OS 3.5 加入等级积分与个性化外观，并让更多模型能够处理图片和文本文件。日常使用会积累积分，也可以随时更换界面配色。 这次更新对你有什么用 启动、对话、命令、笔记等日常操作可获得积分并提升等级。 冷色、标准和暖色三套配色可在系统中解锁；天择网站点配色均免费。 不支持图片输入的模型会先在本地识别图片文字，文本文件也可直接读取后发送。 如何使用 在“等级与外观”中查看积分和配色；人工智能对话工具栏可直接切换联网与命令模式。 ← 返回新闻列表 进入天择OS →",
-      "updatedAt": "2026-08-10T04:06:07.193Z"
+      "text": "天择OS 3.5：等级积分、配色与图片文字识别 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 版本更新 天择OS 3.5：等级积分、配色与图片文字识别 🗓 发布：2026-07-25 ✍ 作者：天择网 天择OS 3.5 终于让系统多了一点“越用越像自己”的感觉。日常操作会积累等级积分，界面配色可以随时更换；图片和文本文件，也能交给更多模型处理了。 积分、配色和图片文字识别 启动、对话、命令和笔记等日常操作都能获得积分并提升等级。 冷色、标准和暖色三套配色可以在系统中解锁；天择网站点配色仍然全部免费。 遇到不支持图片输入的模型，系统会先在本地识别图片文字；文本文件也能直接读取后发送。 去看看自己的进度 积分和配色都集中在“等级与外观”里；联网与命令模式则可以直接从人工智能对话工具栏切换。 ← 返回新闻列表 进入天择OS →",
+      "updatedAt": "2026-08-24T03:43:51.801Z"
     },
     {
       "url": "/news/25/",
@@ -680,11 +697,11 @@
       "description": "COC 伤害计算器新增分享链接，好友可只读查看配置与完整计算结果。",
       "headings": [
         "COC 伤害计算结果可以一键分享",
-        "这次更新对你有什么用",
-        "如何使用"
+        "一条链接会带走什么",
+        "算完顺手复制"
       ],
-      "text": "COC 伤害计算结果可以一键分享 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 工具更新 COC 伤害计算结果可以一键分享 🗓 发布：2026-07-30 ✍ 作者：天择网 COC 伤害计算器新增“复制分享链接”。算好法术方案后，可以把配置与结果直接发给好友，不必再逐项截图说明。 这次更新对你有什么用 最高伤害、最少法术和自定义闪震三种模式都可分享。 链接只包含计算所需的法术、装备、目标建筑、回血小屋等级和模式。 好友打开后进入只读页面，不会读取或改写其本地村庄存档。 如何使用 在 伤害计算器 完成计算，点击结果下方的“复制分享链接”即可。",
-      "updatedAt": "2026-08-10T04:06:07.194Z"
+      "text": "COC 伤害计算结果可以一键分享 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 工具更新 COC 伤害计算结果可以一键分享 🗓 发布：2026-07-30 ✍ 作者：天择网 算好一套法术方案后，再逐项截图解释确实有点累。COC 伤害计算器现在加入了“复制分享链接”，配置和结果可以一起发给好友，对方点开就能看懂。 一条链接会带走什么 最高伤害、最少法术和自定义闪震三种模式都可以分享。 链接只会带上计算所需的法术、装备、目标建筑、回血小屋等级和模式。 好友打开的是只读页面，不会读取或改写其本地村庄存档。 算完顺手复制 在 伤害计算器 完成计算后，点击结果下方的“复制分享链接”即可，不需要再手动整理参数。",
+      "updatedAt": "2026-08-24T03:43:51.803Z"
     },
     {
       "url": "/news/26/",
@@ -692,11 +709,11 @@
       "description": "天择网与天择OS 4.0 正式发布，带来统一工作台、五套站点配色、多会话对话、知识库与专区升级。",
       "headings": [
         "天择网与天择OS 4.0：全站工作台统一升级",
-        "这次更新对你有什么用",
-        "如何使用"
+        "统一之后，变化落在哪里",
+        "网页和桌面都能体验"
       ],
-      "text": "天择网与天择OS 4.0：全站工作台统一升级 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 正式发布 天择网与天择OS 4.0：全站工作台统一升级 发布：2026-07-31 作者：天择网 天择网与天择OS 4.0 正式发布。网站和系统采用更统一的工作台结构，人工智能、知识库、COC 与英语学习功能也完成集中升级。 这次更新对你有什么用 首页改为分层导航，主要内容与工具入口更容易找到，站点提供五套免费外观。 人工智能支持多会话、可命名配置、知识库、扫描文档文字识别和更清晰的能力开关。 COC、英语学习和桌面版的导航、数据衔接与移动端体验同步改善。 如何使用 浏览天择网即可体验新版站点；进入 天择OS 可选择网页版或 Windows 桌面版。",
-      "updatedAt": "2026-08-10T04:06:07.194Z"
+      "text": "天择网与天择OS 4.0：全站工作台统一升级 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 正式发布 天择网与天择OS 4.0：全站工作台统一升级 发布：2026-07-31 作者：天择网 天择网与天择OS 4.0 不是给某个页面单独换一层外观，而是把网站和系统当成一张完整工作台重新整理。两边现在拥有更统一的结构，人工智能、知识库、COC 和英语学习功能也一起完成了集中升级。 统一之后，变化落在哪里 首页改为分层导航，主要内容和工具入口更容易找到，站点还提供五套免费外观。 人工智能支持多会话、可命名配置、知识库、扫描文档文字识别，以及更清晰的能力开关。 COC、英语学习和桌面版的导航、数据衔接与移动端体验也同步得到改善。 网页和桌面都能体验 直接浏览天择网，就能体验新版站点；进入 天择OS ，还可以在网页版和 Windows 桌面版之间选择。",
+      "updatedAt": "2026-08-24T03:43:51.812Z"
     },
     {
       "url": "/news/27/",
@@ -704,11 +721,11 @@
       "description": "天择OS 4.1 正式发布，新增对话归档、命令行智能体、人工智能用量账本、会员外观和加密存档。",
       "headings": [
         "天择OS 4.1：对话归档、智能体、用量账本与会员外观",
-        "这次更新对你有什么用",
-        "如何使用"
+        "把长期使用的问题补上",
+        "4.1 已经可以用了"
       ],
-      "text": "天择OS 4.1：对话归档、智能体、用量账本与会员外观 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 正式发布 天择OS 4.1：对话归档、智能体、用量账本与会员外观 发布：2026-08-02 作者：天择网 天择OS 4.1 正式发布。新版重点完善对话管理、命令行智能体、人工智能用量统计、外观体系和存档安全。 这次更新对你有什么用 对话可以归档、还原或永久删除；归档内容仍可保留在本地知识库中。 命令行新增纯问答与多步骤智能体两类入口，系统会自动阻止重复且无进展的调用。 新增用量账本、六档会员外观与密码加密存档，重要数据更易统计和迁移。 如何使用 网页版刷新后即可使用；Windows 用户可从 天择OS 下载页 获取 4.1。",
-      "updatedAt": "2026-08-10T04:06:07.194Z"
+      "text": "天择OS 4.1：对话归档、智能体、用量账本与会员外观 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 正式发布 天择OS 4.1：对话归档、智能体、用量账本与会员外观 发布：2026-08-02 作者：天择网 聊天越来越多以后，真正棘手的不是再开一个新会话，而是旧会话怎么收、用量怎么看、存档怎么安全迁走。天择OS 4.1 正式发布，这一版就集中补上了这些适合长期使用的能力。 把长期使用的问题补上 对话可以归档、还原或永久删除；已经归档的内容仍可保留在本地知识库中。 命令行新增纯问答与多步骤智能体两类入口，系统会自动阻止重复又没有进展的调用。 用量账本、六档会员外观和密码加密存档也在这一版加入，重要数据更容易统计和迁移。 4.1 已经可以用了 网页版刷新后即可进入 4.1；Windows 用户可以从 天择OS 下载页 获取对应版本。",
+      "updatedAt": "2026-08-24T03:43:51.813Z"
     },
     {
       "url": "/news/28/",
@@ -716,11 +733,26 @@
       "description": "天择网与天择OS 5.0 正式发布，让网页浏览、文件管理、本地模型和 Windows 工具更容易使用。",
       "headings": [
         "天择网与天择OS 5.0：网页浏览、文件管理与本地模型",
-        "这次更新对你有什么用",
-        "如何使用"
+        "这次真正聚到一起的东西",
+        "先在线体验，还是直接装桌面版"
       ],
-      "text": "天择网与天择OS 5.0：网页浏览、文件管理与本地模型 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 正式发布 天择网与天择OS 5.0：网页浏览、文件管理与本地模型 发布：2026-08-07 作者：天择网 天择网与天择OS 5.0 正式发布。新版把网页浏览、文件、知识库、云端与本地模型和 Windows 工具集中到一起，常用能力更容易找到和使用。 这次更新对你有什么用 桌面版使用真正的网页窗口，可打开拒绝嵌入的网站，也能直达多个网页版人工智能服务。 文件空间统一管理浏览器下载和知识库文件，支持导入、预览、编辑、搜索与回收站。 人工智能可按需使用云端或本地模型；云端临时不可用时还能自动切换，并可自动识别本机模型、精简长对话占用。 Windows 版新增应用管理器和内置 Python；COC 分享配置与教程入口也同步完善。 如何使用 可先打开 网页版 5.0 体验；需要在桌面中打开完整网页、管理本机文件、安装应用或运行 Python 时，请从 下载页 安装桌面版。",
-      "updatedAt": "2026-08-10T05:19:25.113Z"
+      "text": "天择网与天择OS 5.0：网页浏览、文件管理与本地模型 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 正式发布 天择网与天择OS 5.0：网页浏览、文件管理与本地模型 发布：2026-08-07 作者：天择网 网页在浏览器里、文件散在各处、知识库和模型又各有入口，功能不少，切换起来却很累。天择网与天择OS 5.0 正式发布，这一次把网页浏览、文件、知识库、云端与本地模型，以及 Windows 工具真正集中到了一起。 这次真正聚到一起的东西 桌面版使用真正的网页窗口，可以打开拒绝嵌入的网站，也能直达多个网页版人工智能服务。 文件空间统一管理浏览器下载和知识库文件，并支持导入、预览、编辑、搜索与回收站。 人工智能可以按需使用云端或本地模型；云端临时不可用时还能自动切换，同时自动识别本机模型、精简长对话占用。 Windows 版新增应用管理器和内置 Python；COC 分享配置与教程入口也同步得到完善。 先在线体验，还是直接装桌面版 想先看看整体变化，可以打开 网页版 5.0 体验；如果需要在桌面中打开完整网页、管理本机文件、安装应用或运行 Python，请从 下载页 安装桌面版。",
+      "updatedAt": "2026-08-24T03:43:51.814Z"
+    },
+    {
+      "url": "/news/29/",
+      "title": "把能查、能算、能学的事放到一起：天择网与天择OS 5.2 — 天择网",
+      "description": "天择网与天择OS 5.2 带来 COC 18.400.22 数据、实时标签查询、升级规划、后端人工智能与课本学习助手体验更新。",
+      "headings": [
+        "把能查、能算、能学的事放到一起：天择网与天择OS 5.2",
+        "村庄数据不再只是一张静态表",
+        "规划开始记得你平时怎么玩",
+        "人工智能有了可靠的后方",
+        "学习时，把密钥和小失误都放轻一点",
+        "网页版和桌面版，都在这里等你"
+      ],
+      "text": "把能查、能算、能学的事放到一起：天择网与天择OS 5.2 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 慢慢变顺手 把能查、能算、能学的事放到一起：天择网与天择OS 5.2 发布：2026-08-24 作者：天择网 玩部落冲突时想查一个标签、排一次升级，学习时又想让批阅先看懂自己的思路，这些原本要在好几个页面和工具之间来回跑的事，终于被接到了一处。天择网与天择OS 5.2 想做的不是再堆一串功能名，而是让每一步少一点绕路。 村庄数据不再只是一张静态表 COC 数据中心 已经接上 COC 18.400.22 的整理数据：超级充能、装备里的 Revenge Deck，以及每个单位的英文名称都能直接查。地震法术也按等级展示四次对城墙的伤害：前三次都是当前等级的 x%，第四次是 100−3x%，按等级地震四击总和 100%，不必再靠零散说法自己凑数。 想看真实玩家或部落，也不必先面对一大段 JSON。直接输入标签，就能得到适合阅读的资料卡；需要深挖时再展开原始数据。个人联赛按现在的新体系显示，传奇段位也会清楚分成传奇3、传奇2、传奇1，避免和旧版铜银金水晶体系混在一起。 规划开始记得你平时怎么玩 升级规划器 的稳本模式先把实验室放在最前面，再按资源、训练、核心建筑、防御、英雄和其他项目安排工人；同一优先级会把较短的时间先穿插进去。导入配兵链接，或者自己配一套常用部队后，实验室与战宠小屋会优先照顾你真正会用的兵种、法术、攻城机器和战宠；英雄名额和建筑工人发生冲突时，也会优先考虑你的常用英雄。莱希和大牦则安心留在战宠升级的最后一档。 人工智能有了可靠的后方 站内助手和天择OS默认使用 AIHubMix 的 Gemini 3.7 Flash 免费模型；上游临时忙不过来或断线时，会在尚未开始回答前自动换到智谱 GLM-4.7-Flash，并继续把话说完。助手现在既能检索天择网内容，也能用 本站 COC 数据 和 coc.py 查询玩家、部落资料；天择OS里的命令行控制也重新接好了，不再让会动手的助手卡在门口。 学习时，把密钥和小失误都放轻一点 课本学习助手体验页 改为通过站点后端对话，普通使用不需要再填写或保存在浏览器里人工智能密钥。解答题批阅也更愿意看核心结论：答案正确、只是有轻微笔误时仍可以拿满分；真正影响结论或推理的错误，才会认真扣分。 网页版和桌面版，都在这里等你 天择OS 5.2 的普通版与 Codex 版 Windows 安装包已经准备好，下载入口都在 天择OS 页面 。至于《部落冲突》安装包，本站不会重新分发受版权保护的游戏文件；想安装国际服，请使用官方渠道，数据中心仍会继续提供能公开整理和查阅的内容。",
+      "updatedAt": "2026-08-24T03:44:11.599Z"
     },
     {
       "url": "/news/3/",
@@ -728,11 +760,11 @@
       "description": "COC 专区正式上线，支持兵种、建筑、法术、英雄等游戏数据的分类浏览与关键词搜索。",
       "headings": [
         "COC 专区上线：游戏数据随手查",
-        "这次更新对你有什么用",
-        "如何使用"
+        "想查的内容都在这里",
+        "直接开查"
       ],
-      "text": "COC 专区上线：游戏数据随手查 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 专区上线 COC 专区上线：游戏数据随手查 🗓 发布：2026-07-09 ⏰ 时间：18:35（UTC+8） ✍ 作者：天择网 面向《部落冲突》玩家的 COC 专区正式上线。首个工具是游戏数据查询，打开网页即可搜索常用单位和各等级属性。 这次更新对你有什么用 按兵种、建筑、法术、英雄、战宠等类别筛选。 输入中文或英文名称即可快速找到条目。 点开卡片可查看生命值、伤害、升级费用、升级时间等等级数据。 如何使用 进入 游戏数据查询 即可使用，无需登录或填写密钥。 ← 返回上一页 前往数据查询 →",
-      "updatedAt": "2026-08-10T04:06:07.179Z"
+      "text": "COC 专区上线：游戏数据随手查 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 专区上线 COC 专区上线：游戏数据随手查 🗓 发布：2026-07-09 ⏰ 时间：18:35（UTC+8） ✍ 作者：天择网 临时想查一个兵种的数据，却要在好几个页面之间翻来翻去，这种体验并不痛快。现在，面向《部落冲突》玩家的 COC 专区正式上线，第一件工具就是打开网页便能使用的游戏数据查询。 想查的内容都在这里 可以按兵种、建筑、法术、英雄、战宠等类别筛选，不用一页页找。 中文名和英文名都能搜索，记得哪个就输入哪个。 点开卡片后，各等级的生命值、伤害、升级费用和升级时间等数据都会列出来。 直接开查 进入 游戏数据查询 就能开始，不需要登录，也不用填写密钥。 ← 返回上一页 前往数据查询 →",
+      "updatedAt": "2026-08-24T03:43:51.817Z"
     },
     {
       "url": "/news/4/",
@@ -740,11 +772,11 @@
       "description": "COC 数据查询升级至更完整的数据源，并开放可从游戏安装包导出结构化数据的工具。",
       "headings": [
         "COC 数据查询升级：更完整的数据与开源导出工具",
-        "这次更新对你有什么用",
-        "如何使用"
+        "这回补齐了什么",
+        "查询和下载各有入口"
       ],
-      "text": "COC 数据查询升级：更完整的数据与开源导出工具 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 数据更新 COC 数据查询升级：更完整的数据与开源导出工具 🗓 发布：2026-07-10 ⏰ 时间：16:40（UTC+8） ✍ 作者：天择网 COC 数据查询换用了更完整的数据源，条目、中文介绍和等级字段都得到补充；生成这份数据的导出工具也同步开放。 这次更新对你有什么用 查询范围扩展到 272 个单位，包含更多夜世界、英雄、装备和帮手内容。 等级表补充所需大本营等级，装备可查看满级技能。 需要自行整理其他版本时，可下载本地运行的数据导出工具。 如何使用 玩家可直接使用 数据查询 ；需要原始数据或工具时，前往 数据开源 。 ← 返回上一页 前往数据查询 →",
-      "updatedAt": "2026-08-10T04:06:07.180Z"
+      "text": "COC 数据查询升级：更完整的数据与开源导出工具 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 数据更新 COC 数据查询升级：更完整的数据与开源导出工具 🗓 发布：2026-07-10 ⏰ 时间：16:40（UTC+8） ✍ 作者：天择网 数据页好不好用，往往就差在那些缺掉的小字段上。这一轮，COC 数据查询换上了更完整的数据源，条目、中文介绍和等级字段都补得更齐；连生成这份数据的导出工具也一起开放了。 这回补齐了什么 查询范围扩展到了 272 个单位，其中包括更多夜世界、英雄、装备和帮手内容。 等级表补上了所需大本营等级，装备条目还能查看满级技能。 如果要自行整理其他版本，也可以下载在本地运行的数据导出工具。 查询和下载各有入口 只想查数据，直接打开 数据查询 即可；需要原始数据或导出工具，则前往 数据开源 。 ← 返回上一页 前往数据查询 →",
+      "updatedAt": "2026-08-24T03:43:51.818Z"
     },
     {
       "url": "/news/5/",
@@ -752,11 +784,11 @@
       "description": "数据开源专区正式上线，集中提供天择网整理的数据与相关工具。",
       "headings": [
         "数据开源专区上线：本站自制数据免费开放",
-        "这次更新对你有什么用",
-        "如何使用"
+        "首批开放的内容",
+        "下载之前说两句"
       ],
-      "text": "数据开源专区上线：本站自制数据免费开放 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 专区上线 数据开源专区上线：本站自制数据免费开放 🗓 发布：2026-07-10 ⏰ 时间：16:50（UTC+8） ✍ 作者：天择网 天择网新增数据开源专区。本站自行整理、适合复用的数据会在这里集中提供，让查询、研究和二次开发都能直接使用。 这次更新对你有什么用 首批开放《部落冲突》单位完整数据，覆盖主要单位类型和等级属性。 数据可免费下载，无需注册，也不限制个人学习或二次开发用途。 与数据配套的导出工具会尽量一并开放，方便跟随游戏版本更新。 如何使用 前往 数据开源 查看当前可下载内容。数据按现状提供，如发现错误可联系开发者。 ← 返回上一页 前往数据开源 →",
-      "updatedAt": "2026-08-10T04:06:07.181Z"
+      "text": "数据开源专区上线：本站自制数据免费开放 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 专区上线 数据开源专区上线：本站自制数据免费开放 🗓 发布：2026-07-10 ⏰ 时间：16:50（UTC+8） ✍ 作者：天择网 自己整理一份能用的数据，最费时间的常常不是下载，而是清洗、核对和补字段。天择网因此新开了数据开源专区，把本站自行整理、适合复用的内容集中放出来，查询、研究和二次开发都能直接接着用。 首批开放的内容 第一批是《部落冲突》单位完整数据，覆盖主要单位类型和等级属性。 所有数据都可以免费下载，无需注册，也不限制个人学习或二次开发用途。 只要条件允许，与数据配套的导出工具也会一并开放，方便大家跟随游戏版本更新。 下载之前说两句 前往 数据开源 即可查看当前可下载的内容。数据按现状提供；如果发现错误，欢迎联系开发者一起修正。 ← 返回上一页 前往数据开源 →",
+      "updatedAt": "2026-08-24T03:43:51.820Z"
     },
     {
       "url": "/news/6/",
@@ -764,11 +796,11 @@
       "description": "天择网已迁移至 wjtianze.github.io，后续更新都将在新地址发布。",
       "headings": [
         "天择网迁至 wjtianze.github.io",
-        "这次更新对你有什么用",
-        "如何使用"
+        "搬家后的安排",
+        "别忘了换书签"
       ],
-      "text": "天择网迁至 wjtianze.github.io — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 站点公告 天择网迁至 wjtianze.github.io 🗓 发布：2026-07-12 ⏰ 时间：18:30（UTC+8） ✍ 作者：天择网 天择网已经完成迁移，长期访问地址为 wjtianze.github.io 。站内内容和主要使用方式保持不变。 这次更新对你有什么用 首页、新闻、博客、数据开源和各个工具专区均已迁移。 新内容与功能只在新地址继续更新。 原 Netlify 地址停止维护，旧书签应尽快替换。 如何使用 请将新首页加入书签；如果从旧链接进入，建议直接改用新域名。 ← 返回新闻列表 进入新网站 →",
-      "updatedAt": "2026-08-10T04:06:07.181Z"
+      "text": "天择网迁至 wjtianze.github.io — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 站点公告 天择网迁至 wjtianze.github.io 🗓 发布：2026-07-12 ⏰ 时间：18:30（UTC+8） ✍ 作者：天择网 网站搬家最怕让人找不到门，好在这次只需要记住一个新地址：天择网已经完成迁移，今后的长期访问地址是 wjtianze.github.io 。站内内容和主要使用方式都没有改变。 搬家后的安排 首页、新闻、博客、数据开源以及各个工具专区都已经迁移完毕。 今后的新内容和新功能只会在新地址继续更新。 原 Netlify 地址停止维护，如果还留着旧书签，请尽快替换。 别忘了换书签 建议现在就把新首页加入书签；如果是从旧链接进来的，也请直接改用新域名，免得以后扑空。 ← 返回新闻列表 进入新网站 →",
+      "updatedAt": "2026-08-24T03:43:51.821Z"
     },
     {
       "url": "/news/7/",
@@ -776,11 +808,11 @@
       "description": "天择网完成一轮界面优化，提升文字层次、页面留白、操作反馈和移动端阅读体验。",
       "headings": [
         "天择网界面焕新：阅读更清晰，操作更顺手",
-        "这次更新对你有什么用",
-        "如何使用"
+        "最先能感觉到的变化",
+        "刷新就能看到"
       ],
-      "text": "天择网界面焕新：阅读更清晰，操作更顺手 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 界面更新 天择网界面焕新：阅读更清晰，操作更顺手 🗓 发布：2026-07-12 ⏰ 时间：16:10（UTC+8） ✍ 作者：天择网 天择网完成一轮界面焕新。页面保留原有紫、蓝、绿主色，但阅读层次、留白和操作反馈更加清晰。 这次更新对你有什么用 标题、正文和辅助信息更容易区分，长文阅读更轻松。 按钮、导航和卡片的反馈更自然，滚动浏览不再显得拥挤。 动画会尊重设备的“减少动态效果”设置，减少不必要的动画负担。 如何使用 刷新任意页面即可看到新版界面；如遇到排版异常，可通过 联系开发者 反馈。 ← 返回新闻列表 回到首页 →",
-      "updatedAt": "2026-08-10T05:19:25.110Z"
+      "text": "天择网界面焕新：阅读更清晰，操作更顺手 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 界面更新 天择网界面焕新：阅读更清晰，操作更顺手 🗓 发布：2026-07-12 ⏰ 时间：16:10（UTC+8） ✍ 作者：天择网 有些改版第一眼很热闹，用久了却更累。这一轮界面焕新想做的恰好相反：天择网仍然保留熟悉的紫、蓝、绿主色，只把阅读层次、留白和操作反馈梳理得更清楚。 最先能感觉到的变化 标题、正文和辅助信息更容易区分，读长文时眼睛会轻松一些。 按钮、导航和卡片的反馈更自然，滚动浏览也不再显得拥挤。 动画会尊重设备的“减少动态效果”设置，不给需要安静界面的用户增加负担。 刷新就能看到 打开或刷新任意页面，就能看到新版界面。如果碰到排版异常，欢迎通过 联系开发者 告诉我们。 ← 返回新闻列表 回到首页 →",
+      "updatedAt": "2026-08-24T03:43:51.822Z"
     },
     {
       "url": "/news/8/",
@@ -788,11 +820,11 @@
       "description": "COC 教程新增都城突袭矿工流攻略，涵盖配兵、路线、法术时机和各子城应对。",
       "headings": [
         "COC 教程新增都城矿工完整攻略",
-        "这次更新对你有什么用",
-        "如何使用"
+        "这份攻略讲得有多细",
+        "从哪篇开始读"
       ],
-      "text": "COC 教程新增都城矿工完整攻略 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 教程更新 COC 教程新增都城矿工完整攻略 🗓 发布：2026-07-12 ⏰ 时间：20:23（UTC+8） ✍ 作者：天择网 COC 教程现已收录第一篇完整攻略：面向 10 级都城与满级矿工的都城突袭打法。文章已从博客迁入 COC 专区，今后的同类内容会统一在这里更新。 这次更新对你有什么用 给出 10 矿工、冰冻、治疗和闪电的完整配兵思路。 用实战截图说明路线判断、冰冻目标和治疗时机。 分别整理普通子城、哥布林矿井、都城之巅与飞龙悬崖的应对办法。 如何使用 前往 混合矿工宝典 阅读全文，或进入 COC 教程 查看后续文章。 ← 返回新闻列表 阅读 COC 教程全文 →",
-      "updatedAt": "2026-08-10T04:09:21.858Z"
+      "text": "COC 教程新增都城矿工完整攻略 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 教程更新 COC 教程新增都城矿工完整攻略 🗓 发布：2026-07-12 ⏰ 时间：20:23（UTC+8） ✍ 作者：天择网 第一篇完整的 COC 攻略终于在教程区落脚了。这份都城突袭打法面向 10 级都城与满级矿工，文章也已经从博客迁入 COC 专区；以后同类内容都会在这里继续更新。 这份攻略讲得有多细 从 10 矿工、冰冻、治疗和闪电出发，给出一套完整的配兵思路。 路线怎么判断、该冻哪个目标、治疗什么时候落，文中都配了实战截图。 普通子城、哥布林矿井、都城之巅和飞龙悬崖，也分别整理了应对办法。 从哪篇开始读 可以直接打开 混合矿工宝典 阅读全文，也可以先进入 COC 教程 ，等后续文章慢慢补齐。 ← 返回新闻列表 阅读 COC 教程全文 →",
+      "updatedAt": "2026-08-24T03:43:51.823Z"
     },
     {
       "url": "/news/9/",
@@ -800,11 +832,11 @@
       "description": "游戏专区正式上线，原创策略卡牌游戏《绩点战争：GPA 4.3》开放浏览器试玩。",
       "headings": [
         "游戏专区上线：《绩点战争》开放试玩",
-        "这次更新对你有什么用",
-        "如何使用"
+        "一局里要权衡什么",
+        "来打一局"
       ],
-      "text": "游戏专区上线：《绩点战争》开放试玩 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 专区上线 游戏专区上线：《绩点战争》开放试玩 🗓 发布：2026-07-13 ⏰ 时间：13:50（UTC+8） ✍ 作者：天择网 天择网游戏专区正式开放，首款内容是原创策略卡牌游戏《绩点战争：GPA 4.3》。无需安装，打开浏览器即可开始一局。 这次更新对你有什么用 用同一份能量在进攻、防守和提升绩点之间做选择。 可以击败对手获胜，也可以率先把绩点提升到 4.3。 当前试玩版包含基础卡牌、主动与被动技能、单人对战和战况记录。 如何使用 前往 游戏专区 开始试玩。当前数值仍会继续调整，欢迎反馈使用感受。 ← 返回新闻列表 开始游玩 →",
-      "updatedAt": "2026-08-10T04:06:07.183Z"
+      "text": "游戏专区上线：《绩点战争》开放试玩 — 天择网 天择网 ☰ 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 专区上线 游戏专区上线：《绩点战争》开放试玩 🗓 发布：2026-07-13 ⏰ 时间：13:50（UTC+8） ✍ 作者：天择网 游戏专区今天第一次亮灯，登场的是原创策略卡牌游戏《绩点战争：GPA 4.3》。不用下载安装，打开浏览器就能开一局，看看你能不能把绩点一路推到 4.3。 一局里要权衡什么 同一份能量既能拿去进攻、防守，也能用来提升绩点，每一步都要做选择。 胜利不只有一条路：可以击败对手，也可以率先把绩点提升到 4.3。 当前试玩版已经包含基础卡牌、主动与被动技能、单人对战和战况记录。 来打一局 前往 游戏专区 就能开始试玩。当前数值还会继续调整，玩完如果有特别爽或特别憋屈的地方，都欢迎反馈。 ← 返回新闻列表 开始游玩 →",
+      "updatedAt": "2026-08-24T03:43:51.824Z"
     },
     {
       "url": "/open/",
@@ -816,35 +848,51 @@
         "开源数据与工具",
         "部落冲突 · 单位完整数据",
         "部落冲突 · 村庄存档解析脚本",
-        "天择OS · 完整源代码 v5.0.0",
+        "天择OS · 完整源代码 v5.2.0",
+        "天择网 · 本地数据中心",
         "按文件查看天择OS 源码",
         "数据从哪里来"
       ],
-      "text": "开源改变世界 · 天择网 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 OPEN DATA WORKSPACE · PUBLIC 开源 改变世界 天择网上所有我自己制作的数据，都会以原始文件形式放在这里，供大家免费、不限用途地使用。 无付费墙 无授权表单 可二次加工 MANIFEST 关于本板块 我坚信，知识和信息不应被一个人独占，而应被全人类共享，以此推动人类的进步。任何人都可以自由下载、查看、引用、二次加工，用于学习、研究、产品或其他目的，无需署名、无需告知。 边界清楚。 数据来自公开渠道整理，不涉及任何第三方隐私、账号数据与未授权内容。 DOWNLOAD CATALOG · 03 开源数据与工具 每个条目都标明格式与用途 部落冲突 · 单位完整数据 从 APK 提取的全部单位静态游戏数据，覆盖兵种、法术、英雄、战宠、装备、建筑、陷阱、守卫与帮手，共 272 条。 JSON 1.9 MB 272 条 下载 JSON 部落冲突 · 村庄存档解析脚本 独立运行的 Python 脚本。输入村庄 JSON，即可输出结构化中文报告与剩余升级时间。 Python 单文件 本地运行 下载脚本 天择OS · 完整源代码 v5.0.0 纯前端 HTML、CSS 与 JavaScript 源码，包含窗口管理、AI 对话、命令行生态、等级积分、三配色、浏览器应用、树状导航和模拟器集成等模块。 19 个文件 纯前端 MIT 许可 下载源码包 在线体验 SOURCE FILES 按文件查看天择OS 源码 适合只需要局部模块时使用 index.html · 入口页 webos.html · OS 本体 os.css os.js version.json PROVENANCE 数据从哪里来 全部数据均来自公开可获取的原始资料，经自行编写工具提取、清洗、整理而成。 不包含玩家个人信息、账号数据或非公开内容。 提取工具本身同样开源，可前往 COC 单位数据导出器 查看与下载。",
-      "updatedAt": "2026-08-07T10:50:47.179Z"
+      "text": "开源改变世界 · 天择网 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 OPEN DATA WORKSPACE · PUBLIC 开源 改变世界 天择网自行编写的代码与原创数据会尽量提供原始文件；涉及第三方名称、数值或素材的内容，仅按相应许可证、平台条款与权利人政策提供学习和查询用途。 无付费墙 无授权表单 可二次加工 MANIFEST 关于本板块 我希望知识和可验证的信息能被更多人方便地使用。天择网原创代码会标明许可证；第三方游戏数据、名称与素材不因整理或下载而改变权利归属，使用时仍须遵守权利人的条款与政策。 边界清楚。 公开文件不含玩家私密账号数据；天择自编代码与第三方衍生资料分开标注，后者不作“无限用途”授权。 DOWNLOAD CATALOG · 04 开源数据与工具 每个条目都标明格式与用途 部落冲突 · 单位完整数据 由 18.400.22 本地数据流水线生成的精选静态游戏数据，覆盖兵种、法术、英雄、战宠、装备、建筑、陷阱、守卫、帮手与超级充能，共 273 条。 JSON 18.400.22 273 条 下载 JSON 部落冲突 · 村庄存档解析脚本 独立运行的 Python 脚本。输入村庄 JSON，即可输出结构化中文报告与剩余升级时间。 Python 单文件 本地运行 下载脚本 天择OS · 完整源代码 v5.2.0 纯前端 HTML、CSS 与 JavaScript 源码，包含窗口管理、AI 对话、命令行生态、等级积分、三配色、浏览器应用、树状导航和模拟器集成等模块。 35 个文件 纯前端 MIT 许可 下载源码包 在线体验 天择网 · 本地数据中心 统一查看网站设置、COC、英语学习和学习助手数据，按模块加密备份、恢复或清除，并管理可选离线内容包。 本机处理 加密归档 离线管理 打开数据中心 SOURCE FILES 按文件查看天择OS 源码 适合只需要局部模块时使用 index.html · 入口页 webos.html · OS 本体 os.css os.js version.json PROVENANCE 数据从哪里来 天择网自编的解析与整理代码按页面标明的许可证提供；《部落冲突》的名称、客户端数值与素材权利仍归 Supercell 等相应权利人所有。公开数据不包含玩家私密账号信息。可前往 COC 单位数据导出器 查看可复现流程与来源说明。 其中的《部落冲突》资料属于非官方玩家内容，未经 Supercell 认可或赞助。详见 Supercell 玩家内容政策 。",
+      "updatedAt": "2026-08-24T03:47:59.751Z"
+    },
+    {
+      "url": "/open/data-center/",
+      "title": "本地数据中心 · 天择网",
+      "description": "统一查看、加密备份、恢复或清除天择网保存在当前浏览器中的网站设置、COC、英语学习和学习助手数据。",
+      "headings": [
+        "本地数据 中心",
+        "选择数据模块",
+        "导出加密归档",
+        "恢复归档",
+        "离线内容包",
+        "安全边界"
+      ],
+      "text": "本地数据中心 · 天择网 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 LOCAL DATA CONTROL 本地数据 中心 这里仅管理普通天择网页面保存在当前浏览器中的数据。天择OS 拥有独立的加密系统存档，本页不会读取、覆盖或清除 tzos_state_v1 。 默认不备份 API Key AES-256-GCM 加密 全部在当前设备处理 MODULE INVENTORY 选择数据模块 重新统计 容量为 JSON 序列化后的近似值；英语词库与学习记录来自 IndexedDB，其余来自 localStorage。 网站设置 五套外观及兼容设置 统计中 COC 工作区 村庄、伤害计算与双方案规划 统计中 英语学习 词库、记录、错词与统计 统计中 学习助手进度 课本学习页的本地作答与对话状态 统计中 清除所选模块 清除不可撤销，请先导出备份。 ENCRYPTED EXPORT 导出加密归档 归档密码 再次输入 包含 API Key 默认关闭。开启后英语和学习助手密钥也会进入加密归档。 导出所选模块 PREVIEW BEFORE RESTORE 恢复归档 选择归档 归档密码 解密并预览 恢复归档中的密钥 默认关闭并保留当前设备已有密钥；开启时还会在执行前再次确认风险。 恢复预览中选中的模块 SELECTIVE OFFLINE PACKS 离线内容包 核心页面自动缓存；COC、英语和游戏按需下载。安装包、大型 ZIP 与真实 AI 请求永不进入离线缓存。 正在检查浏览器支持… COC 工具包 村庄、数据、规划、伤害与教程 未下载 下载 英语学习包 四阶段训练、词库与本地素材 未下载 下载 游戏包 绩点战争及游戏专区 未下载 下载 安装天择网应用 检查站点更新 安全边界 恢复前只展示模块、条目数与容量，不自动写入。 恢复某模块时会替换该模块现有数据，不触碰其它模块。 天择OS、浏览器 Cookie、账号令牌和真实 AI 请求不在管理范围内。 忘记归档密码后无法解密，本站也无法找回。",
+      "updatedAt": "2026-08-24T03:43:51.828Z"
     },
     {
       "url": "/os/",
       "title": "天择OS · 天择网",
-      "description": "天择OS 5.0 提供网页与 Windows 普通 API 版，并新增可并存的 v5.0-codex 桌面版：用户登录自己的 ChatGPT 账号即可使用 Codex 模型与智能体能力。",
+      "description": "天择OS 5.2 提供网页与 Windows 普通版，并新增可并存的 v5.2-codex 桌面版：用户登录自己的 ChatGPT 账号即可使用 Codex 模型与智能体能力。",
       "headings": [
-        "天择OS v5.0.0",
+        "天择OS v5.2.0",
         "运行方式与版本演进",
-        "电脑端 · API 版",
+        "电脑端 · 普通版",
         "电脑端 · Codex 版",
-        "网页端 5.0 · API 版",
+        "网页端 5.2 · 普通版",
         "更新日志"
       ],
-      "text": "天择OS · 天择网 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 EVOLUTION SHELL · GENERATIVE WORKSPACE 天择OS v5.0.0 一套在浏览器与 Windows 桌面运行的本地优先工作台。普通 API 版继续同时支持网页与桌面；新增的 v5.0-codex 是可并存安装的 Windows 开发者版，用用户自己的 ChatGPT 账号驱动全部 AI 与智能体能力。 进入网页版 查看桌面版本 WEB / API DESKTOP / API CODEX / DESKTOP FILES / NATIVE 运行方式与版本演进 API 版 5.0 · Codex 桌面版 v5.0-codex 电脑端 · API 版 Windows 原生应用 · 当前安装包 v5.0.0 独立窗口运行，不占浏览器标签 真实 Chromium 网页视图兼容拒绝 iframe 的网站 内部文件空间统一浏览器下载、知识库与 Agent 文件工具 内置 Python 3.13，并支持 Ollama 等本地部署模型 使用 DeepSeek 等云端 API 或本机 Ollama，可直接覆盖升级普通版 下载 Windows 安装包（v5.0.0） 正在检测实际已发布的桌面安装包… 电脑端 · Codex 版 Windows 开发者版 · v5.0-codex 用户直接绑定并登录自己的 ChatGPT 账号，不保存传统 API Key 模型、思考强度、可选回答速度和额度均从 Codex App Server 读取 思考摘要、计划、命令、文件修改、工具与图片按智能体过程显示 Codex 默认操作天择OS文件管理器，保留完整 tzcli 系统控制能力 与普通 API 版使用独立应用编号和数据目录，可同时安装 下载 Codex 桌面版（v5.0-codex） 仅 Windows 桌面端 · 需要用户自己的 ChatGPT 账号 网页端 5.0 · API 版 免安装 · 浏览器继续使用 API 无需下载，打开网页即可使用 跨平台，手机/平板/电脑都能跑 数据存浏览器本地，隐私可控 完整 API 对话、命令行、COC 与站内应用体验 Windows 文件、原生应用与内置 Python 仅桌面版可用 浏览器不能启动本机 Codex App Server，因此不提供 Codex 网页版 进入网页版 更新日志 自 1.0 至今的版本演进 v5.0.0 最新 2026-08-07 DeepSeek V4 Flash 预设升级为 Responses API ，支持语义化流式响应、用量统计和服务端联网搜索 桌面浏览器与网页版 AI 使用真实 Chromium 网页视图，兼容拒绝 iframe 的站点；可选豆包、千问、DeepSeek、Kimi、智谱、ChatGPT、Claude、Gemini 与 Grok，国际站加载前提示 VPN 新增 内部文件资源管理器 ，与知识库、浏览器下载和 Agent 文件工具合并，支持导入导出、创建、预览、编辑、重命名、复制、移动、搜索与回收站删除 新增 Windows 应用管理器、EXE 安装包归档与受确认启动；原生软件遵循 Windows 安全边界，以独立顶层窗口运行 安装包内置官方 Python 3.13，支持内部脚本、参数、大输出记录、停止任务及 Agent 逐次授权 AI 新增始终 API、始终本地、API 连接错误自动回退本地三档路由；支持 Ollama 自动读取模型、上下文长度与能力，并持久显示错误码与降级模型 新增按模型安全窗口自动或手动执行的上下文压缩；只压缩发给模型的较早上下文，不删除界面中的完整聊天记录 天择网站点助手恢复流式输出与深度思考开关，跨页面保持展开状态和当前对话，Markdown 与完整 LaTeX 公式随生成持续渲染 COC 伤害计算分享配置可一键复制回主页；新增可从博客和 COC 专区进入的 COC教程入口 命令行完成 166 条命令、47 个兼容别名、213 条可达路径的运行时审计；Windows 任务栏、窗口、安装包和快捷方式统一使用天择OS图标 AI 生成应用的沙箱 localStorage 按应用隔离持久化，关闭重开不丢数据，伪造 appId 无法写入其他应用，卸载时同步清理 v4.1.0 2026-08-01 主页与天择OS采用更简洁的图片背景，各专区使用带标志性元素的专属背景 AI 对话支持 归档、查看、还原与永久删除 ；归档对话仍保留在本地知识库 AI Agent 可调用包括 ask 与 agent 子智能体在内的全部系统命令；无次数/轮数硬限制，由系统自动检测并掐断无进展循环 新增 词元用量与计费 软件，累计统计历史输入、输出、总词元与单价快照费用 新增青铜至钻石六档积分 VIP 月卡及六套专属完整皮肤；等级门槛为 Lv.1–10、月费为 200–2600 分，均低于 30 天 3600 分的理论上限；高档权益包含本档及以下皮肤，不会自动续费 全量存档默认使用 PBKDF2 + AES-GCM 密码加密；明文导出改为显式危险操作 天择网移动端与首页树状导航完成适配；网页版与桌面工程已更新至 4.1.0 v4.0.0 2026-07-31 全面升级为生成式星图工作台，重构桌面、系统导航、应用入口与 AI 多会话体验 加入冷 / 中 / 暖三套配色、图片壁纸、按钮材质与统一图片图标图集 v3.5.0 2026-07-25 新增 用户等级与积分 ：每日启动、AI 对话、终端命令、新建笔记、安装软件、导出存档均可获积分（各项有每日上限），累计积分升级并获称号；终端 level 查看，数据加密存储、随全量存档迁移 新增 界面配色皮肤 ：冷（紫·蓝·绿）/ 中（蓝·绿·黄）/ 暖（绿·黄·橙）三套配色；OS 内冷色默认解锁，中、暖色用积分兑换（系统设置或终端 skin 命令）； 天择网三色全部免费 ，网站左下角 🎨 随时切换 AI 对话工具栏新增「🌐 联网」「⌨️ 命令行」开关，不用进设置即可切换 纯文本模型支持上传图片：本地 OCR 识别成文字随消息发送（不上传图片本身）；文本类文件（txt/md/json/代码等）直接读取内容发送，不再发 base64 AI 软件可反向调用系统命令行：软件内 await TZOS_CMD.exec('命令') 即可执行任意系统命令并拿到输出 修复上下文用量条刷新页面后数值大幅缩水：持久化上一轮真实词元用量，历史未变时刷新后显示与刷新前一致；估算器改为中英文分别计权并计入系统提示词与图片 v3.2.0 2026-07-24 笔记命令行新增 note view （查看内容）、 note edit （整体替换）、 note undo （撤销最近一次改动）； note new 输出包含分配的固定编号 笔记编号改为 创建顺序 且永不改变（最早创建的为 1，后续递增，旧笔记自动迁移补齐），便于长期 CLI 引用 修复笔记保存占位\"双进度条\"——改为与 AI 对话修复同源的轻量圆点占位，确保状态栏是唯一的进度反馈通道 COC 伤害计算器新增第三个标签页 ③「 自定义闪震数量计算伤害 」，可自定义雷电/地震数量精确计算总伤害、逐瓶明细与回血容错时间 v3.1.1 2026-07-23 修复 AI 生成软件的命令包注册失效：软件内自动注入真实应用 id 与 TZOS_CMD.register，命令在软件内部执行可直接调用软件函数；旧写法自动兼容，卸载自动清理注册 实用工具新增「笔记」：Markdown / LaTeX 编辑与实时预览，可用命令行 note 全面操控（new / list / open / append / export / search / del） 文档阅读器标签页并入窗口标题栏（与浏览器一致），取消缩放工具栏，缩放仅 Ctrl + 滚轮并带瞬时百分比提示 命令行输入输出取消字符限制；补全 AI 命令行模式提示词（agent / widget / note 等全部命令） v3.1 2026-07-22（07-23 修订） 修订 ：实用工具（COC 专区/升级规划/伤害计算/背单词）不再实时连接线上天择网，本地页面打包进 OS，存档同源直写（村庄 JSON → localStorage，词库 → IndexedDB），桌面版经内置协议加载、离线可用 修订 ：村庄存档分析并入 COC 专区首页（独立应用下线）；修复规划器/伤害计算与首页存档冲突（建筑工人 NaN、夜世界丢失）与小屋座数导入 修订 ：修复悬浮窗命令 failed to fetch、词库永远返回示例数据；AI 对话与悬浮窗内容互通（🔄 手动 + 定时自动同步），API 配置共享，深度思考/豆包/截图各自独立 修订 ：AI 命令行模式取消 3 轮限制，「调用了 N 条命令行」卡片内联在所属回答下方，agent 式交错展示；联系开发者页修复全屏空白；修复清空对话栈溢出 修复时钟应用走 1 秒就停（废弃 DOMNodeRemoved 事件改用自检方案）；修复 AI 悬浮窗无法清空对话、无法切换豆包；悬浮窗仅保留顶栏一个关闭按钮，关闭时记忆位置与大小 天择网系列应用精简为天择网主页 + 天择导航；命令行重构：coc-data 读写本地玩家村庄存档（save/json/clear）、coc-game 查询游戏静态数据、words 支持导入例句；浏览器↗按钮改为在系统外打开网址 天择OS 官网改为电脑端/网页端/更新日志三栏，不再提供历史版本下载 v3.0 2026-07-21 新增 AI 悬浮窗：Ctrl+1 一键召唤，独立于 OS 主窗口之外。桌面版为独立始终置顶 Electron 窗口，网页版为页面固定覆盖层 悬浮窗复用完整 AI 对话功能，共享同一份配置与对话历史；专注纯对话，不启用命令行模式 桌面版 Ctrl+1 注册为系统全局快捷键；拖拽采用 Electron 原生 -webkit-app-region: drag，丝滑无跳跃 v2.6 2026-07-20 新增窗口置顶（图钉/右键/命令行四种方式）；文档阅读器缩放工具栏 命令行全面扩展：每个自有软件均有顶层命令；words 支持 add/list/count/find/del 修复置顶窗口层级过高遮挡任务栏/开始菜单；CLI 引擎支持异步命令 v2.5 2026-07-20 AI 对话联网搜索、图片与文件上传；AI 能力设置与上下文用量显示 新增文档阅读器、时钟应用、任务栏电量与联网状态；同一软件只开一个窗口 v2.2 2026-07-19 修复桌面版 AI 停止生成未中断、自动截图 TypeError、长对话双进度条、终端输出截断 COC 伤害计算器新增建筑工人小屋回血与法术容错，加固城墙三震不毁、四震必毁 v2.1 2026-07-18 新增命令行终端与 AI 命令行模式（Agent 直接改系统） 对话自动截图、词元费用统计、消息复制；修复双滚动条、浅色模式白字等 9 处 v2.0 2026-07-18 AI 全链路升级：记忆、词元统计、停止/重发、LaTeX 流式渲染 浅色主题、浏览器收藏夹、模拟器；全量存档导入导出、在线更新检查 v1.0 2026-07-14 天择OS 首个版本发布并开源：浏览器里运行的全屏模拟操作系统 预装天择网全部功能；窗口系统、任务栏、开始菜单，PC/移动端自适应；内置 AI 对话与软件商城 网页端、普通桌面版与 Codex 桌面版数据各自独立，可按需并存。 网页端只能使用普通 API 版；Codex 版仅适用于 Windows 桌面。 普通版首次使用云端模型仍需在“AI 配置”中填写自己的 API Key；Codex 版请在“Codex 管理”中登录自己的 ChatGPT 账号。安装包未进行商业代码签名，Windows 可能显示 SmartScreen 提示；高权限操作仍受 Codex 审批与系统权限约束。",
-      "updatedAt": "2026-08-14T14:22:48.014Z"
+      "text": "天择OS · 天择网 天择网 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS 联系开发者 EVOLUTION SHELL · GENERATIVE WORKSPACE 天择OS v5.2.0 一套在浏览器与 Windows 桌面运行的本地优先工作台。普通版继续同时支持网页与桌面；可并存安装的 v5.2-codex 开发者版则用用户自己的 ChatGPT 账号驱动 Codex 模型与智能体能力。 进入网页版 查看桌面版本 WEB / API DESKTOP / API CODEX / DESKTOP FILES / NATIVE 运行方式与版本演进 普通版 5.2 · Codex 桌面版 v5.2-codex 电脑端 · 普通版 Windows 原生应用 · 当前安装包 v5.2.0 独立窗口运行，不占浏览器标签 真实 Chromium 网页视图兼容拒绝 iframe 的网站 内部文件空间统一浏览器下载、知识库与 Agent 文件工具 内置 Python 3.13，并支持 Ollama 等本地部署模型 默认使用安全托管的免费 AI，亦可添加自己的云端接口或本机 Ollama 下载 Windows 安装包（v5.2.0） 正在检测实际已发布的桌面安装包… 电脑端 · Codex 版 Windows 开发者版 · v5.2-codex 用户直接绑定并登录自己的 ChatGPT 账号，不保存传统 API Key 模型、思考强度、可选回答速度和额度均从 Codex App Server 读取 思考摘要、计划、命令、文件修改、工具与图片按智能体过程显示 Codex 默认操作天择OS文件管理器，保留完整 tzcli 系统控制能力 与普通 API 版使用独立应用编号和数据目录，可同时安装 下载 Codex 桌面版（v5.2-codex） 仅 Windows 桌面端 · 需要用户自己的 ChatGPT 账号 网页端 5.2 · 普通版 免安装 · 浏览器直接使用 无需下载，打开网页即可使用 跨平台，手机/平板/电脑都能跑 数据存浏览器本地，隐私可控 完整 API 对话、命令行、COC 与站内应用体验 Windows 文件、原生应用与内置 Python 仅桌面版可用 浏览器不能启动本机 Codex App Server，因此不提供 Codex 网页版 进入网页版 更新日志 自 1.0 至今的版本演进 v5.2.0 最新 2026-08-24 COC 数据中心升级至国际服 18.400.22：补齐超级充能、反击卡组与按等级计算的城墙地震伤害；现在可直接查询玩家、部落和公开赛季资料，并把结果带入村庄分析和升级规划 稳本规划重新安排优先级：实验室优先，配兵链接或自定义常用单位会影响兵种、法术、攻城机器与战宠的升级顺序 AI 助手默认经 Cloudflare 后端使用免费模型，浏览器不再保存默认模型密钥；主通道受限或临时断线时会安全重试，并在适用时切换独立的免费回退通道 AI 能检索天择网内容、查询本站 COC 静态数据与公开实时资料；同时修复 Agent 调用系统命令不稳定的问题，并收紧文档与命令权限边界 v5.0.0 2026-08-07 DeepSeek V4 Flash 预设升级为 Responses API ，支持语义化流式响应、用量统计和服务端联网搜索 桌面浏览器与网页版 AI 使用真实 Chromium 网页视图，兼容拒绝 iframe 的站点；可选豆包、千问、DeepSeek、Kimi、智谱、ChatGPT、Claude、Gemini 与 Grok，国际站加载前提示 VPN 新增 内部文件资源管理器 ，与知识库、浏览器下载和 Agent 文件工具合并，支持导入导出、创建、预览、编辑、重命名、复制、移动、搜索与回收站删除 新增 Windows 应用管理器、EXE 安装包归档与受确认启动；原生软件遵循 Windows 安全边界，以独立顶层窗口运行 安装包内置官方 Python 3.13，支持内部脚本、参数、大输出记录、停止任务及 Agent 逐次授权 AI 新增始终 API、始终本地、API 连接错误自动回退本地三档路由；支持 Ollama 自动读取模型、上下文长度与能力，并持久显示错误码与降级模型 新增按模型安全窗口自动或手动执行的上下文压缩；只压缩发给模型的较早上下文，不删除界面中的完整聊天记录 天择网站点助手恢复流式输出与深度思考开关，跨页面保持展开状态和当前对话，Markdown 与完整 LaTeX 公式随生成持续渲染 COC 伤害计算分享配置可一键复制回主页；新增可从博客和 COC 专区进入的 COC教程入口 命令行完成 166 条命令、47 个兼容别名、213 条可达路径的运行时审计；Windows 任务栏、窗口、安装包和快捷方式统一使用天择OS图标 AI 生成应用的沙箱 localStorage 按应用隔离持久化，关闭重开不丢数据，伪造 appId 无法写入其他应用，卸载时同步清理 v4.1.0 2026-08-01 主页与天择OS采用更简洁的图片背景，各专区使用带标志性元素的专属背景 AI 对话支持 归档、查看、还原与永久删除 ；归档对话仍保留在本地知识库 AI Agent 可调用包括 ask 与 agent 子智能体在内的全部系统命令；无次数/轮数硬限制，由系统自动检测并掐断无进展循环 新增 词元用量与计费 软件，累计统计历史输入、输出、总词元与单价快照费用 新增青铜至钻石六档积分 VIP 月卡及六套专属完整皮肤；等级门槛为 Lv.1–10、月费为 200–2600 分，均低于 30 天 3600 分的理论上限；高档权益包含本档及以下皮肤，不会自动续费 全量存档默认使用 PBKDF2 + AES-GCM 密码加密；明文导出改为显式危险操作 天择网移动端与首页树状导航完成适配；网页版与桌面工程已更新至 4.1.0 v4.0.0 2026-07-31 全面升级为生成式星图工作台，重构桌面、系统导航、应用入口与 AI 多会话体验 加入冷 / 中 / 暖三套配色、图片壁纸、按钮材质与统一图片图标图集 v3.5.0 2026-07-25 新增 用户等级与积分 ：每日启动、AI 对话、终端命令、新建笔记、安装软件、导出存档均可获积分（各项有每日上限），累计积分升级并获称号；终端 level 查看，数据加密存储、随全量存档迁移 新增 界面配色皮肤 ：冷（紫·蓝·绿）/ 中（蓝·绿·黄）/ 暖（绿·黄·橙）三套配色；OS 内冷色默认解锁，中、暖色用积分兑换（系统设置或终端 skin 命令）； 天择网三色全部免费 ，网站左下角 🎨 随时切换 AI 对话工具栏新增「🌐 联网」「⌨️ 命令行」开关，不用进设置即可切换 纯文本模型支持上传图片：本地 OCR 识别成文字随消息发送（不上传图片本身）；文本类文件（txt/md/json/代码等）直接读取内容发送，不再发 base64 AI 软件可反向调用系统命令行：软件内 await TZOS_CMD.exec('命令') 即可执行任意系统命令并拿到输出 修复上下文用量条刷新页面后数值大幅缩水：持久化上一轮真实词元用量，历史未变时刷新后显示与刷新前一致；估算器改为中英文分别计权并计入系统提示词与图片 v3.2.0 2026-07-24 笔记命令行新增 note view （查看内容）、 note edit （整体替换）、 note undo （撤销最近一次改动）； note new 输出包含分配的固定编号 笔记编号改为 创建顺序 且永不改变（最早创建的为 1，后续递增，旧笔记自动迁移补齐），便于长期 CLI 引用 修复笔记保存占位\"双进度条\"——改为与 AI 对话修复同源的轻量圆点占位，确保状态栏是唯一的进度反馈通道 COC 伤害计算器新增第三个标签页 ③「 自定义闪震数量计算伤害 」，可自定义雷电/地震数量精确计算总伤害、逐瓶明细与回血容错时间 v3.1.1 2026-07-23 修复 AI 生成软件的命令包注册失效：软件内自动注入真实应用 id 与 TZOS_CMD.register，命令在软件内部执行可直接调用软件函数；旧写法自动兼容，卸载自动清理注册 实用工具新增「笔记」：Markdown / LaTeX 编辑与实时预览，可用命令行 note 全面操控（new / list / open / append / export / search / del） 文档阅读器标签页并入窗口标题栏（与浏览器一致），取消缩放工具栏，缩放仅 Ctrl + 滚轮并带瞬时百分比提示 命令行输入输出取消字符限制；补全 AI 命令行模式提示词（agent / widget / note 等全部命令） v3.1 2026-07-22（07-23 修订） 修订 ：实用工具（COC 专区/升级规划/伤害计算/背单词）不再实时连接线上天择网，本地页面打包进 OS，存档同源直写（村庄 JSON → localStorage，词库 → IndexedDB），桌面版经内置协议加载、离线可用 修订 ：村庄存档分析并入 COC 专区首页（独立应用下线）；修复规划器/伤害计算与首页存档冲突（建筑工人 NaN、夜世界丢失）与小屋座数导入 修订 ：修复悬浮窗命令 failed to fetch、词库永远返回示例数据；AI 对话与悬浮窗内容互通（🔄 手动 + 定时自动同步），API 配置共享，深度思考/豆包/截图各自独立 修订 ：AI 命令行模式取消 3 轮限制，「调用了 N 条命令行」卡片内联在所属回答下方，agent 式交错展示；联系开发者页修复全屏空白；修复清空对话栈溢出 修复时钟应用走 1 秒就停（废弃 DOMNodeRemoved 事件改用自检方案）；修复 AI 悬浮窗无法清空对话、无法切换豆包；悬浮窗仅保留顶栏一个关闭按钮，关闭时记忆位置与大小 天择网系列应用精简为天择网主页 + 天择导航；命令行重构：coc-data 读写本地玩家村庄存档（save/json/clear）、coc-game 查询游戏静态数据、words 支持导入例句；浏览器↗按钮改为在系统外打开网址 天择OS 官网改为电脑端/网页端/更新日志三栏，不再提供历史版本下载 v3.0 2026-07-21 新增 AI 悬浮窗：Ctrl+1 一键召唤，独立于 OS 主窗口之外。桌面版为独立始终置顶 Electron 窗口，网页版为页面固定覆盖层 悬浮窗复用完整 AI 对话功能，共享同一份配置与对话历史；专注纯对话，不启用命令行模式 桌面版 Ctrl+1 注册为系统全局快捷键；拖拽采用 Electron 原生 -webkit-app-region: drag，丝滑无跳跃 v2.6 2026-07-20 新增窗口置顶（图钉/右键/命令行四种方式）；文档阅读器缩放工具栏 命令行全面扩展：每个自有软件均有顶层命令；words 支持 add/list/count/find/del 修复置顶窗口层级过高遮挡任务栏/开始菜单；CLI 引擎支持异步命令 v2.5 2026-07-20 AI 对话联网搜索、图片与文件上传；AI 能力设置与上下文用量显示 新增文档阅读器、时钟应用、任务栏电量与联网状态；同一软件只开一个窗口 v2.2 2026-07-19 修复桌面版 AI 停止生成未中断、自动截图 TypeError、长对话双进度条、终端输出截断 COC 伤害计算器新增建筑工人小屋回血与法术容错，加固城墙三震不毁、四震必毁 v2.1 2026-07-18 新增命令行终端与 AI 命令行模式（Agent 直接改系统） 对话自动截图、词元费用统计、消息复制；修复双滚动条、浅色模式白字等 9 处 v2.0 2026-07-18 AI 全链路升级：记忆、词元统计、停止/重发、LaTeX 流式渲染 浅色主题、浏览器收藏夹、模拟器；全量存档导入导出、在线更新检查 v1.0 2026-07-14 天择OS 首个版本发布并开源：浏览器里运行的全屏模拟操作系统 预装天择网全部功能；窗口系统、任务栏、开始菜单，PC/移动端自适应；内置 AI 对话与软件商城 网页端、普通桌面版与 Codex 桌面版数据各自独立，可按需并存。 网页端只能使用普通 API 版；Codex 版仅适用于 Windows 桌面。 普通版默认使用 Cloudflare 后端托管的 Gemini 3.7 Flash 免费模型，无需在前端填写 API Key；主模型限流时后端立即改用智谱官方 GLM 4.7 Flash 免费模型，断线或其它瞬时故障则在安全重试用尽后切换。回退使用独立服务通道，但免费服务仍受平台策略与容量影响，不代表无限调用。需要其它模型时仍可在“AI 配置”中添加自己的接口。Codex 版请在“Codex 管理”中登录自己的 ChatGPT 账号。安装包未进行商业代码签名，Windows 可能显示 SmartScreen 提示；高权限操作仍受 Codex 审批与系统权限约束。",
+      "updatedAt": "2026-08-24T03:44:36.186Z"
     },
     {
       "url": "/os/webos.html",
       "title": "天择OS · 天择网操作系统",
-      "description": "天择OS 5.0 —— 本地优先的网页与 Windows 工作台，提供内部文件空间、应用管理器、原生浏览器、Python 与 AI Agent。",
+      "description": "天择OS 5.2 —— 本地优先的网页与 Windows 工作台，提供安全受管 AI、COC 实时查询、恢复中心、内部文件空间、应用管理器和交互式 Python。",
       "headings": [],
-      "text": "天择OS · 天择网操作系统 天择OS 5.0 EVOLUTION SHELL 正在唤醒系统… 天择OS 5.0 · Evolution Shell 搜索应用 Ctrl + Space 系统就绪 --:-- AI Agent 商城 文件 应用 Python 导航 VIP 设置 关闭 快捷轨道 --:--",
-      "updatedAt": "2026-08-06T10:33:49.199Z"
+      "text": "天择OS · 天择网操作系统 天择OS 5.2 EVOLUTION SHELL 正在唤醒系统… 天择OS 5.2 · Evolution Shell 搜索应用 Ctrl + Space 系统就绪 --:-- AI Agent 商城 文件 应用 Python 导航 VIP 设置 关闭 快捷轨道 --:--",
+      "updatedAt": "2026-08-23T15:18:19.475Z"
     },
     {
       "url": "/words/",
@@ -871,7 +919,7 @@
         "词库 JSON 示例"
       ],
       "text": "天择背单词 · 天择网 天择网 菜单 首页 新闻 博客 数据开源 AI 专区 COC 专区 游戏专区 英语专区 天择OS VOCABULARY STUDIO / LOCAL-FIRST 英语学习控制台 把词库、四阶段训练与复习数据放进同一条学习流。 已学词数 0 累计正确率 0% 连续学习 0 天 本地数据在线 AI 配置 学习流 选择当前任务 词库控制 导入、检索与维护 01 训练舱 四阶段渐进学习 02 数据台 趋势与掌握度 03 复习队列 集中处理错词 04 学习数据仅在此设备处理 MODULE 01 / LIBRARY 词库控制中心 先建立自己的词库，再从检索结果直接进入 AI 解析或例句生成。 本地存储 A / 数据入口 装载词库 JSON 支持数组或对象格式、一词多义和例句字段。导入会合并同名单词，不覆盖已有学习记录。 选择 JSON 文件 粘贴内容 查看格式 维护操作 导出词库 清空数据 正在导入… B / 词库遥测 实时反映当前设备中的词库与掌握状态。 总词数 0 LIBRARY 已学习 0 LEARNED 待复习 0 REVIEW 已掌握 0 MASTERED C / 词条浏览器 检索与学习入口 搜索 还没有词条 从上方装载 JSON 词库后，这里会成为你的学习索引。 MODULE 02 / TRAINING 四阶段训练舱 一次训练按理解、回忆、巩固、拼写推进，阶段成绩会进入本地统计。 自适应流程 训练路径 从识别到主动输出 每一阶段都使用同一批词，逐步提高回忆强度。 01 英译中预习 建立词形与释义联系 02 中译英回忆 由语义主动提取单词 03 英译中巩固 识别多义与相近干扰 04 完整拼写 完成最终主动输出 本轮参数 配置训练 单词数量 每轮 3 至 50 个 仅练错词 从复习队列抽取 AI 干扰项 生成更接近真实语境的选项 启动本轮训练 所有答题记录仅保存在本机 阶段简报 开始本阶段 AI 正在生成干扰项… 1 / 10 听发音 提示首字母 跳过此题 提交答案 下一题 MODULE 03 / INSIGHTS 学习数据台 把学习量、正确率和掌握度拆开观察，快速定位下一轮训练重点。 近 14 天 已学词数 0 LEARNED 累计正确率 0% ACCURACY 连续学习 0 STREAK / DAYS 已掌握词数 0 MASTERED 学习频率 近 14 天学习曲线 每日答题量 能力分层 掌握度分布 风险词条 高频错词 开始复习 MODULE 04 / REVIEW QUEUE 错词复习队列 按错误频率自动排序；连续答对 3 次后，词条会自动离开队列。 训练全部错词 优先级队列 需要再次巩固 可从每个词条直接进入 AI 解析或单词练习。 AI SERVICE 连接模型服务 为例句、深度解析与智能干扰项配置兼容接口。 快速预设 选择后仍可手动修改 DeepSeek V4 Flash 极高性能快速文本 · 自备 Key DeepSeek V4 Pro 超高性能旗舰文本 · 自备 Key MiMo V2.5 中性能快速多模态 · 自备 Key GLM 4.7 Flash 免费文本模型 · 自备 Key GLM 4.6V Flash 免费多模态模型 · 自备 Key API 地址 完整的 Chat Completions 地址 API Key 仅保存到当前设备 模型名 使用接口要求的模型 ID 温度 0 稳定，2 更发散 密钥只保存在本机 localStorage；请求会直接发送到你填写的模型服务。 测试连接 保存配置 AI WORD ANALYSIS AI 解析 关闭 CONTEXT LAB 例句 重新生成 完成 PASTE IMPORT 粘贴 JSON 词库 支持数组或带 vocab 字段的对象格式。 JSON 内容 取消 开始导入 DATA SCHEMA 词库 JSON 示例 复制模板后替换内容，即可导入自己的词库。 word 必填 单词字符串 meaning 必填 释义数组，支持一词多义 phonetic 可选 音标 pos 可选 词性 examples 可选 包含 en、zh 的例句数组 tags 可选 标签数组 复制示例 关闭",
-      "updatedAt": "2026-08-07T10:49:31.456Z"
+      "updatedAt": "2026-08-24T03:43:51.837Z"
     }
   ]
 }

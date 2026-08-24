@@ -7,8 +7,31 @@
   <meta name="description" content="村庄存档分析功能已并入 COC 专区首页，正在跳转…" />
   <meta http-equiv="refresh" content="0; url=../index.html" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260807-v5.0.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260824-v5.2.0" />
   <style>
+    /* 无脚本或跳转较慢时仍会显示本页，纹理地址必须按当前两级路由解析。 */
+    :root {
+      --tz-v4-wallpaper:url("../../assets/img/ui-v4/wallpaper-cold.webp");
+      --tz-v4-button:url("../../assets/img/ui-v4/button-cold.webp");
+      --tz-v4-surface:url("../../assets/img/ui-v4/surface-cold.webp");
+      --tz-v4-icon-atlas:url("../../assets/img/ui-v4/icon-atlas-cold.png");
+      --tz-v4-icon-well:url("../../assets/img/ui-v4/icon-well-cold.webp");
+    }
+    html[data-palette="mid"] {
+      --tz-v4-wallpaper:url("../../assets/img/ui-v4/wallpaper-mid.webp");
+      --tz-v4-button:url("../../assets/img/ui-v4/button-mid.webp");
+      --tz-v4-surface:url("../../assets/img/ui-v4/surface-mid.webp");
+      --tz-v4-icon-atlas:url("../../assets/img/ui-v4/icon-atlas-mid.png");
+      --tz-v4-icon-well:url("../../assets/img/ui-v4/icon-well-mid.webp");
+    }
+    html[data-palette="warm"] {
+      --tz-v4-wallpaper:url("../../assets/img/ui-v4/wallpaper-warm.webp");
+      --tz-v4-button:url("../../assets/img/ui-v4/button-warm.webp");
+      --tz-v4-surface:url("../../assets/img/ui-v4/surface-warm.webp");
+      --tz-v4-icon-atlas:url("../../assets/img/ui-v4/icon-atlas-warm.png");
+      --tz-v4-icon-well:url("../../assets/img/ui-v4/icon-well-warm.webp");
+    }
+
     .village-redirect-shell {
       display:grid;
       place-items:center;

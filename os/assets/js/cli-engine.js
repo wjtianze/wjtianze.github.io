@@ -18,7 +18,20 @@
     for (let i = 0; i < source.length; i++) {
       const ch = source[i];
       if (escaped) { value += ch; escaped = false; continue; }
-      if (ch === '\\' && quote !== "'") { if (start < 0) start = i; escaped = true; continue; }
+      if (ch === '\\' && quote !== "'") {
+        // Windows 路径中的反斜杠默认是普通字符。只有在它确实用于转义
+        // 空白、引号、另一个反斜杠或选项前缀时才吞掉反斜杠，避免
+        // `shell cd C:\\Users\\name` 被错误解析成 `C:Usersname`。
+        const next = source[i + 1] || '';
+        if (next && (/\s/.test(next) || next === '"' || next === "'" || next === '\\' || next === '-')) {
+          if (start < 0) start = i;
+          escaped = true;
+          continue;
+        }
+        if (start < 0) start = i;
+        value += ch;
+        continue;
+      }
       if (quote) {
         if (ch === quote) { quote = ''; continue; }
         value += ch;

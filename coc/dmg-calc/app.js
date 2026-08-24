@@ -1,11 +1,11 @@
 /* ===== 天择网 · COC 伤害计算器 · app.js ===== */
-/* 仅适用于家乡。雷电固定伤害 + 地震百分比递减伤害 + 英雄装备技能伤害。 */
+/* 仅适用于家乡。雷电固定伤害 + 地震伤害（普通建筑递减、城墙不递减）+ 英雄装备技能伤害。 */
 (function () {
   "use strict";
 
   /* 装备 ID → 中文名/所属英雄（与村庄存档分析一致，90000000 系列） */
   var EQUIP_MAP = {
-    90000000:{zh:"野蛮人木偶",hero:"蛮王"},90000001:{zh:"狂暴药水瓶",hero:"蛮王"},90000002:{zh:"弓箭手木偶",hero:"女王"},90000003:{zh:"隐形药水瓶",hero:"女王"},90000004:{zh:"永恒书卷",hero:"永王"},90000005:{zh:"生命宝石",hero:"永王"},90000006:{zh:"寻踪飞盾",hero:"闰土"},90000007:{zh:"皇家宝石",hero:"闰土"},90000008:{zh:"地震金靴",hero:"蛮王"},90000009:{zh:"野猪骑士木偶",hero:"闰土"},90000010:{zh:"巨型手套",hero:"蛮王"},90000011:{zh:"治疗胡须",hero:"蛮王"},90000012:{zh:"急速药水瓶",hero:"闰土"},90000013:{zh:"火箭飞矛",hero:"闰土"},90000014:{zh:"尖刺足球",hero:"蛮王"},90000015:{zh:"冰封箭矢",hero:"女王"},90000016:{zh:"擎天箭矢",hero:"女王"},90000017:{zh:"巨型箭矢",hero:"女王"},90000019:{zh:"英雄火炬",hero:"永王"},90000020:{zh:"天使木偶",hero:"女王"},90000022:{zh:"巨大火球",hero:"永王"},90000024:{zh:"狂暴宝石",hero:"永王"},90000032:{zh:"灵蛇手镯",hero:"蛮王"},90000034:{zh:"治疗书卷",hero:"永王"},90000035:{zh:"暗黑皇冠",hero:"王子"},90000039:{zh:"克隆魔镜",hero:"女王"},90000040:{zh:"雷电战靴",hero:"闰土"},90000041:{zh:"熔岩气球玩偶",hero:"永王"},90000042:{zh:"护卫玩偶",hero:"王子"},90000043:{zh:"暗黑魔球",hero:"王子"},90000044:{zh:"铁甲短裤",hero:"王子"},90000047:{zh:"贵族哑铃",hero:"王子"},90000048:{zh:"动作人偶",hero:"女王"},90000049:{zh:"陨石法杖",hero:"王子"},90000050:{zh:"冷冽冰晶",hero:"闰土"},90000051:{zh:"木棍马驹",hero:"蛮王"},90000052:{zh:"烈焰之心",hero:"龙王"},90000053:{zh:"火箭背包",hero:"龙王"},90000056:{zh:"爆震器",hero:"龙王"},90000057:{zh:"助燃器",hero:"龙王"},90000059:{zh:"雷电獠牙",hero:"龙王"}
+    90000000:{zh:"野蛮人木偶",hero:"蛮王"},90000001:{zh:"狂暴药水瓶",hero:"蛮王"},90000002:{zh:"弓箭手木偶",hero:"女王"},90000003:{zh:"隐形药水瓶",hero:"女王"},90000004:{zh:"永恒书卷",hero:"永王"},90000005:{zh:"生命宝石",hero:"永王"},90000006:{zh:"寻踪飞盾",hero:"闰土"},90000007:{zh:"皇家宝石",hero:"闰土"},90000008:{zh:"地震金靴",hero:"蛮王"},90000009:{zh:"野猪骑士木偶",hero:"闰土"},90000010:{zh:"巨型手套",hero:"蛮王"},90000011:{zh:"治疗胡须",hero:"蛮王"},90000012:{zh:"急速药水瓶",hero:"闰土"},90000013:{zh:"火箭飞矛",hero:"闰土"},90000014:{zh:"尖刺足球",hero:"蛮王"},90000015:{zh:"冰封箭矢",hero:"女王"},90000016:{zh:"擎天箭矢",hero:"女王"},90000017:{zh:"巨型箭矢",hero:"女王"},90000019:{zh:"英雄火炬",hero:"永王"},90000020:{zh:"天使木偶",hero:"女王"},90000022:{zh:"巨大火球",hero:"永王"},90000024:{zh:"狂暴宝石",hero:"永王"},90000032:{zh:"灵蛇手镯",hero:"蛮王"},90000034:{zh:"治疗书卷",hero:"永王"},90000035:{zh:"暗黑皇冠",hero:"王子"},90000039:{zh:"克隆魔镜",hero:"女王"},90000040:{zh:"雷电战靴",hero:"闰土"},90000041:{zh:"熔岩气球玩偶",hero:"永王"},90000042:{zh:"护卫玩偶",hero:"王子"},90000043:{zh:"暗黑魔球",hero:"王子"},90000044:{zh:"铁甲短裤",hero:"王子"},90000047:{zh:"贵族哑铃",hero:"王子"},90000048:{zh:"动作人偶",hero:"女王"},90000049:{zh:"陨石法杖",hero:"王子"},90000050:{zh:"冷冽冰晶",hero:"闰土"},90000051:{zh:"木棍马驹",hero:"蛮王"},90000052:{zh:"烈焰之心",hero:"龙王"},90000053:{zh:"火箭背包",hero:"龙王"},90000056:{zh:"爆震器",hero:"龙王"},90000057:{zh:"助燃器",hero:"龙王"},90000059:{zh:"雷电獠牙",hero:"龙王"},90000060:{zh:"反击卡组",hero:"龙王"}
   };
   var HERO_ORDER = ["蛮王","女王","永王","王子","闰土","龙王"];
   var BUILD_CATS = [
@@ -60,16 +60,13 @@
   function quakePct(lvl){ return quakePctRaw(lvl); }
   function quakeSum(b){ var s=0; for(var i=1;i<=b;i++){ s += 1/(2*i-1); } return s; }
   /* 单次/累计地震伤害。
-   * 城墙固定游戏规则（与等级无关）：
-   *   - 3 瓶地震无论如何（任何城墙等级、任何地震等级）都不能单独摧毁城墙；
-   *   - 4 瓶地震无论如何都必定摧毁城墙。
-   * 实现方式：前 3 瓶按真实递减公式累加；第 4 瓶补足剩余 HP（quakeHitDmg(4) 直接返回 H - quakeDmg(3)），
-   * 于是累计正好等于 H；5 瓶及以上时 quakeHitDmg 全部返回 0，quakeDmg 末尾的 wall&&count>=4 分支直接返回 H。
-   * 而 count<4 时通过 min(d, H-0.0001) 严格把上限压在「未摧毁」一侧。 */
+   * 普通建筑保持 1、1/3、1/5……逐次衰减；若该等级全额百分比为 x，城墙前 3 次
+   * 均为 x、不衰减，第 4 次为 1-3x 并补足剩余生命。5 级因此为 29%、29%、29%、13%。 */
   function quakeHitDmg(index, H, lvl, wall){
     if(index<=0 || H<=0 || lvl<=0)return 0;
     if(wall && index===4)return Math.max(0, H-quakeDmg(3,H,lvl,true));
     if(wall && index>4)return 0;
+    if(wall)return H*quakePct(lvl);
     return H*quakePct(lvl)/(2*index-1);
   }
   function quakeDmg(count, H, lvl, wall){
@@ -85,7 +82,7 @@
   function equipSkillDmg(unit, lvl){ var r=lvlData(unit,lvl); if(!r)return 0; return num(r.SkillDamage); }
 
   function loadGame(cb){
-    fetch("../data/all_game_data_zh.json?v=20260718a").then(function(r){return r.json();}).then(function(d){
+    fetch("../data/all_game_data_zh.json?v=18.400.22").then(function(r){return r.json();}).then(function(d){
       G=d;
       d.units.forEach(function(u){
         var g=String(u.globalID||"").trim();
@@ -589,11 +586,11 @@
       html+='<tr><td>'+uiGlyph("lightning")+' 雷电法术 Lv'+ll+'</td><td>'+b.a+'</td><td class="dm-num">'+fmt(lightDmg(ll))+'</td><td class="dm-num">'+fmt(liDmg)+'</td></tr>';
     }
     if(b.b>0){
-      html+='<tr><td>'+uiGlyph("globe")+' 地震法术 Lv'+ql+'（'+fmtPct(quakePct(ql))+' 全额'+(r.wall?'，城墙四震必毁':'，逐次递减')+'）</td><td>'+b.b+'</td><td class="dm-num">'+(r.wall&&b.b>=4?'第4瓶补足':'按递减')+'</td><td class="dm-num">'+fmt(qDmg)+'</td></tr>';
+      html+='<tr><td>'+uiGlyph("globe")+' 地震法术 Lv'+ql+'（'+fmtPct(quakePct(ql))+' 全额'+(r.wall?'，城墙前三次不衰减、第四次补足':'，逐次递减')+'）</td><td>'+b.b+'</td><td class="dm-num">'+(r.wall&&b.b>=4?'前三次全额，第4瓶补足':(r.wall?'不衰减':'按递减'))+'</td><td class="dm-num">'+fmt(qDmg)+'</td></tr>';
       /* 逐次明细 */
       for(var i=1;i<=b.b;i++){
         var once=quakeHitDmg(i,H,ql,r.wall);
-        var note=r.wall&&i===4?'补足剩余生命值':(r.wall&&i>4?'目标已摧毁':'系数 1/'+(2*i-1));
+        var note=r.wall?(i===4?'补足剩余生命值':(i>4?'目标已摧毁':'城墙全额、不衰减')):'系数 1/'+(2*i-1);
         html+='<tr><td style="padding-left:30px; color:var(--ink-faint);">└ 第 '+i+' 次（'+note+'）</td><td>1</td><td class="dm-num">'+fmt(once)+'</td><td class="dm-num">'+fmt(once)+'</td></tr>';
       }
     }
@@ -642,10 +639,10 @@
     var html='<div class="dm-breakdown"><table><thead><tr><th>伤害来源</th><th>数量 / 占法术空间</th><th>单次伤害</th><th style="text-align:right">小计</th></tr></thead><tbody>';
     if(eqDmg>0)html+='<tr><td>'+uiGlyph("shield")+' 英雄装备（技能伤害累计）</td><td>—（不占法术空间）</td><td>—</td><td class="dm-num">'+fmt(eqDmg)+'</td></tr>';
     if(b.b>0){
-      html+='<tr><td>'+uiGlyph("globe")+' 地震法术 Lv'+ql+'（'+fmtPct(quakePct(ql))+' 全额'+(r.wall?'，城墙四震必毁':'，逐次递减')+'）</td><td>'+b.b+' 格</td><td class="dm-num">'+(r.wall&&b.b>=4?'第4瓶补足':'按递减')+'</td><td class="dm-num">'+fmt(qDmg)+'</td></tr>';
+      html+='<tr><td>'+uiGlyph("globe")+' 地震法术 Lv'+ql+'（'+fmtPct(quakePct(ql))+' 全额'+(r.wall?'，城墙前三次不衰减、第四次补足':'，逐次递减')+'）</td><td>'+b.b+' 格</td><td class="dm-num">'+(r.wall&&b.b>=4?'前三次全额，第4瓶补足':(r.wall?'不衰减':'按递减'))+'</td><td class="dm-num">'+fmt(qDmg)+'</td></tr>';
       for(var i=1;i<=b.b;i++){
         var once=quakeHitDmg(i,H,ql,r.wall);
-        var note=r.wall&&i===4?'补足剩余生命值':(r.wall&&i>4?'目标已摧毁':'系数 1/'+(2*i-1));
+        var note=r.wall?(i===4?'补足剩余生命值':(i>4?'目标已摧毁':'城墙全额、不衰减')):'系数 1/'+(2*i-1);
         html+='<tr><td style="padding-left:30px; color:var(--ink-faint);">└ 第 '+i+' 次（'+note+'）</td><td>1 格</td><td class="dm-num">'+fmt(once)+'</td><td class="dm-num">'+fmt(once)+'</td></tr>';
       }
     }

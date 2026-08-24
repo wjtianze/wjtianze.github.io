@@ -6,9 +6,10 @@
   <title>升级规划器 · COC 专区 · 天择网</title>
   <meta name="description" content="基于村庄存档的升级规划器，单级拆分+前置依赖，稳本/速本模式，甘特图缩放滚动，待规划区拖拽安排。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260807-v5.0.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260824-v5.2.0" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css?v=20260801-v4.1.6" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-workspace.css?v=20260801-v4.1.6" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/coc/planner/priority.css?v=20260823a" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
 </head>
 <body class="coc-tool coc-planner-tool">
@@ -58,6 +59,7 @@
     </section>
 
     <section class="section" id="vpBody" style="display:none;">
+      <div class="card vp-coverage-notice" id="vpCoverageNotice" role="status" style="display:none;margin-bottom:16px;padding:16px 18px;border-color:rgba(245,158,11,.45);background:rgba(245,158,11,.08);"></div>
       <div class="vp-opt-bar">
         <div class="vp-opt-group">
           <span class="vog-title">可选加成</span>
@@ -73,6 +75,49 @@
         </div>
       </div>
       <div class="vp-mode-desc" id="vpModeDesc"></div>
+
+      <section class="vp-army-priority" aria-labelledby="vpArmyPriorityTitle">
+        <div class="vp-army-head">
+          <div>
+            <span class="vog-title">常用配兵优先级</span>
+            <h2 id="vpArmyPriorityTitle">让排程先升级你真正会用的单位</h2>
+            <p>粘贴游戏内“分享配兵”链接，或在下方手动勾选。常用兵种、法术和攻城机器优先进入实验室队列，常用战宠优先进入战宠小屋队列；莱希与大牦仍固定最后。建筑工人数少于已解锁英雄数时，常用英雄会先升级。</p>
+          </div>
+        </div>
+        <div class="vp-army-import">
+          <label class="sr-only" for="vpArmyLink">游戏配兵链接</label>
+          <input id="vpArmyLink" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="粘贴 https://link.clashofclans.com/…&army=…" />
+          <button class="btn btn--sm btn--primary" id="vpImportArmy" type="button">导入配兵链接</button>
+        </div>
+        <p class="vp-army-status" id="vpArmyStatus" role="status" aria-live="polite"></p>
+        <div class="vp-army-groups" id="vpArmyGroups" aria-label="自定义常用单位"></div>
+        <div class="vp-army-actions">
+          <button class="btn btn--sm btn--primary" id="vpApplyArmy" type="button">保存并重建两套方案</button>
+          <button class="btn btn--sm" id="vpClearArmy" type="button">清空常用配兵</button>
+          <span class="vp-army-summary" id="vpArmySummary"></span>
+        </div>
+      </section>
+
+      <section class="vp-snapshot-console" aria-labelledby="vpSnapshotTitle">
+        <div class="vp-snapshot-head">
+          <div>
+            <span class="vog-title">双方案快照</span>
+            <h2 id="vpSnapshotTitle">稳本与速本方案</h2>
+          </div>
+          <div class="vp-snapshot-actions">
+            <button class="btn btn--sm btn--primary" id="vpSavePlan" type="button" data-ui-icon="save">保存当前方案</button>
+            <button class="btn btn--sm" id="vpRebuildPlan" type="button" data-ui-icon="refresh">重建当前方案</button>
+            <button class="btn btn--sm" id="vpCopyPlan" type="button" data-ui-icon="copy">复制到另一方案</button>
+            <button class="btn btn--sm" id="vpExportJson" type="button" data-ui-icon="download">导出 JSON</button>
+            <button class="btn btn--sm" id="vpExportIcs" type="button" data-ui-icon="calendar">导出日历</button>
+          </div>
+        </div>
+        <p class="vp-snapshot-status" id="vpSnapshotStatus" role="status" aria-live="polite"></p>
+        <div class="vp-compare" id="vpCompare" aria-label="稳本与速本方案指标对比">
+          <article data-compare-mode="steady"><span>稳本方案</span><b>正在计算</b><small>—</small></article>
+          <article data-compare-mode="rush"><span>速本方案</span><b>正在计算</b><small>—</small></article>
+        </div>
+      </section>
 
       <div class="vp-tabs" role="tablist" aria-label="村庄世界" style="margin-top:18px;">
         <button class="vp-tab active" data-world="home" role="tab" id="vpTabHome" aria-selected="true" aria-controls="vpHome" data-ui-icon="home">家乡</button>
@@ -119,13 +164,17 @@
         </div>
       </div>
 
-      <p class="v-planner-hint">每级一个滑块，前置依赖自动处理：同单位必须逐级升级；兵种/法术/攻城机器需实验室达到对应等级，战宠需战宠小屋等级，英雄需英雄殿堂等级。下方「待规划区」显示尚未安排的单级任务，可点击或拖到甘特图自动排程（含前置）；甘特图里的滑块可拖回待规划区，键盘用户也可聚焦滑块后按 Delete / Backspace 移除（含其后置等级）。缩放按钮可放大时间轴横向滚动查看。</p>
+      <p class="v-planner-hint">每级一个滑块，前置依赖自动处理：同单位必须逐级升级；兵种/法术/攻城机器需实验室达到对应等级，战宠需战宠小屋等级，英雄需英雄殿堂等级；超级充能接在所属建筑满级之后，并沿用该建筑的优先档。建筑工人严格按实验室 → 第一优先级 → 第二优先级 → 英雄 → 其它分阶段执行，上一阶段全部结束后才进入下一阶段；同档由多名建筑工人按短时长到长时长分配。下方「待规划区」可点击或拖拽安排；甘特图里的滑块可拖回，也可按 Delete / Backspace 移除。</p>
     </section>
     </div>
     </div>
   </main>
 
-  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260807-v5.0.0"></script>
-  <script defer src="https://wjtianze.github.io/coc/planner/app.js"></script>
+  <footer class="coc-fan-notice">本页是非官方玩家内容，未经 Supercell 认可或赞助。详见 <a href="https://supercell.com/en/fan-content-policy/" target="_blank" rel="noopener noreferrer">Supercell 玩家内容政策</a>。</footer>
+
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260824-v5.2.0"></script>
+  <script defer src="https://wjtianze.github.io/coc/planner/storage.js?v=20260820a"></script>
+  <script defer src="https://wjtianze.github.io/coc/planner/priority.js?v=20260823a"></script>
+  <script defer src="https://wjtianze.github.io/coc/planner/app.js?v=20260823c"></script>
 </body>
 </html>

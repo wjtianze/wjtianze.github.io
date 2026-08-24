@@ -1888,6 +1888,15 @@ body.tzos.light .python-code-editor { color: #172554; background: rgba(239,246,2
 .python-task-empty { color: var(--ink-muted); font-size: 9px; }
 .python-output { flex: 1; min-width: 0; min-height: 0; margin: 0; overflow: auto; padding: 13px; color: #c7f9d4; background: rgba(0, 8, 14, .75); font: 11.5px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace; white-space: pre-wrap; word-break: break-word; }
 body.tzos.light .python-output { color: #14532d; background: rgba(240,253,244,.76); }
+.python-stdin-bar { flex: 0 0 auto; border-width: 1px 0 0 !important; }
+.python-stdin-bar .app-field { flex: 1; min-width: 180px; }
+.python-stdin-bar .input { width: 100%; }
+
+.desktop-backup-list { display: grid; gap: 7px; padding-top: 8px; }
+.desktop-backup-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.desktop-backup-item > span { display: flex; min-width: 0; flex-direction: column; }
+.desktop-backup-item strong { color: var(--ink); font-size: 11px; }
+.desktop-backup-item small { margin-top: 3px; overflow: hidden; color: var(--ink-muted); font-size: 9.5px; text-overflow: ellipsis; white-space: nowrap; }
 
 .browser-native-status { max-width: 180px; overflow: hidden; color: var(--ink-muted); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
 .browser-native-host { position: relative; }
@@ -1935,6 +1944,7 @@ body.tzos.light .python-output { color: #14532d; background: rgba(240,253,244,.7
   .python-tools-layout { grid-template-columns: 1fr; overflow: auto; }
   .python-editor-pane { min-height: 440px; border-right: 0; border-bottom: 1px solid var(--app-line); }
   .python-output-pane { min-height: 360px; }
+  .desktop-backup-item { align-items: stretch; flex-direction: column; }
 }
 @container (max-width: 600px) {
   .workspace-tabs { width: 100%; }
