@@ -78,8 +78,9 @@
         var saved = JSON.parse(localStorage.getItem(TZ_SITE_AI_CONFIG_KEY) || "null");
         if (!saved || saved.mode !== "custom") return fallback;
         var url = new URL(String(saved.url || ""));
-        if (url.protocol !== "https:" || url.username || url.password || this.isManagedEndpoint(url.href) ||
+        if (!/^https?:$/.test(url.protocol) || url.username || url.password || this.isManagedEndpoint(url.href) ||
             !String(saved.model || "").trim() || !String(saved.key || "").trim()) return fallback;
+        var caps = saved.caps && typeof saved.caps === "object" ? saved.caps : {};
         return {
           version: 1,
           mode: "custom",
@@ -87,9 +88,16 @@
           key: String(saved.key).trim().slice(0, 4096),
           model: String(saved.model).trim().slice(0, 160),
           api: String(saved.api || "").toLowerCase() === "responses" ? "responses" : "chat-completions",
+          thinkingProtocol: ["auto", "chat-thinking", "chat-enable-thinking", "responses-reasoning"].indexOf(String(saved.thinkingProtocol || "")) >= 0 ? String(saved.thinkingProtocol) : "auto",
           maxTokens: Math.min(384000, Math.max(1, parseInt(saved.maxTokens, 10) || 8192)),
           managedProxy: false,
-          caps: saved.caps && typeof saved.caps === "object" ? saved.caps : { image: false, file: false, webSearch: false, contextLength: 0 }
+          caps: {
+            image: !!caps.image,
+            file: !!caps.file,
+            webSearch: !!caps.webSearch,
+            contextLength: Math.min(2000000, Math.max(0, parseInt(caps.contextLength, 10) || 0))
+          },
+          prices: saved.prices && typeof saved.prices === "object" ? Object.assign({}, saved.prices) : {}
         };
       } catch (e) { return fallback; }
     },
@@ -103,13 +111,25 @@
       if (!/^https?:$/.test(url.protocol) || url.username || url.password) throw new Error("自定义接口需使用 HTTP 或 HTTPS 地址，且地址中不能包含账号信息");
       if (this.isManagedEndpoint(url.href)) throw new Error("天择网受管代理只能使用服务端固定的 GLM-4.7-Flash；自定义服务请填写其它 HTTP 或 HTTPS 地址和你自己的密钥");
       if (!String(value.model || "").trim() || !String(value.key || "").trim()) throw new Error("请填写模型名称与接口密钥");
+      var current = this.siteConfig();
+      var previousCustom = current && current.mode === "custom" ? current : {};
+      var sourceCaps = value.caps && typeof value.caps === "object" ? value.caps : (previousCustom.caps || {});
+      var requestedThinkingProtocol = value.thinkingProtocol === undefined ? previousCustom.thinkingProtocol : value.thinkingProtocol;
       var next = {
         version: 1, mode: "custom", url: url.href,
         key: String(value.key).trim().slice(0, 4096),
         model: String(value.model).trim().slice(0, 160),
         api: String(value.api || "").toLowerCase() === "responses" ? "responses" : "chat-completions",
+        thinkingProtocol: ["auto", "chat-thinking", "chat-enable-thinking", "responses-reasoning"].indexOf(String(requestedThinkingProtocol || "")) >= 0 ? String(requestedThinkingProtocol) : "auto",
         maxTokens: Math.min(384000, Math.max(1, parseInt(value.maxTokens, 10) || 8192)),
-        caps: value.caps && typeof value.caps === "object" ? value.caps : { image: false, file: false, webSearch: false, contextLength: 0 }
+        caps: {
+          image: !!sourceCaps.image,
+          file: !!sourceCaps.file,
+          webSearch: !!sourceCaps.webSearch,
+          contextLength: Math.min(2000000, Math.max(0, parseInt(sourceCaps.contextLength, 10) || 0))
+        },
+        prices: value.prices && typeof value.prices === "object" ? Object.assign({}, value.prices) :
+          (previousCustom.prices && typeof previousCustom.prices === "object" ? Object.assign({}, previousCustom.prices) : {})
       };
       localStorage.setItem(TZ_SITE_AI_CONFIG_KEY, JSON.stringify(next));
       return next;
@@ -387,7 +407,7 @@
     } catch (e) {}
 
     var rootUrl = getTzSiteRoot();
-    var brandIconUrl = new URL("assets/img/brand/tianze-mark.png?rev=20260828i", rootUrl).href;
+    var brandIconUrl = new URL("assets/img/brand/tianze-mark.png?rev=20260828j", rootUrl).href;
     var brandIcons = Array.prototype.slice.call(document.querySelectorAll('link[rel~="icon"]'));
     if (!brandIcons.length && document.head) {
       var brandIcon = document.createElement("link");
@@ -2022,7 +2042,7 @@
     frame.title = "天择网站内助手";
     frame.loading = "lazy";
     frame.setAttribute("allow", "clipboard-read; clipboard-write; display-capture");
-    frame.dataset.src = new URL("os/float-chat.html?embedded=1&site=1&v=5.3.0", rootUrl).href;
+    frame.dataset.src = new URL("os/float-chat.html?embedded=1&site=1&v=5.3.0-20260828j", rootUrl).href;
     dock.appendChild(frame);
 
     var backdrop = document.createElement("div");

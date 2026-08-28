@@ -307,7 +307,7 @@ const Store = {
     const key = String(saved.key || '').trim();
     let parsed = null;
     try { parsed = new URL(url); } catch (_) {}
-    if (!parsed || parsed.protocol !== 'https:' || parsed.username || parsed.password ||
+    if (!parsed || !/^https?:$/.test(parsed.protocol) || parsed.username || parsed.password ||
         !model || !key || isForbiddenSiteAIEndpoint(url)) {
       this._siteAIConfigCache = this.siteDefaultAIConfig();
       return { ...this._siteAIConfigCache, caps: { ...this._siteAIConfigCache.caps } };

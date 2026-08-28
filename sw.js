@@ -1,6 +1,6 @@
 /* 天择网选择性离线缓存。不得缓存安装包、技能 ZIP 或真实 AI 请求。 */
 "use strict";
-const CACHE_REV = "20260828i";
+const CACHE_REV = "20260828j";
 const CORE_CACHE = `tz-site-core-${CACHE_REV}`;
 const PACK_PREFIX = `tz-site-pack-${CACHE_REV}-`;
 const KNOWN_PACKS = ["coc", "english", "game"];
