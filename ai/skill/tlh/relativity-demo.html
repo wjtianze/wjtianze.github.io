@@ -551,6 +551,7 @@ header .header-sub .ver{font-size:.6rem;opacity:.7;display:block}
   #col-chat{height:80vh}
 }
 </style>
+  <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828i" />
 </head>
 <body>
 <header>
@@ -692,14 +693,14 @@ header .header-sub .ver{font-size:.6rem;opacity:.7;display:block}
   <div class="col-divider" id="div1"></div>
   <!-- 右栏：AI 聊天 -->
   <div class="column" id="col-chat">
-    <div class="chat-col-head"><span>🤖 AI 助手</span><button class="stats-btn" onclick="openStats()" title="查看 Token / 价格统计">📊 用量统计</button></div>
+    <div class="chat-col-head"><span>🤖 AI 助手</span><button class="stats-btn" onclick="openStats()" title="查看词元与价格统计">📊 用量统计</button></div>
     <div class="conversation-tabs" id="conv-tabs"></div>
     <div class="chat-settings">
-      <label>🤖 <select id="chat-model" class="model-sel" aria-label="在线体验模型"><option value="gemini-3.7-flash-free" selected>天择 AI（自动回退）</option></select></label>
+      <label>🤖 <select id="chat-model" class="model-sel" aria-label="在线体验模型"><option value="glm-4.7-flash" selected>天择 AI（智谱 GLM-4.7-Flash）</option></select></label>
       <label>🌡️ <input type="number" id="chat-temp" value="0.7" min="0" max="2" step="0.1"></label>
       <label>🎯 P <input type="number" id="chat-topp" value="0.9" min="0" max="1" step="0.05"></label>
       <label>🧠 <select id="chat-thinking"><option value="none">无</option><option value="high">high</option><option value="max" selected>max</option></select></label>
-      <label title="理解强度：无=最简提示词省 token；标准=带知识点与摘要；深度=附带教材全文">💡 理解强度 <select id="chat-deep"><option value="none">无</option><option value="standard" selected>标准</option><option value="deep">深度</option></select></label>
+      <label title="理解强度：无=最简提示词、节省词元；标准=带知识点与摘要；深度=附带教材全文">💡 理解强度 <select id="chat-deep"><option value="none">无</option><option value="standard" selected>标准</option><option value="deep">深度</option></select></label>
     </div>
     <div class="chat-messages" id="chat-messages"></div>
     <div class="chat-io-resize" id="chatIoResize" title="上下拖动：调整输入区高度"></div>
@@ -727,7 +728,7 @@ header .header-sub .ver{font-size:.6rem;opacity:.7;display:block}
 <!-- 统计弹窗（L6.1：移到 body 层级，覆盖整个视口） -->
 <div class="stats-overlay" id="stats-overlay">
   <div class="stats-box">
-    <h4><span>📊 Token / 价格统计</span><span class="close-x" onclick="closeStats()">✕</span></h4>
+    <h4><span>📊 词元与价格统计</span><span class="close-x" onclick="closeStats()">✕</span></h4>
     <select id="stats-scope" onchange="renderStats()"></select>
     <div id="stats-scope-body"></div>
     <div class="stats-sub" style="margin-top:10px">🌐 全部累计用量（所有对话 + 命名/批阅/重写/讲解）</div>
@@ -1314,8 +1315,8 @@ function renderMathIn(el){try{if(typeof katex!=='undefined'&&typeof renderMathIn
 function renderMath(){renderMathIn(document.body)}
 
 // ===== Token / 价格：按模型分桶 =====
-var MODELS={'gemini-3.7-flash-free':{name:'天择 AI',hit:0,miss:0,out:0}};
-var FLASH='gemini-3.7-flash-free';
+var MODELS={'glm-4.7-flash':{name:'天择 AI',hit:0,miss:0,out:0}};
+var FLASH='glm-4.7-flash';
 var aux={naming:{},grading:{},rewrite:{},explain:{},demo:{}};
 function curModel(){var e=document.getElementById('chat-model');return(e&&MODELS[e.value])?e.value:FLASH}
 function curTemp(){var e=document.getElementById('chat-temp');var v=e?parseFloat(e.value):0.7;return isNaN(v)?0.7:v}
@@ -1431,7 +1432,7 @@ function _renderKpExplainBox(ci,ii,it){
   var _body='';
   if(it.__explainStatus==='thinking'){
     var _toks=estTok(it.__explainThinking||'');
-    _body='<div class="kp-thinking">🧠 思考中…约 <b>'+_toks+'</b> tok（仅显示估算，不展示思考过程）</div>';
+    _body='<div class="kp-thinking">🧠 思考中…约 <b>'+_toks+'</b> 词元（仅显示估算，不展示思考过程）</div>';
   }else if(it.__explainStatus==='generating'){
     _body='<div class="md-content">'+md(it.__explain||'')+'<span class="explain-stream-cursor"></span></div>';
   }else if(it.__explainStatus==='error'){
@@ -1453,7 +1454,7 @@ function _streamKpExplain(ci,ii){
   var _body='';
   if(it.__explainStatus==='thinking'){
     var _toks=estTok(it.__explainThinking||'');
-    _body='<div class="kp-thinking">🧠 思考中…约 <b>'+_toks+'</b> tok（仅显示估算，不展示思考过程）</div>';
+    _body='<div class="kp-thinking">🧠 思考中…约 <b>'+_toks+'</b> 词元（仅显示估算，不展示思考过程）</div>';
   }else if(it.__explainStatus==='generating'){
     _body='<div class="md-content">'+md(it.__explain||'')+'<span class="explain-stream-cursor"></span></div>';
   }else if(it.__explainStatus==='error'){
@@ -1666,8 +1667,8 @@ async function _doAiGenDemo(ci,ii,extra,existingDemo){
   function updStatus(phase,rt,ct,preview){
     if(!statusAnchor||!document.body.contains(statusAnchor))return;
     var phaseHtml='';
-    if(phase==='thinking'){phaseHtml='🧠 思考中…约 <b>'+(rt||0)+'</b> tok（仅显示估算，不展示思考过程）';}
-    else if(phase==='generating'){phaseHtml='📝 生成代码中…约 <b>'+(ct||0)+'</b> tok';}
+    if(phase==='thinking'){phaseHtml='🧠 思考中…约 <b>'+(rt||0)+'</b> 词元（仅显示估算，不展示思考过程）';}
+    else if(phase==='generating'){phaseHtml='📝 生成代码中…约 <b>'+(ct||0)+'</b> 词元';}
     else{phaseHtml='🤖 AI 正在'+(hasExisting?'编辑':'生成')+'交互式演示…';}
     var previewHtml='';
     if(preview){previewHtml='<pre style="margin-top:10px;padding:6px 8px;background:#1e1e2e;color:#cdd6f4;border-radius:5px;font-size:.64rem;max-height:90px;overflow:hidden;text-align:left;white-space:pre-wrap;word-break:break-all;border:1px solid #45475a">'+esc(preview)+'</pre>';}
@@ -2175,7 +2176,7 @@ function renderOne(q,i){
         verdictHtml='<div class="q-verdict '+(ok?'correct':'wrong')+'">'+(ok?'✅ 正确':'❌ 你的答案：'+(q.__selected||'(未答)')+' ，正确答案：'+q.answer)+'</div>';
       }
       h+=verdictHtml;
-      if(q.__explainStatus==='thinking'){var _toks=estTok(q.__explainThinking||'');h+='<div class="q-explain md-content"><strong>💡 解析：</strong><div class="q-thinking">🧠 思考中…约 <b>'+_toks+'</b> tok（仅显示估算，不展示思考过程）</div></div>';}
+      if(q.__explainStatus==='thinking'){var _toks=estTok(q.__explainThinking||'');h+='<div class="q-explain md-content"><strong>💡 解析：</strong><div class="q-thinking">🧠 思考中…约 <b>'+_toks+'</b> 词元（仅显示估算，不展示思考过程）</div></div>';}
       else if(q.__explainStatus==='generating'){h+='<div class="q-explain md-content"><strong>💡 AI 详解（生成中）：</strong>'+md(q.__explainContent||'')+'<span class="explain-stream-cursor"></span></div>';}
       else if(q.explanation)h+='<div class="q-explain md-content"><strong>💡 解析：'+(q.__explained?'<span style="font-size:.7rem;color:#6a1b9a"> ('+(q.__explainHidden?'原解析':'AI 详解')+')'+'</span>':'')+'</strong>'+md(q.explanation)+'</div>';
     }else{
@@ -2187,7 +2188,7 @@ function renderOne(q,i){
         else{var sc=q.__score10,cls=q.__verdict==='correct'?'tag-correct':q.__verdict==='partial'?'tag-partial':'tag-wrong';vt='<span class="tag '+cls+'">🤖 AI 评分：'+sc+' / 10</span>';}
         h+='<h5>🤖 AI 批阅</h5><div>'+vt+'</div>';if(q.__feedback)h+='<div class="blk md-content">'+md(q.__feedback)+'</div>';}
       h+='<h5>📌 参考答案</h5><div class="blk md-content">'+md(q.answer||'')+'</div>';
-      if(q.__explainStatus==='thinking'){var _toks=estTok(q.__explainThinking||'');h+='<h5>💡 解析</h5><div class="blk"><div class="q-thinking">🧠 思考中…约 <b>'+_toks+'</b> tok（仅显示估算，不展示思考过程）</div></div>';}
+      if(q.__explainStatus==='thinking'){var _toks=estTok(q.__explainThinking||'');h+='<h5>💡 解析</h5><div class="blk"><div class="q-thinking">🧠 思考中…约 <b>'+_toks+'</b> 词元（仅显示估算，不展示思考过程）</div></div>';}
       else if(q.__explainStatus==='generating'){h+='<h5>💡 AI 详解（生成中）</h5><div class="blk md-content">'+md(q.__explainContent||'')+'<span class="explain-stream-cursor"></span></div>';}
       else if(q.explanation){h+='<h5>💡 解析'+(q.__explained?'<span style="font-size:.7rem;color:#6a1b9a"> ('+(q.__explainHidden?'原解析':'AI 详解')+')'+'</span>':'')+'</h5><div class="blk md-content">'+md(q.explanation)+'</div>';}
       h+='</div>';
@@ -2679,7 +2680,7 @@ function restoreDraft(){
 // 本页不保存、不接收也不转发用户 API Key。每次请求仅从同源父页取得一次性 Turnstile 令牌。
 var URL='https://tianze-ai-proxy.xia-xilin-sgy.workers.dev/api/ai/chat';
 var BETA_URL=URL;
-var MANAGED_MODEL='gemini-3.7-flash-free';
+var MANAGED_MODEL='glm-4.7-flash';
 var _nativeFetch=window.fetch.bind(window);
 function clampNumber(value,fallback,min,max){var n=Number(value);if(!isFinite(n))n=fallback;return Math.max(min,Math.min(max,n));}
 function managedMessages(messages){
@@ -2718,7 +2719,7 @@ function refreshBalance(){
   if(el){el.textContent='后端代管';el.title='在线体验不读取或展示任何账户余额';}
 }
 function estTok(s){s=String(s||'');var cjk=(s.match(/[\u3400-\u9fff\uf900-\ufaff\u3000-\u303f\uff00-\uffef]/g)||[]).length;return Math.round(cjk*0.6+(s.length-cjk)*0.3)}
-function tkLive(m){return '<div class="token-line">🧠 思考约 <span class="num">'+(m._rt||0)+'</span> tok · 📝 回答约 <span class="num">'+(m._ct||0)+'</span> tok <span style="opacity:.55">(估算)</span></div>'}
+function tkLive(m){return '<div class="token-line">🧠 思考约 <span class="num">'+(m._rt||0)+'</span> 词元 · 📝 回答约 <span class="num">'+(m._ct||0)+'</span> 词元 <span style="opacity:.55">(估算)</span></div>'}
 function tkFinal(m){var u=m._us||{hit:0,miss:0,out:0,rea:0};var rea=u.rea||0,ans=u.out-rea;if(rea===0&&(m._rt||0)>0){var tot=(m._rt+m._ct)||1;rea=Math.round(u.out*m._rt/tot);ans=u.out-rea}if(ans<0)ans=0;var p=MODELS[m._model||FLASH]||MODELS[FLASH];var cst=u.hit*p.hit/1e6+u.miss*p.miss/1e6+u.out*p.out/1e6;return '<div class="token-line">🤖 <span class="num">'+p.name+'</span> · ⚡ 思考 <span class="num">'+rea+'</span> · 回答 <span class="num">'+ans+'</span> · 输出合计 <span class="num">'+u.out+'</span> · 缓存 命中<span class="num">'+u.hit+'</span>/未命中<span class="num">'+u.miss+'</span> · 💰 <span class="cost">¥'+cst.toFixed(5)+'</span></div>'}
 
 function vdLabel(v){return v==='correct'?'完全正确':v==='partial'?'部分正确':v==='wrong'?'错误':v==='ungraded'?'未能批阅':'待批阅'}
@@ -3054,7 +3055,7 @@ function muTable(s){
   for(var m in MODELS){if(!s[m])continue;any=true;var d=s[m],p=MODELS[m],cst=d.hit*p.hit/1e6+d.miss*p.miss/1e6+d.out*p.out/1e6;tot.hit+=d.hit;tot.miss+=d.miss;tot.out+=d.out;tot.cost+=cst;rows+='<tr><td>'+p.name+'</td><td>'+d.hit+'</td><td>'+d.miss+'</td><td>'+d.out+'</td><td>'+(d.hit+d.miss+d.out)+'</td><td class="cost">¥'+cst.toFixed(5)+'</td></tr>'}
   if(!any)return'<div style="font-size:.76rem;color:var(--text-light);padding:4px 0">暂无用量</div>';
   rows+='<tr class="total-row"><td>总计</td><td>'+tot.hit+'</td><td>'+tot.miss+'</td><td>'+tot.out+'</td><td>'+(tot.hit+tot.miss+tot.out)+'</td><td class="cost">¥'+tot.cost.toFixed(5)+'</td></tr>';
-  return'<table class="stats-table"><tr><th>模型</th><th>命中</th><th>未命中</th><th>输出</th><th>总token</th><th>价格</th></tr>'+rows+'</table>';
+  return'<table class="stats-table"><tr><th>模型</th><th>命中</th><th>未命中</th><th>输出</th><th>总词元</th><th>价格</th></tr>'+rows+'</table>';
 }
 function renderStats(){
   if(!statsOpen)return;

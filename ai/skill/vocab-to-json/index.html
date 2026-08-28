@@ -6,11 +6,13 @@
   <title>词库转 JSON · 天择网 AI 技能</title>
   <meta name="description" content="将 TXT、CSV、Excel、Word、PDF 或 Markdown 词库转化为天择背单词标准 JSON 格式。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260824-v5.2.0" />
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/workspace-pages.css?v=20260801-v4.1.6" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Ctext x='16' y='22' font-size='14' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3EJSON%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828i-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/workspace-pages.css?v=20260828-editorial-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/split-motion.css?v=20260827d-v5.3.0" data-tz-split-motion />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/site-refactor.css?v=20260828-editorial-v5.3.0" data-tz-site-refactor />
+  <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828i" />
 </head>
-<body data-workspace-page="vocab-skill">
+<body class="wp-editorial-page wp-editorial-page--skill" data-workspace-page="vocab-skill">
   <a class="wp-skip" href="#main-content">跳到主要内容</a>
   <div class="bg-mesh"></div>
 
@@ -28,8 +30,8 @@
   <main id="main-content" tabindex="-1">
     <section class="wp-hero wrap" aria-labelledby="vocab-title">
       <div>
-        <div class="wp-kicker">AI SKILL · VOCABULARY DATA</div>
-        <h1 id="vocab-title">把零散词库整理成<br/><span class="grad">可直接导入的 JSON</span></h1>
+        <div class="wp-kicker">词库整理技能</div>
+        <h1 id="vocab-title">把零散词库整理成<span class="grad">可直接导入的 JSON</span></h1>
         <p>读取常见文档和表格中的单词、释义、音标与例句，统一为天择背单词使用的标准结构，并自动处理一词多义与重复项。</p>
         <div class="wp-chip-row"><span class="wp-chip">6 种输入格式</span><span class="wp-chip">标准化输出</span><span class="wp-chip">自动去重</span><span class="wp-chip">Codex 工作流</span></div>
       </div>
@@ -37,7 +39,7 @@
     </section>
 
     <section class="wp-section wrap" aria-labelledby="vocab-formats">
-      <div class="wp-section-head reveal"><div><div class="wp-kicker">INPUT ADAPTERS</div><h2 id="vocab-formats">支持的输入格式</h2></div><p>文档、表格与纯文本</p></div>
+      <div class="wp-section-head reveal"><div><div class="wp-kicker">输入格式</div><h2 id="vocab-formats">支持的输入格式</h2></div><p>文档、表格与纯文本</p></div>
       <div class="wp-grid">
         <article class="wp-card wp-format-card reveal d1"><div class="wp-format-badge" aria-hidden="true"><span data-ui-icon="document"></span><small>TXT</small></div><h3>纯文本</h3><p>适合每行一个单词，或使用空格、制表符分隔的简洁词表。</p></article>
         <article class="wp-card wp-format-card reveal d2"><div class="wp-format-badge" aria-hidden="true"><span data-ui-icon="document"></span><small>CSV</small></div><h3>CSV 表格</h3><p>识别逗号分隔的数据列，保留已有字段并整理标准结构。</p></article>
@@ -49,7 +51,7 @@
     </section>
 
     <section class="wp-section wrap" aria-labelledby="vocab-workflow">
-      <div class="wp-section-head reveal"><div><div class="wp-kicker">WORKFLOW</div><h2 id="vocab-workflow">四步完成转换</h2></div><p>在 Codex 对话中使用</p></div>
+      <div class="wp-section-head reveal"><div><div class="wp-kicker">使用步骤</div><h2 id="vocab-workflow">四步完成转换</h2></div><p>在 Codex 对话中使用</p></div>
       <div class="wp-step-list">
         <article class="wp-step reveal d1"><div><h3>提供词库</h3><p>上传文档，或直接在对话中粘贴词库内容。</p></div></article>
         <article class="wp-step reveal d2"><div><h3>触发技能</h3><p>说“转换词库”“词库转 JSON”或“格式化单词表”。</p></div></article>
@@ -59,7 +61,7 @@
     </section>
 
     <section class="wp-section wrap" aria-labelledby="vocab-output">
-      <div class="wp-section-head reveal"><div><div class="wp-kicker">OUTPUT SCHEMA</div><h2 id="vocab-output">标准输出结构</h2></div><p>清晰、可读、可导入</p></div>
+      <div class="wp-section-head reveal"><div><div class="wp-kicker">输出结构</div><h2 id="vocab-output">标准输出结构</h2></div><p>清晰、可读、可导入</p></div>
       <div class="wp-grid">
         <div class="wp-card wp-output-code reveal">
           <div class="wp-code-panel">
@@ -96,13 +98,13 @@
     <section class="wp-section wrap" aria-labelledby="vocab-next">
       <a class="wp-card wp-download-card reveal" href="https://wjtianze.github.io/english/words/index.html">
         <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="book"></span></div>
-        <div><div class="wp-kicker">NEXT STEP</div><h2 id="vocab-next">转换完成后，进入天择背单词</h2><p>在“词库管理”中导入生成的 JSON，即可开始四阶段词汇训练。</p></div>
+        <div><div class="wp-kicker">接下来</div><h2 id="vocab-next">转换完成后，进入天择背单词</h2><p>在“词库管理”中导入生成的 JSON，即可开始四阶段词汇训练。</p></div>
         <span class="wp-action-link">打开词汇训练应用 <span data-ui-icon="right" aria-hidden="true"></span></span>
       </a>
     </section>
   </main>
 
-  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260824-v5.2.0"></script>
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260828i-v5.3.0"></script>
   <script>
   document.querySelectorAll('[data-copy-target]').forEach(function (button) {
     button.addEventListener('click', function () {

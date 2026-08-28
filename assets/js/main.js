@@ -37,142 +37,90 @@
   })();
 
   var TZ_MANAGED_AI_PROXY_URL = "https://tianze-ai-proxy.xia-xilin-sgy.workers.dev/api/ai/chat";
-  var TZ_MANAGED_AI_MODEL = "gemini-3.7-flash-free";
-  var TZ_MANAGED_AI_DEFAULT_TOKENS = 65536;
-  var TZ_LEGACY_GLM_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions";
-  var TZ_LEGACY_GLM_PROXY_URL = "https://tianze-glm-proxy.xia-xilin-sgy.workers.dev/api/ai/chat";
-  var TZ_LEGACY_GLM_MODEL = "glm-4.7-flash";
+  var TZ_MANAGED_AI_MODEL = "glm-4.7-flash";
+  var TZ_SITE_AI_CONFIG_KEY = "tz_site_ai_config_v1";
+  var TZ_SITE_AI_PROXY_URL = "https://tianze-ai-proxy.xia-xilin-sgy.workers.dev/api/ai/site-chat";
+  var TZ_SITE_AI_MODEL = "glm-4.7-flash";
 
   /* ============================================================
      TZAI · 全站统一 AI 配置助手
-     天择网内任何需要 AI 的页面一律通过 TZAI.config() 取配置：
-     天择OS 内（同源 iframe）自动使用 OS 通用配置，OS 未配置时返回 null；
-     独立访问（不在 OS 内）返回 null，由页面自身决定是否提供本地配置入口。
+     天择网页面一律通过 TZAI.config() 读取站点自己的配置。
+     天择OS 使用 os.js 内的独立配置存档；两边共享同一默认模型、
+     Worker 安全边界和自定义配置语义，但互不读取、改写对方的状态。
      ============================================================ */
   window.TZAI = {
-    defaultCloudConfig: function () {
+    siteDefaultConfig: function () {
       return {
-        url: TZ_MANAGED_AI_PROXY_URL,
+        version: 1,
+        mode: "managed",
+        url: TZ_SITE_AI_PROXY_URL,
         key: "",
-        model: TZ_MANAGED_AI_MODEL,
+        model: TZ_SITE_AI_MODEL,
         api: "chat-completions",
-        maxTokens: TZ_MANAGED_AI_DEFAULT_TOKENS,
-        managedProxy: true
+        maxTokens: 65536,
+        managedProxy: true,
+        caps: { image: false, file: false, webSearch: false, contextLength: 204800 }
       };
     },
-    isLegacyBlankDefault: function (config) {
-      var c = config || {};
-      if (String(c.key || "").trim()) return false;
-      var url = String(c.url || "").replace(/\/+$/, "").toLowerCase();
-      var model = String(c.model || "").toLowerCase();
-      if (model === TZ_LEGACY_GLM_MODEL && url === TZ_LEGACY_GLM_URL) return true;
-      if (model === TZ_MANAGED_AI_MODEL && url === "https://aihubmix.com/v1/chat/completions") return true;
-      if (model !== "deepseek-v4-flash") return false;
-      return [
-        "https://api.deepseek.com/responses",
-        "https://api.deepseek.com/v1/chat/completions",
-        "https://api.deepseek.com/chat/completions"
-      ].indexOf(url) >= 0;
-    },
-    isLegacyManagedProxyPreset: function (config) {
-      var c = config || {};
-      if (String(c.key || "").trim()) return false;
+    isManagedEndpoint: function (value) {
       try {
-        var parsed = new URL(String(c.url || ""));
-        var loopback = ["127.0.0.1", "localhost", "[::1]"].indexOf(parsed.hostname.toLowerCase()) >= 0;
-        return String(c.model || "") === TZ_LEGACY_GLM_MODEL && !parsed.username && !parsed.password && !parsed.search && !parsed.hash &&
-          (parsed.href === TZ_LEGACY_GLM_PROXY_URL || (!!c.managedProxy && loopback && (parsed.protocol === "http:" || parsed.protocol === "https:")));
-      } catch (e) { return false; }
-    },
-    isManagedAIProxyPreset: function (config) {
-      var c = config || {};
-      try {
-        return new URL(String(c.url || "")).href === TZ_MANAGED_AI_PROXY_URL &&
-          String(c.model || "") === TZ_MANAGED_AI_MODEL;
-      } catch (e) { return false; }
-    },
-    normalizeCloudConfig: function (config) {
-      if (!config) return this.defaultCloudConfig();
-      if (this.isManagedAIProxyPreset(config)) {
-        return {
-          url: TZ_MANAGED_AI_PROXY_URL,
-          key: "",
-          model: TZ_MANAGED_AI_MODEL,
-          api: "chat-completions",
-          maxTokens: TZ_MANAGED_AI_DEFAULT_TOKENS,
-          managedProxy: true
-        };
-      }
-      if (this.isLegacyBlankDefault(config) || this.isLegacyManagedProxyPreset(config)) return this.defaultCloudConfig();
-      return config;
-    },
-    migrateSiteConversationDefaults: function () {
-      try {
-        var key = "tz_site_ai_chat_v1";
-        var state = JSON.parse(localStorage.getItem(key) || "null");
-        if (!state || !Array.isArray(state.chatSessions)) return false;
-        var changed = false;
-        state.chatSessions.forEach(function (session) {
-          var profile = session && session.aiProfile;
-          if (!profile || typeof profile !== "object") return;
-          var model = String(profile.apiModel || "").trim().toLowerCase();
-          if (["deepseek-v4-flash", TZ_LEGACY_GLM_MODEL].indexOf(model) < 0) return;
-          profile.apiModel = TZ_MANAGED_AI_MODEL;
-          changed = true;
+        var url = new URL(String(value || ""));
+        return [TZ_SITE_AI_PROXY_URL, TZ_MANAGED_AI_PROXY_URL].some(function (endpoint) {
+          var expected = new URL(endpoint);
+          return url.origin === expected.origin &&
+            url.pathname.replace(/\/+$/, "") === expected.pathname.replace(/\/+$/, "");
         });
-        if (changed) localStorage.setItem(key, JSON.stringify(state));
-        return changed;
       } catch (e) { return false; }
     },
-    // 是否在天择OS内运行（被 iframe 嵌入且能读到 OS 状态）
-    inOS: function () {
-      try { return window.parent !== window && !!localStorage.getItem("tzos_state_v1"); }
-      catch (e) { return false; }
-    },
-    // 读取天择OS通用 AI 配置（localStorage 同源共享）；未配置或不完整返回 null
-    osConfig: function () {
+    siteConfig: function () {
+      var fallback = this.siteDefaultConfig();
       try {
-        var s = JSON.parse(localStorage.getItem("tzos_state_v1") || "{}");
-        var saved = s.aiConfig;
-        var migrateLegacyDefault = !!saved &&
-          (this.isLegacyBlankDefault(saved) || this.isLegacyManagedProxyPreset(saved));
-        var c = this.normalizeCloudConfig(saved);
-        if (JSON.stringify(c) !== JSON.stringify(saved) &&
-            (!saved || this.isManagedAIProxyPreset(saved) || this.isLegacyBlankDefault(saved) || this.isLegacyManagedProxyPreset(saved))) {
-          s.aiConfig = c;
-          localStorage.setItem("tzos_state_v1", JSON.stringify(s));
-          if (migrateLegacyDefault) this.migrateSiteConversationDefaults();
-        }
-        var local = s.aiLocalConfig || { url: "http://127.0.0.1:11434", model: "qwen3.5:4b", api: "ollama", provider: "ollama" };
-        var mode = ["api", "local", "auto"].indexOf(s.aiRoutingMode) >= 0 ? s.aiRoutingMode : "api";
-        var targetsProxy = false;
-        try {
-          var configUrl = new URL(String(c.url || "")).href;
-          targetsProxy = configUrl === TZ_MANAGED_AI_PROXY_URL || configUrl === TZ_LEGACY_GLM_PROXY_URL;
-        } catch (e) {}
-        var apiReady = Boolean(c.url && c.model && (!targetsProxy || c.managedProxy) && (c.key || c.managedProxy));
-        var localReady = Boolean(local.url && local.model);
-        if ((mode === "api" && !apiReady) || (mode === "local" && !localReady) || (mode === "auto" && !(apiReady && localReady))) return null;
-        var active = mode === "local" ? local : c;
+        var saved = JSON.parse(localStorage.getItem(TZ_SITE_AI_CONFIG_KEY) || "null");
+        if (!saved || saved.mode !== "custom") return fallback;
+        var url = new URL(String(saved.url || ""));
+        if (url.protocol !== "https:" || url.username || url.password || this.isManagedEndpoint(url.href) ||
+            !String(saved.model || "").trim() || !String(saved.key || "").trim()) return fallback;
         return {
-          url: active.url,
-          key: mode === "local" ? "" : (active.key || ""),
-          model: active.model,
-          maxTokens: active.maxTokens || 0,
-          api: active.api || (/\/responses\/?(?:[?#].*)?$/i.test(active.url) ? "responses" : "chat-completions"),
-          managedProxy: mode !== "local" && !!active.managedProxy,
-          routeMode: mode,
-          apiConfig: c,
-          localConfig: local,
-          ready: true
+          version: 1,
+          mode: "custom",
+          url: url.href,
+          key: String(saved.key).trim().slice(0, 4096),
+          model: String(saved.model).trim().slice(0, 160),
+          api: String(saved.api || "").toLowerCase() === "responses" ? "responses" : "chat-completions",
+          maxTokens: Math.min(384000, Math.max(1, parseInt(saved.maxTokens, 10) || 8192)),
+          managedProxy: false,
+          caps: saved.caps && typeof saved.caps === "object" ? saved.caps : { image: false, file: false, webSearch: false, contextLength: 0 }
         };
-      } catch (e) {}
-      return null;
+      } catch (e) { return fallback; }
     },
-    // 统一入口：OS 内 → OS 配置；OS 外 → null（页面可用自有配置兜底）
+    saveSiteConfig: function (config) {
+      if (!config || config.mode !== "custom") {
+        localStorage.removeItem(TZ_SITE_AI_CONFIG_KEY);
+        return this.siteDefaultConfig();
+      }
+      var value = config;
+      var url = new URL(String(value.url || ""));
+      if (!/^https?:$/.test(url.protocol) || url.username || url.password) throw new Error("自定义接口需使用 HTTP 或 HTTPS 地址，且地址中不能包含账号信息");
+      if (this.isManagedEndpoint(url.href)) throw new Error("天择网受管代理只能使用服务端固定的 GLM-4.7-Flash；自定义服务请填写其它 HTTP 或 HTTPS 地址和你自己的密钥");
+      if (!String(value.model || "").trim() || !String(value.key || "").trim()) throw new Error("请填写模型名称与接口密钥");
+      var next = {
+        version: 1, mode: "custom", url: url.href,
+        key: String(value.key).trim().slice(0, 4096),
+        model: String(value.model).trim().slice(0, 160),
+        api: String(value.api || "").toLowerCase() === "responses" ? "responses" : "chat-completions",
+        maxTokens: Math.min(384000, Math.max(1, parseInt(value.maxTokens, 10) || 8192)),
+        caps: value.caps && typeof value.caps === "object" ? value.caps : { image: false, file: false, webSearch: false, contextLength: 0 }
+      };
+      localStorage.setItem(TZ_SITE_AI_CONFIG_KEY, JSON.stringify(next));
+      return next;
+    },
+    resetSiteConfig: function () {
+      localStorage.removeItem(TZ_SITE_AI_CONFIG_KEY);
+      return this.siteDefaultConfig();
+    },
+    // 统一入口始终读取站点配置；天择OS 的配置由 os.js 自己管理。
     config: function () {
-      if (this.inOS()) return this.osConfig();
-      return null;
+      return this.siteConfig();
     }
   };
 
@@ -381,11 +329,11 @@
   };
 
   /* ============================================================
-     Tianze Web 5.2 · Evolution Shell
+     Tianze Web 5.3 · 统一站点外壳
      The shared status line and command palette are generated
      once here so all existing static pages inherit the same shell.
      ============================================================ */
-  var TZ_SITE_VERSION = "5.2";
+  var TZ_SITE_VERSION = "5.3.0";
 
   function getTzSiteRoot() {
     var scripts = document.querySelectorAll('script[src*="assets/js/main.js"]');
@@ -439,6 +387,18 @@
     } catch (e) {}
 
     var rootUrl = getTzSiteRoot();
+    var brandIconUrl = new URL("assets/img/brand/tianze-mark.png?rev=20260828i", rootUrl).href;
+    var brandIcons = Array.prototype.slice.call(document.querySelectorAll('link[rel~="icon"]'));
+    if (!brandIcons.length && document.head) {
+      var brandIcon = document.createElement("link");
+      brandIcon.rel = "icon";
+      document.head.appendChild(brandIcon);
+      brandIcons.push(brandIcon);
+    }
+    brandIcons.forEach(function (icon) {
+      icon.href = brandIconUrl;
+      icon.type = "image/png";
+    });
     var items = [
       { id: "home", label: "首页", icon: "home", href: "index.html" },
       { id: "news", label: "新闻", icon: "newspaper", href: "news/index.html" },
@@ -500,24 +460,10 @@
           sharedNav.appendChild(navLink);
         });
       }
-      var topbarStatus = topbar.querySelector(".tz-topbar-status");
-      if (!topbarStatus) {
-        topbarStatus = document.createElement("div");
-        topbarStatus.className = "tz-topbar-status";
-        topbarStatus.setAttribute("aria-label", "当前板块");
-        var live = document.createElement("span");
-        live.className = "tz-live-dot";
-        live.setAttribute("aria-hidden", "true");
-        topbarStatus.appendChild(live);
-        var statusText = document.createElement("span");
-        statusText.textContent = active.label + " · 在线";
-        topbarStatus.appendChild(statusText);
-        var statusVersion = document.createElement("span");
-        statusVersion.textContent = TZ_SITE_VERSION;
-        topbarStatus.appendChild(statusVersion);
-        var toggle = topbar.querySelector(".nav-toggle");
-        topbarInner.insertBefore(topbarStatus, toggle || topbar.querySelector(".nav"));
-      }
+      /* 板块名称已经由导航的当前项表达，不再伪装“在线”状态。 */
+      topbar.querySelectorAll(".tz-topbar-status").forEach(function (element) {
+        element.remove();
+      });
 
       if (!topbar.querySelector(".tz-command-trigger")) {
         var commandTrigger = document.createElement("button");
@@ -566,62 +512,10 @@
       });
     }
 
-    if (!document.querySelector(".tz-site-statusbar")) {
-      var statusbar = document.createElement("div");
-      statusbar.className = "tz-site-statusbar";
-      statusbar.setAttribute("role", "region");
-      statusbar.setAttribute("aria-label", "站点运行状态");
-      statusbar.setAttribute("aria-live", "off");
-
-      var statusLeft = document.createElement("span");
-      statusLeft.className = "tz-site-statusbar__left";
-      var statusDot = document.createElement("i");
-      statusLeft.appendChild(statusDot);
-      var statusLabel = document.createElement("b");
-      statusLabel.textContent = "EVOLUTION NETWORK";
-      statusLeft.appendChild(statusLabel);
-      var zoneLabel = document.createElement("span");
-      zoneLabel.textContent = active.label;
-      statusLeft.appendChild(zoneLabel);
-
-      var statusCenter = document.createElement("button");
-      statusCenter.className = "tz-status-command";
-      statusCenter.type = "button";
-      appendTzIcon(statusCenter, "search");
-      var centerText = document.createElement("span");
-      centerText.textContent = "全站搜索";
-      statusCenter.appendChild(centerText);
-      var centerKey = document.createElement("kbd");
-      centerKey.textContent = "Ctrl K";
-      statusCenter.appendChild(centerKey);
-
-      var statusRight = document.createElement("span");
-      statusRight.className = "tz-site-statusbar__right";
-      var clockIcon = appendTzIcon(statusRight, "clock");
-      clockIcon.setAttribute("aria-hidden", "true");
-      var clock = document.createElement("time");
-      clock.className = "tz-site-clock";
-      statusRight.appendChild(clock);
-
-      statusbar.appendChild(statusLeft);
-      statusbar.appendChild(statusCenter);
-      statusbar.appendChild(statusRight);
-      document.body.appendChild(statusbar);
-
-      function updateClock() {
-        var now = new Date();
-        clock.dateTime = now.toISOString();
-        try {
-          clock.textContent = new Intl.DateTimeFormat("zh-CN", {
-            month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false
-          }).format(now);
-        } catch (e) {
-          clock.textContent = now.toLocaleString();
-        }
-      }
-      updateClock();
-      window.setInterval(updateClock, 30000);
-    }
+    /* 底部状态条曾重复导航和时钟信息，也会遮住移动端内容。 */
+    document.querySelectorAll(".tz-site-statusbar").forEach(function (element) {
+      element.remove();
+    });
 
     if (!document.querySelector(".tz-command-palette")) {
       var overlay = document.createElement("div");
@@ -890,21 +784,16 @@
     }
   }
 
-  /* ============================================================
-     Tianze Web 4.1 · shared internal-page primitives
-     Existing static pages keep their content and URLs. This pass
-     promotes their internal hierarchy into four shared structures:
-     page hero, workspace cards, workspace lists and readers.
-     ============================================================ */
+  /* 普通内容页只补充语义和可访问性，不再改写原有版式。 */
   var TZ_PAGE_ZONE_META = {
     home: { label: "天择网", code: "HOME", icon: "home" },
-    news: { label: "新闻中心", code: "NEWS", icon: "newspaper" },
-    blog: { label: "博客档案", code: "BLOG", icon: "pen" },
-    open: { label: "开放资源", code: "OPEN", icon: "unlock" },
-    ai: { label: "AI 工作区", code: "AI", icon: "ai" },
-    contact: { label: "联络节点", code: "CONTACT", icon: "user" },
-    english: { label: "英语工作区", code: "ENGLISH", icon: "book" },
-    game: { label: "游戏实验室", code: "GAME", icon: "gamepad" },
+    news: { label: "新闻", code: "NEWS", icon: "newspaper" },
+    blog: { label: "博客", code: "BLOG", icon: "pen" },
+    open: { label: "数据开源", code: "OPEN", icon: "unlock" },
+    ai: { label: "AI 专区", code: "AI", icon: "ai" },
+    contact: { label: "联系", code: "CONTACT", icon: "user" },
+    english: { label: "英语专区", code: "ENGLISH", icon: "book" },
+    game: { label: "游戏专区", code: "GAME", icon: "gamepad" },
     os: { label: "天择OS", code: "OS", icon: "monitor" }
   };
 
@@ -954,7 +843,7 @@
     appendTzIcon(signal, zone.meta.icon);
     var copy = makeTzText("span", "tz-page-hero__signal-copy");
     copy.appendChild(makeTzText("b", "", zone.meta.label));
-    copy.appendChild(makeTzText("small", "", "EVOLUTION / " + zone.meta.code));
+    copy.appendChild(makeTzText("small", "", zone.meta.label));
     signal.appendChild(copy);
     signal.appendChild(makeTzText("i", "", TZ_SITE_VERSION));
     hero.insertBefore(signal, hero.firstChild);
@@ -972,11 +861,11 @@
     var headLead = makeTzText("span", "tz-workspace-list__lead");
     appendTzIcon(headLead, zone.meta.icon);
     var headCopy = makeTzText("span", "tz-workspace-list__copy");
-    headCopy.appendChild(makeTzText("small", "", "INDEX STREAM / " + zone.meta.code));
+    headCopy.appendChild(makeTzText("small", "", zone.meta.label));
     headCopy.appendChild(makeTzText("b", "", zone.meta.label + "索引"));
     headLead.appendChild(headCopy);
     head.appendChild(headLead);
-    head.appendChild(makeTzText("span", "tz-workspace-list__count", String(items.length).padStart(2, "0") + " ENTRIES"));
+    head.appendChild(makeTzText("span", "tz-workspace-list__count", ""));
     list.insertBefore(head, list.firstChild);
 
     items.forEach(function (item, index) {
@@ -1016,7 +905,7 @@
     var consoleLead = makeTzText("span", "tz-reader__console-lead");
     appendTzIcon(consoleLead, isTutorial ? "book" : "document");
     var consoleCopy = makeTzText("span", "tz-reader__console-copy");
-    consoleCopy.appendChild(makeTzText("small", "", isTutorial ? "GUIDE READER" : "DOCUMENT READER"));
+    consoleCopy.appendChild(makeTzText("small", "", ""));
     consoleCopy.appendChild(makeTzText("b", "", zone.meta.label));
     consoleLead.appendChild(consoleCopy);
     consoleBar.appendChild(consoleLead);
@@ -1025,7 +914,7 @@
     var minutes = Math.max(2, Math.ceil(textLength / 420));
     var consoleMeta = makeTzText("span", "tz-reader__console-meta");
     consoleMeta.appendChild(makeTzText("span", "", "约 " + minutes + " 分钟"));
-    consoleMeta.appendChild(makeTzText("span", "", TZ_SITE_VERSION + " READER"));
+    consoleMeta.appendChild(makeTzText("span", "", ""));
     consoleBar.appendChild(consoleMeta);
     var progress = makeTzText("span", "tz-reader__progress");
     progress.setAttribute("aria-hidden", "true");
@@ -1062,7 +951,7 @@
     var end = makeTzText("div", "tz-reader__end");
     end.setAttribute("aria-hidden", "true");
     appendTzIcon(end, "check");
-    end.appendChild(makeTzText("span", "", "END OF DOCUMENT"));
+    end.appendChild(makeTzText("span", "", "正文结束"));
     reader.insertBefore(end, articleFoot);
 
     var progressScheduled = false;
@@ -1083,27 +972,12 @@
 
   function upgradeTzWorkspaceSections(main, zone) {
     var sections = Array.prototype.slice.call(main.querySelectorAll(":scope > .section"));
-    sections.forEach(function (section, sectionIndex) {
+    sections.forEach(function (section) {
       if (section.closest(".words-app, .gpa-game") || section.querySelector(":scope > .news-list")) return;
       section.classList.add("tz-workspace-section");
       section.setAttribute("data-tz-primitive", "workspace-section");
-      section.setAttribute("data-tz-section", String(sectionIndex + 1).padStart(2, "0"));
-
       var heading = section.querySelector(":scope > .section-head, :scope > .tz-prose-card > .section-head");
-      if (heading) {
-        heading.classList.add("tz-workspace-heading");
-        if (!heading.querySelector(".tz-workspace-heading__code")) {
-          heading.appendChild(makeTzText("span", "tz-workspace-heading__code", "MODULE " + String(sectionIndex + 1).padStart(2, "0")));
-        }
-      } else if (!section.querySelector(":scope > .tz-workspace-section__head")) {
-        var compactHead = makeTzText("div", "tz-workspace-section__head");
-        var compactLead = makeTzText("span", "");
-        appendTzIcon(compactLead, zone.meta.icon);
-        compactLead.appendChild(document.createTextNode(zone.meta.label));
-        compactHead.appendChild(compactLead);
-        compactHead.appendChild(makeTzText("small", "", "MODULE " + String(sectionIndex + 1).padStart(2, "0")));
-        section.insertBefore(compactHead, section.firstChild);
-      }
+      if (heading) heading.classList.add("tz-workspace-heading");
     });
   }
 
@@ -1124,6 +998,8 @@
   }
 
   function initTzInternalPagePrimitives() {
+    /* 旧版会重排页面 DOM 并插入装饰标题；保留空入口只为兼容旧调用。 */
+    return;
     if (!document.body || /\/ai\/skill\/tlh\/relativity-demo\.html$/i.test(location.pathname)) return;
     if (document.body.classList.contains("tz-homepage") ||
         document.body.classList.contains("coc-tool") ||
@@ -1197,12 +1073,7 @@
     iconObserver.observe(document.body, { childList: true, subtree: true });
   }
 
-  /* ============================================================
-     Tianze Web 4.1 / one-third narrative workspace
-     Every regular site page presents its title and introduction in
-     a stable left rail, with actionable or editorial content on the
-     right. Complex applications opt into their own equivalent grid.
-     ============================================================ */
+  /* 共享动效文件同时承载站内助手样式，因此仍按需加载。 */
   function ensureTzSplitMotionStyles() {
     if (document.querySelector('link[data-tz-split-motion]')) return;
     var scripts = document.querySelectorAll('script[src*="assets/js/main.js"]');
@@ -1210,8 +1081,22 @@
     if (!source) return;
     var link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = new URL("../css/split-motion.css?v=20260802-v4.1.8", source).href;
+    link.href = new URL("../css/split-motion.css?v=20260827d-v5.3.0", source).href;
     link.setAttribute("data-tz-split-motion", "true");
+    document.head.appendChild(link);
+  }
+
+  /* 最终视觉层单独维护，始终排在历史样式与共享动效之后。
+     这样旧页面无需逐个复制规则，也不会把生成发布副本当成源码修改。 */
+  function ensureTzRefactorStyles() {
+    if (document.querySelector('link[data-tz-site-refactor]')) return;
+    var scripts = document.querySelectorAll('script[src*="assets/js/main.js"]');
+    var source = scripts.length ? scripts[scripts.length - 1].src : "";
+    if (!source) return;
+    var link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = new URL("../css/site-refactor.css?v=20260828-v5.3.0", source).href;
+    link.setAttribute("data-tz-site-refactor", "true");
     document.head.appendChild(link);
   }
 
@@ -1246,6 +1131,8 @@
   }
 
   function initTzSplitArchitecture() {
+    /* 站内内容页恢复顺序正文，不再由脚本自动改造成两栏。 */
+    return;
     if (!document.body || /\/ai\/skill\/tlh\/relativity-demo\.html$/i.test(location.pathname)) return;
     var main = document.querySelector("main");
     if (!main) return;
@@ -1319,6 +1206,54 @@
     }
   }
 
+  function initTzHomeDirectory() {
+    var directory = document.querySelector("[data-site-directory]");
+    if (!directory || directory.getAttribute("data-directory-ready") === "true") return;
+
+    var toggles = Array.prototype.slice.call(directory.querySelectorAll("[data-directory-toggle]"));
+    var toggleAll = directory.querySelector("[data-directory-toggle-all]");
+
+    function setZoneOpen(button, open) {
+      var panelId = button.getAttribute("aria-controls");
+      var panel = panelId && document.getElementById(panelId);
+      if (!panel) return;
+      button.setAttribute("aria-expanded", open ? "true" : "false");
+      button.setAttribute("aria-label", (open ? "收起" : "展开") + button.getAttribute("data-directory-label"));
+      var text = button.querySelector("[data-directory-toggle-text]");
+      if (text) text.textContent = open ? "收起" : "展开";
+      panel.hidden = !open;
+    }
+
+    function syncToggleAll() {
+      if (!toggleAll) return;
+      var allOpen = toggles.every(function (button) {
+        return button.getAttribute("aria-expanded") === "true";
+      });
+      toggleAll.setAttribute("aria-expanded", allOpen ? "true" : "false");
+      toggleAll.textContent = allOpen ? "全部收起" : "全部展开";
+    }
+
+    toggles.forEach(function (button) {
+      setZoneOpen(button, button.getAttribute("aria-expanded") !== "false");
+      button.addEventListener("click", function () {
+        setZoneOpen(button, button.getAttribute("aria-expanded") !== "true");
+        syncToggleAll();
+      });
+    });
+
+    if (toggleAll) {
+      toggleAll.addEventListener("click", function () {
+        var shouldOpen = toggleAll.getAttribute("aria-expanded") !== "true";
+        toggles.forEach(function (button) { setZoneOpen(button, shouldOpen); });
+        syncToggleAll();
+      });
+    }
+
+    directory.setAttribute("data-directory-ready", "true");
+    syncToggleAll();
+  }
+
+  /* 旧星图构建器保留为兼容代码，但首页不再调用。 */
   function initTzHomeSiteTree() {
     var map = document.querySelector(".tz-homepage .tz-network-map");
     if (!map || map.getAttribute("data-site-tree-ready") === "true") return;
@@ -1351,7 +1286,8 @@
       "/ai/skill/tlh/relativity-demo.html": "相对论学习演示",
       "/ai/skill/vocab-to-json/": "词库转 JSON",
       "/coc/": "COC 专区",
-      "/coc/data/": "游戏数据查询",
+      "/coc/data/": "游戏静态数据",
+      "/coc/live/": "实时数据查询",
       "/coc/dmg-calc/": "伤害计算器",
       "/coc/planner/": "升级规划器",
       "/coc/tutorial/": "COC 教程",
@@ -1359,10 +1295,10 @@
       "/game/": "游戏专区",
       "/game/gpa-card/": "绩点战争",
       "/english/": "英语专区",
-      "/english/words/": "英语学习控制台",
-      "/words/": "背单词兼容入口",
+      "/english/words/": "背单词",
+      "/words/": "背单词旧入口",
       "/os/": "天择OS",
-      "/os/webos.html": "天择OS 5.2",
+      "/os/webos.html": "天择OS 5.3",
       "/contact/": "联系开发者"
     };
     var iconByRoot = {
@@ -1914,65 +1850,72 @@
 
   function initTzSiteMotion() {
     if (!document.body || /\/ai\/skill\/tlh\/relativity-demo\.html$/i.test(location.pathname)) return;
-    var reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     document.body.classList.add("tz-motion-enabled");
-
-    var candidates = document.querySelectorAll([
-      "main > :not(script):not(style):not(.tz-split-stack)",
-      ".tz-split-stack > .tz-split-content",
-      ".tz-split-content > *",
-      ".tz-workspace-card",
-      ".tz-workspace-list__item",
-      ".wp-card",
-      ".english-tool-card",
-      ".game-card",
-      ".coc-unit-card"
-    ].join(","));
-    Array.prototype.forEach.call(candidates, function (element, index) {
-      if (element.closest("[role='dialog'][hidden], .modal:not(.show):not(.active), .hidden")) return;
-      element.classList.add("tz-motion-item");
-      element.style.setProperty("--tz-motion-order", String(index % 7));
-    });
-
-    if (!reducedMotion && "IntersectionObserver" in window) {
-      var observer = new IntersectionObserver(function (entries) {
-        entries.forEach(function (entry) {
-          if (!entry.isIntersecting) return;
-          entry.target.classList.add("tz-motion-visible");
-          observer.unobserve(entry.target);
-        });
-      }, { rootMargin: "0px 0px -7% 0px", threshold: 0.001 });
-      document.querySelectorAll(".tz-motion-item").forEach(function (element) {
-        observer.observe(element);
-      });
-    } else {
-      document.querySelectorAll(".tz-motion-item").forEach(function (element) {
-        element.classList.add("tz-motion-visible");
-      });
-    }
-
+    /* 只让站点页眉完成一次轻微入场。正文不再统一淡入、上浮或随滚动位移。 */
     window.requestAnimationFrame(function () {
       window.requestAnimationFrame(function () {
         document.body.classList.add("tz-motion-ready");
       });
     });
-
-    var scrollPending = false;
-    function updateScrollMotion() {
-      scrollPending = false;
-      var shift = Math.max(-18, Math.min(18, window.scrollY * -0.018));
-      document.documentElement.style.setProperty("--tz-scroll-shift", shift.toFixed(2) + "px");
-    }
-    window.addEventListener("scroll", function () {
-      if (reducedMotion || scrollPending) return;
-      scrollPending = true;
-      window.requestAnimationFrame(updateScrollMotion);
-    }, { passive: true });
-    updateScrollMotion();
-
   }
 
   var TZ_SITE_AI_UI_KEY = "tz_site_ai_ui_v1";
+  var TZ_SITE_VISIT_HISTORY_KEY = "tz_site_visit_history_v1";
+  var TZ_SITE_VISIT_HISTORY_LIMIT = 24;
+
+  function normalizeTzSiteVisitPath(value, baseHref, expectedOrigin) {
+    try {
+      var base = new URL(baseHref || value);
+      var target = new URL(value, base);
+      var ownOrigin = String(expectedOrigin || base.origin);
+      if (!/^https?:$/i.test(target.protocol) || target.origin !== ownOrigin) return "";
+      var path = target.pathname || "/";
+      path = path.replace(/\/index\.html$/i, "/");
+      return path.charAt(0) === "/" ? path : "/" + path;
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function readTzSiteVisitHistory(storage) {
+    if (!storage || typeof storage.getItem !== "function") return [];
+    try {
+      var parsed = JSON.parse(storage.getItem(TZ_SITE_VISIT_HISTORY_KEY) || "[]");
+      if (!Array.isArray(parsed)) return [];
+      var seen = Object.create(null);
+      return parsed.map(function (item) {
+        var path = String(item && item.path || "").trim();
+        var visitedAt = Number(item && item.visitedAt);
+        if (path.charAt(0) !== "/" || /[?#]/.test(path) || !isFinite(visitedAt) || visitedAt <= 0) return null;
+        path = path.replace(/\/index\.html$/i, "/");
+        if (seen[path]) return null;
+        seen[path] = true;
+        return {
+          path: path.slice(0, 500),
+          title: String(item && item.title || path).replace(/\s+/g, " ").trim().slice(0, 160),
+          visitedAt: Math.floor(visitedAt)
+        };
+      }).filter(Boolean).sort(function (a, b) { return b.visitedAt - a.visitedAt; }).slice(0, TZ_SITE_VISIT_HISTORY_LIMIT);
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function recordTzSiteVisit(storage, href, title, now, ownOrigin) {
+    if (!storage || typeof storage.setItem !== "function") return [];
+    var path = normalizeTzSiteVisitPath(href, href, ownOrigin);
+    if (!path) return readTzSiteVisitHistory(storage);
+    var visitedAt = Number(now) || Date.now();
+    var history = readTzSiteVisitHistory(storage).filter(function (item) { return item.path !== path; });
+    history.unshift({
+      path: path,
+      title: String(title || path).replace(/\s+/g, " ").trim().slice(0, 160),
+      visitedAt: Math.floor(visitedAt)
+    });
+    history = history.slice(0, TZ_SITE_VISIT_HISTORY_LIMIT);
+    try { storage.setItem(TZ_SITE_VISIT_HISTORY_KEY, JSON.stringify(history)); } catch (e) {}
+    return history;
+  }
   function readTzSiteAssistantUiState() {
     try {
       var parsed = JSON.parse(sessionStorage.getItem(TZ_SITE_AI_UI_KEY) || "{}");
@@ -2002,19 +1945,21 @@
       if (window.parent !== window && new URLSearchParams(location.search).get("nochrome") === "1") return;
     } catch (e) {}
 
+    recordTzSiteVisit(localStorage, location.href, document.title, Date.now(), location.origin);
+
     var rootUrl = getTzSiteRoot();
     var restoredUiState = readTzSiteAssistantUiState();
     var launcher = document.createElement("button");
     launcher.className = "tz-site-ai-launcher";
     launcher.type = "button";
-    launcher.setAttribute("aria-label", "打开天择网 AI 对话");
+    launcher.setAttribute("aria-label", "打开天择网站内助手");
     launcher.setAttribute("aria-haspopup", "dialog");
     launcher.setAttribute("aria-expanded", "false");
     launcher.setAttribute("aria-controls", "tz-site-ai-dock");
     appendTzIcon(launcher, "ai");
     var launcherCopy = document.createElement("span");
-    launcherCopy.appendChild(makeTzText("b", "", "问天择网"));
-    launcherCopy.appendChild(makeTzText("small", "", "本地优先检索与导航"));
+    launcherCopy.appendChild(makeTzText("b", "", "站内助手"));
+    launcherCopy.appendChild(makeTzText("small", "", "查文章、工具和 COC 资料"));
     launcher.appendChild(launcherCopy);
 
     var dock = document.createElement("section");
@@ -2023,7 +1968,7 @@
     dock.hidden = true;
     dock.setAttribute("role", "dialog");
     dock.setAttribute("aria-modal", "false");
-    dock.setAttribute("aria-label", "天择网 AI 对话");
+    dock.setAttribute("aria-label", "天择网站内助手");
     dock.setAttribute("aria-hidden", "true");
 
     var dockBar = document.createElement("header");
@@ -2031,10 +1976,17 @@
     var dockTitle = document.createElement("span");
     appendTzIcon(dockTitle, "ai");
     var titleCopy = document.createElement("span");
-    titleCopy.appendChild(makeTzText("b", "", "天择网 AI"));
-    titleCopy.appendChild(makeTzText("small", "", "站内索引 + 本机知识 · 配置与天择OS共享"));
+    titleCopy.appendChild(makeTzText("b", "", "天择网站内助手"));
+    titleCopy.appendChild(makeTzText("small", "", "查找当前页和全站内容"));
     dockTitle.appendChild(titleCopy);
     dockBar.appendChild(dockTitle);
+    var settings = document.createElement("button");
+    settings.type = "button";
+    settings.className = "tz-site-ai-dock__close";
+    settings.setAttribute("aria-label", "打开站内助手设置");
+    settings.title = "站内助手设置";
+    appendTzIcon(settings, "settings");
+    dockBar.appendChild(settings);
     var close = document.createElement("button");
     close.type = "button";
     close.className = "tz-site-ai-dock__close";
@@ -2048,20 +2000,18 @@
     setup.setAttribute("aria-label", "AI 首次配置");
     appendTzIcon(setup, "key");
     var setupCopy = document.createElement("span");
-    setupCopy.appendChild(makeTzText("strong", "", "尚未配置 AI"));
-    setupCopy.appendChild(makeTzText("small", "", "可先搜索本站，或进入天择OS配置自定义 API 或本地模型。"));
+    setupCopy.appendChild(makeTzText("strong", "", "站内助手接口需要设置"));
+    setupCopy.appendChild(makeTzText("small", "", "可恢复本站默认通道，或填写只供站内助手使用的自定义接口。"));
     setup.appendChild(setupCopy);
     var setupActions = document.createElement("span");
     setupActions.className = "tz-site-ai-setup__actions";
     var localSearch = document.createElement("button");
     localSearch.type = "button";
     localSearch.textContent = "搜索本站";
-    var configLink = document.createElement("a");
-    configLink.href = new URL("os/webos.html", rootUrl).href;
-    configLink.target = "_blank";
-    configLink.rel = "noopener";
-    configLink.textContent = "进入天择OS配置";
-    configLink.setAttribute("aria-label", "在新标签页打开天择OS，随后选择 AI 配置");
+    var configLink = document.createElement("button");
+    configLink.type = "button";
+    configLink.textContent = "站内助手设置";
+    configLink.setAttribute("aria-label", "打开站内助手独立设置");
     setupActions.appendChild(localSearch);
     setupActions.appendChild(configLink);
     setup.appendChild(setupActions);
@@ -2069,10 +2019,10 @@
 
     var frame = document.createElement("iframe");
     frame.className = "tz-site-ai-dock__frame";
-    frame.title = "天择网 AI 对话";
+    frame.title = "天择网站内助手";
     frame.loading = "lazy";
     frame.setAttribute("allow", "clipboard-read; clipboard-write; display-capture");
-    frame.dataset.src = new URL("os/float-chat.html?embedded=1&site=1", rootUrl).href;
+    frame.dataset.src = new URL("os/float-chat.html?embedded=1&site=1&v=5.3.0", rootUrl).href;
     dock.appendChild(frame);
 
     var backdrop = document.createElement("div");
@@ -2081,38 +2031,47 @@
     backdrop.setAttribute("aria-hidden", "true");
     var aiModalMedia = window.matchMedia ? window.matchMedia("(max-width: 900px)") : { matches: false };
     var lastConfigured = null;
+    var closeTimer = 0;
 
     function hasAIConfig() {
-      return Boolean(window.TZAI && typeof window.TZAI.osConfig === "function" && window.TZAI.osConfig());
+      return Boolean(window.TZAI && typeof window.TZAI.siteConfig === "function" && window.TZAI.siteConfig());
     }
 
     function syncAISetup() {
       var configured = hasAIConfig();
       setup.hidden = configured;
       dock.classList.toggle("needs-setup", !configured);
-      if (lastConfigured === false && configured) {
-        frame.src = frame.src;
-      }
       lastConfigured = configured;
     }
 
     function setBackgroundInert(inert) {
-      Array.prototype.forEach.call(document.body.children, function (child) {
-        if (child === dock || child === backdrop || /^(SCRIPT|STYLE|LINK)$/i.test(child.tagName)) return;
-        if (inert) {
-          if (!child.hasAttribute("inert")) {
-            child.setAttribute("inert", "");
-            child.setAttribute("data-tz-ai-inert", "true");
-          }
-        } else if (child.getAttribute("data-tz-ai-inert") === "true") {
-          child.removeAttribute("inert");
-          child.removeAttribute("data-tz-ai-inert");
+      if (!inert) {
+        document.querySelectorAll('[data-tz-ai-inert="true"]').forEach(function (element) {
+          element.removeAttribute("inert");
+          element.removeAttribute("data-tz-ai-inert");
+        });
+        return;
+      }
+
+      function makeBranchInert(element) {
+        if (!element || element === dock || element === backdrop || /^(SCRIPT|STYLE|LINK)$/i.test(element.tagName)) return;
+        if (element.contains(dock)) {
+          Array.prototype.forEach.call(element.children, makeBranchInert);
+          return;
         }
-      });
+        if (!element.hasAttribute("inert")) {
+          element.setAttribute("inert", "");
+          element.setAttribute("data-tz-ai-inert", "true");
+        }
+      }
+
+      Array.prototype.forEach.call(document.body.children, makeBranchInert);
     }
 
     function syncAIModalMode(open) {
-      var modal = Boolean(open && aiModalMedia.matches);
+      var inline = dock.classList.contains("tz-site-ai-dock--inline");
+      var modal = Boolean(open && aiModalMedia.matches && !inline);
+      dock.setAttribute("role", inline ? "region" : "dialog");
       dock.setAttribute("aria-modal", String(modal));
       backdrop.hidden = !modal;
       document.body.classList.toggle("tz-site-ai-modal", modal);
@@ -2141,6 +2100,7 @@
           });
         });
       }
+      var currentPath = normalizeTzSiteVisitPath(location.href, location.href, location.origin);
       return {
         url: location.href,
         title: document.title,
@@ -2148,7 +2108,10 @@
           description ? description.content : "",
           text.replace(/\s+/g, " ").trim().slice(0, 5200)
         ].filter(Boolean).join("\n"),
-        navigation: navigation
+        navigation: navigation,
+        history: readTzSiteVisitHistory(localStorage).filter(function (item) {
+          return item.path !== currentPath;
+        }).slice(0, 20)
       };
     }
 
@@ -2164,9 +2127,22 @@
       if (!frame.getAttribute("src") && frame.dataset.src) frame.src = frame.dataset.src;
     }
 
+    function openSiteConfig() {
+      ensureFrameLoaded();
+      if (frame.contentWindow && frame.dataset.loaded === "1") {
+        frame.contentWindow.postMessage({ type: "tz-site-open-config-v1" }, location.origin);
+      } else {
+        frame.dataset.openConfigOnLoad = "1";
+      }
+    }
+
     function setOpen(open, options) {
       options = options || {};
       open = !!open;
+      if (closeTimer) {
+        window.clearTimeout(closeTimer);
+        closeTimer = 0;
+      }
       if (!options.restoring) writeTzSiteAssistantUiState({ open: open });
       launcher.setAttribute("aria-expanded", open ? "true" : "false");
       if (open) {
@@ -2186,29 +2162,42 @@
         dock.setAttribute("aria-hidden", "true");
         document.body.classList.remove("tz-site-ai-open");
         syncAIModalMode(false);
-        window.setTimeout(function () {
+        var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        closeTimer = window.setTimeout(function () {
+          closeTimer = 0;
           dock.hidden = true;
           if (!options.restoring) launcher.focus({ preventScroll: true });
-        }, 190);
+        }, reduced ? 0 : 190);
       }
     }
 
     launcher.addEventListener("click", function () { setOpen(dock.hidden); });
-    close.addEventListener("click", function () { setOpen(false); });
+    settings.addEventListener("click", openSiteConfig);
+    configLink.addEventListener("click", openSiteConfig);
+    close.addEventListener("click", function () {
+      if (!dock.classList.contains("tz-site-ai-dock--inline")) setOpen(false);
+    });
     backdrop.addEventListener("click", function () { setOpen(false); });
     localSearch.addEventListener("click", function () {
-      setOpen(false);
+      if (!dock.classList.contains("tz-site-ai-dock--inline")) setOpen(false);
       window.setTimeout(function () {
         var trigger = document.querySelector(".tz-command-trigger, .tz-status-command");
         if (trigger) trigger.click();
       }, 210);
     });
-    frame.addEventListener("load", sendContext);
+    frame.addEventListener("load", function () {
+      frame.dataset.loaded = "1";
+      sendContext();
+      if (frame.dataset.openConfigOnLoad === "1") {
+        delete frame.dataset.openConfigOnLoad;
+        frame.contentWindow.postMessage({ type: "tz-site-open-config-v1" }, location.origin);
+      }
+    });
     document.addEventListener("keydown", function (event) {
-      if (event.key === "Escape" && !dock.hidden) {
+      if (event.key === "Escape" && !dock.hidden && !dock.classList.contains("tz-site-ai-dock--inline")) {
         event.preventDefault();
         setOpen(false);
-      } else if (event.key === "Tab" && !dock.hidden && aiModalMedia.matches) {
+      } else if (event.key === "Tab" && !dock.hidden && dock.getAttribute("aria-modal") === "true") {
         var focusable = Array.prototype.filter.call(
           dock.querySelectorAll('a[href], button:not([disabled]), iframe, [tabindex]:not([tabindex="-1"])'),
           function (element) { return !element.hidden && element.offsetParent !== null; }
@@ -2232,8 +2221,14 @@
     document.addEventListener("visibilitychange", function () {
       if (!document.hidden) syncAISetup();
     });
-    window.addEventListener("popstate", sendContext);
+    window.addEventListener("popstate", function () {
+      recordTzSiteVisit(localStorage, location.href, document.title, Date.now(), location.origin);
+      sendContext();
+    });
     window.addEventListener("pagehide", function () {
+      // 首页内嵌、下滑后的首页浮动窗与普通页面共用同一真实开关状态。
+      // 静态页面跳转会销毁整个 iframe，因此离页前必须无条件保存，不能因
+      // `[data-home-ai-stage]` 存在而漏掉“首页下滑 -> 新闻”等导航路径。
       writeTzSiteAssistantUiState({ open: dock.getAttribute("aria-hidden") === "false" });
     });
     var screenshotInProgress = false;
@@ -2311,20 +2306,104 @@
       location.href = requested.href;
     });
 
+    var launcherHint = launcherCopy.querySelector("small");
+    var dockHint = titleCopy.querySelector("small");
+    var setupTitle = setupCopy.querySelector("strong");
+    var setupHint = setupCopy.querySelector("small");
+    if (launcherHint) launcherHint.textContent = "查文章、工具和 COC 资料";
+    if (dockHint) dockHint.textContent = "查找当前页和全站内容";
+    if (setupTitle) setupTitle.textContent = "第一次使用前，请先选择模型服务";
+    if (setupHint) setupHint.textContent = "可以使用本站通道，也可以填写自己的接口；设置只用于这个助手。";
+
     syncAISetup();
     document.body.appendChild(launcher);
     document.body.appendChild(backdrop);
-    document.body.appendChild(dock);
-    if (restoredUiState.open === true) setOpen(true, { restoring: true });
+
+    var homeAIStage = document.querySelector("[data-home-ai-stage]");
+    if (homeAIStage) {
+      homeAIStage.appendChild(dock);
+      homeAIStage.setAttribute("data-home-ai-ready", "true");
+      dock.setAttribute("data-home-ai-dock", "true");
+      var homeAIObserver = null;
+      var homeAIMode = "";
+      var homeAIInline = true;
+      var homeAIFrame = 0;
+      var reducedMotionMedia = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : { matches: false };
+
+      function homeAIStageIsVisible() {
+        var rect = homeAIStage.getBoundingClientRect();
+        var viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+        var visible = Math.max(0, Math.min(rect.bottom, viewportHeight * .82) - Math.max(rect.top, viewportHeight * .08));
+        return rect.height > 0 && visible / rect.height >= .16;
+      }
+
+      function applyHomeAIMode(inline) {
+        homeAIInline = Boolean(inline);
+        var compact = Boolean(aiModalMedia.matches);
+        var nextMode = homeAIInline ? "inline" : (compact ? "launcher" : "floating");
+        if (nextMode === homeAIMode) {
+          syncAIModalMode(nextMode === "floating" && !dock.hidden);
+          return;
+        }
+        homeAIMode = nextMode;
+        homeAIStage.setAttribute("data-home-ai-mode", nextMode);
+        dock.setAttribute("data-home-ai-mode", nextMode);
+        dock.classList.toggle("tz-site-ai-dock--inline", nextMode === "inline");
+        dock.classList.toggle("tz-site-ai-dock--home-floating", nextMode === "floating");
+        document.body.classList.toggle("tz-home-ai-inline", nextMode === "inline");
+        document.body.classList.toggle("tz-home-ai-floating", nextMode === "floating");
+
+        if (nextMode === "launcher") setOpen(false, { restoring: true });
+        else setOpen(true, { restoring: true });
+        syncAIModalMode(nextMode === "floating");
+      }
+
+      homeAIStage.setAttribute("data-home-ai-reduced-motion", reducedMotionMedia.matches ? "true" : "false");
+      applyHomeAIMode(true);
+      if ("IntersectionObserver" in window) {
+        homeAIObserver = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.target !== homeAIStage) return;
+            syncHomeAIPosition();
+          });
+        }, {
+          root: null,
+          rootMargin: "-8% 0px -18% 0px",
+          threshold: [0, 0.16, 0.35, 0.65]
+        });
+        homeAIObserver.observe(homeAIStage);
+      }
+
+      function syncHomeAIPosition() {
+        if (homeAIFrame) return;
+        homeAIFrame = window.requestAnimationFrame(function () {
+          homeAIFrame = 0;
+          applyHomeAIMode(homeAIStageIsVisible());
+        });
+      }
+      window.addEventListener("scroll", syncHomeAIPosition, { passive: true });
+      window.addEventListener("resize", syncHomeAIPosition, { passive: true });
+      window.addEventListener("orientationchange", syncHomeAIPosition, { passive: true });
+      var syncHomeAIViewport = function () { syncHomeAIPosition(); };
+      if (aiModalMedia.addEventListener) aiModalMedia.addEventListener("change", syncHomeAIViewport);
+      else if (aiModalMedia.addListener) aiModalMedia.addListener(syncHomeAIViewport);
+      var syncReducedMotion = function () {
+        homeAIStage.setAttribute("data-home-ai-reduced-motion", reducedMotionMedia.matches ? "true" : "false");
+      };
+      if (reducedMotionMedia.addEventListener) reducedMotionMedia.addEventListener("change", syncReducedMotion);
+      else if (reducedMotionMedia.addListener) reducedMotionMedia.addListener(syncReducedMotion);
+      syncHomeAIPosition();
+    } else {
+      document.body.appendChild(dock);
+      if (restoredUiState.open === true) setOpen(true, { restoring: true });
+    }
   }
 
   function bootTzUiV4() {
     ensureTzSplitMotionStyles();
+    ensureTzRefactorStyles();
     initTzSectionIdentity();
     initTzEvolutionShell();
-    initTzInternalPagePrimitives();
-    initTzSplitArchitecture();
-    initTzHomeSiteTree();
     initTzUiV4();
     initTzSiteMotion();
     initTzSiteAssistant();
@@ -2359,23 +2438,23 @@
     ORDER: ["cold", "mid", "warm", "porcelain", "ink"],
     SKINS: {
       cold: {
-        name: "冷色星图", description: "紫蓝绿 · 深夜玻璃",
+        name: "冷蓝", description: "冷色背景 · 清晰对比",
         css: ["#7c3aed", "#3b82f6", "#10b981"], themeColor: "#102947", scheme: "dark"
       },
       mid: {
-        name: "标准平衡", description: "澄蓝青绿 · 清晰均衡",
+        name: "青绿", description: "青绿背景 · 清晰均衡",
         css: ["#3b82f6", "#10b981", "#eab308"], themeColor: "#123133", scheme: "dark"
       },
       warm: {
-        name: "暖光原野", description: "青绿金橙 · 温暖材质",
+        name: "暖色", description: "金橙背景 · 温暖柔和",
         css: ["#10b981", "#eab308", "#f97316"], themeColor: "#3a2918", scheme: "dark"
       },
       porcelain: {
-        name: "明亮云瓷", description: "云白雾蓝 · 轻盈瓷面",
+        name: "明亮", description: "浅色背景 · 适合白天",
         css: ["#6552b8", "#2563a8", "#167d69"], themeColor: "#edf3f7", scheme: "light"
       },
       ink: {
-        name: "墨潮", description: "墨黑青黛 · 克制纸纹",
+        name: "墨色", description: "深色背景 · 较低亮度",
         css: ["#4856a8", "#158a91", "#6c8d72"], themeColor: "#071417", scheme: "dark"
       }
     },

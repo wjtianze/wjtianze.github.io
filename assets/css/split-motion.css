@@ -6,8 +6,7 @@
     "Segoe UI", sans-serif;
   --tz-type-literary: "STXingkai", "FZShuTi", "STKaiti", "KaiTi",
     "Kaiti SC", "Noto Serif SC", serif;
-  --tz-type-coc: "Supercell-Magic", "Supercell Magic", "Arial Rounded MT Bold",
-    "Trebuchet MS", "Microsoft YaHei UI", sans-serif;
+  --tz-type-coc: "Microsoft YaHei UI", "PingFang SC", "Microsoft YaHei", sans-serif;
   --tz-split-gap: clamp(18px, 2.2vw, 32px);
   --tz-motion-ease: cubic-bezier(.2, .78, .24, 1);
   --tz-motion-spring: cubic-bezier(.2, .86, .24, 1.08);
@@ -400,43 +399,16 @@ body.tz-motion-enabled main.tz-split-main > .tz-split-stack {
   filter: none;
 }
 
-body.tz-motion-enabled :is(
-  .tz-workspace-card,
-  .tz-workspace-list__item,
-  .wp-card,
-  .english-tool-card,
-  .game-card,
-  .card,
-  .btn,
-  button,
-  .nav a
-) {
+body.tz-motion-enabled :is(.btn, button, .nav a) {
   transition:
-    transform .24s var(--tz-motion-spring),
     border-color .22s ease,
-    box-shadow .28s var(--tz-motion-ease),
-    filter .24s ease,
     color .2s ease,
     background-color .22s ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  body.tz-motion-enabled :is(
-    .tz-workspace-card,
-    .tz-workspace-list__item,
-    .wp-card,
-    .english-tool-card,
-    .game-card,
-    .card
-  ):hover {
-    transform: translate3d(0, -5px, 0);
-    border-color: color-mix(in srgb, var(--c-green, #5eead4) 72%, transparent);
-    box-shadow: 0 24px 62px rgba(0, 0, 0, .24), 0 0 34px color-mix(in srgb, var(--c-green, #5eead4) 14%, transparent);
-    filter: saturate(1.08);
-  }
-
   body.tz-motion-enabled :is(.btn, button, .nav a):hover {
-    transform: translate3d(0, -2px, 0);
+    border-color: color-mix(in srgb, var(--c-green, #5eead4) 64%, transparent);
   }
 }
 
@@ -451,17 +423,14 @@ body.tz-motion-enabled :is(
   gap: 10px;
   min-height: 54px;
   padding: 8px 14px 8px 9px;
-  border: 1px solid color-mix(in srgb, var(--c-green, #5eead4) 70%, transparent);
-  border-radius: 18px;
-  background-color: color-mix(in srgb, var(--c-bg-card, #071923) 92%, transparent);
-  background-image: var(--tz-v4-button, none);
-  background-position: center;
-  background-size: cover;
-  background-blend-mode: screen;
+  border: 1px solid rgba(105, 218, 194, .48);
+  border-radius: 10px;
+  background: #0a2b2f;
+  background-image: none !important;
   color: var(--ink, #f4f7fb);
-  box-shadow: 0 18px 50px rgba(0, 0, 0, .3), 0 0 30px color-mix(in srgb, var(--c-green, #5eead4) 13%, transparent);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .2);
+  text-shadow: none;
   cursor: pointer;
-  backdrop-filter: blur(18px);
 }
 
 .tz-site-ai-launcher > .tz-icon {
@@ -484,8 +453,8 @@ body.tz-motion-enabled :is(
 
 .tz-site-ai-launcher small {
   color: var(--ink-dim, #b6c3cf);
-  font: 9px/1.2 ui-monospace, "SFMono-Regular", Consolas, monospace;
-  letter-spacing: .04em;
+  font: 10px/1.3 "Microsoft YaHei UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  letter-spacing: 0;
 }
 
 /* AI 专区的六个模型标志占据底部安全带；桌面端将助手入口收成图标，
@@ -510,17 +479,16 @@ body.tz-motion-enabled :is(
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--c-green, #5eead4) 58%, transparent);
-  border-radius: 24px;
-  background: color-mix(in srgb, var(--c-bg, #04111b) 96%, transparent);
-  box-shadow: 0 32px 100px rgba(0, 0, 0, .48), 0 0 60px color-mix(in srgb, var(--c-green, #5eead4) 12%, transparent);
+  border: 1px solid rgba(105, 218, 194, .4);
+  border-radius: 14px;
+  background: var(--c-bg, #04111b);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .42);
   opacity: 0;
   transform: translate3d(0, 18px, 0) scale(.975);
   transform-origin: right bottom;
   transition:
     opacity .18s ease,
     transform .24s var(--tz-motion-spring);
-  backdrop-filter: blur(24px);
 }
 
 .tz-site-ai-dock.open {
@@ -541,11 +509,8 @@ body.tz-motion-enabled :is(
   justify-content: space-between;
   gap: 12px;
   padding: 0 10px 0 14px;
-  border-bottom: 1px solid color-mix(in srgb, var(--c-border, #5eead4) 45%, transparent);
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--c-bg-card, #071923) 96%, transparent), color-mix(in srgb, var(--c-blue, #38bdf8) 12%, transparent)),
-    var(--tz-v4-surface, none);
-  background-size: cover;
+  border-bottom: 1px solid rgba(105, 218, 194, .24);
+  background: #0a2b2f;
 }
 
 .tz-site-ai-dock__bar > span {
@@ -586,7 +551,7 @@ body.tz-motion-enabled :is(
   display: grid;
   place-items: center;
   padding: 0;
-  border: 1px solid color-mix(in srgb, var(--c-border, #5eead4) 40%, transparent);
+  border: 1px solid rgba(105, 218, 194, .32);
   border-radius: 12px;
   background: color-mix(in srgb, var(--c-bg-card, #071923) 84%, transparent);
   color: var(--ink, #f4f7fb);
@@ -653,6 +618,43 @@ body.tz-site-ai-modal { overflow: hidden; }
   background: transparent;
 }
 
+/* 首页只移动同一个 dock 的定位方式；iframe 始终留在该节点中。 */
+.home-ai-stage > .tz-site-ai-dock.tz-site-ai-dock--inline {
+  position: relative;
+  inset: auto;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  border-radius: 10px;
+  box-shadow: none;
+  opacity: 1;
+  transform: none;
+  transform-origin: center;
+}
+
+.home-ai-stage > .tz-site-ai-dock.tz-site-ai-dock--inline .tz-site-ai-dock__bar > button:last-child {
+  display: none;
+}
+
+.home-ai-stage > .tz-site-ai-dock.tz-site-ai-dock--home-floating {
+  position: fixed;
+  top: auto;
+  right: calc(18px + var(--tz-safe-right, 0px));
+  bottom: calc(18px + var(--tz-safe-bottom, 0px));
+  left: auto;
+  width: min(370px, calc(100vw - 36px));
+  height: min(480px, calc(100dvh - 96px));
+  border-radius: 10px;
+}
+
+body.tz-home-ai-inline .tz-site-ai-launcher,
+body.tz-home-ai-floating.tz-site-ai-open .tz-site-ai-launcher {
+  visibility: hidden;
+  pointer-events: none;
+  opacity: 0;
+}
+
 @media (max-width: 900px) {
   body.tz-site-shell main.tz-split-main,
   .tz-reader.tz-reader-split {
@@ -710,6 +712,14 @@ body.tz-site-ai-modal { overflow: hidden; }
     width: auto;
     height: auto;
     border-radius: 20px;
+  }
+
+  .home-ai-stage > .tz-site-ai-dock.tz-site-ai-dock--inline {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
   }
 
   .tz-site-ai-setup {

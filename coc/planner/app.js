@@ -34,12 +34,12 @@
 
   var HOME_LANES = [
     { key:"home_builder", label:"建筑工人", color:"#7c3aed" },
-    { key:"home_lab",     label:"研究员",   color:"#3b82f6" },
-    { key:"home_pet",     label:"战宠研究员", color:"#f59e0b" }
+    { key:"home_lab",     label:"实验室",   color:"#3b82f6" },
+    { key:"home_pet",     label:"战宠小屋", color:"#f59e0b" }
   ];
   var BB_LANES = [
     { key:"bb_builder", label:"建筑工人", color:"#8b5cf6" },
-    { key:"bb_lab",     label:"研究员",   color:"#06b6d4" }
+    { key:"bb_lab",     label:"星空实验室",   color:"#06b6d4" }
   ];
   var LAB_GID="1000007", TAVERN_GID="1000071", PETHOUSE_GID="1000068";
 
@@ -403,7 +403,7 @@
       card.querySelector("span").textContent=label+(mode===STATE.mode?" · 当前":"");
       card.querySelector("b").textContent=snap?(m.tasks+" 项"):"未建立";
       card.querySelector("small").textContent=snap?
-        ("家乡 "+fmtDur(m.homeSpan)+" · 夜世界 "+fmtDur(m.bbSpan)+" · "+fmtDateTime(snap.updatedAt)):
+        ("家乡村庄 "+fmtDur(m.homeSpan)+" · 建筑大师基地 "+fmtDur(m.bbSpan)+" · "+fmtDateTime(snap.updatedAt)):
         "切换到该模式后可重建或复制当前方案";
     });
   }
@@ -487,7 +487,7 @@
     $("vpExportIcs").addEventListener("click",exportCurrentIcs);
   }
   function modeDesc(){
-    var prefix=PARTIAL?"当前是官方接口公开资料的部分规划：只包含接口实际返回的单位，不推断缺失建筑；时间轴暂按英雄/夜世界各 1 名工人、1 名研究员和 1 名战宠研究员估算。":"";
+    var prefix=PARTIAL?"当前是官方接口公开资料的部分规划：只包含接口实际返回的单位，不推断缺失建筑；家乡村庄与建筑大师基地暂按各 1 名建筑工人，实验室、星空实验室和战宠小屋各按 1 个升级栏位估算。":"";
     if(STATE.mode==="steady")return prefix+"稳本模式：严格依次完成实验室、第一档建筑、第二档防御、英雄和其它；上一阶段全部结束后才进入下一阶段，同档由多名建筑工人按时间短→长分配。超级充能跟随所属建筑的优先档。实验室与战宠小屋先排常用配兵，莱希和大牦固定最后。";
     return prefix+"速本模式：忽略防御建筑、建筑工人小屋升级、陷阱、资源采集器与英雄，集中资源冲大本营。";
   }
@@ -593,7 +593,7 @@
       }
       STATE.mode=compatible&&PLAN_STORAGE.MODES.indexOf(oldState.activeMode)>=0?oldState.activeMode:"steady";
       function metric(l,val){return '<div class="v-metric"><div class="vm-label">'+esc(l)+'</div><div class="vm-value">'+esc(val)+'</div></div>';}
-      $("vpMetricsWrap").innerHTML=metric("玩家标签",v.tag||"-")+metric("采集时间",dt?dt.toLocaleString("zh-CN"):"-")+metric("家乡大本营",TH+" 本")+metric("夜世界大本营",BH?BH+" 本":"未建")+metric("游戏数据",PLAN_IDENTITY.gameDataVersion)+metric("村庄指纹",PLAN_IDENTITY.villageFingerprint);
+      $("vpMetricsWrap").innerHTML=metric("玩家标签",v.tag||"-")+metric("采集时间",dt?dt.toLocaleString("zh-CN"):"-")+metric("家乡村庄大本营",TH+" 本")+metric("建筑大师大本营",BH?BH+" 本":"未建")+metric("游戏数据",PLAN_IDENTITY.gameDataVersion)+metric("村庄指纹",PLAN_IDENTITY.villageFingerprint);
       $("vpGobWorker").checked=STATE.gobWorker===1; $("vpGobLab").checked=STATE.gobLab===1; $("vpModeDesc").textContent=modeDesc();
       homeP=new Planner("home",{lanes:HOME_LANES,svgId:"vpGanttHome",wrapId:"vpGanttWrapHome",pendingGridId:"vpPendingGridHome",pendingCountId:"vpPendingCountHome",infoId:"vpInfoHome",statsId:"vpStatsHome",zoomLabelId:"vpZoomLabelHome"});
       bbP=new Planner("bb",{lanes:BB_LANES,svgId:"vpGanttBB",wrapId:"vpGanttWrapBB",pendingGridId:"vpPendingGridBB",pendingCountId:"vpPendingCountBB",infoId:"vpInfoBB",statsId:"vpStatsBB",zoomLabelId:"vpZoomLabelBB"});

@@ -10,7 +10,7 @@
   var root = rootUrl();
   function ensureManifest() {
     if (document.querySelector('link[rel="manifest"]')) return;
-    var link = document.createElement("link"); link.rel = "manifest"; link.href = new URL("manifest.webmanifest", root).href; document.head.appendChild(link);
+    var link = document.createElement("link"); link.rel = "manifest"; link.href = new URL("manifest.webmanifest?v=20260828i", root).href; document.head.appendChild(link);
   }
   function workerTarget() { return registration && (registration.waiting || registration.active) || navigator.serviceWorker.controller; }
   async function request(message) {

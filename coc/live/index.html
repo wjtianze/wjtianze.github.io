@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#102947" />
+  <title>COC 实时数据查询 · 天择网</title>
+  <meta name="description" content="用图形表单查询《部落冲突》玩家、部落、成员、部落对战、部落对战联赛、突袭周末、地区、排行榜、赛季与标签资料；无需开发者账号或密钥。" />
+  <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828i-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css?v=20260827-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-workspace.css?v=20260827d-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/coc/live/live.css?v=20260828c-v5.3.0" />
+  <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828i" />
+</head>
+<body class="coc-tool coc-live-tool coc-live-page">
+  <a class="tz-skip-link" href="#mainContent">跳到主要内容</a>
+  <div class="bg-mesh" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="https://wjtianze.github.io/index.html" aria-label="天择网首页">
+        <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/></svg></span>
+        <span class="logo-text">天择网</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-label="打开菜单" data-ui-icon="menu"></button>
+      <nav class="nav" aria-label="主导航"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html" class="active"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a><a href="https://wjtianze.github.io/contact/index.html"><span>联系开发者</span></a></nav>
+    </div>
+  </header>
+
+  <main id="mainContent" class="coc-live-main" tabindex="-1">
+    <section class="coc-live-hero wrap" aria-labelledby="cocLiveTitle">
+      <nav class="crumb" aria-label="面包屑"><a href="https://wjtianze.github.io/index.html">主页</a><span aria-hidden="true">›</span><a href="https://wjtianze.github.io/coc/index.html">COC 专区</a><span aria-hidden="true">›</span><span aria-current="page">实时数据查询</span></nav>
+      <div class="coc-live-hero-grid">
+        <div class="coc-live-intro">
+          <p class="coc-live-overline">官方公开资料 · 图形查询</p>
+          <h1 id="cocLiveTitle">从一个标签，查到整场部落对战</h1>
+          <p class="coc-live-deck">不用写代码，也不用填写开发者账号。选择一个问题、填入公开标签，结果会整理成可继续点击的资料卡和表格。</p>
+          <dl class="coc-live-facts" aria-label="查询器能力概览">
+            <div><dt>40</dt><dd>项只读查询</dd></div>
+            <div><dt>8</dt><dd>个业务分类</dd></div>
+            <div><dt>0</dt><dd>个访客密钥</dd></div>
+          </dl>
+          <nav class="coc-zone-switch" aria-label="COC 数据专区">
+            <a href="https://wjtianze.github.io/coc/data/index.html"><span class="tz-icon" data-icon="folder" aria-hidden="true"></span><span><b>游戏静态数据</b><small>兵种、建筑与升级数值</small></span></a>
+            <a href="https://wjtianze.github.io/coc/live/index.html" class="is-active" aria-current="page"><span class="tz-icon" data-icon="search" aria-hidden="true"></span><span><b>实时数据查询</b><small>玩家、部落与部落对战资料</small></span></a>
+          </nav>
+        </div>
+
+        <aside class="coc-live-service" aria-labelledby="cocServiceTitle">
+          <div class="coc-live-service-head">
+            <div><p class="coc-live-overline">云端查询服务</p><h2 id="cocServiceTitle">连接状态</h2></div>
+            <span class="coc-live-status" id="cocLiveStatus" role="status" aria-live="polite">尚未检查</span>
+          </div>
+          <p id="cocServiceDetail">网页只发送查询动作与公开标签，不收集邮箱、密码或开发者密钥。</p>
+          <button class="live-button live-button--primary" type="button" id="cocConnect">检查并重试连接</button>
+          <details>
+            <summary>服务边界与隐私</summary>
+            <p>云端查询服务只提供不涉及账号隐私的公开资料查询；玩家令牌验证、账号操作、事件订阅和内部静态目录均不开放。</p>
+          </details>
+        </aside>
+      </div>
+    </section>
+
+    <div class="coc-live-workspace wrap">
+      <aside class="coc-live-sidebar" aria-labelledby="cocQueryNavTitle">
+        <div class="coc-live-sidebar-head">
+          <div><p class="coc-live-overline">图形模式</p><h2 id="cocQueryNavTitle">选择查询</h2></div>
+          <span class="coc-live-capability-count" id="cocCapabilityCount">40 项</span>
+        </div>
+        <nav class="coc-live-category-nav" id="cocCategoryNav" aria-label="实时查询分类"></nav>
+        <nav class="coc-live-tool-nav" id="cocToolNav" aria-label="当前分类的查询项目"></nav>
+        <p class="coc-live-sidebar-note" id="cocCapabilityNote">连接后会核对云端实际开放的查询项目。</p>
+        <aside class="coc-live-truth-note" aria-labelledby="cocClanGamesTitle">
+          <p class="coc-live-overline">数据边界</p>
+          <h3 id="cocClanGamesTitle">部落竞赛只有日程提示</h3>
+          <p>官方实时接口不提供部落竞赛积分、任务或奖励进度。这里不会推测或伪造这些数据，只会显示大致的开始与结束时间提示。</p>
+        </aside>
+      </aside>
+
+      <section class="coc-live-stage" aria-label="查询工作区">
+        <article class="coc-live-query-panel" aria-labelledby="cocActionTitle">
+          <header class="coc-live-action-head">
+            <div>
+              <p class="coc-live-overline" id="cocActionEyebrow">玩家</p>
+              <h2 id="cocActionTitle">玩家资料</h2>
+              <p id="cocActionDescription">输入玩家标签，查看等级、奖杯、联赛、部落、英雄与部队概况。</p>
+            </div>
+            <button class="live-icon-button" type="button" id="cocCopyLink" aria-label="复制当前查询页面链接" title="复制当前查询页面链接"><span class="tz-icon" data-icon="copy" aria-hidden="true"></span></button>
+          </header>
+
+          <nav class="coc-live-related" id="cocActionLinks" aria-label="相关查询"></nav>
+
+          <form id="cocFriendlyForm" novalidate aria-describedby="cocLiveError">
+            <div class="coc-live-form-grid" id="cocFriendlyFields"></div>
+            <div class="coc-live-form-actions">
+              <button class="live-button live-button--primary" type="submit" id="cocFriendlyRun">查询玩家</button>
+              <button class="live-button" type="reset" id="cocFriendlyReset">恢复默认值</button>
+              <span class="coc-live-history-actions" aria-label="查询历史">
+                <button class="live-button" type="button" id="cocQueryPrevious" disabled>上一次</button>
+                <button class="live-button" type="button" id="cocQueryNext" disabled>下一次</button>
+              </span>
+            </div>
+          </form>
+          <p class="coc-live-message" id="cocLiveError" role="status" aria-live="polite">选择查询项目并填写必要条件即可开始。</p>
+        </article>
+
+        <article class="coc-live-result-panel" aria-labelledby="cocResultHeading">
+          <header class="coc-live-result-head">
+            <div><p class="coc-live-overline">查询结果</p><h2 id="cocResultHeading">资料卡</h2></div>
+            <span class="coc-live-result-meta" id="cocResultMeta" role="status" aria-live="polite">尚未查询</span>
+          </header>
+          <div class="coc-friendly-result" id="cocFriendlyResult" role="region" aria-label="结构化查询结果" aria-busy="false"><p class="coc-friendly-empty">结果会显示为可继续点击的资料卡和表格。</p></div>
+          <details class="coc-live-json-details" id="cocRawJsonDetails">
+            <summary>原始数据</summary>
+            <div class="coc-live-json-tools"><button class="live-button live-button--small" type="button" id="cocCopyResult" disabled>复制原始数据</button><button class="live-button live-button--small" type="button" id="cocDownloadResult" disabled>下载原始数据</button></div>
+            <pre class="coc-live-result" id="cocResult" tabindex="0" aria-label="查询原始数据"></pre>
+          </details>
+        </article>
+
+        <details class="coc-live-developer" id="cocDeveloperDetails">
+          <summary>开发者模式：直接选择 coc.py 动作并填写 JSON</summary>
+          <div class="coc-live-developer-body">
+            <p>普通查询不需要这里。图形模式已经覆盖云端开放的全部 40 项动作；开发者模式不会开放令牌验证或账号管理。</p>
+            <div class="coc-live-form-grid">
+              <div class="coc-live-field"><label for="cocAction">查询动作</label><select id="cocAction" name="action"><option value="">正在加载能力表</option></select></div>
+              <div class="coc-live-field is-wide"><label for="cocParams">参数 JSON</label><textarea id="cocParams" name="params" rows="9" spellcheck="false" autocomplete="off">{}</textarea></div>
+            </div>
+            <p class="coc-live-capability" id="cocActionHelp"></p>
+            <button class="live-button live-button--primary" type="button" id="cocRun">执行开发者查询</button>
+          </div>
+        </details>
+      </section>
+    </div>
+  </main>
+
+  <footer class="coc-fan-notice">本页是非官方玩家内容，未经 Supercell 认可或赞助。详见 <a href="https://supercell.com/en/fan-content-policy/" target="_blank" rel="noopener noreferrer">Supercell 玩家内容政策</a>。</footer>
+
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260828i-v5.3.0"></script>
+  <script defer src="https://wjtianze.github.io/coc/shared/snapshot-v2.js?v=20260823a"></script>
+  <script defer src="https://wjtianze.github.io/coc/live/live.js?v=20260828b"></script>
+</body>
+</html>

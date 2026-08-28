@@ -6,11 +6,13 @@
   <title>COC 单位数据导出器 · 技能 — 天择网</title>
   <meta name="description" content="COC 本地数据导出器：校验部落冲突 18.400.22 APK 签名并生成 273 个精选单位的结构化 JSON，包含中文介绍、超级充能、装备技能和反击卡组。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260824-v5.2.0" />
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/workspace-pages.css?v=20260801-v4.1.6" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828i-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/workspace-pages.css?v=20260828-editorial-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/split-motion.css?v=20260827d-v5.3.0" data-tz-split-motion />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/site-refactor.css?v=20260828-editorial-v5.3.0" data-tz-site-refactor />
+  <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828i" />
 </head>
-<body data-workspace-page="coc-skill">
+<body class="wp-editorial-page wp-editorial-page--skill" data-workspace-page="coc-skill">
   <a class="wp-skip" href="#main-content">跳到主要内容</a>
   <div class="bg-mesh"></div>
 
@@ -48,7 +50,7 @@
     <!-- 功能定位 -->
     <section class="wp-section wrap" aria-labelledby="coc-skill-purpose">
       <div class="wp-card wp-prose reveal">
-        <div class="wp-section-head"><div><div class="wp-kicker">PURPOSE</div><h2 id="coc-skill-purpose">这个技能做什么</h2></div></div>
+        <div class="wp-section-head"><div><div class="wp-kicker">用途</div><h2 id="coc-skill-purpose">这个技能做什么</h2></div></div>
         <p>本技能包含两个独立可用的 Python 脚本：<b>apk_data_pipeline.py</b> 给定一份《部落冲突》APK，先验证 Android v2/v3 签名，再完成解码、解析、命名映射和导出，产出 <code>单位完整数据.json</code>；<b>village_parser.py</b> 读取你的游戏内账号 JSON，结合前者的数据计算普通升级与超级充能的剩余时间。</p>
         <div class="wp-notice" data-tone="success">
           <span class="wp-notice-icon" aria-hidden="true"><span data-ui-icon="shield"></span></span>
@@ -60,7 +62,7 @@
     <!-- 核心功能 -->
     <section class="wp-section wrap" aria-labelledby="coc-skill-features">
       <div class="wp-section-head reveal">
-        <div><div class="wp-kicker">CAPABILITIES</div><h2 id="coc-skill-features">核心功能</h2></div>
+        <div><div class="wp-kicker">能做什么</div><h2 id="coc-skill-features">核心功能</h2></div>
         <p>一条命令完成全部提取</p>
       </div>
       <div class="wp-grid">
@@ -82,7 +84,7 @@
         <article class="wp-card wp-feature-card reveal d1">
           <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="edit"></span></div>
           <h3>名称表可替换</h3>
-          <p>内置默认名称表覆盖家乡、夜世界与都城精选项目；也可用 <code>--roster-xlsx</code> 提供自定义表。</p>
+          <p>内置默认名称表覆盖家乡村庄、建筑大师基地与都城精选项目；也可用 <code>--roster-xlsx</code> 提供自定义表。</p>
         </article>
         <article class="wp-card wp-feature-card reveal d2">
           <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="unlock"></span></div>
@@ -121,13 +123,13 @@ python apk_data_pipeline.py --apk "APK.apk" --roster-xlsx "名称表.xlsx" --out
     <section class="wp-section wrap" aria-labelledby="village-parser-use">
       <div class="wp-card wp-prose reveal">
         <div class="wp-section-head"><div><div class="wp-kicker">流水线 02</div><h2 id="village-parser-use">解析村庄存档</h2></div><p>village_parser.py</p></div>
-        <p>输入从游戏导出的村庄存档 JSON，脚本会结合 <code>单位完整数据.json</code>，输出村庄概况、家乡与夜世界完整清单，以及各类单位达到当前大本营满级的剩余升级时间。</p>
+        <p>输入从游戏导出的村庄存档 JSON，脚本会结合 <code>单位完整数据.json</code>，输出村庄概况、家乡村庄与建筑大师基地完整清单，以及各类单位达到当前大本营满级的剩余升级时间。</p>
         <div class="wp-code-panel">
           <div class="wp-code-head"><span>PowerShell / 终端</span><button class="btn wp-copy" type="button" data-copy-target="village-code" data-ui-icon="copy"><span data-copy-label>复制命令</span></button></div>
           <pre id="village-code"><code># 第一个参数是账号 JSON，第二个参数是本流水线生成的游戏数据
 python village_parser.py "村庄存档.json" "单位完整数据.json"</code></pre>
         </div>
-        <p>脚本内置装备与帮手的 ID 到中文名映射，并正确处理夜世界兵种等级不连续的情况。也可以前往 <a href="https://wjtianze.github.io/coc/village/index.html">村庄存档分析</a> 在线体验，或在 <a href="https://wjtianze.github.io/coc/planner/index.html">升级规划器</a> 用甘特图排程。</p>
+        <p>脚本内置装备与帮手的 ID 到中文名映射，并正确处理建筑大师基地兵种等级不连续的情况。也可以前往 <a href="https://wjtianze.github.io/coc/village/index.html">村庄存档分析</a> 在线体验，或在 <a href="https://wjtianze.github.io/coc/planner/index.html">升级规划器</a> 用甘特图排程。</p>
       </div>
     </section>
 
@@ -174,7 +176,7 @@ python village_parser.py "村庄存档.json" "单位完整数据.json"</code></p
 
   <footer class="coc-fan-notice">本页是非官方玩家内容，未经 Supercell 认可或赞助。详见 <a href="https://supercell.com/en/fan-content-policy/" target="_blank" rel="noopener noreferrer">Supercell 玩家内容政策</a>。</footer>
 
-  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260824-v5.2.0"></script>
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260828i-v5.3.0"></script>
   <script>
   document.querySelectorAll('[data-copy-target]').forEach(function (button) {
     button.addEventListener('click', function () {

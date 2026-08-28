@@ -504,8 +504,8 @@ img { max-width: 100%; display: block; }
   /* A theme may tint these images, but must never replace them. Keeping the
      image and focal-point tokens separate makes new first-level zones safe to
      register without coupling them to a particular visual skin. */
-  --tz-section-bg-image: url("../img/section-bg/source/home.webp");
-  --tz-section-bg-mobile-image: url("../img/section-bg/mobile/home.webp");
+  --tz-section-bg-image: url("../img/section-bg/source/home-20260828.webp");
+  --tz-section-bg-mobile-image: url("../img/section-bg/mobile/home-20260828.webp");
   --tz-section-bg: var(--tz-section-bg-image);
   --tz-section-bg-mobile: var(--tz-section-bg-mobile-image);
   --tz-section-overlay: linear-gradient(180deg, rgba(9, 28, 52, .18), rgba(7, 21, 42, .38));
@@ -518,11 +518,11 @@ img { max-width: 100%; display: block; }
   --tz-safe-bottom: env(safe-area-inset-bottom, 0px);
   --tz-safe-left: env(safe-area-inset-left, 0px);
 }
-html[data-zone="ai"] { --tz-section-bg-image: url("../img/section-bg/source/ai.webp?v=20260802-ai3"); --tz-section-bg-mobile-image: url("../img/section-bg/mobile/ai.webp?v=20260802-ai3"); --tz-section-bg-position: center calc(100% + 52px); --tz-section-bg-size: 100% auto; }
-html[data-zone="coc"] { --tz-section-bg-image: url("../img/section-bg/source/coc.webp"); --tz-section-bg-mobile-image: url("../img/section-bg/mobile/coc.webp"); }
-html[data-zone="english"] { --tz-section-bg-image: url("../img/section-bg/source/english.webp"); --tz-section-bg-mobile-image: url("../img/section-bg/mobile/english.webp"); }
-html[data-zone="game"] { --tz-section-bg-image: url("../img/section-bg/source/game.webp"); --tz-section-bg-mobile-image: url("../img/section-bg/mobile/game.webp"); }
-html[data-zone="os"] { --tz-section-bg-image: url("../img/section-bg/source/os.webp"); --tz-section-bg-mobile-image: url("../img/section-bg/mobile/os.webp"); }
+html[data-zone="ai"] { --tz-section-bg-image: url("../img/section-bg/source/ai-20260828.webp"); --tz-section-bg-mobile-image: url("../img/section-bg/mobile/ai-20260828.webp"); --tz-section-bg-position: center top; --tz-section-bg-size: cover; }
+html[data-zone="coc"] { --tz-section-bg-image: url("../img/section-bg/source/coc-20260828.webp"); --tz-section-bg-mobile-image: url("../img/section-bg/mobile/coc-20260828.webp"); }
+html[data-zone="english"] { --tz-section-bg-image: url("../img/section-bg/source/english-20260828.webp"); --tz-section-bg-mobile-image: url("../img/section-bg/mobile/english-20260828.webp"); }
+html[data-zone="game"] { --tz-section-bg-image: url("../img/section-bg/source/game-20260828.webp"); --tz-section-bg-mobile-image: url("../img/section-bg/mobile/game-20260828.webp"); }
+html[data-zone="os"] { --tz-section-bg-image: url("../img/section-bg/source/os.webp?v=20260828-refactor1"); --tz-section-bg-mobile-image: url("../img/section-bg/mobile/os.webp?v=20260828-refactor1"); }
 
 @media (max-width: 680px) {
   html,
@@ -2457,6 +2457,309 @@ main { isolation: isolate; }
 /* ============================================================
    英语专区 / 词库转 JSON 技能
    ============================================================ */
+body.english-home.tz-site-shell .english-home-main {
+  position: relative;
+  z-index: 1;
+  padding-top: 0;
+  padding-bottom: clamp(72px, 10vw, 120px);
+}
+
+.english-home .wrap {
+  width: min(1140px, calc(100% - 48px));
+  margin-inline: auto;
+}
+
+.english-home-hero {
+  min-height: min(730px, calc(100svh - 64px));
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(330px, .72fr);
+  align-items: center;
+  gap: clamp(54px, 9vw, 124px);
+  padding-block: clamp(88px, 11vw, 144px);
+  border-bottom: 1px solid var(--tz-v4-line);
+}
+
+.english-home-kicker,
+.english-section-heading > p,
+.english-tool-entry > div > p:first-child {
+  margin: 0 0 14px;
+  color: var(--tz-skin-focus);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .08em;
+}
+
+.english-home-copy h1 {
+  max-width: 10ch;
+  margin: 0;
+  color: var(--ink);
+  font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", STSong, Georgia, serif;
+  font-size: clamp(50px, 6.5vw, 82px);
+  line-height: 1.12;
+  letter-spacing: -.055em;
+  text-wrap: balance;
+}
+
+.english-home-copy > p:last-of-type {
+  max-width: 680px;
+  margin: 28px 0 0;
+  color: var(--ink-dim);
+  font-size: clamp(17px, 1.8vw, 20px);
+  line-height: 1.85;
+  text-wrap: pretty;
+}
+
+.english-home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 32px;
+}
+
+.english-home-actions .btn,
+.english-tool-entry > .btn {
+  min-height: 46px;
+  border-radius: 6px;
+  background: var(--tz-skin-focus);
+  color: var(--tz-skin-canvas);
+  box-shadow: none;
+}
+
+.english-home-actions .btn--ghost {
+  border-color: var(--tz-v4-line);
+  background: transparent;
+  color: var(--ink);
+}
+
+.english-sample {
+  min-height: 390px;
+  padding: clamp(28px, 4vw, 46px);
+  border: 1px solid var(--tz-v4-line);
+  border-radius: 4px;
+  background: var(--tz-skin-surface-internal);
+  box-shadow: 14px 14px 0 color-mix(in srgb, var(--tz-skin-focus) 12%, transparent);
+}
+
+.english-sample > p {
+  margin: 0 0 64px;
+  color: var(--ink-faint);
+  font-size: 12px;
+}
+
+.english-sample h2 {
+  margin: 0;
+  color: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(34px, 4.3vw, 52px);
+  letter-spacing: -.035em;
+  overflow-wrap: anywhere;
+}
+
+.english-sample > span {
+  display: block;
+  margin-top: 7px;
+  color: var(--tz-skin-focus);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 16px;
+}
+
+.english-sample dl {
+  margin: 38px 0 0;
+  border-top: 1px solid var(--tz-v4-line);
+}
+
+.english-sample dl > div {
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  gap: 12px;
+  padding-block: 11px;
+  border-bottom: 1px solid var(--tz-v4-line);
+}
+
+.english-sample dt {
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.english-sample dd {
+  margin: 0;
+  color: var(--ink-dim);
+}
+
+.english-method {
+  display: grid;
+  grid-template-columns: minmax(240px, .7fr) minmax(0, 1.5fr);
+  gap: clamp(48px, 9vw, 126px);
+  padding-block: clamp(76px, 10vw, 126px);
+  border-bottom: 1px solid var(--tz-v4-line);
+  scroll-margin-top: 80px;
+}
+
+.english-section-heading h2,
+.english-tool-entry h2 {
+  margin: 0;
+  color: var(--ink);
+  font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", STSong, Georgia, serif;
+  font-size: clamp(34px, 4.4vw, 52px);
+  line-height: 1.22;
+  letter-spacing: -.04em;
+}
+
+.english-section-heading > span {
+  display: block;
+  max-width: 320px;
+  margin-top: 20px;
+  color: var(--ink-faint);
+  line-height: 1.7;
+}
+
+.english-method-list {
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--tz-v4-line);
+  list-style: none;
+}
+
+.english-method-list li {
+  display: grid;
+  grid-template-columns: 54px 1fr;
+  gap: 22px;
+  padding-block: 26px;
+  border-bottom: 1px solid var(--tz-v4-line);
+}
+
+.english-method-list li > span {
+  padding-top: 4px;
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.english-method-list h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 20px;
+  line-height: 1.4;
+}
+
+.english-method-list p {
+  margin: 8px 0 0;
+  color: var(--ink-faint);
+  line-height: 1.75;
+}
+
+.english-tool-entry {
+  display: grid;
+  grid-template-columns: 100px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(28px, 5vw, 58px);
+  margin-top: clamp(74px, 9vw, 116px);
+  padding-block: clamp(34px, 5vw, 58px);
+  border-block: 1px solid var(--tz-v4-line);
+}
+
+.english-tool-entry__mark {
+  color: var(--tz-skin-focus);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 52px;
+  line-height: 1;
+}
+
+.english-tool-entry > div > p:not(:first-child) {
+  max-width: 670px;
+  margin: 14px 0 0;
+  color: var(--ink-dim);
+  line-height: 1.75;
+}
+
+.english-tool-entry ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 20px 0 0;
+  padding: 0;
+  color: var(--ink-faint);
+  font-size: 12px;
+  list-style-position: inside;
+}
+
+@media (max-width: 860px) {
+  .english-home-hero,
+  .english-method {
+    grid-template-columns: 1fr;
+  }
+
+  .english-home-hero {
+    min-height: 0;
+  }
+
+  .english-sample {
+    width: min(560px, 100%);
+  }
+
+  .english-tool-entry {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  .english-tool-entry > .btn {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 620px) {
+  .english-home .wrap {
+    width: min(100% - 28px, 1140px);
+    padding-inline: 0;
+  }
+
+  .english-home-hero {
+    gap: 48px;
+    padding-block: 62px;
+  }
+
+  .english-home-copy h1 {
+    font-size: clamp(42px, 13vw, 58px);
+  }
+
+  .english-home-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .english-home-actions .btn {
+    width: 100%;
+  }
+
+  .english-sample {
+    min-height: 0;
+    padding: 26px;
+    box-shadow: 8px 8px 0 color-mix(in srgb, var(--tz-skin-focus) 10%, transparent);
+  }
+
+  .english-sample > p {
+    margin-bottom: 44px;
+  }
+
+  .english-method {
+    gap: 36px;
+  }
+
+  .english-method-list li {
+    grid-template-columns: 36px 1fr;
+    gap: 12px;
+  }
+
+  .english-tool-entry {
+    grid-template-columns: 1fr;
+  }
+
+  .english-tool-entry > .btn {
+    grid-column: 1;
+    width: 100%;
+  }
+}
+
 .english-hero {
   min-height: 640px;
   padding-top: 96px;
@@ -3110,20 +3413,16 @@ body.tz-site-shell :where(
   }
 }
 
-/* ============================================================
-   Tianze Web 4.1 · Evolution Network Shell
-   A shared operating shell for all static pages. Every structural
-   surface and actionable control uses the generated v4 image set.
-   ============================================================ */
+/* Shared site chrome */
 :root {
   --tz-shell-rail: 0px;
-  --tz-shell-status: 36px;
-  --tz-shell-sticky-top: 86px;
+  --tz-shell-status: 0px;
+  --tz-shell-sticky-top: 72px;
 }
 
 body.tz-site-shell {
   min-height: 100vh;
-  padding-bottom: calc(var(--tz-shell-status) + 16px + var(--tz-safe-bottom));
+  padding-bottom: max(18px, var(--tz-safe-bottom));
 }
 
 /* Always available before the optional motion stylesheet finishes loading. */
@@ -3164,7 +3463,7 @@ body.tz-site-shell {
   transition: transform .18s var(--ease-out);
 }
 
-.tz-skip-link:focus {
+.tz-skip-link:focus-visible {
   outline: 2px solid var(--c-blue-soft);
   outline-offset: 2px;
   transform: translate(-50%, 0);
@@ -3176,21 +3475,22 @@ body.tz-site-shell.tz-command-open {
 
 body.tz-site-shell .topbar {
   position: sticky;
-  top: 10px;
-  width: calc(100% - 24px);
-  margin: 10px 12px 0;
-  border: 1px solid var(--tz-v4-line);
-  border-radius: 20px;
+  top: 0;
+  width: 100%;
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid var(--tz-v4-line);
+  border-radius: 0;
   overflow: visible;
-  box-shadow: 0 18px 50px rgba(0, 0, 0, .24), inset 0 1px rgba(255, 255, 255, .08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
 }
 
 body.tz-site-shell .topbar-inner {
   width: 100%;
   max-width: none;
-  height: 66px;
-  padding: 0 18px;
-  gap: 14px;
+  height: 64px;
+  padding: 0 20px;
+  gap: 12px;
 }
 
 body.tz-site-shell .brand {
@@ -3218,14 +3518,14 @@ body.tz-site-shell .brand .logo-mark::after {
 
 .brand-copy small {
   color: var(--ink-faint);
-  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  font-size: 8px;
-  font-weight: 650;
-  letter-spacing: .12em;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .02em;
 }
 
 .tz-topbar-status {
-  display: inline-flex;
+  display: none !important;
   align-items: center;
   gap: 7px;
   min-width: max-content;
@@ -3263,17 +3563,13 @@ body.tz-site-shell .brand .logo-mark::after {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  min-width: 112px;
+  min-width: 92px;
   height: 38px;
   padding: 0 9px 0 11px;
   border: 1px solid var(--tz-v4-line);
-  border-radius: 12px;
-  background-color: rgba(var(--c-blue-rgb), .28);
-  background-image: var(--tz-v4-button);
-  background-position: center;
-  background-size: cover;
-  background-blend-mode: screen;
-  color: #fff;
+  border-radius: 7px;
+  background: var(--tz-skin-control);
+  color: var(--ink);
   cursor: pointer;
   font: inherit;
   font-size: 12px;
@@ -3308,16 +3604,20 @@ body.tz-site-shell .nav::-webkit-scrollbar {
 
 body.tz-site-shell .nav a {
   flex: 0 0 auto;
-  padding: 9px 12px;
-  border-radius: 11px;
+  padding: 10px 11px 8px;
+  border-radius: 0;
+  border-bottom: 2px solid transparent;
   font-size: 12px;
 }
 
 body.tz-site-shell .nav a.active {
-  border: 1px solid var(--tz-v4-line);
+  border: 0;
+  border-bottom: 2px solid var(--tz-skin-focus);
+  color: var(--ink);
 }
 
 .tz-site-statusbar {
+  display: none !important;
   position: fixed;
   z-index: 45;
   left: 12px;
@@ -3649,6 +3949,470 @@ body.tz-site-shell .article-body {
   background-size: cover;
   background-blend-mode: multiply;
   box-shadow: 0 26px 80px rgba(0, 0, 0, .2);
+}
+
+/* Homepage: a personal, editorial index. The former orbit map styles below
+   remain compatible with archived markup; the current page uses this list. */
+.home-journal-main {
+  position: relative;
+  z-index: 1;
+  padding-bottom: clamp(72px, 10vw, 132px);
+}
+
+.home-journal .wrap {
+  width: min(1180px, calc(100% - 48px));
+  margin-inline: auto;
+}
+
+.home-journal-hero {
+  min-height: min(720px, calc(100svh - 88px));
+  display: grid;
+  grid-template-columns: minmax(0, .9fr) minmax(360px, 1.1fr);
+  align-items: end;
+  gap: clamp(48px, 9vw, 132px);
+  padding-block: clamp(88px, 11vw, 152px) clamp(68px, 8vw, 108px);
+  border-bottom: 1px solid var(--tz-v4-line);
+}
+
+.home-journal-motto,
+.home-section-heading > p {
+  margin: 0 0 14px;
+  color: var(--tz-skin-focus);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .08em;
+}
+
+.home-journal-hero h1 {
+  max-width: 7ch;
+  margin: 0;
+  color: var(--ink);
+  font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", STSong, Georgia, serif;
+  font-size: clamp(62px, 9vw, 116px);
+  font-weight: 700;
+  line-height: .98;
+  letter-spacing: -.065em;
+  text-wrap: balance;
+}
+
+.home-journal-hero__intro {
+  padding-bottom: 6px;
+}
+
+.home-journal-hero__intro > p {
+  max-width: 650px;
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: clamp(18px, 2vw, 23px);
+  line-height: 1.8;
+  text-wrap: pretty;
+}
+
+.home-journal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 34px;
+}
+
+.home-journal-actions .btn {
+  min-height: 46px;
+  padding-inline: 18px;
+  border-radius: 6px;
+  background: var(--tz-skin-focus);
+  color: var(--tz-skin-canvas);
+  box-shadow: none;
+}
+
+.home-journal-actions .btn--ghost {
+  border-color: var(--tz-v4-line);
+  background: transparent;
+  color: var(--ink);
+}
+
+.home-journal-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 42px 0 0;
+  border-top: 1px solid var(--tz-v4-line);
+}
+
+.home-journal-facts div {
+  min-width: 0;
+  padding: 18px 16px 0 0;
+}
+
+.home-journal-facts dt {
+  color: var(--ink-faint);
+  font-size: 12px;
+}
+
+.home-journal-facts dd {
+  margin: 6px 0 0;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.home-current,
+.home-directory,
+.home-reading {
+  padding-block: clamp(72px, 9vw, 118px);
+  border-bottom: 1px solid var(--tz-v4-line);
+  scroll-margin-top: 88px;
+}
+
+.home-current {
+  display: grid;
+  grid-template-columns: minmax(210px, .72fr) minmax(0, 1.6fr);
+  gap: clamp(36px, 7vw, 100px);
+}
+
+.home-section-heading h2 {
+  max-width: 15ch;
+  margin: 0;
+  color: var(--ink);
+  font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", STSong, Georgia, serif;
+  font-size: clamp(32px, 4.4vw, 52px);
+  line-height: 1.2;
+  letter-spacing: -.04em;
+  text-wrap: balance;
+}
+
+.home-current-link {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 12px 24px;
+  padding-block: 26px;
+  border-block: 1px solid var(--tz-v4-line);
+  color: inherit;
+  text-decoration: none;
+}
+
+.home-current-link time,
+.home-current-link span {
+  color: var(--ink-faint);
+  font-size: 13px;
+}
+
+.home-current-link strong {
+  color: var(--ink);
+  font-size: clamp(20px, 2.5vw, 29px);
+  line-height: 1.35;
+}
+
+.home-current-link span {
+  grid-column: 2;
+  max-width: 640px;
+  line-height: 1.7;
+}
+
+.home-current-link b {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  align-self: center;
+  color: var(--tz-skin-focus);
+  font-size: 13px;
+}
+
+.home-current-link:hover strong,
+.home-current-link:focus-visible strong {
+  color: var(--tz-skin-focus);
+}
+
+.home-directory-heading {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(280px, .8fr) auto;
+  align-items: end;
+  gap: 24px 48px;
+  margin-bottom: 44px;
+}
+
+.home-directory-heading > p {
+  max-width: 520px;
+  margin: 0;
+  color: var(--ink-faint);
+  line-height: 1.75;
+}
+
+.home-directory-toggle-all,
+.site-directory-zone__head > button {
+  min-height: 44px;
+  border: 0;
+  border-bottom: 1px solid var(--tz-v4-line);
+  background: transparent;
+  color: var(--ink-dim);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.home-directory-toggle-all {
+  min-width: 88px;
+  padding: 0 4px;
+}
+
+.site-directory-list {
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--tz-v4-line);
+  list-style: none;
+}
+
+.site-directory-zone {
+  border-bottom: 1px solid var(--tz-v4-line);
+}
+
+.site-directory-zone__head {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr) 74px;
+  align-items: center;
+  gap: 20px;
+  min-height: 96px;
+}
+
+.site-directory-number {
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+}
+
+.site-directory-zone__head > a {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(140px, .55fr) minmax(0, 1fr);
+  align-items: baseline;
+  gap: 18px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.site-directory-zone__head strong {
+  color: var(--ink);
+  font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", STSong, Georgia, serif;
+  font-size: 24px;
+}
+
+.site-directory-zone__head a > span {
+  color: var(--ink-faint);
+  font-size: 14px;
+}
+
+.site-directory-zone__head > a:hover strong,
+.site-directory-zone__head > a:focus-visible strong {
+  color: var(--tz-skin-focus);
+}
+
+.site-directory-zone__head > button {
+  justify-self: stretch;
+  padding: 0;
+}
+
+.site-directory-zone > ul {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 28px;
+  margin: -8px 74px 24px;
+  padding: 0 0 0 74px;
+  border-left: 1px solid var(--tz-v4-line);
+  list-style: none;
+}
+
+.site-directory-zone > ul[hidden] {
+  display: none;
+}
+
+.site-directory-zone > ul a {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding-block: 9px;
+  border-bottom: 1px solid color-mix(in srgb, var(--tz-v4-line) 62%, transparent);
+  color: var(--ink-dim);
+  font-size: 13px;
+  line-height: 1.45;
+  text-decoration: none;
+}
+
+.site-directory-zone > ul a:hover,
+.site-directory-zone > ul a:focus-visible {
+  color: var(--tz-skin-focus);
+}
+
+.home-directory button:hover,
+.home-directory button:focus-visible {
+  color: var(--ink);
+  border-color: var(--tz-skin-focus);
+}
+
+.home-reading {
+  display: grid;
+  grid-template-columns: minmax(210px, .72fr) minmax(0, 1.6fr);
+  gap: clamp(36px, 7vw, 100px);
+}
+
+.home-reading-list {
+  border-top: 1px solid var(--tz-v4-line);
+}
+
+.home-reading-list > a {
+  display: grid;
+  grid-template-columns: 100px minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: baseline;
+  min-height: 78px;
+  padding-block: 20px;
+  border-bottom: 1px solid var(--tz-v4-line);
+  color: inherit;
+  text-decoration: none;
+}
+
+.home-reading-list time,
+.home-reading-list span {
+  color: var(--ink-faint);
+  font-size: 12px;
+}
+
+.home-reading-list strong {
+  color: var(--ink);
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.home-reading-list > a:hover strong,
+.home-reading-list > a:focus-visible strong {
+  color: var(--tz-skin-focus);
+}
+
+@media (max-width: 900px) {
+  .home-journal-hero {
+    min-height: 0;
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 48px;
+  }
+
+  .home-journal-hero h1 {
+    max-width: 9ch;
+  }
+
+  .home-current,
+  .home-reading {
+    grid-template-columns: 1fr;
+  }
+
+  .home-directory-heading {
+    grid-template-columns: 1fr auto;
+  }
+
+  .home-directory-heading > p {
+    grid-column: 1 / -1;
+  }
+
+  .site-directory-zone > ul {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .home-journal .wrap {
+    width: min(100% - 28px, 1180px);
+    padding-inline: 0;
+  }
+
+  .home-journal-hero {
+    padding-block: 64px 58px;
+    gap: 34px;
+  }
+
+  .home-journal-hero h1 {
+    font-size: clamp(50px, 17vw, 72px);
+  }
+
+  .home-journal-hero__intro > p {
+    font-size: 17px;
+  }
+
+  .home-journal-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .home-journal-actions .btn {
+    width: 100%;
+  }
+
+  .home-journal-facts {
+    grid-template-columns: 1fr;
+  }
+
+  .home-journal-facts div {
+    display: grid;
+    grid-template-columns: 58px 1fr;
+    gap: 12px;
+    padding-block: 12px;
+    border-bottom: 1px solid var(--tz-v4-line);
+  }
+
+  .home-journal-facts dd {
+    margin: 0;
+  }
+
+  .home-current-link {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .home-current-link span,
+  .home-current-link b {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .home-directory-heading {
+    grid-template-columns: 1fr;
+  }
+
+  .home-directory-toggle-all {
+    justify-self: start;
+  }
+
+  .site-directory-zone__head {
+    grid-template-columns: 34px minmax(0, 1fr) 56px;
+    gap: 10px;
+    min-height: 88px;
+  }
+
+  .site-directory-zone__head > a {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+
+  .site-directory-zone__head strong {
+    font-size: 20px;
+  }
+
+  .site-directory-zone__head a > span {
+    font-size: 12px;
+  }
+
+  .site-directory-zone > ul {
+    grid-template-columns: 1fr;
+    margin: -2px 0 18px 34px;
+    padding-left: 20px;
+  }
+
+  .home-reading-list > a {
+    grid-template-columns: 1fr auto;
+    gap: 6px 12px;
+  }
+
+  .home-reading-list strong {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
 }
 
 /* Homepage workspace */
@@ -6995,8 +7759,8 @@ html[data-palette] {
   --tz-ui-card-image: var(--tz-v4-surface);
 }
 
-/* Final cascade for the 4.1 calm backgrounds. Kept at EOF so legacy
-   compatibility rules cannot restore the former ornate full-screen wallpaper. */
+/* Final material baseline: section artwork stays in the page background;
+   content surfaces are quiet, solid and readable. */
 body,
 body.tz-site-shell {
   background-color: var(--tz-skin-canvas) !important;
@@ -7017,20 +7781,17 @@ body.tz-site-shell {
 }
 .bg-mesh::after {
   background-image: linear-gradient(var(--tz-skin-grid) 1px, transparent 1px) !important;
-  background-size: 96px 96px !important;
-  opacity: .14 !important;
+  background-size: 112px 112px !important;
+  opacity: .06 !important;
 }
 body::before,
 body::after { background-image: none !important; opacity: .12 !important; animation: none !important; }
 :where(.card, .topbar, .tz-network-panel, .tz-domain-card, .tz-feed-panel, .article-body) {
   border-color: var(--tz-v4-line) !important;
   background-color: var(--tz-skin-surface) !important;
-  background-image: var(--tz-v4-surface) !important;
-  background-position: center !important;
-  background-size: cover !important;
-  background-blend-mode: var(--tz-skin-surface-blend) !important;
-  backdrop-filter: blur(8px) saturate(118%);
-  -webkit-backdrop-filter: blur(8px) saturate(118%);
+  background-image: none !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 body.tz-internal-v41 :is(
   .tz-page-hero,
@@ -7046,12 +7807,9 @@ body.tz-internal-v41 :is(
 ) {
   border-color: var(--tz-v4-line) !important;
   background-color: var(--tz-skin-surface-internal) !important;
-  background-image: var(--tz-v4-surface) !important;
-  background-position: center !important;
-  background-size: cover !important;
-  background-blend-mode: var(--tz-skin-surface-blend) !important;
-  backdrop-filter: blur(7px) saturate(116%);
-  -webkit-backdrop-filter: blur(7px) saturate(116%);
+  background-image: none !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 .tz-network-map,
 .tz-network-map.is-site-orbit {
@@ -7630,3 +8388,513 @@ body.tz-site-shell .tzpal-panel {
   text-align: center;
 }
 .coc-fan-notice a { color: var(--ink-dim); text-decoration: underline; text-underline-offset: 3px; }
+
+/* 5.3 公共品牌与首页助手舞台：实体表面、清楚网格、无装饰性玻璃层。 */
+body.tz-site-shell .brand {
+  color: var(--ink);
+  text-transform: none;
+}
+
+body.tz-site-shell .brand:hover {
+  transform: none;
+}
+
+body.tz-site-shell .brand .logo-mark {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background-color: transparent !important;
+  background-image: url("../img/brand/tianze-mark.png") !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-size: contain !important;
+  box-shadow: none;
+}
+
+body.tz-site-shell .brand:hover .logo-mark {
+  transform: none;
+}
+
+body.tz-site-shell .brand .logo-mark::before,
+body.tz-site-shell .brand .logo-mark::after,
+body.tz-site-shell .brand .logo-mark svg {
+  display: none !important;
+}
+
+body.tz-site-shell .brand .logo-text {
+  background: none;
+  color: var(--ink);
+  -webkit-text-fill-color: currentColor;
+}
+
+.home-ai-section {
+  display: grid;
+  grid-template-columns: minmax(220px, .72fr) minmax(0, 1.68fr);
+  gap: clamp(24px, 4vw, 64px);
+  align-items: start;
+  padding-block: clamp(54px, 8vw, 104px);
+  border-top: 1px solid var(--line-strong);
+}
+
+.home-ai-heading {
+  position: sticky;
+  top: 96px;
+  display: grid;
+  gap: 24px;
+}
+
+.home-ai-heading .home-section-heading {
+  padding: 0;
+  border: 0;
+}
+
+.home-ai-heading h2 {
+  max-width: 12ch;
+  margin: 6px 0 0;
+  font-family: "Noto Serif SC", "Songti SC", STSong, Georgia, serif;
+  font-size: clamp(32px, 4.1vw, 58px);
+  font-weight: 700;
+  line-height: 1.13;
+  letter-spacing: -.035em;
+  text-wrap: balance;
+}
+
+.home-ai-intro {
+  display: grid;
+  gap: 10px;
+  max-width: 34rem;
+  color: var(--ink-dim);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.home-ai-intro p {
+  margin: 0;
+}
+
+.home-ai-stage {
+  grid-column: 2;
+  min-width: 0;
+  height: clamp(560px, 64vw, 660px);
+  max-height: 680px;
+  display: grid;
+  place-items: stretch;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--tz-skin-surface-internal);
+  box-shadow: 0 22px 62px rgba(0, 0, 0, .22);
+}
+
+.home-ai-stage__waiting,
+.home-ai-stage__noscript {
+  align-self: center;
+  justify-self: center;
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 14px;
+}
+
+.home-ai-stage[data-home-ai-ready="true"] > .home-ai-stage__waiting {
+  display: none;
+}
+
+.home-ai-stage:is([data-home-ai-mode="floating"], [data-home-ai-mode="launcher"]) {
+  overflow: visible;
+}
+
+@media (max-width: 900px) {
+  .home-ai-section {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding-block: 48px;
+  }
+
+  .home-ai-heading {
+    position: static;
+    top: auto;
+  }
+
+  .home-ai-heading h2 {
+    max-width: 15ch;
+  }
+
+  .home-ai-stage {
+    grid-column: 1;
+    width: 100%;
+    height: clamp(540px, 76dvh, 640px);
+    max-height: none;
+    border-radius: 9px;
+    box-shadow: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .home-ai-section {
+    padding-inline: 14px;
+  }
+
+  .home-ai-heading h2 {
+    font-size: clamp(29px, 9.5vw, 42px);
+  }
+
+  .home-ai-stage {
+    height: clamp(520px, 74dvh, 610px);
+  }
+}
+
+/* 5.3 首页返工：站内助手直接占据原星图右栏，页面回到紧凑的个人站布局。 */
+body.home-journal,
+body.home-journal.tz-site-shell {
+  background-color: var(--tz-skin-canvas) !important;
+  background-image: none !important;
+}
+
+body.home-journal > .bg-mesh {
+  display: none;
+}
+
+.home-journal-main {
+  padding-top: 12px;
+  padding-bottom: 76px;
+}
+
+.home-journal .wrap {
+  width: min(1320px, calc(100% - 64px));
+}
+
+.home-journal-hero {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(280px, .64fr) minmax(560px, 1.36fr);
+  align-items: center;
+  gap: clamp(32px, 4vw, 64px);
+  padding: clamp(20px, 2vw, 28px);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--tz-v4-line) 78%, transparent);
+  border-radius: 12px;
+  background-color: #071719;
+  background-image:
+    linear-gradient(90deg, rgba(4, 18, 22, .97) 0%, rgba(4, 18, 22, .88) 39%, rgba(4, 18, 22, .38) 100%),
+    var(--tz-section-bg-image);
+  background-position: center;
+  background-size: cover;
+  box-shadow: none;
+}
+
+.home-journal-hero__copy {
+  min-width: 0;
+  padding: 12px 0;
+}
+
+.home-journal-hero h1 {
+  max-width: none;
+  margin: 0;
+  color: #f5f8f7;
+  font-family: "Microsoft YaHei UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: clamp(48px, 5vw, 72px);
+  font-weight: 760;
+  line-height: 1.08;
+  letter-spacing: -.045em;
+}
+
+.home-journal-motto {
+  color: #70ddc3;
+  letter-spacing: .04em;
+}
+
+.home-journal-hero__intro {
+  max-width: 31rem;
+  margin: 24px 0 0;
+  color: rgba(235, 243, 242, .8);
+  font-size: clamp(16px, 1.45vw, 19px);
+  line-height: 1.8;
+  text-wrap: pretty;
+}
+
+.home-journal-actions {
+  margin-top: 28px;
+}
+
+body.home-journal .home-journal-actions .btn {
+  min-height: 44px;
+  padding-inline: 17px;
+  border-radius: 7px;
+  background-color: #5bcab1 !important;
+  background-image: none !important;
+  background-blend-mode: normal !important;
+  color: #061716 !important;
+  text-shadow: none !important;
+  box-shadow: none;
+  transform: none;
+}
+
+body.home-journal .home-journal-actions .btn:hover,
+body.home-journal .home-journal-actions .btn:focus-visible {
+  background-color: #78dcc5 !important;
+  filter: none;
+  transform: none;
+}
+
+body.home-journal .home-journal-actions .btn--ghost {
+  border-color: rgba(230, 244, 241, .32) !important;
+  background-color: rgba(7, 25, 28, .62) !important;
+  background-image: none !important;
+  color: #eef7f5 !important;
+}
+
+.home-journal-hero .home-ai-stage {
+  grid-column: 2;
+  width: 100%;
+  height: clamp(520px, calc(100svh - 164px), 630px);
+  max-height: none;
+  overflow: hidden;
+  border: 1px solid rgba(174, 221, 212, .22);
+  border-radius: 9px;
+  background: #08191d;
+  box-shadow: none;
+  scroll-margin-top: 96px;
+}
+
+.home-current,
+.home-reading {
+  padding-block: clamp(48px, 5vw, 72px);
+}
+
+/* 站点控件使用清楚的实体色，不再把整张图片贴到按钮上。 */
+body.tz-site-shell :is(.btn, .nav-toggle, .tzpal-btn, .tz-command-trigger, .tz-status-command) {
+  background-color: var(--tz-skin-control) !important;
+  background-image: none !important;
+  background-blend-mode: normal !important;
+  text-shadow: none !important;
+  box-shadow: none;
+}
+
+body.tz-site-shell .nav a.active::before {
+  inset: auto 10px 1px;
+  height: 2px;
+  border-radius: 0;
+  background-color: var(--tz-skin-focus) !important;
+  background-image: none !important;
+  background-blend-mode: normal !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 980px) {
+  .home-journal-main {
+    padding-top: 16px;
+  }
+
+  .home-journal .wrap {
+    width: min(100% - 28px, 760px);
+  }
+
+  .home-journal-hero {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    padding: 30px;
+    background-position: 62% center;
+  }
+
+  .home-journal-hero .home-ai-stage {
+    grid-column: 1;
+    height: clamp(520px, 72dvh, 610px);
+  }
+}
+
+@media (max-width: 560px) {
+  .home-journal-main {
+    padding-top: 12px;
+  }
+
+  .home-journal-hero {
+    padding: 24px 16px 16px;
+    border-radius: 0;
+  }
+
+  .home-journal-hero h1 {
+    font-size: clamp(42px, 14vw, 58px);
+  }
+
+  .home-journal-hero .home-ai-stage {
+    height: clamp(500px, 72dvh, 580px);
+  }
+}
+
+/* 正文直接出现。旧版逐块淡入会让首屏在加载后短暂发灰，也会拖慢阅读。 */
+.js .reveal,
+.js .reveal:not(.in),
+.js .reveal.in {
+  opacity: 1 !important;
+  transform: none !important;
+  transition-delay: 0s !important;
+}
+
+/* 5.3.0 视觉收口：主页专属背景贯穿全文，内容区只保留轻薄阅读底。 */
+body.home-journal > .bg-mesh {
+  display: block !important;
+  background-color: var(--tz-skin-canvas) !important;
+  background-image: var(--tz-skin-scene), var(--tz-section-bg-image) !important;
+  background-position: var(--tz-section-bg-position) !important;
+  background-size: var(--tz-section-bg-size) !important;
+  background-repeat: no-repeat !important;
+}
+
+body.home-journal .home-current,
+body.home-journal .home-reading {
+  border-color: color-mix(in srgb, var(--tz-v4-line) 68%, transparent) !important;
+  background-color: color-mix(in srgb, var(--tz-skin-surface) 62%, transparent) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html[data-palette="porcelain"] body.home-journal .home-current,
+html[data-palette="porcelain"] body.home-journal .home-reading {
+  background-color: color-mix(in srgb, var(--tz-skin-surface) 74%, transparent) !important;
+}
+
+/* 天择OS 移动端：先呈现产品说明与两个入口，移除没有信息增量的装饰卡。 */
+@media (max-width: 680px) {
+  body.home-journal > .bg-mesh {
+    background-image: var(--tz-skin-scene-mobile), var(--tz-section-bg-mobile-image) !important;
+    background-position: var(--tz-section-bg-position-mobile) !important;
+    background-size: var(--tz-section-bg-size-mobile) !important;
+  }
+
+  body.home-journal .home-current,
+  body.home-journal .home-reading {
+    background-color: color-mix(in srgb, var(--tz-skin-surface-mobile) 70%, transparent) !important;
+  }
+
+  html[data-palette="porcelain"] body.home-journal .home-current,
+  html[data-palette="porcelain"] body.home-journal .home-reading {
+    background-color: color-mix(in srgb, var(--tz-skin-surface-mobile) 78%, transparent) !important;
+  }
+
+  body[data-workspace-page="os"] .tz-os-landing-hero {
+    min-height: 0 !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 0 !important;
+    margin-top: 12px;
+    padding: 22px 18px 18px !important;
+    border-radius: 15px !important;
+  }
+
+  body[data-workspace-page="os"] .tz-os-kicker {
+    margin-bottom: 10px;
+    font-size: 9px;
+    letter-spacing: .08em;
+  }
+
+  body[data-workspace-page="os"] .tz-os-hero-copy h1 {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    font-size: clamp(34px, 10.5vw, 42px) !important;
+    line-height: 1.04;
+    letter-spacing: -.045em;
+  }
+
+  body[data-workspace-page="os"] .tz-os-version {
+    margin-left: 0;
+    padding: 4px 7px;
+    font-size: 9px;
+  }
+
+  body[data-workspace-page="os"] .tz-os-hero-copy > p {
+    margin-top: 13px;
+    font-size: 14px;
+    line-height: 1.62;
+  }
+
+  body[data-workspace-page="os"] .tz-os-hero-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  body[data-workspace-page="os"] .tz-os-hero-actions .btn {
+    width: 100%;
+    min-height: 42px;
+    padding: 9px 10px;
+    border-radius: 9px;
+    font-size: 12px;
+    line-height: 1.35;
+    text-align: center;
+  }
+
+  body[data-workspace-page="os"] .tz-os-hero-node {
+    display: none !important;
+  }
+
+  body[data-workspace-page="os"] .tz-workspace-section {
+    padding-top: 30px !important;
+    scroll-margin-top: 70px;
+  }
+
+  body[data-workspace-page="os"] .section-head {
+    gap: 6px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+  }
+
+  body[data-workspace-page="os"] .section-head h2 {
+    font-size: clamp(22px, 6.8vw, 27px);
+    line-height: 1.2;
+  }
+
+  body[data-workspace-page="os"] .section-head .more {
+    font-size: 10px;
+    line-height: 1.45;
+    letter-spacing: .03em;
+  }
+
+  body[data-workspace-page="os"] .os-pick {
+    gap: 12px;
+  }
+
+  body[data-workspace-page="os"] .os-card {
+    min-height: 0 !important;
+    padding: 18px 16px !important;
+    border-radius: 15px !important;
+  }
+
+  body[data-workspace-page="os"] .os-card .oc-icon {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 11px;
+    border-radius: 12px;
+  }
+
+  body[data-workspace-page="os"] .os-card h3 {
+    font-size: 19px;
+    line-height: 1.3;
+  }
+
+  body[data-workspace-page="os"] .os-card .oc-tag {
+    margin-bottom: 12px;
+    font-size: 11px;
+  }
+
+  body[data-workspace-page="os"] .os-card ul {
+    margin-bottom: 15px;
+  }
+
+  body[data-workspace-page="os"] .os-card li {
+    padding-block: 4px;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  body[data-workspace-page="os"] .os-card .btn {
+    min-height: 42px;
+    padding: 9px 12px;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+}

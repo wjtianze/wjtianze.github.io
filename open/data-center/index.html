@@ -8,9 +8,9 @@
   <meta name="theme-color" content="#102947" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; frame-src 'self' https://challenges.cloudflare.com; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://challenges.cloudflare.com https://tianze-ai-proxy.xia-xilin-sgy.workers.dev; worker-src 'self'; manifest-src 'self'" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";p=String(p||"cold").trim().toLowerCase();if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";document.documentElement.setAttribute("data-palette",p);document.documentElement.style.colorScheme=p==="porcelain"?"light":"dark";}catch(e){}})();</script>
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260824-v5.2.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828i-v5.3.0" />
   <link rel="stylesheet" href="https://wjtianze.github.io/open/data-center/data-center.css?v=20260820a" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23102947'/%3E%3Cpath d='M8 9h16v5H8zm0 7h16v7H8z' fill='%237dd3fc'/%3E%3C/svg%3E" />
+  <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828i" />
 </head>
 <body class="data-center-page">
   <div class="bg-mesh"></div>
@@ -24,7 +24,7 @@
 
   <main id="main-content" tabindex="-1">
     <section class="dc-hero wrap" aria-labelledby="dcTitle">
-      <div class="dc-kicker" data-ui-icon="save">LOCAL DATA CONTROL</div>
+      <div class="dc-kicker" data-ui-icon="save">当前设备的数据</div>
       <h1 id="dcTitle">本地数据 <span class="grad">中心</span></h1>
       <p>这里仅管理普通天择网页面保存在当前浏览器中的数据。天择OS 拥有独立的加密系统存档，本页不会读取、覆盖或清除 <code>tzos_state_v1</code>。</p>
       <div class="dc-trust"><span data-ui-icon="shield">默认不备份 API Key</span><span data-ui-icon="key">AES-256-GCM 加密</span><span data-ui-icon="laptop">全部在当前设备处理</span></div>
@@ -33,7 +33,7 @@
     <section class="dc-layout wrap" aria-label="本地数据管理工作区">
       <div class="dc-main">
         <section class="dc-panel" aria-labelledby="moduleTitle">
-          <div class="dc-panel-head"><div><small>MODULE INVENTORY</small><h2 id="moduleTitle">选择数据模块</h2></div><button class="btn btn--sm" id="refreshModules" type="button" data-ui-icon="refresh">重新统计</button></div>
+          <div class="dc-panel-head"><div><small>可管理的内容</small><h2 id="moduleTitle">选择数据模块</h2></div><button class="btn btn--sm" id="refreshModules" type="button" data-ui-icon="refresh">重新统计</button></div>
           <p class="dc-help">容量为 JSON 序列化后的近似值；英语词库与学习记录来自 IndexedDB，其余来自 localStorage。</p>
           <div class="dc-modules" id="moduleList" aria-live="polite">
             <label class="dc-module" data-module="settings"><input type="checkbox" value="settings" checked /><span data-ui-icon="palette"></span><span><b>网站设置</b><small>五套外观及兼容设置</small></span><strong data-module-size>统计中</strong></label>
@@ -45,7 +45,7 @@
         </section>
 
         <section class="dc-panel" aria-labelledby="backupTitle">
-          <div class="dc-panel-head"><div><small>ENCRYPTED EXPORT</small><h2 id="backupTitle">导出加密归档</h2></div></div>
+          <div class="dc-panel-head"><div><small>加密备份</small><h2 id="backupTitle">导出加密归档</h2></div></div>
           <div class="dc-form-grid">
             <label><span>归档密码</span><input id="exportPassword" type="password" minlength="6" autocomplete="new-password" placeholder="至少 6 个字符" /></label>
             <label><span>再次输入</span><input id="exportPassword2" type="password" minlength="6" autocomplete="new-password" placeholder="重复密码" /></label>
@@ -56,7 +56,7 @@
         </section>
 
         <section class="dc-panel" aria-labelledby="restoreTitle">
-          <div class="dc-panel-head"><div><small>PREVIEW BEFORE RESTORE</small><h2 id="restoreTitle">恢复归档</h2></div></div>
+          <div class="dc-panel-head"><div><small>恢复前预览</small><h2 id="restoreTitle">恢复归档</h2></div></div>
           <div class="dc-form-grid">
             <label><span>选择归档</span><input id="archiveFile" type="file" accept=".tzwebarchive,application/json" /></label>
             <label><span>归档密码</span><input id="importPassword" type="password" autocomplete="current-password" placeholder="输入导出时的密码" /></label>
@@ -71,7 +71,7 @@
 
       <aside class="dc-side">
         <section class="dc-panel dc-offline" aria-labelledby="offlineTitle">
-          <div class="dc-panel-head"><div><small>SELECTIVE OFFLINE PACKS</small><h2 id="offlineTitle">离线内容包</h2></div></div>
+          <div class="dc-panel-head"><div><small>按需离线</small><h2 id="offlineTitle">离线内容包</h2></div></div>
           <p class="dc-help">核心页面自动缓存；COC、英语和游戏按需下载。安装包、大型 ZIP 与真实 AI 请求永不进入离线缓存。</p>
           <div id="offlineSupport" class="dc-offline-support" role="status">正在检查浏览器支持…</div>
           <div class="dc-pack-list">
@@ -87,7 +87,7 @@
     </section>
   </main>
 
-  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260820a"></script>
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260828i-v5.3.0"></script>
   <script defer src="https://wjtianze.github.io/open/data-center/core.js?v=20260820a"></script>
   <script defer src="https://wjtianze.github.io/open/data-center/data-center.js?v=20260820a"></script>
 </body>

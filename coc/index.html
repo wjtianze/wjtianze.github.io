@@ -4,12 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>COC 专区 · 村庄存档分析 · 天择网</title>
-  <meta name="description" content="天择网 COC 专区 —— 粘贴部落冲突村庄 JSON，自动解析并按家乡/夜世界分类展示村庄完整数据，计算剩余升级时间（含墙钟时间），并可进入数据查询、升级规划与法术伤害计算。" />
+  <meta name="description" content="天择网 COC 专区 —— 粘贴部落冲突村庄 JSON，自动解析并按家乡村庄、建筑大师基地分类展示完整数据，计算剩余升级时间（含墙钟时间），并可分别进入实时数据查询、游戏静态数据、升级规划与法术伤害计算。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260824-v5.2.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828i-v5.3.0" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css?v=20260801-v4.1.6" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-workspace.css?v=20260801-v4.1.6" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tactical.css?v=20260827" />
+  <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828i" />
 </head>
 <body class="coc-tool coc-village-tool">
   <div class="bg-mesh"></div>
@@ -21,19 +22,19 @@
         <span class="logo-text">天择网</span>
       </a>
       <button class="nav-toggle" type="button" aria-label="菜单" data-ui-icon="menu"></button>
-      <nav class="nav"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html" class="active"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a><a href="https://wjtianze.github.io/contact/index.html"><span>联系开发者</span></a></nav>
+      <nav class="nav"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html" class="active"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a><a href="https://wjtianze.github.io/contact/index.html"><span>联系我</span></a></nav>
     </div>
   </header>
 
   <main class="coc-console">
     <div class="coc-tool-layout wrap">
     <section class="page-head coc-tool-brief" aria-labelledby="cocVillageTitle">
-      <div class="coc-kicker reveal in d1">Village Intelligence · Local Analysis</div>
-      <h1 class="reveal in d1" id="cocVillageTitle">COC 专区 · 村庄存档 <span class="grad">分析</span></h1>
-      <p class="reveal in d2">粘贴你的部落冲突村庄 JSON 数据，自动解析并按「家乡」与「夜世界」分类展示完整村庄信息，计算各类单位到达当前大本营满级的剩余升级时间（含按工人数量折算的墙钟时间）。所有解析在浏览器本地完成，数据仅保存在你自己的设备上。</p>
+      <div class="coc-kicker reveal in d1">COC 工具台 · 村庄档案</div>
+      <h1 class="reveal in d1" id="cocVillageTitle">村庄存档<span class="grad">分析</span></h1>
+      <p class="reveal in d2">粘贴游戏导出的村庄 JSON，即可分别查看家乡村庄与建筑大师基地，并计算升到当前大本营上限还需要多久。解析和保存都在本机完成。</p>
       <div class="coc-brief-notes reveal in d2" aria-label="工具特性">
         <span data-ui-icon="shield">全程本地解析，不上传存档</span>
-        <span data-ui-icon="home">家乡与夜世界分别整理</span>
+        <span data-ui-icon="home">家乡村庄与建筑大师基地分别整理</span>
         <span data-ui-icon="calendar">结果可直接接入升级规划</span>
       </div>
     </section>
@@ -42,11 +43,12 @@
     <!-- 二级专区导航 -->
     <section class="section" style="padding-top:18px;">
       <div class="coc-nav reveal d1">
-        <a href="https://wjtianze.github.io/coc/data/index.html"><span data-ui-icon="search"></span><span><b>数据查询</b><small>DATA INDEX</small></span></a>
-        <a href="https://wjtianze.github.io/coc/planner/index.html"><span data-ui-icon="calendar"></span><span><b>升级规划</b><small>TIMELINE</small></span></a>
-        <a href="https://wjtianze.github.io/coc/dmg-calc/index.html"><span data-ui-icon="burst"></span><span><b>伤害计算</b><small>SIMULATOR</small></span></a>
-        <a href="https://wjtianze.github.io/coc/tutorial/index.html"><span data-ui-icon="book"></span><span><b>COC 教程</b><small>GUIDES</small></span></a>
-        <a href="https://wjtianze.github.io/coc/install/index.html"><span data-ui-icon="download"></span><span><b>国际服安装</b><small>OFFICIAL INSTALL</small></span></a>
+        <a href="https://wjtianze.github.io/coc/data/index.html"><span data-ui-icon="document"></span><span><b>游戏静态数据</b><small>静态资料</small></span></a>
+        <a href="https://wjtianze.github.io/coc/live/index.html"><span data-ui-icon="search"></span><span><b>实时数据查询</b><small>实时查询</small></span></a>
+        <a href="https://wjtianze.github.io/coc/planner/index.html"><span data-ui-icon="calendar"></span><span><b>升级规划</b><small>升级时间</small></span></a>
+        <a href="https://wjtianze.github.io/coc/dmg-calc/index.html"><span data-ui-icon="burst"></span><span><b>伤害计算</b><small>战斗计算</small></span></a>
+        <a href="https://wjtianze.github.io/coc/tutorial/index.html"><span data-ui-icon="book"></span><span><b>COC 教程</b><small>玩法教程</small></span></a>
+        <a href="https://wjtianze.github.io/coc/install/index.html"><span data-ui-icon="download"></span><span><b>国际服安装</b><small>商店与 APK 下载</small></span></a>
       </div>
     </section>
 
@@ -56,12 +58,17 @@
           <h2><span class="bar"></span>粘贴村庄 JSON</h2>
         </div>
         <p id="vJsonHelp" style="font-size:13.5px; color:var(--ink-dim); margin-bottom:12px; line-height:1.7;"><span class="coc-status-dot"></span>将游戏中导出的村庄 JSON 粘贴到下方文本框，点击「解析数据」即可。解析结果会自动保存到本地，升级规划器与伤害计算器可直接读取；数据仅在浏览器中处理。</p>
-        <label class="coc-section-label" for="vJsonInput">Village JSON Input</label>
+        <label class="coc-section-label" for="vJsonInput">村庄 JSON 数据</label>
         <textarea id="vJsonInput" spellcheck="false" autocomplete="off" aria-describedby="vJsonHelp vError" placeholder='{"tag":"#XXXXX","timestamp":1783589176,"buildings":[...],"units":[...],"heroes":[...] ...}'></textarea>
         <div class="v-actions">
           <button class="btn" id="vParseBtn"><span>解析数据</span></button>
           <button class="btn btn--sm" id="vSampleBtn"><span>填入示例</span></button>
           <button class="btn btn--sm" id="vClearBtn"><span>清空</span></button>
+        </div>
+        <div class="v-sync-notice" id="vSyncNotice" role="status" aria-live="polite" hidden>
+          <span class="v-sync-notice__mark" data-ui-icon="info" aria-hidden="true"></span>
+          <span class="v-sync-notice__text" id="vSyncNoticeText"></span>
+          <button type="button" class="btn btn--sm" id="vSyncReload" hidden>载入助手修改</button>
         </div>
         <div class="v-error" id="vError" role="alert" aria-live="assertive" tabindex="-1"></div>
       </div>
@@ -81,25 +88,25 @@
         <div class="section-head" style="margin-bottom:14px;">
           <h2><span class="bar"></span>剩余升级时间总览</h2>
         </div>
-        <p style="font-size:13px; color:var(--ink-dim); margin-bottom:14px; line-height:1.7;">基于当前大本营等级，逐级累加每项单位从当前等级到当前大本营允许最高等级的升级时长。<b style="color:var(--ink);">墙钟时间</b>＝该资源串行总时长 ÷ 对应工人/研究员数量（即并行后实际所需时间）。</p>
+        <p style="font-size:13px; color:var(--ink-dim); margin-bottom:14px; line-height:1.7;">基于当前大本营等级，逐级累加每项单位从当前等级到当前大本营允许最高等级的升级时长。<b style="color:var(--ink);">墙钟时间</b>＝该资源串行总时长 ÷ 对应建筑工人或升级设施的并行栏位数。</p>
         <div class="v-opt-bar">
           <span style="font-size:13px; color:var(--ink-faint);">可选加成：</span>
-          <label><input type="checkbox" id="vGobWorker"> 哥布林工人（家乡建筑工人 +1）</label>
-          <label><input type="checkbox" id="vGobLab"> 哥布林研究员（家乡研究员 +1）</label>
+          <label><input type="checkbox" id="vGobWorker"> 哥布林建筑工人（家乡村庄建筑工人 +1）</label>
+          <label><input type="checkbox" id="vGobLab"> 哥布林研究工人（家乡村庄实验室 +1）</label>
         </div>
         <div id="vTimeOverview"></div>
-        <p class="v-time-note">分工：研究员（实验室）升级兵种 / 法术 / 攻城机器；战宠研究员升级战宠；建筑工人升级英雄 / 建筑 / 陷阱 / 其他。已满级或尚未解锁的单位不计入；城墙升级无时间成本，不计入。</p>
+        <p class="v-time-note">分工：实验室升级兵种、法术和攻城机器；战宠小屋升级战宠；建筑工人升级英雄、建筑、陷阱和其它项目。已满级或尚未解锁的单位不计入；城墙升级无时间成本，不计入。</p>
       </div>
 
       <!-- 家乡 -->
       <div class="v-world">
-        <div class="v-world-title" data-ui-icon="home">家乡 <span class="vw-badge">Home Village</span></div>
+        <div class="v-world-title" data-ui-icon="home">家乡村庄</div>
         <div id="vHome"></div>
       </div>
 
       <!-- 夜世界 -->
       <div class="v-world">
-        <div class="v-world-title" data-ui-icon="moon">夜世界 <span class="vw-badge">Builder Base</span></div>
+        <div class="v-world-title" data-ui-icon="moon">建筑大师基地</div>
         <div id="vBB"></div>
       </div>
 
@@ -108,7 +115,7 @@
         <div class="coc-link-icon" data-ui-icon="calendar" aria-hidden="true"></div>
         <div style="flex:1; min-width:200px;">
           <h3 style="font-size:16px; font-weight:600; margin-bottom:3px; color:var(--ink);">前往升级规划器</h3>
-          <p style="font-size:13.5px; color:var(--ink-dim);">基于刚才解析的村庄数据，用甘特图规划升级排程。家乡与夜世界分开，支持稳本 / 速本两种模式，自动安排工人、可拖拽微调。</p>
+          <p style="font-size:13.5px; color:var(--ink-dim);">基于刚才解析的村庄数据，用甘特图规划升级排程。家乡村庄与建筑大师基地分开，支持稳本 / 速本两种模式，自动安排建筑工人和升级设施，也可拖拽微调。</p>
         </div>
         <span class="btn btn--sm" style="flex-shrink:0;"><span data-ui-icon="right">打开规划器</span></span>
       </a>
@@ -129,7 +136,7 @@
 
   <footer class="coc-fan-notice">本页是非官方玩家内容，未经 Supercell 认可或赞助。详见 <a href="https://supercell.com/en/fan-content-policy/" target="_blank" rel="noopener noreferrer">Supercell 玩家内容政策</a>。</footer>
 
-  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260824-v5.2.0"></script>
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260828i-v5.3.0"></script>
   <script defer src="https://wjtianze.github.io/coc/shared/snapshot-v2.js?v=20260823a"></script>
   <script defer src="https://wjtianze.github.io/coc/app.js?v=20260823a"></script>
 </body>

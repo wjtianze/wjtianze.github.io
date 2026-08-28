@@ -511,8 +511,7 @@ html[data-palette="warm"] .coc-tool {
    Supercell face without downloading external fonts.
    ============================================================ */
 .coc-tool {
-  --tz-type-coc: "Supercell-Magic", "Supercell Magic", "Arial Rounded MT Bold",
-    "Trebuchet MS", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+  --tz-type-coc: "Microsoft YaHei UI", "PingFang SC", "Microsoft YaHei", sans-serif;
   font-family: "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC",
     "Noto Sans CJK SC", system-ui, sans-serif;
 }
@@ -770,5 +769,47 @@ html[data-palette="warm"] .coc-tool {
   .coc-tool .coc-tool-layout > .coc-tool-brief,
   .coc-tool .coc-tool-content > .section {
     animation: none !important;
+  }
+}
+/* 村庄存档被站内助手修改时的跨页面同步提示。 */
+.coc-village-tool .v-sync-notice {
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 11px 12px;
+  border: 1px solid color-mix(in srgb, var(--accent, #55d6c2) 34%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent, #55d6c2) 9%, var(--surface, #101d2d));
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.coc-village-tool .v-sync-notice:not([hidden]) {
+  display: flex;
+}
+
+.coc-village-tool .v-sync-notice__mark {
+  flex: 0 0 auto;
+  color: var(--accent, #55d6c2);
+}
+
+.coc-village-tool .v-sync-notice__text {
+  min-width: 0;
+  flex: 1;
+}
+
+.coc-village-tool .v-sync-notice .btn {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 620px) {
+  .coc-village-tool .v-sync-notice {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .coc-village-tool .v-sync-notice .btn {
+    width: 100%;
   }
 }

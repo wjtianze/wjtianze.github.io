@@ -9,6 +9,11 @@
 
   var G = null, IDMAP = {}, V = null, TH = 0, BH = 0, TASKS = [], SNAPSHOT_COVERAGE = null;
   var GOB_WORKER = 0, GOB_LAB = 0;
+  var INPUT_BASELINE = "", INPUT_DIRTY = false;
+  var REVISION_READY = false, REVISION_BOUND = false, PENDING_REVISION = null, REVISION_CHANNEL = null;
+  var SEEN_REVISIONS = Object.create(null), SEEN_REVISION_ORDER = [];
+  var LOCAL_REVISION_KEY = "tz_local_data_revision_v1";
+  var LOCAL_REVISION_EVENT = "tz-local-data-revision";
   var VILLAGE_ARRAY_FIELDS = ["helpers","buildings","traps","decos","obstacles","units","siege_machines","heroes","spells","pets","equipment","house_parts","skins","sceneries","buildings2","traps2","units2","heroes2"];
   var VILLAGE_OBJECT_ARRAY_FIELDS = ["helpers","buildings","traps","decos","obstacles","units","siege_machines","heroes","spells","pets","equipment","buildings2","traps2","units2","heroes2"];
 
@@ -23,6 +28,41 @@
   function unitOf(id){ return IDMAP[String(id)]||null; }
   function catOf(id){ var u=IDMAP[String(id)]; return u?u.category:""; }
   function isBBcat(c){ return c&&c.indexOf("夜世界")===0; }
+
+  function validLocalRevision(detail){
+    return !!detail&&typeof detail==="object"&&!Array.isArray(detail)&&
+      detail.schemaVersion===1&&detail.module==="coc"&&
+      (detail.resource==="village"||detail.resource==="snapshot")&&
+      typeof detail.revision==="string"&&detail.revision.length>0&&detail.revision.length<=160&&
+      typeof detail.changedAt==="number"&&isFinite(detail.changedAt)&&detail.changedAt>0;
+  }
+  function rememberRevision(revision){
+    if(SEEN_REVISIONS[revision])return false;
+    SEEN_REVISIONS[revision]=true; SEEN_REVISION_ORDER.push(revision);
+    if(SEEN_REVISION_ORDER.length>64)delete SEEN_REVISIONS[SEEN_REVISION_ORDER.shift()];
+    return true;
+  }
+  function inputIsDirty(){
+    var input=$("vJsonInput");
+    INPUT_DIRTY=!!input&&input.value!==INPUT_BASELINE;
+    return INPUT_DIRTY;
+  }
+  function markInputCommitted(text){
+    INPUT_BASELINE=String(text==null?"":text);
+    INPUT_DIRTY=false;
+  }
+  function showSyncNotice(message, allowReload){
+    var notice=$("vSyncNotice"), text=$("vSyncNoticeText"), button=$("vSyncReload");
+    if(!notice||!text||!button)return;
+    text.textContent=message;
+    if(allowReload)button.removeAttribute("hidden");else button.setAttribute("hidden","");
+    notice.removeAttribute("hidden");
+  }
+  function clearSyncNotice(){
+    var notice=$("vSyncNotice"), button=$("vSyncReload");
+    if(notice)notice.setAttribute("hidden","");
+    if(button)button.setAttribute("hidden","");
+  }
 
   function buildTimeSec(r){ if(!r)return 0; return num(r.BuildTimeD)*86400+num(r.BuildTimeH)*3600+num(r.BuildTimeM)*60+num(r.BuildTimeS); }
   function upgradeTimeSec(r){ if(!r)return 0; return num(r.UpgradeTimeH)*3600+num(r.UpgradeTimeM)*60; }
@@ -113,11 +153,11 @@
     var ts=V.timestamp||0, d=ts?new Date(ts*1000):null;
     var wc=workerCounts();
     var html="";
-    html+=m("玩家标签",V.tag||"-");
-    html+=m("采集时间",d?d.toLocaleString("zh-CN"):"-","");
-    html+=m("家乡大本营",TH+" 本","");
-    html+=m("夜世界大本营",BH?BH+" 本":"未建","");
-    html+=m("家乡建筑工人",wc.home_builder+" 个","含哥布林工人"+GOB_WORKER);
+    html+=m("玩家标签",V.tag||"无");
+    html+=m("数据截取时间",d?d.toLocaleString("zh-CN"):"无","");
+    html+=m("家乡村庄大本营",TH+" 本","");
+    html+=m("建筑大师大本营",BH?BH+" 本":"未建","");
+    html+=m("家乡村庄建筑工人",wc.home_builder+" 个","含哥布林建筑工人 "+GOB_WORKER+" 名");
     html+=m("待升级任务",TASKS.length+" 项","见下方总览与规划器");
     $("vMetrics").innerHTML=html;
   }
@@ -216,15 +256,15 @@
   function renderTimeOverview(){
     var wc=workerCounts();
     var groups = {
-      home_builder:{label:"建筑工人",sec:0,n:0}, home_lab:{label:"研究员",sec:0,n:0}, home_pet:{label:"战宠研究员",sec:0,n:0},
-      bb_builder:{label:"建筑工人",sec:0,n:0}, bb_lab:{label:"研究员",sec:0,n:0}
+      home_builder:{label:"建筑工人",sec:0,n:0}, home_lab:{label:"实验室",sec:0,n:0}, home_pet:{label:"战宠小屋",sec:0,n:0},
+      bb_builder:{label:"建筑工人",sec:0,n:0}, bb_lab:{label:"星空实验室",sec:0,n:0}
     };
     TASKS.forEach(function(t){ var k=laneOf(t.cat,t.world); if(groups[k]){groups[k].sec+=t.sec;groups[k].n++;} });
 
     function block(title, iconKey, keys){
       var maxSec=0; keys.forEach(function(k){ if(groups[k].sec>maxSec)maxSec=groups[k].sec; });
       var h='<div class="v-world-block"><h3>'+uiGlyph(iconKey)+' '+title+'</h3>';
-      h+='<table class="v-time-table"><thead><tr><th>资源</th><th>任务数</th><th>串行总时长</th><th>工人/研究员</th><th>墙钟时间</th><th style="width:22%">占比</th></tr></thead><tbody>';
+      h+='<table class="v-time-table"><thead><tr><th>负责方</th><th>任务数</th><th>串行总时长</th><th>并行栏位</th><th>墙钟时间</th><th style="width:22%">占比</th></tr></thead><tbody>';
       keys.forEach(function(k){
         var g=groups[k], slots=wc[k]||0, wall = slots>0?g.sec/slots:0;
         var pct = maxSec?Math.round(g.sec/maxSec*100):0;
@@ -234,7 +274,7 @@
       h+='</tbody></table></div>';
       return h;
     }
-    var html = block("家乡 · Home Village","home",["home_builder","home_lab","home_pet"]) + block("夜世界 · Builder Base","moon",["bb_builder","bb_lab"]);
+    var html = block("家乡村庄","home",["home_builder","home_lab","home_pet"]) + block("建筑大师基地","moon",["bb_builder","bb_lab"]);
     $("vTimeOverview").innerHTML=html;
   }
 
@@ -259,7 +299,7 @@
     var result=$("vResult");
     result.classList.add("show");
     renderMetrics(); renderTimeOverview(); renderHome(); renderBB();
-    saveToStorage();
+    if(options.persist!==false)saveToStorage();
     if(options.reveal!==false){
       result.setAttribute("tabindex","-1");
       result.scrollIntoView({behavior:"smooth",block:"start"});
@@ -279,6 +319,82 @@
   function showError(msg){ var e=$("vError"); e.textContent=msg; e.classList.add("show"); $("vJsonInput").setAttribute("aria-invalid","true"); e.focus(); }
   function clearError(){ var e=$("vError"); e.textContent=""; e.classList.remove("show"); $("vJsonInput").removeAttribute("aria-invalid"); }
 
+  function loadPersistedVillage(options){
+    options=options||{};
+    var saved;
+    try{
+      saved=JSON.parse(localStorage.getItem("tz_coc_village")||"null");
+    }catch(error){
+      showSyncNotice("助手已修改村庄存档，但保存内容无法读取。当前输入没有被覆盖。",false);
+      return false;
+    }
+    if(!saved||!saved.village){
+      V=null; TH=0; BH=0; TASKS=[]; SNAPSHOT_COVERAGE=null; GOB_WORKER=0; GOB_LAB=0;
+      $("vJsonInput").value="";
+      $("vGobWorker").checked=false; $("vGobLab").checked=false;
+      $("vResult").classList.remove("show");
+      clearError(); markInputCommitted("");
+      if(options.notice!==false)showSyncNotice("站内助手已清除本机村庄存档。",false);
+      return true;
+    }
+    var savedText=typeof saved.village==="string"?saved.village:JSON.stringify(saved.village);
+    var parsed=parseVillage(savedText);
+    if(!parsed){
+      showSyncNotice("助手已修改村庄存档，但新内容无法解析。当前输入没有被覆盖。",false);
+      return false;
+    }
+    $("vJsonInput").value=savedText;
+    V=parsed; SNAPSHOT_COVERAGE=saved.coverage||null;
+    TH=detectTH(V); BH=detectBH(V); GOB_WORKER=saved.gobWorker||0; GOB_LAB=saved.gobLab||0;
+    $("vGobWorker").checked=!!GOB_WORKER; $("vGobLab").checked=!!GOB_LAB;
+    computeTasks(); render({reveal:false,persist:false}); clearError(); markInputCommitted(savedText);
+    if(options.notice!==false)showSyncNotice("站内助手的村庄存档修改已载入。",false);
+    return true;
+  }
+
+  function applyPendingRevision(explicit){
+    if(!PENDING_REVISION||!REVISION_READY)return false;
+    if(!explicit&&inputIsDirty()){
+      showSyncNotice("站内助手已修改本机村庄存档。文本框里还有未保存内容，因此没有自动覆盖。",true);
+      return false;
+    }
+    if(loadPersistedVillage({notice:true})){
+      PENDING_REVISION=null;
+      return true;
+    }
+    return false;
+  }
+
+  function receiveLocalRevision(detail){
+    if(!validLocalRevision(detail)||!rememberRevision(detail.revision))return false;
+    PENDING_REVISION={
+      schemaVersion:1,module:"coc",resource:detail.resource,
+      revision:detail.revision,changedAt:detail.changedAt
+    };
+    if(!REVISION_READY)return true;
+    applyPendingRevision(false);
+    return true;
+  }
+
+  function bindLocalRevision(){
+    if(REVISION_BOUND||!window.addEventListener)return;
+    REVISION_BOUND=true;
+    window.addEventListener(LOCAL_REVISION_EVENT,function(event){receiveLocalRevision(event&&event.detail);});
+    window.addEventListener("storage",function(event){
+      if(!event||event.key!==LOCAL_REVISION_KEY||typeof event.newValue!=="string")return;
+      try{receiveLocalRevision(JSON.parse(event.newValue));}catch(_error){}
+    });
+    if(typeof window.BroadcastChannel==="function"){
+      try{
+        REVISION_CHANNEL=new window.BroadcastChannel(LOCAL_REVISION_EVENT);
+        REVISION_CHANNEL.addEventListener("message",function(event){receiveLocalRevision(event&&event.data);});
+      }catch(_error){REVISION_CHANNEL=null;}
+    }
+    window.addEventListener("pagehide",function(){
+      if(REVISION_CHANNEL){try{REVISION_CHANNEL.close();}catch(_error){}REVISION_CHANNEL=null;}
+    },{once:true});
+  }
+
   var SAMPLE = '{"tag":"#GU9JCCV8P","timestamp":1783589176,"helpers":[{"data":93000000,"lvl":5,"helper_cooldown":3452},{"data":93000001,"lvl":6,"helper_cooldown":3452},{"data":93000002,"lvl":2,"helper_cooldown":3452},{"data":93000003,"lvl":1,"helper_cooldown":3452}],"buildings":[{"data":1000001,"lvl":13,"weapon":1},{"data":1000008,"lvl":17,"gear_up":1},{"data":1000009,"lvl":17,"gear_up":1},{"data":1000013,"lvl":12,"gear_up":1},{"data":1000012,"lvl":10,"timer":12728},{"data":1000059,"lvl":3,"timer":143120},{"data":1000000,"lvl":11,"cnt":4},{"data":1000002,"lvl":15,"cnt":7},{"data":1000003,"lvl":14,"cnt":4},{"data":1000004,"lvl":15,"cnt":7},{"data":1000005,"lvl":14,"cnt":4},{"data":1000006,"lvl":15,"cnt":1},{"data":1000007,"lvl":11,"cnt":1},{"data":1000008,"lvl":17,"cnt":6},{"data":1000009,"lvl":17,"cnt":7},{"data":1000010,"lvl":13,"cnt":57},{"data":1000010,"lvl":14,"cnt":243},{"data":1000011,"lvl":11,"cnt":5},{"data":1000012,"lvl":10,"cnt":3},{"data":1000013,"lvl":12,"cnt":3},{"data":1000014,"lvl":9,"cnt":1},{"data":1000015,"lvl":1,"cnt":5},{"data":1000019,"lvl":10,"cnt":5},{"data":1000020,"lvl":7,"cnt":1},{"data":1000021,"lvl":7,"cnt":4},{"data":1000023,"lvl":9,"cnt":3},{"data":1000024,"lvl":8,"cnt":1},{"data":1000026,"lvl":10,"cnt":1},{"data":1000027,"lvl":7,"cnt":3},{"data":1000028,"lvl":7,"cnt":2},{"data":1000029,"lvl":6,"cnt":1},{"data":1000031,"lvl":4,"cnt":1},{"data":1000032,"lvl":7,"cnt":2},{"data":1000064,"lvl":1,"cnt":1},{"data":1000067,"lvl":2,"cnt":2},{"data":1000070,"lvl":6,"cnt":1},{"data":1000071,"lvl":7,"cnt":1},{"data":1000093,"lvl":1,"cnt":1}],"traps":[{"data":12000000,"lvl":8,"cnt":7},{"data":12000001,"lvl":5,"cnt":1},{"data":12000001,"lvl":7,"cnt":8},{"data":12000002,"lvl":6,"cnt":6},{"data":12000005,"lvl":6,"cnt":6},{"data":12000006,"lvl":3,"cnt":7},{"data":12000008,"lvl":4,"cnt":3},{"data":12000016,"lvl":3,"cnt":1}],"decos":[{"data":18000001,"cnt":4}],"obstacles":[{"data":8000007,"cnt":1}],"units":[{"data":4000000,"lvl":9},{"data":4000001,"lvl":9},{"data":4000002,"lvl":8},{"data":4000003,"lvl":9},{"data":4000004,"lvl":8},{"data":4000005,"lvl":8},{"data":4000006,"lvl":9},{"data":4000007,"lvl":5},{"data":4000008,"lvl":8},{"data":4000009,"lvl":8},{"data":4000010,"lvl":8},{"data":4000011,"lvl":9},{"data":4000012,"lvl":7},{"data":4000013,"lvl":9},{"data":4000015,"lvl":5},{"data":4000017,"lvl":5},{"data":4000022,"lvl":4},{"data":4000023,"lvl":6},{"data":4000024,"lvl":6},{"data":4000053,"lvl":2},{"data":4000058,"lvl":5},{"data":4000059,"lvl":3},{"data":4000065,"lvl":2},{"data":4000082,"lvl":3},{"data":4000097,"lvl":1,"timer":307029,"extra":true}],"siege_machines":[{"data":4000051,"lvl":3},{"data":4000052,"lvl":3},{"data":4000062,"lvl":3}],"heroes":[{"data":28000000,"lvl":67,"timer":49587},{"data":28000001,"lvl":65,"timer":251139},{"data":28000002,"lvl":40},{"data":28000004,"lvl":2,"timer":6340},{"data":28000006,"lvl":40,"timer":132339}],"spells":[{"data":26000000,"lvl":9},{"data":26000001,"lvl":7},{"data":26000002,"lvl":6},{"data":26000003,"lvl":3},{"data":26000005,"lvl":7},{"data":26000009,"lvl":6},{"data":26000010,"lvl":5},{"data":26000011,"lvl":5},{"data":26000016,"lvl":6},{"data":26000017,"lvl":6},{"data":26000028,"lvl":5},{"data":26000035,"lvl":3,"timer":119666},{"data":26000053,"lvl":1},{"data":26000070,"lvl":2}],"pets":[],"equipment":[{"data":90000000,"lvl":7},{"data":90000001,"lvl":8},{"data":90000002,"lvl":7},{"data":90000003,"lvl":9},{"data":90000004,"lvl":15},{"data":90000005,"lvl":9},{"data":90000006,"lvl":15},{"data":90000007,"lvl":1},{"data":90000008,"lvl":15},{"data":90000010,"lvl":18},{"data":90000011,"lvl":6},{"data":90000013,"lvl":18},{"data":90000014,"lvl":1},{"data":90000015,"lvl":12},{"data":90000016,"lvl":1},{"data":90000017,"lvl":15},{"data":90000019,"lvl":1},{"data":90000020,"lvl":15},{"data":90000022,"lvl":18},{"data":90000024,"lvl":15},{"data":90000032,"lvl":1},{"data":90000034,"lvl":15},{"data":90000035,"lvl":1},{"data":90000039,"lvl":18},{"data":90000040,"lvl":1},{"data":90000041,"lvl":1},{"data":90000042,"lvl":12},{"data":90000043,"lvl":15},{"data":90000044,"lvl":1},{"data":90000047,"lvl":1},{"data":90000048,"lvl":1},{"data":90000049,"lvl":18},{"data":90000050,"lvl":1},{"data":90000051,"lvl":1},{"data":90000052,"lvl":1},{"data":90000053,"lvl":1},{"data":90000057,"lvl":1},{"data":90000060,"lvl":1}],"house_parts":[82000000],"skins":[52000006],"sceneries":[60000082],"buildings2":[{"data":1000036,"lvl":9,"timer":170553},{"data":1000033,"lvl":1,"cnt":46},{"data":1000033,"lvl":6,"cnt":124},{"data":1000033,"lvl":7,"cnt":10},{"data":1000034,"lvl":10,"cnt":1},{"data":1000035,"lvl":9,"cnt":1},{"data":1000035,"lvl":10,"cnt":2},{"data":1000036,"lvl":9,"cnt":1},{"data":1000037,"lvl":1,"cnt":1},{"data":1000037,"lvl":6,"cnt":1},{"data":1000037,"lvl":7,"cnt":1},{"data":1000038,"lvl":8,"cnt":1},{"data":1000038,"lvl":9,"cnt":1},{"data":1000039,"lvl":10,"cnt":1},{"data":1000040,"lvl":10,"cnt":1},{"data":1000041,"lvl":1,"cnt":1},{"data":1000041,"lvl":6,"cnt":2},{"data":1000042,"lvl":1,"cnt":6},{"data":1000043,"lvl":5,"cnt":1},{"data":1000043,"lvl":6,"cnt":2},{"data":1000044,"lvl":5,"cnt":1},{"data":1000044,"lvl":6,"cnt":2},{"data":1000045,"lvl":9,"cnt":1},{"data":1000046,"lvl":10,"cnt":1},{"data":1000047,"lvl":1,"cnt":1},{"data":1000048,"lvl":6,"cnt":3},{"data":1000049,"lvl":1,"cnt":2},{"data":1000050,"lvl":1,"cnt":2},{"data":1000050,"lvl":2,"cnt":1},{"data":1000050,"lvl":6,"cnt":2},{"data":1000051,"lvl":6,"cnt":1},{"data":1000052,"lvl":1,"cnt":1},{"data":1000053,"lvl":1,"cnt":1},{"data":1000054,"lvl":6,"cnt":1},{"data":1000055,"lvl":5,"cnt":1},{"data":1000055,"lvl":6,"cnt":1},{"data":1000056,"lvl":7,"cnt":1},{"data":1000057,"lvl":1,"cnt":1},{"data":1000058,"lvl":10,"cnt":1},{"data":1000063,"lvl":1,"cnt":1},{"data":1000065,"lvl":5,"cnt":1},{"data":1000078,"lvl":6,"cnt":1},{"data":1000080,"lvl":1,"cnt":1},{"data":1000081,"lvl":1,"cnt":1},{"data":1000082,"lvl":5,"cnt":1}],"traps2":[{"data":12000010,"lvl":1,"cnt":3},{"data":12000010,"lvl":3,"cnt":3},{"data":12000011,"lvl":1,"cnt":1},{"data":12000011,"lvl":6,"cnt":4},{"data":12000013,"lvl":1,"cnt":1},{"data":12000013,"lvl":6,"cnt":5},{"data":12000014,"lvl":1,"cnt":2},{"data":12000014,"lvl":6,"cnt":1},{"data":12000014,"lvl":7,"cnt":1}],"units2":[{"data":4000031,"lvl":14},{"data":4000032,"lvl":13},{"data":4000033,"lvl":12},{"data":4000034,"lvl":18},{"data":4000035,"lvl":14},{"data":4000036,"lvl":13},{"data":4000037,"lvl":12},{"data":4000038,"lvl":11},{"data":4000041,"lvl":15},{"data":4000042,"lvl":20}],"heroes2":[{"data":28000003,"lvl":21},{"data":28000005,"lvl":24}],"boosts":{"clocktower_cooldown":3634}}';
 
   function refreshGob(){
@@ -288,6 +404,12 @@
   }
 
   function init(){
+    bindLocalRevision();
+    $("vJsonInput").addEventListener("input",function(){
+      inputIsDirty();
+      if(!INPUT_DIRTY&&PENDING_REVISION&&REVISION_READY)applyPendingRevision(false);
+    });
+    $("vSyncReload").addEventListener("click",function(){applyPendingRevision(true);});
     loadGame(function(){
       $("vParseBtn").addEventListener("click", function(){
         clearError();
@@ -295,23 +417,26 @@
         if(!text){ showError("请先粘贴村庄 JSON 数据。"); return; }
         V=parseVillage(text); if(!V)return; SNAPSHOT_COVERAGE=null;
         TH=detectTH(V); BH=detectBH(V);
-        computeTasks(); render();
+        computeTasks(); render(); markInputCommitted($("vJsonInput").value); PENDING_REVISION=null; clearSyncNotice();
       });
-      $("vSampleBtn").addEventListener("click", function(){ $("vJsonInput").value=SAMPLE; clearError(); });
-      $("vClearBtn").addEventListener("click", function(){ $("vJsonInput").value=""; clearError(); $("vResult").classList.remove("show"); });
+      $("vSampleBtn").addEventListener("click", function(){ $("vJsonInput").value=SAMPLE; inputIsDirty(); clearError(); });
+      $("vClearBtn").addEventListener("click", function(){ $("vJsonInput").value=""; inputIsDirty(); clearError(); $("vResult").classList.remove("show"); });
       $("vGobWorker").addEventListener("change", refreshGob);
       $("vGobLab").addEventListener("change", refreshGob);
-      // 自动恢复上次保存的村庄存档（同源 localStorage["tz_coc_village"]，由本页保存或天择OS命令行 coc-data 写入）
-      try {
-        var saved = JSON.parse(localStorage.getItem("tz_coc_village") || "null");
-        if (saved && saved.village) {
-          var savedText = typeof saved.village === "string" ? saved.village : JSON.stringify(saved.village);
-          $("vJsonInput").value = savedText;
-          V = parseVillage(savedText); SNAPSHOT_COVERAGE=saved.coverage||null;
-          if (V) { TH = detectTH(V); BH = detectBH(V); GOB_WORKER = saved.gobWorker||0; GOB_LAB = saved.gobLab||0; $("vGobWorker").checked = !!GOB_WORKER; $("vGobLab").checked = !!GOB_LAB; computeTasks(); render({reveal:false}); }
-        }
-      } catch (e) {}
+      REVISION_READY=true;
+      // 若加载游戏数据期间用户已经开始输入，绝不再用旧存档覆盖文本框。
+      if(PENDING_REVISION)applyPendingRevision(false);
+      else if(!inputIsDirty())loadPersistedVillage({notice:false});
     });
   }
-  init();
+  if(typeof module==="object"&&module&&module.exports){
+    module.exports={
+      receiveLocalRevision:receiveLocalRevision,
+      markInputCommitted:markInputCommitted,
+      inputIsDirty:inputIsDirty,
+      applyPendingRevision:applyPendingRevision,
+      setRevisionReady:function(value){REVISION_READY=!!value;},
+      state:function(){return{inputBaseline:INPUT_BASELINE,inputDirty:INPUT_DIRTY,pendingRevision:PENDING_REVISION,seenCount:SEEN_REVISION_ORDER.length};}
+    };
+  }else init();
 })();

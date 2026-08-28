@@ -10,6 +10,21 @@
   var SCHEMA_VERSION = 2;
   var STORAGE_KEY = "tz_coc_planner_v1";
   var MODES = Object.freeze(["steady", "rush"]);
+  var CATEGORY_DISPLAY = Object.freeze({
+    "夜世界兵种": "建筑大师基地兵种",
+    "夜世界英雄": "建筑大师基地英雄",
+    "夜世界资源建筑": "建筑大师基地资源建筑",
+    "夜世界科技建筑": "建筑大师基地科技建筑",
+    "夜世界防御建筑": "建筑大师基地防御建筑",
+    "夜世界其它建筑": "建筑大师基地其它建筑",
+    "夜世界陷阱": "建筑大师基地陷阱",
+    "帮手角色": "帮手"
+  });
+
+  function displayCategory(value) {
+    var category = String(value || "升级任务");
+    return CATEGORY_DISPLAY[category] || category;
+  }
 
   function safeNumber(value, fallback) {
     var number = Number(value);
@@ -214,7 +229,7 @@
           rows.push("DTSTART:" + icsDate(start));
           rows.push("DTEND:" + icsDate(end));
           rows.push("SUMMARY:" + icsEscape("COC · " + task.name + " " + task.fromLvl + "→" + task.toLvl));
-          rows.push("DESCRIPTION:" + icsEscape((world === "home" ? "家乡" : "夜世界") + " · " + (task.cat || "升级任务") + " · " + (mode === "steady" ? "稳本方案" : "速本方案")));
+          rows.push("DESCRIPTION:" + icsEscape((world === "home" ? "家乡村庄" : "建筑大师基地") + " · " + displayCategory(task.cat) + " · " + (mode === "steady" ? "稳本方案" : "速本方案")));
           rows.push("END:VEVENT");
         });
     });

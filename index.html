@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>天择网 5.2 · Evolution Network</title>
-  <meta name="description" content="这里是天择网：记录思考，分享创作，安放热爱。" />
+  <title>天择网 5.3 · 作品、文章与学习工具</title>
+  <meta name="description" content="天择网是我整理作品、文章、游戏资料和学习工具的个人网站。" />
   <meta name="theme-color" content="#102947" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260824-v5.2.0" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3l3.5 8.3 8.5 1-6.5 5.7 2.2 8.7-7.7-4.6-7.7 4.6 2.2-8.7L4 12.3l8.5-1z' fill='%237dd3fc'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828i-v5.3.0" />
+  <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828i" />
 </head>
-<body class="tz-homepage">
-  <div class="bg-mesh"></div>
+<body class="tz-homepage home-journal">
+  <div class="bg-mesh" aria-hidden="true"></div>
 
   <header class="topbar">
     <div class="wrap topbar-inner">
@@ -19,14 +19,9 @@
         <span class="logo-mark" aria-hidden="true"></span>
         <span class="brand-copy">
           <span class="logo-text">天择网</span>
-          <small>EVOLUTION NETWORK · 5.2</small>
+          <small>个人作品与学习记录</small>
         </span>
       </a>
-      <div class="tz-topbar-status" aria-label="系统状态">
-        <span class="tz-live-dot" aria-hidden="true"></span>
-        <span>网络矩阵 · 在线</span>
-        <time datetime="2026-08-07">2026.08</time>
-      </div>
       <button class="nav-toggle" type="button" data-ui-icon="menu" aria-label="打开菜单"></button>
       <nav class="nav" aria-label="主导航">
         <a href="https://wjtianze.github.io/index.html" class="active"><span>首页</span></a>
@@ -38,207 +33,54 @@
         <a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a>
         <a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a>
         <a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a>
-        <a href="https://wjtianze.github.io/contact/index.html"><span>联系开发者</span></a>
+        <a href="https://wjtianze.github.io/contact/index.html"><span>联系</span></a>
       </nav>
     </div>
   </header>
 
-  <main class="tz-home-workspace">
-    <section class="tz-home-hero wrap" aria-labelledby="home-title">
-      <div class="tz-home-hero__copy">
-        <div class="tz-kicker reveal in">
-          <span class="tz-icon" data-icon="crystal" aria-hidden="true"></span>
-          <span>物竞天择 · 适者生存</span>
-          <b>NETWORK 5.2</b>
+  <main id="home-main" class="home-journal-main">
+    <section class="home-journal-hero wrap" aria-labelledby="home-title">
+      <div class="home-journal-hero__copy">
+        <p class="home-journal-motto">物竞天择，适者生存。</p>
+        <h1 id="home-title">天择网</h1>
+        <p class="home-journal-hero__intro">文章、游戏资料和我平时在用的工具，都整理在这里。想找哪一页，直接问右边的站内助手；往下翻也能慢慢看。</p>
+        <div class="home-journal-actions">
+          <a class="btn" href="#home-ai">问问站内助手</a>
+          <a class="btn btn--ghost" href="https://wjtianze.github.io/os/index.html">体验天择OS</a>
         </div>
-        <h1 id="home-title" class="reveal in d1">
-          这里是天择网
-        </h1>
-        <p class="tz-home-lead reveal in d2">
-          <strong>记录思考，分享创作，安放热爱。</strong>
-          新闻、博客、开源数据、AI 实践、游戏与学习工具在这里彼此连接，也持续生长。
-        </p>
-        <div class="hero-actions reveal in d3">
-          <a class="btn" href="#domains">
-            <span class="tz-icon" data-icon="cursor" aria-hidden="true"></span>
-            <span>进入内容矩阵</span>
-          </a>
-          <a class="btn btn--ghost" href="https://wjtianze.github.io/os/index.html">
-            <span class="tz-icon" data-icon="monitor" aria-hidden="true"></span>
-            <span>启动天择OS 5.2</span>
-          </a>
-        </div>
-        <dl class="tz-home-metrics reveal in d3" aria-label="站点概览">
-          <div><dt>内容域</dt><dd>09</dd></div>
-          <div><dt>站点资讯</dt><dd>29</dd></div>
-          <div><dt>开源技能</dt><dd>02</dd></div>
-          <div><dt>当前代际</dt><dd>5.2</dd></div>
-        </dl>
       </div>
-
-      <aside class="tz-network-panel reveal in d2" aria-label="天择网络态势">
-        <div class="tz-panel-head">
-          <div>
-            <small>LIVE TOPOLOGY</small>
-            <h2>网络态势</h2>
-          </div>
-          <span class="tz-status-chip" role="status" aria-live="polite"><i></i>正在连接节点索引</span>
-        </div>
-        <div class="tz-network-map" aria-label="内容节点拓扑">
-          <div class="tz-network-loading" role="status">
-            <span class="tz-icon" data-icon="crystal" aria-hidden="true"></span>
-            <b>正在生成全站星图</b>
-            <small>主页居中 · 分层连接 · 29 个精选节点</small>
-          </div>
-        </div>
-        <div class="tz-panel-foot">
-          <span><i>01</i> 内容持续同步</span>
-          <span><i>02</i> 五套免费外观</span>
-          <span><i>03</i> OS / Web 联动</span>
-        </div>
-      </aside>
+      <div class="home-ai-stage" id="home-ai" data-home-ai-stage data-home-ai-mode="loading" aria-label="天择网站内助手">
+        <p class="home-ai-stage__waiting" role="status">正在打开站内助手…</p>
+        <noscript><p class="home-ai-stage__noscript">启用 JavaScript 后可以使用站内助手。</p></noscript>
+      </div>
     </section>
 
-    <section class="wrap">
-      <a class="tz-priority-signal reveal in" href="https://wjtianze.github.io/news/29/index.html">
-        <span class="tz-signal-icon">
-          <span class="tz-icon" data-icon="burst" aria-hidden="true"></span>
-        </span>
-        <span class="tz-signal-copy">
-          <small>最新公告 · 2026-08-24</small>
-          <strong>天择网与天择OS 5.2：COC 数据中心与安全 AI 后端上线</strong>
-        </span>
-        <span class="tz-signal-action">
-          阅读更新
-          <span class="tz-icon" data-icon="right" aria-hidden="true"></span>
-        </span>
+    <section class="home-current wrap" aria-labelledby="current-title">
+      <div class="home-section-heading">
+        <p>最近更新</p>
+        <h2 id="current-title">这次更新了什么</h2>
+      </div>
+      <a class="home-current-link" href="https://wjtianze.github.io/news/30/index.html">
+        <time datetime="2026-08-28">2026 年 8 月 28 日</time>
+        <strong>天择网与天择OS 5.3 已经可以用了</strong>
+        <span>首页助手、COC 查询、单词本和桌面版都更顺手了。</span>
+        <b>阅读全文</b>
       </a>
     </section>
 
-    <section class="tz-domain-section wrap" id="domains" aria-labelledby="domains-title">
-      <div class="tz-workspace-heading reveal">
-        <div>
-          <span>DOMAIN MATRIX / 01</span>
-          <h2 id="domains-title">内容矩阵</h2>
-        </div>
-        <p>每个板块都是独立入口，也能在天择OS中作为应用运行。</p>
+    <section class="home-reading wrap" aria-labelledby="reading-title">
+      <div class="home-section-heading">
+        <p>继续看看</p>
+        <h2 id="reading-title">最近值得打开的内容</h2>
       </div>
-
-      <div class="tz-domain-grid">
-        <a class="tz-domain-card tz-domain-card--os reveal" href="https://wjtianze.github.io/os/index.html">
-          <span class="tz-domain-index">OS / 5.2</span>
-          <span class="tz-domain-icon"><span class="tz-icon" data-icon="monitor" aria-hidden="true"></span></span>
-          <div>
-            <small>EVOLUTION SHELL</small>
-            <h3>天择OS</h3>
-            <p>在浏览器与桌面端运行的完整工作台，整合本站应用、AI 对话、命令行与软件生态。</p>
-          </div>
-          <span class="tz-domain-go">启动系统 <span class="tz-icon" data-icon="right" aria-hidden="true"></span></span>
-        </a>
-
-        <a class="tz-domain-card reveal" href="https://wjtianze.github.io/news/index.html">
-          <span class="tz-domain-index">01</span>
-          <span class="tz-domain-icon"><span class="tz-icon" data-icon="newspaper" aria-hidden="true"></span></span>
-          <div><small>SIGNAL FEED</small><h3>新闻</h3><p>站点动态与重要更新的第一发布现场。</p></div>
-          <span class="tz-domain-go">浏览信号 <span class="tz-icon" data-icon="right" aria-hidden="true"></span></span>
-        </a>
-
-        <a class="tz-domain-card reveal" href="https://wjtianze.github.io/blog/index.html">
-          <span class="tz-domain-index">02</span>
-          <span class="tz-domain-icon"><span class="tz-icon" data-icon="pen" aria-hidden="true"></span></span>
-          <div><small>LONGFORM</small><h3>博客</h3><p>更长篇幅的思考、随笔、攻略与创作。</p></div>
-          <span class="tz-domain-go">打开文库 <span class="tz-icon" data-icon="right" aria-hidden="true"></span></span>
-        </a>
-
-        <a class="tz-domain-card reveal" href="https://wjtianze.github.io/open/index.html">
-          <span class="tz-domain-index">03</span>
-          <span class="tz-domain-icon"><span class="tz-icon" data-icon="unlock" aria-hidden="true"></span></span>
-          <div><small>OPEN DATA</small><h3>数据开源</h3><p>自制数据与服务免费开放，不限制使用方向。</p></div>
-          <span class="tz-domain-go">读取资源 <span class="tz-icon" data-icon="right" aria-hidden="true"></span></span>
-        </a>
-
-        <a class="tz-domain-card reveal" href="https://wjtianze.github.io/ai/index.html">
-          <span class="tz-domain-index">04</span>
-          <span class="tz-domain-icon"><span class="tz-icon" data-icon="ai" aria-hidden="true"></span></span>
-          <div><small>INTELLIGENCE</small><h3>AI 专区</h3><p>人工智能工具、技能、实践与前沿观察。</p></div>
-          <span class="tz-domain-go">进入专区 <span class="tz-icon" data-icon="right" aria-hidden="true"></span></span>
-        </a>
-
-        <a class="tz-domain-card tz-domain-card--wide reveal" href="https://wjtianze.github.io/coc/index.html">
-          <span class="tz-domain-index">05</span>
-          <span class="tz-domain-icon"><span class="tz-icon" data-icon="shield" aria-hidden="true"></span></span>
-          <div><small>COC LAB</small><h3>COC 专区</h3><p>村庄存档分析、升级规划、伤害计算与本地游戏数据工具。</p></div>
-          <span class="tz-domain-go">进入实验室 <span class="tz-icon" data-icon="right" aria-hidden="true"></span></span>
-        </a>
-
-        <a class="tz-domain-card tz-domain-card--wide reveal" href="https://wjtianze.github.io/game/index.html">
-          <span class="tz-domain-index">06</span>
-          <span class="tz-domain-icon"><span class="tz-icon" data-icon="gamepad" aria-hidden="true"></span></span>
-          <div><small>PLAYGROUND</small><h3>游戏专区</h3><p>天择网原创网页游戏与可直接运行的互动作品。</p></div>
-          <span class="tz-domain-go">开始游玩 <span class="tz-icon" data-icon="right" aria-hidden="true"></span></span>
-        </a>
-
-        <a class="tz-domain-card tz-domain-card--wide reveal" href="https://wjtianze.github.io/english/index.html">
-          <span class="tz-domain-index">07</span>
-          <span class="tz-domain-icon"><span class="tz-icon" data-icon="book" aria-hidden="true"></span></span>
-          <div><small>LEARNING DECK</small><h3>英语专区</h3><p>四阶段词汇训练、AI 出题与自定义词库组成的学习工作台。</p></div>
-          <span class="tz-domain-go">开始训练 <span class="tz-icon" data-icon="right" aria-hidden="true"></span></span>
-        </a>
-      </div>
-    </section>
-
-    <section class="tz-feed-section wrap" aria-labelledby="feed-title">
-      <div class="tz-workspace-heading reveal">
-        <div>
-          <span>最新动态 / 02</span>
-          <h2 id="feed-title">最新动态</h2>
-        </div>
-        <a href="https://wjtianze.github.io/news/index.html">查看全部新闻 <span class="tz-icon" data-icon="right" aria-hidden="true"></span></a>
-      </div>
-
-      <div class="tz-feed-layout">
-        <div class="tz-feed-timeline">
-          <a class="tz-feed-entry reveal" href="https://wjtianze.github.io/news/29/index.html">
-            <time datetime="2026-08-24">08.24</time>
-            <span class="tz-feed-marker"></span>
-            <div><small>正式发布 · 最新</small><h3>天择网与天择OS 5.2 正式发布</h3><p>COC 数据中心能直接查玩家与部落，AI 也有了不把密钥留在浏览器里的稳定后端。</p></div>
-          </a>
-          <a class="tz-feed-entry reveal" href="https://wjtianze.github.io/news/27/index.html">
-            <time datetime="2026-08-02">08.02</time>
-            <span class="tz-feed-marker"></span>
-            <div><small>正式发布</small><h3>天择OS 4.1 正式发布</h3><p>对话归档、智能体、用量统计、会员外观和加密存档同步上线。</p></div>
-          </a>
-          <a class="tz-feed-entry reveal" href="https://wjtianze.github.io/news/26/index.html">
-            <time datetime="2026-07-31">07.31</time>
-            <span class="tz-feed-marker"></span>
-            <div><small>正式发布</small><h3>天择网与天择OS 4.0</h3><p>全站工作台、人工智能多会话、知识库、COC 与英语学习体验统一升级。</p></div>
-          </a>
-          <a class="tz-feed-entry reveal" href="https://wjtianze.github.io/news/23/index.html">
-            <time datetime="2026-07-24">07.24</time>
-            <span class="tz-feed-marker"></span>
-            <div><small>版本更新</small><h3>笔记命令与 COC 自定义闪震</h3><p>笔记管理更直接，COC 伤害方案可按自定义雷电与地震数量计算。</p></div>
-          </a>
-        </div>
-
-        <aside class="tz-feed-side">
-          <a class="tz-side-module reveal" href="https://wjtianze.github.io/coc/tutorial/1/index.html">
-            <span class="tz-side-module__icon"><span class="tz-icon" data-icon="document" aria-hidden="true"></span></span>
-            <small>COC 教程</small>
-            <h3>混合矿工宝典：从路线到法术时机的完整攻略</h3>
-            <p>都城突袭 · 2026-07-12</p>
-          </a>
-          <div class="tz-side-module tz-side-module--manifest reveal">
-            <span class="tz-side-module__icon"><span class="tz-icon" data-icon="tree" aria-hidden="true"></span></span>
-            <small>NETWORK MANIFEST</small>
-            <h3>不是信息仓库，是一套选择系统</h3>
-            <p>在信息过载的时代做减法：只保留真正经得起时间筛选、又能继续生长的内容。</p>
-            <a href="https://wjtianze.github.io/contact/index.html">联系开发者 <span class="tz-icon" data-icon="right" aria-hidden="true"></span></a>
-          </div>
-        </aside>
+      <div class="home-reading-list">
+        <a href="https://wjtianze.github.io/coc/tutorial/1/index.html"><time datetime="2026-07-12">7 月 12 日</time><strong>混合矿工玩法：路线、法术和进攻时机</strong><span>COC 教程</span></a>
+        <a href="https://wjtianze.github.io/news/27/index.html"><time datetime="2026-08-02">8 月 2 日</time><strong>天择OS 4.1 正式发布</strong><span>版本记录</span></a>
+        <a href="https://wjtianze.github.io/english/index.html"><time datetime="2026-08-27">持续维护</time><strong>用四轮练习真正记住一个单词</strong><span>英语学习</span></a>
       </div>
     </section>
   </main>
 
-  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260824-v5.2.0"></script>
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260828i-v5.3.0"></script>
 </body>
 </html>

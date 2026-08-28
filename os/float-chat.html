@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>AI 悬浮窗 · 天择OS</title>
-<link rel="stylesheet" href="https://wjtianze.github.io/os/assets/css/os.css?v=5.2.1">
+<link rel="stylesheet" href="https://wjtianze.github.io/os/assets/css/os.css?v=5.3.0">
 <style>
 /* 悬浮窗专用：隐藏 OS 桌面元素，让 AI 对话占满整个窗口 */
 body.tzos { position: relative; height: 100vh; overflow: hidden; background-image: var(--os-wallpaper); background-size: cover; background-position: center; }
@@ -46,7 +46,79 @@ body.float-site #floatRoot .site-ai-badge { white-space: nowrap; }
 }
 #floatTitleBar .fbtn:hover { filter: brightness(1.2); }
 #floatTitleBar .fbtn.close { background-image: linear-gradient(rgba(95,8,17,.58),rgba(95,8,17,.58)), var(--os-button); background-size: cover; color: #fff; }
+
+/* 站内嵌入态是网站工具，不沿用桌面系统的壁纸和图片按钮。 */
+body.float-site {
+  background: #071719 !important;
+  color: #edf5f3;
+  font-family: "Microsoft YaHei UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+body.float-site #floatRoot,
+body.float-site #floatRoot .app-chat,
+body.float-site #floatRoot .chat-messages,
+body.float-site #floatRoot .chat-input-bar,
+body.float-site #floatRoot .chat-toolbar,
+body.float-site #floatRoot .chat-tabbar {
+  background-color: #08191d !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+body.float-site #floatRoot .chat-toolbar {
+  display: flex;
+  flex-wrap: wrap !important;
+  gap: 6px;
+  overflow-x: hidden !important;
+  scrollbar-width: none;
+}
+body.float-site #floatRoot .chat-toolbar::-webkit-scrollbar { display: none; }
+body.float-site #floatRoot .chat-toolbar > .btn { flex: 0 1 auto !important; }
+body.float-site #floatRoot :is(
+  .btn,
+  .chat-flag,
+  .chat-ctx,
+  .chat-suggest-chip,
+  .chat-send,
+  .chat-attach-btn,
+  .chat-tab,
+  .chat-tab-new,
+  .msg-act,
+  .msg-avatar,
+  .ce-icon
+) {
+  background-image: none !important;
+  background-blend-mode: normal !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+body.float-site #floatRoot :is(.btn, .chat-ctx, .chat-suggest-chip, .chat-tab, .chat-tab-new, .msg-act) {
+  border-color: rgba(143, 199, 188, .24) !important;
+  border-radius: 7px;
+  background-color: #10272b !important;
+  color: #dbe9e6 !important;
+}
+body.float-site #floatRoot .chat-send {
+  border: 1px solid rgba(110, 224, 198, .48) !important;
+  border-radius: 7px;
+  background-color: #5bcab1 !important;
+  color: #061716 !important;
+}
+body.float-site #floatRoot .chat-input-bar textarea {
+  border-color: rgba(143, 199, 188, .22) !important;
+  background: #0c2024 !important;
+  color: #edf5f3 !important;
+}
+body.float-site #floatRoot .chat-empty .ce-icon,
+body.float-site #floatRoot .msg-avatar {
+  border: 0 !important;
+  background-color: transparent !important;
+}
+body.float-site #floatRoot .chat-suggest-chip {
+  padding: 8px 11px;
+  border-radius: 7px;
+}
 </style>
+  <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828i" />
 </head>
 <body class="tzos">
 <script>
@@ -55,10 +127,14 @@ window.__tzSiteEmbedMode = __tzFloatParams.get('site') === '1';
 if (__tzFloatParams.get('embedded') === '1') document.body.classList.add('float-embedded');
 if (window.__tzSiteEmbedMode) document.body.classList.add('float-site');
 try {
-  var __tzBootState = JSON.parse(localStorage.getItem("tzos_state_v1") || "{}");
-  if (__tzBootState.theme === "light") document.body.classList.add("light");
-  if (__tzBootState.palette === "mid" || __tzBootState.palette === "warm") {
-    document.body.setAttribute("data-palette", __tzBootState.palette);
+  // 站内助手是独立产品面；嵌入模式绝不读取天择OS的 tzos_state_v1。
+  // 普通天择OS悬浮窗仍沿用原主题与配色。
+  if (!window.__tzSiteEmbedMode) {
+    var __tzBootState = JSON.parse(localStorage.getItem("tzos_state_v1") || "{}");
+    if (__tzBootState.theme === "light") document.body.classList.add("light");
+    if (__tzBootState.palette === "mid" || __tzBootState.palette === "warm") {
+      document.body.setAttribute("data-palette", __tzBootState.palette);
+    }
   }
 } catch (_) {}
 </script>
@@ -81,7 +157,7 @@ try {
 <!-- 自定义拖拽标题栏 -->
 <div id="floatTitleBar">
   <span class="ficon tz-icon" style="--tz-ix:5;--tz-iy:1"></span>
-  <span class="ftext">AI 悬浮窗 · 5.2.1</span>
+  <span class="ftext">站内助手 · 5.3.0</span>
   <button class="fbtn close" id="floatCloseBtn" title="关闭 (Esc)" aria-label="关闭 AI 悬浮窗"><span class="tz-icon" style="--tz-ix:1;--tz-iy:4"></span></button>
 </div>
 
@@ -92,11 +168,12 @@ try {
 // 标记为悬浮窗模式，os.js 的 boot() 会走轻量路径
 window.__tzFloatMode = true;
 </script>
-<script src="https://wjtianze.github.io/assets/js/cloud-security.js?v=5.2.1"></script>
-<script src="https://wjtianze.github.io/os/assets/js/coc-live-service.js?v=5.2.1"></script>
-<script src="https://wjtianze.github.io/os/assets/js/ai-tools.js?v=5.2.1"></script>
-<script src="https://wjtianze.github.io/os/assets/js/cli-engine.js?v=5.2.1"></script>
-<script src="https://wjtianze.github.io/os/assets/js/os.js?v=5.2.1"></script>
+<script src="https://wjtianze.github.io/assets/js/cloud-security.js?v=5.3.0"></script>
+<script src="https://wjtianze.github.io/os/assets/js/coc-live-service.js?v=5.3.0"></script>
+<script src="https://wjtianze.github.io/os/assets/js/ai-tools.js?v=5.3.0"></script>
+<script src="https://wjtianze.github.io/os/assets/js/local-data-actions.js?v=5.3.0"></script>
+<script src="https://wjtianze.github.io/os/assets/js/cli-engine.js?v=5.3.0"></script>
+<script src="https://wjtianze.github.io/os/assets/js/os.js?v=5.3.0"></script>
 <script>
 (function() {
   'use strict';
@@ -111,6 +188,11 @@ window.__tzFloatMode = true;
     var root = document.getElementById('floatRoot');
     var winId = 'float-chat-win';
     var siteMode = !!window.__tzSiteEmbedMode;
+    if (siteMode) {
+      document.title = '天择网站内助手';
+      var title = document.querySelector('#floatTitleBar .ftext');
+      if (title) title.textContent = '天择网站内助手';
+    }
     // 复用完整的 renderAIChat（含工具栏、消息区、附件、输入框与 Agent 开关）
     root.innerHTML = window.TZOS.renderAIChat({ floatMode: true, siteMode: siteMode, disableAgent: siteMode });
     // Agent 命令由 preload 的受控 IPC 转交给天择OS主窗口执行

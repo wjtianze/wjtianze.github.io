@@ -1,0 +1,195 @@
+/* 英语专区首页：内容优先的学习页，不叠加装饰性卡片或纹理控件。 */
+body.english-home {
+  min-width: 0;
+  overflow-x: clip;
+  font-family: "Microsoft YaHei UI", "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+}
+
+.english-home :is(h1, h2, h3, button, .btn) {
+  font-family: inherit;
+}
+
+.english-home :is(.english-home-copy, .english-section-heading, .english-tool-entry > div) {
+  min-width: 0;
+}
+
+.english-home .english-home-hero {
+  min-height: min(620px, calc(100svh - 64px));
+  grid-template-columns: minmax(0, 1.08fr) minmax(320px, .72fr);
+  gap: clamp(44px, 7vw, 84px);
+  padding-block: clamp(64px, 8vw, 96px);
+}
+
+.english-home .english-home-copy h1,
+.english-home .english-section-heading h2,
+.english-home .english-tool-entry h2 {
+  font-family: inherit;
+  font-weight: 760;
+  letter-spacing: -.045em;
+}
+
+.english-home .english-home-copy h1 {
+  max-width: 11ch;
+  font-size: clamp(46px, 5.6vw, 70px);
+  line-height: 1.14;
+}
+
+.english-home .english-home-copy > p:last-of-type {
+  max-width: 620px;
+  margin-top: 22px;
+  font-size: clamp(16px, 1.6vw, 18px);
+  line-height: 1.8;
+}
+
+.english-home .english-home-kicker,
+.english-home .english-section-heading > p,
+.english-home .english-tool-entry > div > p:first-child {
+  letter-spacing: .04em;
+}
+
+.english-home .english-home-actions {
+  margin-top: 28px;
+}
+
+.english-home .english-home-actions .btn,
+.english-home .english-tool-entry > .btn {
+  border-color: var(--tz-skin-focus) !important;
+  background-color: var(--tz-skin-focus) !important;
+  background-image: none !important;
+  color: var(--tz-skin-canvas) !important;
+  box-shadow: none !important;
+  font-weight: 700;
+}
+
+.english-home .english-home-actions .btn--ghost {
+  border-color: var(--tz-v4-line) !important;
+  background-color: transparent !important;
+  color: var(--ink) !important;
+}
+
+.english-home .english-home-actions .btn:hover,
+.english-home .english-tool-entry > .btn:hover {
+  filter: brightness(1.08);
+}
+
+.english-home .english-home-actions .btn--ghost:hover {
+  border-color: var(--tz-skin-focus) !important;
+  background-color: var(--tz-skin-control) !important;
+  filter: none;
+}
+
+.english-home :is(.btn, a):focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--tz-skin-focus) 45%, transparent);
+  outline-offset: 3px;
+}
+
+.english-home .english-sample {
+  min-height: 360px;
+  padding: clamp(26px, 3.4vw, 38px);
+  border-radius: 6px;
+  background-color: var(--tz-skin-surface-internal) !important;
+  background-image: none !important;
+  box-shadow: none;
+}
+
+.english-home .english-sample > p {
+  margin-bottom: 48px;
+}
+
+.english-home .english-sample h2,
+.english-home .english-sample > span,
+.english-home .english-tool-entry__mark {
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.english-home .english-sample h2 {
+  font-size: clamp(30px, 3vw, 44px);
+  letter-spacing: -.045em;
+  overflow-wrap: normal;
+  white-space: nowrap;
+  word-break: keep-all;
+}
+
+.english-home .english-method {
+  grid-template-columns: minmax(220px, .62fr) minmax(0, 1.45fr);
+  gap: clamp(40px, 7vw, 88px);
+  padding-block: clamp(64px, 8vw, 96px);
+}
+
+.english-home .english-method-list li {
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 18px;
+  padding-block: 22px;
+}
+
+.english-home .english-method-list h3 {
+  font-size: 18px;
+}
+
+.english-home .english-tool-entry {
+  grid-template-columns: 76px minmax(0, 1fr) auto;
+  gap: clamp(24px, 4vw, 44px);
+  margin-top: clamp(64px, 8vw, 92px);
+  padding-block: clamp(30px, 4vw, 44px);
+}
+
+.english-home .english-tool-entry__mark {
+  font-size: 44px;
+}
+
+.english-home .english-tool-entry ul {
+  gap: 8px 18px;
+}
+
+@media (max-width: 860px) {
+  .english-home .english-home-hero,
+  .english-home .english-method {
+    grid-template-columns: 1fr;
+  }
+
+  .english-home .english-home-hero {
+    min-height: 0;
+  }
+
+  .english-home .english-tool-entry {
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+
+  .english-home .english-tool-entry > .btn {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 620px) {
+  .english-home .english-home-hero {
+    gap: 38px;
+    padding-block: 48px 58px;
+  }
+
+  .english-home .english-home-copy h1 {
+    font-size: clamp(38px, 11vw, 50px);
+  }
+
+  .english-home .english-sample {
+    min-height: 0;
+    padding: 24px;
+  }
+
+  .english-home .english-sample > p {
+    margin-bottom: 36px;
+  }
+
+  .english-home .english-method {
+    gap: 30px;
+  }
+
+  .english-home .english-tool-entry {
+    grid-template-columns: 1fr;
+  }
+
+  .english-home .english-tool-entry > .btn {
+    grid-column: 1;
+    width: 100%;
+  }
+}

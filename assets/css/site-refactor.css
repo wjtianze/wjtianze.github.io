@@ -1,0 +1,1118 @@
+/* Tianze Web 5.3 · 最终视觉收口
+   方向：沉静工具站。背景负责区分专区，内容使用平面实体表面。 */
+
+:root {
+  --tz-refactor-panel: color-mix(in srgb, var(--tz-skin-surface-raised) 90%, #071719 10%);
+  --tz-refactor-panel-strong: color-mix(in srgb, var(--tz-skin-surface-raised) 96%, #020b0d 4%);
+  --tz-refactor-line: color-mix(in srgb, var(--tz-v4-line) 88%, transparent);
+  --tz-refactor-accent: var(--tz-skin-focus);
+}
+
+/* “明亮云瓷”改为偏纸张的低眩光配色，所有层级保持深字浅底。 */
+html[data-palette="porcelain"] {
+  --tz-theme-bg-base: #d9ded8;
+  --tz-theme-bg: #e5e8e1;
+  --tz-theme-bg-soft: #d0d8d3;
+  --tz-theme-bg-elevated: rgba(241, 242, 236, .94);
+  --tz-theme-bg-elevated-hover: rgba(248, 248, 243, .98);
+  --tz-theme-ink: #182521;
+  --tz-theme-ink-dim: #3f524c;
+  --tz-theme-ink-faint: #5f706a;
+  --tz-theme-ink-muted: #77847f;
+  --tz-theme-line: rgba(34, 67, 58, .18);
+  --tz-theme-line-strong: rgba(34, 67, 58, .31);
+  --tz-theme-glass: rgba(236, 239, 232, .95);
+  --tz-theme-glass-strong: rgba(244, 245, 239, .98);
+  --tz-theme-glass-border: rgba(34, 67, 58, .24);
+  --tz-v4-surface-color: rgba(236, 239, 232, .96);
+  --tz-v4-surface-color-strong: rgba(244, 245, 239, .99);
+  --tz-v4-line: rgba(34, 67, 58, .27);
+  --tz-skin-canvas: #d9ded8;
+  --tz-skin-surface: rgba(232, 236, 229, .97);
+  --tz-skin-surface-mobile: rgba(232, 236, 229, .98);
+  --tz-skin-surface-internal: rgba(238, 240, 234, .98);
+  --tz-skin-surface-internal-mobile: rgba(238, 240, 234, .99);
+  --tz-skin-surface-raised: rgba(246, 246, 240, .99);
+  --tz-skin-control: #d4ddd7;
+  --tz-skin-input: #f4f4ee;
+  --tz-skin-focus: #075f53;
+  --tz-skin-focus-halo: rgba(7, 95, 83, .18);
+  --tz-status-online: #086d59;
+  --tz-refactor-panel: #e9ece5;
+  --tz-refactor-panel-strong: #f1f2ec;
+}
+
+body,
+body.tz-site-shell {
+  background-attachment: fixed !important;
+  background-position: center top !important;
+  background-size: cover !important;
+}
+
+body::before {
+  inset: 0 !important;
+  z-index: -1 !important;
+  width: auto !important;
+  height: auto !important;
+  border-radius: 0 !important;
+  background: rgba(3, 13, 17, .48) !important;
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+body::after { display: none !important; }
+
+html[data-palette="porcelain"] body::before {
+  background: rgba(226, 230, 222, .82) !important;
+}
+
+.bg-mesh {
+  background-color: transparent !important;
+  background-image: var(--tz-section-bg-image) !important;
+  background-position: center top !important;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+  opacity: 1 !important;
+}
+
+.bg-mesh::after {
+  background: none !important;
+  opacity: 0 !important;
+}
+
+/* 文字、导航与控件回到清楚的平面层级。 */
+.grad,
+.page-head h1 .grad,
+.news-row .n-date b,
+body.tz-site-shell .brand .logo-text {
+  background: none !important;
+  color: var(--tz-refactor-accent) !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+body.tz-site-shell .topbar {
+  top: 0;
+  width: 100%;
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid var(--tz-refactor-line);
+  border-radius: 0;
+  background: color-mix(in srgb, var(--tz-refactor-panel-strong) 94%, transparent) !important;
+  box-shadow: none;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+body.tz-site-shell .topbar-inner { height: 64px; }
+body.tz-site-shell .brand { gap: 10px; }
+body.tz-site-shell .brand .logo-mark { width: 34px; height: 40px; border-radius: 0; }
+body.tz-site-shell .brand .logo-text { color: var(--ink) !important; font-size: 18px; }
+body.tz-site-shell .brand-copy small { color: var(--ink-faint); font-size: 10px; }
+
+body.tz-site-shell .nav { gap: 0; }
+body.tz-site-shell .nav a {
+  min-height: 44px;
+  padding: 12px 10px;
+  border-radius: 0;
+  color: var(--ink-dim);
+  font-size: 13px;
+  transform: none !important;
+}
+body.tz-site-shell .nav a::before { display: none; }
+body.tz-site-shell .nav a.active { color: var(--ink); }
+body.tz-site-shell .nav a.active::after {
+  content: "";
+  position: absolute;
+  right: 10px;
+  bottom: 3px;
+  left: 10px;
+  height: 2px;
+  background: var(--tz-refactor-accent);
+}
+
+body.tz-site-shell :is(.btn, button, input, textarea, select) {
+  border-radius: 7px;
+}
+
+body.tz-site-shell .btn {
+  border-color: var(--tz-refactor-line) !important;
+  background-color: var(--tz-skin-control) !important;
+  background-image: none !important;
+  color: var(--ink) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+body.tz-site-shell .btn:hover,
+body.tz-site-shell .btn:focus-visible {
+  border-color: var(--tz-refactor-accent) !important;
+  filter: none !important;
+}
+
+/* 站内助手：浮动窗口始终停在导航栏下方，避免盖住全站入口。首页内嵌态另行铺满舞台。 */
+.tz-site-ai-dock {
+  top: calc(var(--tz-shell-sticky-top, 72px) + 10px);
+  right: 16px;
+  bottom: auto;
+  width: min(540px, calc(100vw - 32px));
+  height: min(700px, calc(100dvh - var(--tz-shell-sticky-top, 72px) - 26px));
+  border-color: var(--tz-refactor-line);
+  border-radius: 10px;
+  background: var(--tz-refactor-panel-strong);
+  box-shadow: 0 18px 54px rgba(0, 0, 0, .36);
+}
+
+.tz-site-ai-dock__bar {
+  min-height: 62px;
+  height: 62px;
+  flex-basis: 62px;
+  border-bottom-color: var(--tz-refactor-line);
+  background: var(--tz-refactor-panel-strong);
+}
+
+.tz-site-ai-dock__bar b { font-size: 15px; }
+.tz-site-ai-dock__bar small { font-size: 11px; }
+.tz-site-ai-dock__close { border-radius: 6px; background: var(--tz-skin-control); }
+
+.home-ai-stage > .tz-site-ai-dock.tz-site-ai-dock--home-floating {
+  top: calc(var(--tz-shell-sticky-top, 72px) + 10px);
+  right: 16px;
+  bottom: auto;
+  width: min(540px, calc(100vw - 32px));
+  height: min(700px, calc(100dvh - var(--tz-shell-sticky-top, 72px) - 26px));
+  border-radius: 10px;
+}
+
+/* 首页：助手占据主舞台；最近更新继续使用同一张主页背景。 */
+body.home-journal,
+body.home-journal.tz-site-shell {
+  background-color: var(--tz-skin-canvas) !important;
+  background-image: var(--tz-skin-scene), var(--tz-section-bg-image) !important;
+  background-position: center top !important;
+  background-size: cover !important;
+}
+
+body.home-journal > .bg-mesh { display: block !important; }
+
+.home-journal-main { padding: 16px 0 68px; }
+.home-journal .wrap { width: min(1440px, calc(100% - 48px)); }
+
+.home-journal-hero {
+  grid-template-columns: minmax(260px, .52fr) minmax(620px, 1.48fr);
+  gap: clamp(28px, 3.5vw, 58px);
+  padding: clamp(28px, 3vw, 46px);
+  border: 1px solid var(--tz-refactor-line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--tz-refactor-panel-strong) 91%, transparent);
+}
+
+.home-journal-hero h1 {
+  color: var(--ink);
+  font-family: "Microsoft YaHei UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: clamp(50px, 5vw, 76px);
+  font-weight: 760;
+}
+
+.home-journal-motto { color: var(--tz-refactor-accent); }
+.home-journal-hero__intro { color: var(--ink-dim); font-size: clamp(15px, 1.35vw, 18px); }
+
+.home-journal-hero .home-ai-stage {
+  height: clamp(610px, calc(100dvh - 144px), 730px);
+  border-color: var(--tz-refactor-line);
+  border-radius: 8px;
+  background: var(--tz-refactor-panel-strong);
+}
+
+.home-current,
+.home-reading {
+  margin-top: 20px;
+  padding: clamp(34px, 4vw, 54px);
+  border: 1px solid var(--tz-refactor-line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--tz-refactor-panel) 94%, transparent);
+}
+
+.home-section-heading h2 {
+  font-family: "Microsoft YaHei UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: clamp(28px, 3.6vw, 44px);
+  letter-spacing: -.035em;
+}
+
+.home-current-link,
+.home-reading-list,
+.home-reading-list > a { border-color: var(--tz-refactor-line); }
+.home-current-link { padding-inline: 4px; }
+
+/* 新闻、博客与 AI：像目录和文章索引，不像营销落地页。 */
+body:not([data-workspace-page]) main > :is(.page-head, .ai-hero, .section) {
+  width: min(1180px, calc(100% - 48px));
+  margin-inline: auto;
+}
+
+.page-head,
+.ai-hero {
+  margin-top: 20px !important;
+  padding: clamp(32px, 5vw, 58px) !important;
+  border: 1px solid var(--tz-refactor-line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--tz-refactor-panel-strong) 94%, transparent) !important;
+  box-shadow: none !important;
+}
+
+.page-head::after,
+.ai-hero::after { display: none !important; }
+
+.page-head h1,
+.ai-hero h1 {
+  font-family: "Microsoft YaHei UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: clamp(38px, 5vw, 60px);
+  font-weight: 760;
+}
+
+.page-head p,
+.ai-hero p { color: var(--ink-dim); }
+
+.news-list {
+  margin-top: 20px;
+  padding: 0 0 54px;
+  border-top: 1px solid var(--tz-refactor-line);
+}
+
+body.tz-site-shell .news-row,
+.news-row {
+  grid-template-columns: 104px minmax(0, 1fr);
+  gap: 24px;
+  padding: 24px 6px;
+  border: 0;
+  border-bottom: 1px solid var(--tz-refactor-line);
+  border-radius: 0;
+  background: color-mix(in srgb, var(--tz-refactor-panel) 92%, transparent) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.news-row:hover,
+.news-row:focus-visible { background: var(--tz-refactor-panel-strong) !important; }
+.news-row .n-date { width: auto; padding-right: 18px; border-color: var(--tz-refactor-line); }
+.news-row .n-body p { white-space: normal; }
+.news-row .n-arrow { display: none; }
+
+.ai-hero .ai-badge {
+  width: fit-content;
+  margin-bottom: 16px;
+  color: var(--tz-refactor-accent);
+}
+
+.ai-hero + .section { padding-top: 20px; }
+.ai-hero ~ .section { padding-inline: 0; }
+.ai-hero ~ .section .card,
+.ai-hero ~ .section .zone-card {
+  min-height: 0;
+  padding: 28px;
+  border: 1px solid var(--tz-refactor-line) !important;
+  border-radius: 9px !important;
+  background: var(--tz-refactor-panel) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+.ai-hero ~ .section .z-icon { border-radius: 6px; background: var(--tz-skin-control) !important; }
+.ai-hero ~ .section .zone-card {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 5px 18px;
+}
+.ai-hero ~ .section .zone-card .z-icon { grid-row: 1 / 3; width: 52px; height: 52px; margin: 0; }
+.ai-hero ~ .section .zone-card :is(h3, p) { grid-column: 2; margin: 0; }
+.ai-hero ~ .section .zone-card .z-go { grid-column: 3; grid-row: 1 / 3; }
+
+/* 开源与联系：取消旧的固定 1/3 介绍栏，改为顺序阅读。 */
+body[data-workspace-page="open"] main#main-content,
+body[data-workspace-page="contact"] main#main-content {
+  display: block !important;
+  width: min(1240px, calc(100% - 48px)) !important;
+  max-width: none !important;
+  margin: 0 auto !important;
+  padding: 20px 0 64px !important;
+}
+
+body[data-workspace-page="open"] main#main-content > .wrap,
+body[data-workspace-page="contact"] main#main-content > .wrap {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding-inline: 0 !important;
+}
+
+body[data-workspace-page="open"] .wp-hero,
+body[data-workspace-page="contact"] .wp-hero {
+  position: relative !important;
+  top: auto !important;
+  display: block !important;
+  min-height: 0 !important;
+  margin: 0 0 20px !important;
+  padding: clamp(32px, 5vw, 56px) !important;
+  border: 1px solid var(--tz-refactor-line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--tz-refactor-panel-strong) 95%, transparent) !important;
+  box-shadow: none;
+}
+
+body[data-workspace-page="open"] .wp-hero::after,
+body[data-workspace-page="contact"] .wp-hero::after,
+body[data-workspace-page="open"] .wp-hero-visual,
+body[data-workspace-page="contact"] .wp-hero-visual { display: none !important; }
+
+body[data-workspace-page="open"] .wp-hero h1,
+body[data-workspace-page="contact"] .wp-hero h1 {
+  max-width: 18ch;
+  color: var(--ink);
+  font-family: "Microsoft YaHei UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: clamp(38px, 5vw, 60px);
+  font-weight: 760;
+  letter-spacing: -.045em;
+}
+
+body[data-workspace-page="open"] .wp-section,
+body[data-workspace-page="contact"] .wp-section { margin: 0; padding: 20px 0; }
+
+body[data-workspace-page="open"] .wp-grid,
+body[data-workspace-page="contact"] .wp-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+body[data-workspace-page="open"] .wp-grid > *,
+body[data-workspace-page="contact"] .wp-grid > * { grid-column: auto !important; }
+body[data-workspace-page="open"] .wp-grid > [data-wide],
+body[data-workspace-page="contact"] .wp-grid > .wp-contact-wide { grid-column: 1 / -1 !important; }
+
+body[data-workspace-page="open"] .wp-card,
+body[data-workspace-page="contact"] .wp-card {
+  padding: clamp(20px, 3vw, 30px);
+  border: 1px solid var(--tz-refactor-line);
+  border-radius: 8px;
+  background: var(--tz-refactor-panel) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+body[data-workspace-page="open"] .wp-card-icon,
+body[data-workspace-page="contact"] .wp-card-icon,
+body[data-workspace-page="open"] .wp-notice-icon,
+body[data-workspace-page="contact"] .wp-notice-icon {
+  width: 42px;
+  height: 42px;
+  margin-bottom: 14px;
+  border-radius: 6px;
+  background: var(--tz-skin-control) !important;
+  box-shadow: none;
+}
+
+.wp-chip {
+  border-radius: 4px;
+  background: var(--tz-skin-control);
+}
+
+.wp-notice {
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--tz-skin-control) 72%, transparent);
+}
+
+body[data-workspace-page="contact"] .wp-contact-value {
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-size: clamp(22px, 3vw, 34px);
+}
+
+/* 亮色主题兜底：控件、弹窗、表格与工具页不再出现白底白字。 */
+html[data-palette="porcelain"] :is(body, body.tz-site-shell, main, section, article, aside, dialog) { color: var(--ink); }
+html[data-palette="porcelain"] :is(.card, .wp-card, .tz-site-ai-dock, .tz-site-ai-dock__bar, .tzpal-panel, .tz-command-dialog) {
+  color: var(--ink) !important;
+}
+html[data-palette="porcelain"] :is(button, .btn, input, textarea, select, option) {
+  border-color: var(--tz-refactor-line) !important;
+  background-color: var(--tz-skin-control) !important;
+  background-image: none !important;
+  color: var(--ink) !important;
+  text-shadow: none !important;
+}
+html[data-palette="porcelain"] :is(p, small, .more, .n-body p, .wp-card p) { text-shadow: none; }
+html[data-palette="porcelain"] .article-body :is(th, td) { color: #182521 !important; }
+html[data-palette="porcelain"] body.tz-site-shell .nav a { color: #40534d !important; }
+html[data-palette="porcelain"] body.tz-site-shell .nav a.active { color: #15241f !important; }
+html[data-palette="porcelain"] :is(.ai-badge, .z-go, .wp-action-link) { color: #075f53 !important; }
+html[data-palette="porcelain"] .ai-badge { border-color: rgba(7, 95, 83, .32) !important; background: #e1e8e2 !important; }
+
+@media (max-width: 1100px) {
+  body.tz-site-shell .topbar {
+    top: max(4px, var(--tz-safe-top));
+    width: calc(100% - 8px - var(--tz-safe-left) - var(--tz-safe-right));
+    margin: 4px calc(4px + var(--tz-safe-right)) 0 calc(4px + var(--tz-safe-left));
+    border: 1px solid var(--tz-refactor-line);
+    border-radius: 8px;
+  }
+  body.tz-site-shell .nav {
+    border-radius: 8px;
+    background: var(--tz-refactor-panel-strong) !important;
+  }
+}
+
+@media (max-width: 980px) {
+  .home-journal .wrap { width: min(100% - 28px, 780px); }
+  .home-journal-hero { grid-template-columns: 1fr; padding: 26px; }
+  .home-journal-hero .home-ai-stage { grid-column: 1; height: clamp(560px, 76dvh, 680px); }
+  .home-current,
+  .home-reading { grid-template-columns: 1fr; padding: 28px; }
+}
+
+@media (max-width: 680px) {
+  body,
+  body.tz-site-shell,
+  .bg-mesh {
+    background-image: var(--tz-section-bg-mobile-image) !important;
+    background-position: center top !important;
+    background-size: cover !important;
+  }
+  body::before { background: rgba(3, 13, 17, .58) !important; }
+  html[data-palette="porcelain"] body::before { background: rgba(226, 230, 222, .86) !important; }
+
+  .tz-site-ai-dock {
+    inset:
+      calc(var(--tz-shell-sticky-top, 78px) + max(6px, var(--tz-safe-top)))
+      max(6px, var(--tz-safe-right))
+      max(6px, var(--tz-safe-bottom))
+      max(6px, var(--tz-safe-left));
+    width: auto;
+    height: auto;
+    border-radius: 8px;
+  }
+
+  .home-journal-main { padding-top: 8px; }
+  .home-journal-hero { padding: 22px 14px 14px; border-radius: 8px; }
+  .home-journal-hero h1 { font-size: clamp(42px, 14vw, 58px); }
+  .home-journal-hero .home-ai-stage { height: clamp(520px, 76dvh, 620px); }
+  .home-current,
+  .home-reading { padding: 22px 16px; border-radius: 8px; }
+
+  body:not([data-workspace-page]) main > :is(.page-head, .ai-hero, .section) { width: min(100% - 28px, 1180px); }
+  .page-head,
+  .ai-hero { padding: 26px 20px !important; border-radius: 8px; }
+  .news-row,
+  body.tz-site-shell .news-row { grid-template-columns: 74px minmax(0, 1fr); gap: 14px; padding: 20px 2px; }
+  .news-row .n-date { padding-right: 12px; }
+
+  .ai-hero ~ .section .zone-card {
+    grid-template-columns: 46px minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+  }
+  .ai-hero ~ .section .zone-card .z-icon { grid-row: 1 / 3; width: 46px; height: 46px; }
+  .ai-hero ~ .section .zone-card .z-go { grid-column: 2; grid-row: 3; margin-top: 8px; }
+
+  body[data-workspace-page="open"] main#main-content,
+  body[data-workspace-page="contact"] main#main-content { width: min(100% - 28px, 1240px) !important; padding-top: 12px !important; }
+  body[data-workspace-page="open"] .wp-hero,
+  body[data-workspace-page="contact"] .wp-hero { padding: 26px 20px !important; border-radius: 8px; }
+  body[data-workspace-page="open"] .wp-grid,
+  body[data-workspace-page="contact"] .wp-grid { grid-template-columns: 1fr; }
+  body[data-workspace-page="open"] .wp-grid > *,
+  body[data-workspace-page="contact"] .wp-grid > * { grid-column: 1 !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tz-site-ai-dock { transform: none; }
+}
+
+/* ============================================================
+   Editorial indexes: updates, essays and COC guides
+   ============================================================ */
+body.content-index main {
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 20px 0 76px;
+}
+
+body.content-index main > .wrap {
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+  padding-inline: 0;
+}
+
+body.content-index .page-head {
+  min-height: 0;
+  margin: 0 0 18px !important;
+  padding: clamp(28px, 3.6vw, 44px) !important;
+  border: 1px solid var(--tz-refactor-line);
+  border-radius: 14px;
+  background:
+    linear-gradient(112deg, color-mix(in srgb, var(--tz-refactor-panel-strong) 96%, transparent), color-mix(in srgb, var(--tz-refactor-panel) 82%, transparent)),
+    var(--tz-section-bg-image) center / cover !important;
+}
+
+body.content-index .page-head .crumb {
+  margin-bottom: 12px;
+  font-family: inherit;
+  font-size: 13px;
+  letter-spacing: 0;
+}
+
+body.content-index .page-head h1 {
+  max-width: none;
+  font-size: clamp(36px, 4vw, 50px);
+  font-weight: 700;
+  line-height: 1.16;
+  letter-spacing: 0;
+}
+
+body.content-index .page-head p {
+  max-width: 700px;
+  margin-top: 12px;
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+body.content-index .news-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0 0 24px;
+  border-top: 0;
+}
+
+body.content-index .news-row,
+body.content-index.tz-site-shell .news-row {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr) 24px;
+  gap: 24px;
+  align-items: center;
+  padding: 24px 18px;
+  border: 0;
+  border-bottom: 1px solid var(--tz-refactor-line);
+  border-radius: 0;
+  background: color-mix(in srgb, var(--tz-refactor-panel) 72%, transparent) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+body.content-index .news-list > .news-row:first-child {
+  margin-bottom: 14px;
+  padding: clamp(24px, 3vw, 34px);
+  border: 1px solid color-mix(in srgb, var(--tz-refactor-line) 88%, rgb(var(--c-green-soft-rgb)) 12%);
+  border-radius: 12px;
+  background:
+    linear-gradient(105deg, color-mix(in srgb, var(--tz-refactor-panel-strong) 96%, transparent), color-mix(in srgb, var(--tz-refactor-panel) 78%, transparent)),
+    var(--tz-section-bg-image) center / cover !important;
+}
+
+body.content-index .news-row:hover,
+body.content-index .news-row:focus-visible {
+  border-color: color-mix(in srgb, var(--tz-refactor-line) 62%, rgb(var(--c-green-soft-rgb)) 38%);
+  background: var(--tz-refactor-panel-strong) !important;
+  transform: none !important;
+}
+
+body.content-index .news-row .n-date {
+  width: auto;
+  padding-right: 20px;
+  border-right: 1px solid var(--tz-refactor-line);
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+
+body.content-index .news-row .n-date b {
+  color: var(--tz-refactor-accent) !important;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+body.content-index .news-row .n-date small {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+}
+
+body.content-index .news-row .n-body .n-tag {
+  margin-bottom: 7px;
+  color: var(--tz-refactor-accent);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: none;
+}
+
+body.content-index .news-row .n-body h3 {
+  margin: 0 0 7px;
+  font-size: clamp(19px, 1.8vw, 25px);
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+
+body.content-index .news-row .n-body p {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 14px;
+  line-height: 1.72;
+}
+
+body.content-index .news-row .n-arrow {
+  display: grid;
+  place-items: center;
+  color: var(--ink-faint);
+  font-size: 18px;
+}
+
+body.content-index--blog .news-list,
+body.content-index--tutorial .news-list {
+  max-width: 100%;
+}
+
+body.content-index--blog .news-list > .news-row:first-child,
+body.content-index--tutorial .news-list > .news-row:first-child {
+  min-height: 170px;
+}
+
+body.content-index--tutorial .news-list > .news-row:first-child {
+  border-color: color-mix(in srgb, var(--tz-refactor-line) 72%, #e5be55 28%);
+}
+
+/* ============================================================
+   Open and contact: compact mastheads and file/contact ledgers
+   ============================================================ */
+body.wp-editorial-page {
+  font-family: "HarmonyOS Sans SC", "Source Han Sans SC", "Noto Sans CJK SC",
+    "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+  font-size: 16px;
+}
+
+body.wp-editorial-page main#main-content {
+  display: block !important;
+  width: min(1180px, calc(100% - 48px)) !important;
+  margin: 0 auto !important;
+  padding: 20px 0 76px !important;
+}
+
+body.wp-editorial-page main#main-content > .wrap {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding-inline: 0 !important;
+}
+
+body.wp-editorial-page--open .wp-hero,
+body.wp-editorial-page--contact .wp-hero {
+  position: relative !important;
+  top: auto !important;
+  display: block !important;
+  min-height: 0 !important;
+  margin: 0 0 8px !important;
+  padding: clamp(28px, 3.6vw, 44px) !important;
+  border: 1px solid var(--tz-refactor-line);
+  border-radius: 14px;
+  background:
+    linear-gradient(112deg, color-mix(in srgb, var(--tz-refactor-panel-strong) 96%, transparent), color-mix(in srgb, var(--tz-refactor-panel) 84%, transparent)),
+    var(--tz-section-bg-image) center / cover !important;
+  box-shadow: none;
+}
+
+body.wp-editorial-page :where(.wp-kicker, .wp-status-line) {
+  margin-bottom: 10px;
+  color: var(--tz-refactor-accent);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: .04em;
+  text-transform: none;
+}
+
+body.wp-editorial-page :where(.wp-kicker, .wp-status-line)::before {
+  width: 18px;
+  height: 2px;
+  flex-basis: 18px;
+  border-radius: 0;
+  box-shadow: none;
+  animation: none;
+}
+
+body.wp-editorial-page--open .wp-hero h1,
+body.wp-editorial-page--contact .wp-hero h1 {
+  max-width: none;
+  font-family: inherit;
+  font-size: clamp(36px, 4vw, 50px);
+  font-weight: 700;
+  line-height: 1.16;
+  letter-spacing: 0;
+}
+
+body.wp-editorial-page .wp-hero p {
+  max-width: 760px;
+  margin-top: 14px;
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+body.wp-editorial-page .wp-hero-visual,
+body.wp-editorial-page .wp-hero::after {
+  display: none !important;
+}
+
+body.wp-editorial-page .wp-section {
+  margin: 0;
+  padding: 26px 0;
+  border-top: 1px solid var(--tz-refactor-line);
+}
+
+body.wp-editorial-page .wp-section-head {
+  align-items: end;
+  margin-bottom: 16px;
+}
+
+body.wp-editorial-page .wp-section-head h2,
+body.wp-editorial-page .wp-card h2 {
+  font-size: clamp(23px, 2.5vw, 32px);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+body.wp-editorial-page .wp-card h3 {
+  font-size: clamp(17px, 1.4vw, 21px);
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+
+body.wp-editorial-page .wp-card {
+  border: 1px solid var(--tz-refactor-line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--tz-refactor-panel) 92%, transparent) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+body.wp-editorial-page a.wp-card:hover,
+body.wp-editorial-page a.wp-card:focus-visible {
+  border-color: color-mix(in srgb, var(--tz-refactor-line) 55%, var(--tz-refactor-accent) 45%);
+  background: var(--tz-refactor-panel-strong) !important;
+  transform: none !important;
+}
+
+body.wp-editorial-page .wp-card-icon,
+body.wp-editorial-page .wp-notice-icon {
+  width: 42px;
+  height: 42px;
+  margin: 0;
+  border-radius: 7px;
+  background: var(--tz-skin-control) !important;
+  box-shadow: none;
+}
+
+body.wp-editorial-page .wp-chip {
+  padding: 0;
+  color: var(--ink-faint);
+  background: none;
+  border: 0;
+  border-radius: 0;
+  font-size: 12px;
+}
+
+body.wp-editorial-page .wp-chip + .wp-chip::before {
+  content: "·";
+  margin: 0 8px;
+  color: var(--tz-refactor-accent);
+}
+
+body.wp-editorial-page--open section[aria-labelledby="open-principle"] {
+  padding-top: 18px;
+}
+
+body.wp-editorial-page--open section[aria-labelledby="open-principle"] .wp-card,
+body.wp-editorial-page--open section[aria-labelledby="open-source-note"] .wp-card {
+  padding: 20px 24px;
+  border-left: 3px solid color-mix(in srgb, var(--tz-refactor-accent) 72%, transparent);
+}
+
+body.wp-editorial-page--open section[aria-labelledby="open-principle"] .wp-section-head,
+body.wp-editorial-page--open section[aria-labelledby="open-source-note"] .wp-section-head {
+  margin-bottom: 8px;
+}
+
+body.wp-editorial-page--open section[aria-labelledby="open-principle"] h2,
+body.wp-editorial-page--open section[aria-labelledby="open-source-note"] h2 {
+  font-size: clamp(20px, 2vw, 25px);
+}
+
+body.wp-editorial-page--open section[aria-labelledby="open-catalog"] .wp-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+body.wp-editorial-page--open section[aria-labelledby="open-catalog"] .wp-grid > * {
+  grid-column: 1 !important;
+}
+
+body.wp-editorial-page--open .wp-catalog-card {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  grid-template-rows: auto auto auto;
+  gap: 5px 18px;
+  align-items: start;
+  min-height: 0;
+  padding: 20px 22px;
+}
+
+body.wp-editorial-page--open .wp-catalog-card > .wp-card-icon {
+  grid-column: 1;
+  grid-row: 1 / span 3;
+}
+
+body.wp-editorial-page--open .wp-catalog-card > :is(h3, p, .wp-card-meta) {
+  grid-column: 2;
+  margin: 0;
+}
+
+body.wp-editorial-page--open .wp-catalog-card > :is(.wp-action-link, .wp-actions) {
+  grid-column: 3;
+  grid-row: 1 / span 3;
+  align-self: center;
+  margin: 0;
+  white-space: nowrap;
+}
+
+body.wp-editorial-page--open .wp-catalog-card[data-wide] {
+  display: block;
+}
+
+body.wp-editorial-page--open .wp-catalog-card[data-wide] .wp-section-head {
+  margin-bottom: 12px;
+}
+
+body.wp-editorial-page--contact section[aria-labelledby="contact-methods"] .wp-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+body.wp-editorial-page--contact section[aria-labelledby="contact-methods"] .wp-grid > * {
+  grid-column: auto !important;
+}
+
+body.wp-editorial-page--contact article.wp-card {
+  min-height: 250px;
+  padding: 24px;
+}
+
+body.wp-editorial-page--contact article.wp-card .wp-card-icon {
+  margin-bottom: 14px;
+}
+
+body.wp-editorial-page--contact a.wp-card {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  gap: 4px 16px;
+  align-items: center;
+  min-height: 0;
+  padding: 20px 22px;
+}
+
+body.wp-editorial-page--contact a.wp-card .wp-card-icon {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+}
+
+body.wp-editorial-page--contact a.wp-card :is(h3, p) {
+  grid-column: 2;
+  margin: 0;
+}
+
+body.wp-editorial-page--contact a.wp-card .wp-action-link {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  white-space: nowrap;
+}
+
+body.wp-editorial-page--contact .wp-contact-value {
+  color: var(--ink);
+  font-size: clamp(22px, 2.6vw, 31px);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  body.content-index main,
+  body.wp-editorial-page main#main-content {
+    width: min(100% - 28px, 760px) !important;
+    padding-top: 12px !important;
+  }
+
+  body.content-index .page-head,
+  body.wp-editorial-page--open .wp-hero,
+  body.wp-editorial-page--contact .wp-hero {
+    padding: 24px 20px !important;
+    border-radius: 10px;
+  }
+
+  body.content-index .page-head h1,
+  body.wp-editorial-page--open .wp-hero h1,
+  body.wp-editorial-page--contact .wp-hero h1 {
+    font-size: clamp(32px, 9vw, 42px);
+  }
+
+  body.content-index .news-row,
+  body.content-index.tz-site-shell .news-row,
+  body.content-index .news-list > .news-row:first-child {
+    grid-template-columns: 78px minmax(0, 1fr);
+    gap: 14px;
+    min-height: 0;
+    padding: 20px 16px;
+  }
+
+  body.content-index .news-row .n-date {
+    padding-right: 12px;
+  }
+
+  body.content-index .news-row .n-date b {
+    font-size: 17px;
+  }
+
+  body.content-index .news-row .n-body h3 {
+    font-size: 18px;
+  }
+
+  body.content-index .news-row .n-arrow {
+    display: none;
+  }
+
+  body.wp-editorial-page .wp-section {
+    padding: 22px 0;
+  }
+
+  body.wp-editorial-page .wp-section-head {
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  body.wp-editorial-page--open .wp-catalog-card {
+    grid-template-columns: 42px minmax(0, 1fr);
+    padding: 18px;
+  }
+
+  body.wp-editorial-page--open .wp-catalog-card > :is(.wp-action-link, .wp-actions) {
+    grid-column: 2;
+    grid-row: auto;
+    justify-self: start;
+    margin-top: 10px;
+    white-space: normal;
+  }
+
+  body.wp-editorial-page--contact section[aria-labelledby="contact-methods"] .wp-grid {
+    grid-template-columns: 1fr;
+  }
+
+  body.wp-editorial-page--contact section[aria-labelledby="contact-methods"] .wp-grid > * {
+    grid-column: 1 !important;
+  }
+
+  body.wp-editorial-page--contact article.wp-card {
+    min-height: 0;
+  }
+
+  body.wp-editorial-page--contact a.wp-card {
+    grid-template-columns: 42px minmax(0, 1fr);
+  }
+
+  body.wp-editorial-page--contact a.wp-card .wp-action-link {
+    grid-column: 2;
+    grid-row: auto;
+    margin-top: 8px;
+  }
+}
+
+/* 旧缓存脚本兼容：即使页面曾被自动包成两栏，也恢复原始顺序正文。 */
+body.content-index main.tz-split-main,
+body.wp-editorial-page main#main-content.tz-split-main {
+  display: block !important;
+  grid-template-columns: none !important;
+}
+
+body.content-index main.tz-split-main > .tz-split-intro,
+body.wp-editorial-page main#main-content.tz-split-main > .tz-split-intro {
+  position: relative !important;
+  top: auto !important;
+  width: 100% !important;
+  max-width: none !important;
+}
+
+body.content-index main.tz-split-main > .tz-split-stack,
+body.wp-editorial-page main#main-content.tz-split-main > .tz-split-stack {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body.content-index main.tz-split-main > .tz-split-stack > .wrap,
+body.wp-editorial-page main#main-content.tz-split-main > .tz-split-stack > .wrap {
+  width: 100% !important;
+  max-width: none !important;
+  margin-inline: 0 !important;
+  padding-inline: 0 !important;
+}
+
+body.content-index :is(.tz-workspace-list__head, .tz-workspace-list__marker, .tz-page-hero__signal),
+body.content-index .tz-topbar-status {
+  display: none !important;
+}
+
+body.content-index .tz-workspace-list__item {
+  grid-template-columns: 112px minmax(0, 1fr) 24px !important;
+  gap: 24px !important;
+}
+
+body.content-index .news-row .n-body {
+  min-width: 0;
+  writing-mode: horizontal-tb !important;
+}
+
+body.content-index .news-row .n-body :is(.n-tag, h3, p) {
+  width: auto !important;
+  max-width: none !important;
+  writing-mode: horizontal-tb !important;
+  word-break: normal !important;
+  overflow-wrap: break-word;
+}
+
+html[data-palette="porcelain"] body.content-index :is(.page-head, .news-row),
+html[data-palette="porcelain"] body.wp-editorial-page :is(.wp-hero, .wp-card) {
+  color: #10272b !important;
+}
+
+html[data-palette="porcelain"] body.content-index .news-list > .news-row:first-child {
+  background: #f1f2ec !important;
+}
+
+html[data-palette="porcelain"] body.content-index .news-row .n-body h3,
+html[data-palette="porcelain"] body.wp-editorial-page :is(h1, h2, h3, .wp-contact-value) {
+  color: #10272b !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+html[data-palette="porcelain"] body.content-index .news-row .n-body p,
+html[data-palette="porcelain"] body.wp-editorial-page :is(p, li) {
+  color: #344e52 !important;
+}
+
+@media (max-width: 760px) {
+  body.content-index .tz-workspace-list__item {
+    grid-template-columns: 78px minmax(0, 1fr) !important;
+    gap: 14px !important;
+  }
+}

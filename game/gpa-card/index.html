@@ -6,10 +6,10 @@
   <title>绩点战争：GPA 4.3 · 内测版 — 天择网</title>
   <meta name="description" content="绩点战争内测版——在攻击、防守与学习成长间分配能量，击倒对手或率先把 GPA 推到 4.3。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260824-v5.2.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828i-v5.3.0" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/gpa-card.css?v=20260801-v4.1.6" />
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/gpa-workspace.css?v=20260801-v4.1.6" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M8 17h5v-5h6v5h5v6h-5v-3h-6v3H8z' fill='white'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/gpa-workspace.css?v=20260828-v5.3.0" />
+  <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828i" />
 </head>
 <body class="gpa-page">
   <div class="bg-mesh"></div>
@@ -29,8 +29,8 @@
     <header class="gpa-hero">
       <div>
         <div class="crumb"><a href="https://wjtianze.github.io/index.html">首页</a><span>/</span><a href="https://wjtianze.github.io/game/index.html">游戏专区</a><span>/</span><span>绩点战争</span></div>
-        <div class="gpa-kicker">ACADEMIC COMBAT SYSTEM</div>
-        <h1 class="gpa-title">绩点战争：<span class="grad">GPA 4.3</span><span class="gpa-version">BETA v0.1</span></h1>
+        <div class="gpa-kicker">绩点对战 · 本地运行</div>
+        <h1 class="gpa-title">绩点战争：<span class="grad">GPA 4.3</span><span class="gpa-version">内测 0.1</span></h1>
         <p class="gpa-hero-intro">在攻击、防守与学习成长之间分配有限能量。左侧掌握目标与状态，右侧完成配卡、行动和结算。</p>
         <div class="gpa-hero-notes" aria-label="游戏信息">
           <span><span class="tz-icon" data-icon="file" aria-hidden="true"></span>12 张战术卡</span>
@@ -38,7 +38,7 @@
           <span><span class="tz-icon" data-icon="ai" aria-hidden="true"></span>本地 AI 对战</span>
         </div>
       </div>
-      <div class="gpa-hero-status">TACTICAL LINK ONLINE</div>
+      <div class="gpa-hero-status">规则引擎已就绪</div>
     </header>
 
     <div class="gpa-overlay" id="startScreen" role="dialog" aria-modal="true" aria-labelledby="startTitle" aria-describedby="startDesc" aria-hidden="false">
@@ -81,7 +81,7 @@
         <div class="gpa-log" id="gameLog" role="log" aria-live="polite" aria-relevant="additions text"></div>
       </aside>
 
-      <section class="gpa-side active-turn" id="playerSide" aria-labelledby="playerName">
+      <section class="gpa-side player-side active-turn" id="playerSide" aria-labelledby="playerName">
         <div class="gpa-player-row">
           <div class="gpa-avatar" data-ui-icon="trophy" aria-hidden="true"></div>
           <div class="gpa-player-data">
@@ -93,7 +93,7 @@
         <div class="gpa-hand-label">手牌 <span id="playerHandCount"></span><span class="gpa-label-meta gpa-label-end" id="deckInfo"></span></div>
         <div class="gpa-hand" id="playerHand" aria-label="玩家手牌"></div>
 
-        <div class="gpa-hand-label">战术商店 <span class="gpa-label-meta">花费能量购买，永久解锁</span><button class="gpa-btn gpa-btn-ghost gpa-refresh" id="refreshBtn" type="button" data-ui-icon="refresh">刷新 · 消耗 1 能量</button></div>
+        <div class="gpa-hand-label">战术商店 <span class="gpa-label-meta">购买后加入卡组</span><button class="gpa-btn gpa-btn-ghost gpa-refresh" id="refreshBtn" type="button" data-ui-icon="refresh">刷新（1 能量）</button></div>
         <div class="gpa-shop" id="shopArea" aria-label="卡牌商店"></div>
 
         <div class="gpa-controls">
@@ -149,7 +149,7 @@
     <div class="gpa-sr-only" id="gameAnnouncer" aria-live="assertive" aria-atomic="true"></div>
   </main>
 
-  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260824-v5.2.0"></script>
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260828i-v5.3.0"></script>
   <script defer src="https://wjtianze.github.io/assets/js/gpa-card.js?v=20260801-v4.1.6"></script>
 </body>
 </html>

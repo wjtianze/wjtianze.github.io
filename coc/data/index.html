@@ -3,13 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>COC 数据中心 · 静态数据与玩家部落查询 · 天择网</title>
-  <meta name="description" content="天择网 COC 数据中心：查询部落冲突 18.400.22 静态游戏数据，并通过受保护的 coc.py 云端服务查询玩家、部落、战争、联赛、都城与排名；玩家公开资料可导入村庄分析和升级规划。" />
+  <title>COC 游戏静态数据 · 天择网</title>
+  <meta name="description" content="查询天择网从部落冲突 18.400.22 国际服安装包整理出的兵种、法术、英雄、装备、建筑与升级数值；页面可离线使用，不调用实时玩家或部落接口。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260824-v5.2.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828i-v5.3.0" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css?v=20260801-v4.1.6" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-workspace.css?v=20260801-v4.1.6" />
-  <link rel="stylesheet" href="https://wjtianze.github.io/coc/data/live-query.css?v=20260824c" />
   <style>
     /* CSS 自定义属性中的相对网址会在内联规则使用处按本文档解析，
        因此为这个两级路由提供文档相对的纹理地址。 */
@@ -61,8 +60,73 @@
     .dq-abil-tag.extra { background:rgba(var(--c-green-rgb),.18); color:var(--c-green-soft); }
     .dq-abil-name { font-size:14px; font-weight:700; color:var(--ink); }
     .dq-visually-hidden { position:absolute!important; width:1px!important; height:1px!important; padding:0!important; margin:-1px!important; overflow:hidden!important; clip:rect(0,0,0,0)!important; white-space:nowrap!important; border:0!important; }
-    .dq-search { position:relative; }
-    .dq-search input { min-width:0; }
+    .coc-data-tool .dq-search {
+      position:relative;
+      display:flex;
+      min-width:0;
+      min-height:50px;
+      align-items:center;
+      gap:12px;
+      padding:0 14px;
+      overflow:hidden;
+      border:1px solid var(--coc-line);
+      border-radius:11px;
+      outline:0;
+      background:var(--coc-input);
+      box-shadow:none;
+    }
+    .coc-data-tool .dq-search:focus-within {
+      border-color:#258699!important;
+      outline:0!important;
+      background:var(--coc-input)!important;
+      box-shadow:0 0 0 2px rgba(37,134,153,.24)!important;
+    }
+    .coc-data-tool .dq-search .dq-ic {
+      display:grid;
+      width:18px;
+      height:18px;
+      flex:0 0 18px;
+      place-items:center;
+      margin:0;
+      color:var(--ink-faint);
+      font-size:16px;
+      line-height:1;
+    }
+    .coc-data-tool .dq-search input,
+    .coc-data-tool .dq-search input:focus,
+    .coc-data-tool .dq-search input:focus-visible {
+      width:100%;
+      min-width:0;
+      min-height:48px;
+      margin:0;
+      padding:0;
+      border:0!important;
+      border-radius:0;
+      outline:0!important;
+      background:transparent!important;
+      box-shadow:none!important;
+      color:var(--ink);
+      appearance:none;
+      -webkit-appearance:none;
+    }
+    .coc-data-tool .dq-search input::-webkit-search-decoration,
+    .coc-data-tool .dq-search input::-webkit-search-cancel-button {
+      display:none;
+      appearance:none;
+      -webkit-appearance:none;
+    }
+    .coc-data-tool .dq-toolbar {
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      align-items:center;
+      gap:14px;
+    }
+    .coc-data-tool .dq-count {
+      min-width:92px;
+      margin:0;
+      text-align:right;
+      line-height:1.4;
+    }
     .dq-clear {
       display:grid;
       place-items:center;
@@ -88,6 +152,32 @@
     .dq-loading-error p { color:var(--ink-faint); font-size:13px; line-height:1.7; }
     .dq-retry { margin-top:2px; }
     .dm-table-wrap:focus-visible { outline:2px solid rgba(var(--c-green-soft-rgb),.65); outline-offset:3px; }
+
+    html[data-palette="porcelain"] .coc-data-tool .dq-search {
+      border-color:rgba(25,74,76,.28);
+      background:#f4f4ee;
+    }
+    html[data-palette="porcelain"] .coc-data-tool .dq-search:focus-within {
+      border-color:#075f53!important;
+      background:#f8f8f3!important;
+      box-shadow:0 0 0 2px rgba(7,95,83,.18)!important;
+    }
+
+    @media (max-width:640px) {
+      .coc-data-tool .dq-toolbar {
+        grid-template-columns:minmax(0,1fr);
+        gap:8px;
+        padding:12px;
+      }
+      .coc-data-tool .dq-search {
+        width:100%;
+      }
+      .coc-data-tool .dq-count {
+        min-width:0;
+        padding-inline:2px;
+        text-align:left;
+      }
+    }
 
     .coc-data-tool {
       --tz-type-coc: "Supercell-Magic", "Supercell Magic", "Arial Rounded MT Bold", "Trebuchet MS", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
@@ -248,7 +338,8 @@
       .coc-data-tool .dq-card:hover .dc-emoji { transform:none; }
     }
   </style>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 6l3 7 7 .5-5.3 4.6L23 25l-7-4.2L9 25l1.8-6.9L5.5 13.5 12.5 13z' fill='white'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tactical.css?v=20260827" />
+  <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828i" />
 </head>
 <body class="coc-tool coc-data-tool">
   <div class="bg-mesh"></div>
@@ -264,7 +355,7 @@
         <span class="logo-text">天择网</span>
       </a>
       <button class="nav-toggle" type="button" aria-label="菜单" data-ui-icon="menu"></button>
-      <nav class="nav" aria-label="主导航"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a><a href="https://wjtianze.github.io/contact/index.html"><span>联系开发者</span></a></nav>
+      <nav class="nav" aria-label="主导航"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html" class="active"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a><a href="https://wjtianze.github.io/contact/index.html"><span>联系开发者</span></a></nav>
     </div>
   </header>
 
@@ -274,24 +365,20 @@
       <div class="crumb reveal in">
         <a href="https://wjtianze.github.io/index.html">主页</a> <span>›</span>
         <a href="https://wjtianze.github.io/coc/index.html">COC 专区</a> <span>›</span>
-        <span>COC 数据中心</span>
+        <span>游戏静态数据</span>
       </div>
-      <div class="coc-kicker reveal in d1">COC Intelligence Console · Static + Live</div>
-      <h1 class="reveal in d1">COC 数据 <span class="grad">中心</span></h1>
-      <p class="reveal in d2">一个入口同时查 18.400.22 静态游戏数值与玩家、部落、战争、联赛、都城、排名等实时公开资料。静态数据离线可用；实时查询由受 Turnstile 保护的 coc.py 云端服务完成，部署方凭据只保存在 Cloudflare 机密变量中。玩家结果可保存为部分快照，并与游戏内完整账号 JSON 无损合并后交给解析器和规划器。</p>
+      <div class="coc-kicker reveal in d1">游戏静态数据 · 18.400.22</div>
+      <h1 class="reveal in d1">查单位、等级与升级数值</h1>
+      <p class="reveal in d2">这里收录从 18.400.22 国际服安装包整理出的游戏数值。按中英文名称搜索，就能查看等级、伤害、生命值、费用和升级时间；数据下载到页面后不需要联网。</p>
       <div class="coc-data-brief-meta" aria-label="数据集信息">
-        <span><span class="tz-icon" data-icon="folder" aria-hidden="true"></span>APK 权威静态数据</span>
-        <span><span class="tz-icon" data-icon="search" aria-hidden="true"></span>官方 API 全能力查询</span>
-        <span><span class="tz-icon" data-icon="shield" aria-hidden="true"></span>凭据不进入网页前端</span>
+        <span><span class="tz-icon" data-icon="folder" aria-hidden="true"></span>273 个精选单位</span>
+        <span><span class="tz-icon" data-icon="search" aria-hidden="true"></span>支持中英文搜索</span>
+        <span><span class="tz-icon" data-icon="shield" aria-hidden="true"></span>本页不查询玩家资料</span>
       </div>
     </section>
 
     <div class="coc-data-content">
-    <div class="coc-source-switch" role="tablist" aria-label="数据来源">
-      <button type="button" role="tab" data-coc-source="static" aria-selected="true" aria-controls="dqStaticPanel">静态游戏数据</button>
-      <button type="button" role="tab" data-coc-source="live" aria-selected="false" aria-controls="cocLivePanel">玩家与部落实时查询</button>
-    </div>
-    <div class="coc-static-panel" id="dqStaticPanel" role="tabpanel">
+    <div class="coc-static-panel" id="dqStaticPanel">
     <section class="section coc-data-results-section">
       <div class="dq-toolbar reveal">
         <div class="dq-search" role="search">
@@ -318,83 +405,30 @@
       </div>
     </section>
 
+    <section class="section coc-data-open-section">
+      <a class="card reveal coc-data-open-card" href="https://wjtianze.github.io/coc/live/index.html">
+        <div class="coc-link-icon" data-ui-icon="search" aria-hidden="true"></div>
+        <div class="coc-data-open-copy">
+          <h3>要查玩家、部落或部落对战？</h3>
+          <p>实时资料已经放到独立专区，可查询玩家、部落、部落对战、部落对战联赛、突袭、地区与排行榜。</p>
+        </div>
+        <span class="btn btn--sm coc-data-open-action"><span>打开实时查询</span><span class="tz-icon" data-icon="right" aria-hidden="true"></span></span>
+      </a>
+    </section>
+
     <!-- 底部：指向数据开源 -->
     <section class="section coc-data-open-section">
       <a class="card reveal coc-data-open-card" href="https://wjtianze.github.io/open/index.html">
         <div class="coc-link-icon" data-ui-icon="folder" aria-hidden="true"></div>
         <div class="coc-data-open-copy">
           <h3>本页数据已开源</h3>
-          <p>前往「数据开源」下载可复现的 18.400.22 JSON 与解析工具。代码按各自开源许可证提供；《部落冲突》名称、数据与素材权利仍归其权利人所有。</p>
+          <p>下载 18.400.22 数据文件与整理工具，也可以自己复现查询结果。</p>
         </div>
         <span class="btn btn--sm coc-data-open-action"><span>前往数据开源</span><span class="tz-icon" data-icon="right" aria-hidden="true"></span></span>
       </a>
     </section>
     </div>
 
-    <section class="coc-live-panel" id="cocLivePanel" role="tabpanel" hidden>
-      <div class="coc-live-stack">
-        <article class="card coc-live-card">
-          <div class="coc-live-head">
-            <div><h2>天择 COC 云端查询</h2><p class="coc-live-help">网页只把查询动作与公开标签发送给天择的只读 Cloudflare Worker；部署方凭据保存在云端机密变量中，不会进入网页源码、浏览器存储或查询结果。</p></div>
-            <span class="coc-live-status" id="cocLiveStatus" aria-live="polite">正在连接</span>
-          </div>
-          <div class="coc-live-actions">
-            <button class="btn btn--sm btn--primary" type="button" id="cocConnect">重新连接云端</button>
-            <button class="btn btn--sm" type="button" id="cocUseLocal" hidden>改用本机服务</button>
-          </div>
-          <p class="coc-live-help">普通访客无需填写邮箱、密码或 API Key。自行部署时，请打开 <a href="https://developer.clashofclans.com/" target="_blank" rel="noopener noreferrer">部落冲突开发者门户</a>注册并验证账号，再把邮箱和密码写入 Worker Secrets；coc.py 会创建或复用仅允许 RoyaleAPI 固定代理地址使用的官方 API Key。邮箱密码只发送给开发者门户；代理会看到 API Token、公开查询及结果，但看不到账号密码。</p>
-          <p class="coc-live-warning" id="cocLiveError" role="status" aria-live="polite">这里只开放 coc.py 的无秘密、只读官网查询；玩家验证令牌、静态游戏数据和账户管理不会发送到云端。</p>
-        </article>
-
-        <article class="card coc-live-card">
-          <div class="coc-live-head"><div><h3>输入标签即可查询</h3><p class="coc-live-help" id="cocCapabilityNote">玩家和部落查询不用填写 JSON；静态游戏数据始终使用天择网自己的 18.400.22 目录。</p></div></div>
-          <div class="coc-live-tabs" role="tablist" aria-label="实时查询类型" aria-orientation="horizontal">
-            <button type="button" id="cocPlayerTab" role="tab" data-live-kind="player" aria-selected="true" aria-controls="cocPlayerFields" tabindex="0">玩家</button>
-            <button type="button" id="cocClanTab" role="tab" data-live-kind="clan" aria-selected="false" aria-controls="cocClanFields" tabindex="-1">部落</button>
-            <button type="button" id="cocAdvancedTab" role="tab" data-live-kind="advanced" aria-selected="false" aria-controls="cocAdvancedFields" tabindex="-1">开发者高级查询</button>
-          </div>
-          <div class="coc-live-basic" id="cocPlayerFields" role="tabpanel" aria-labelledby="cocPlayerTab">
-            <label class="coc-live-label" for="cocPlayerTag">玩家标签</label>
-            <div class="coc-live-tag-row">
-              <input id="cocPlayerTag" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" maxlength="16" placeholder="例如 #2PP" aria-describedby="cocPlayerTagHelp" />
-              <button class="btn btn--sm btn--primary" type="button" id="cocQueryPlayer">查询玩家</button>
-            </div>
-            <p class="coc-live-help" id="cocPlayerTagHelp">可以带或不带 #；网页会自动大写、补上 #，并把容易混淆的字母 O 改为数字 0。按回车也能查询。</p>
-          </div>
-          <div class="coc-live-basic" id="cocClanFields" role="tabpanel" aria-labelledby="cocClanTab" hidden>
-            <label class="coc-live-label" for="cocClanTag">部落标签</label>
-            <div class="coc-live-tag-row">
-              <input id="cocClanTag" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" maxlength="16" placeholder="例如 #2PP" aria-describedby="cocClanTagHelp" />
-              <button class="btn btn--sm btn--primary" type="button" id="cocQueryClan">查询部落</button>
-            </div>
-            <p class="coc-live-help" id="cocClanTagHelp">可以带或不带 #；网页会自动大写、补上 #，并把容易混淆的字母 O 改为数字 0。按回车也能查询。</p>
-          </div>
-          <div class="coc-live-advanced" id="cocAdvancedFields" role="tabpanel" aria-labelledby="cocAdvancedTab" hidden>
-            <p class="coc-live-warning">这里面向熟悉 coc.py 和官方接口的开发者。普通玩家查询、部落查询请使用上面的标签页，不需要编写 JSON。</p>
-            <div class="coc-live-grid">
-              <div class="coc-live-field"><label for="cocAction">官网查询动作</label><select id="cocAction"><option>连接后加载</option></select></div>
-              <div class="coc-live-field is-wide"><label for="cocParams">参数 JSON（开发者高级功能）</label><textarea id="cocParams" spellcheck="false">{"name":"","limit":20}</textarea></div>
-            </div>
-            <p class="coc-live-capability" id="cocActionHelp"></p>
-            <div class="coc-live-actions"><button class="btn btn--sm btn--primary" type="button" id="cocRun">执行高级查询</button></div>
-          </div>
-        </article>
-
-        <article class="card coc-live-card">
-          <div class="coc-live-result-tools">
-            <span class="coc-live-result-meta" id="cocResultMeta" role="status" aria-live="polite">尚未查询</span>
-            <div class="coc-live-actions" style="margin-top:0"><button class="btn btn--sm btn--primary" type="button" id="cocImportPlayer" hidden>导入玩家快照</button><a class="btn btn--sm" id="cocOpenParser" href="https://wjtianze.github.io/coc/index.html" hidden>打开村庄解析器</a><a class="btn btn--sm" id="cocOpenPlanner" href="https://wjtianze.github.io/coc/planner/index.html" hidden>打开升级规划器</a></div>
-          </div>
-          <div class="coc-friendly-result" id="cocFriendlyResult" aria-label="查询结果" aria-busy="false"><p class="coc-friendly-empty">查询后的玩家或部落资料会显示在这里。</p></div>
-          <details class="coc-live-json-details" id="cocRawJsonDetails">
-            <summary>查看原始 JSON（高级）</summary>
-            <div class="coc-live-json-tools"><button class="btn btn--sm" type="button" id="cocCopyResult" disabled>复制 JSON</button><button class="btn btn--sm" type="button" id="cocDownloadResult" disabled>下载 JSON</button></div>
-            <pre class="coc-live-result" id="cocResult" tabindex="0" aria-label="查询结果 JSON"></pre>
-          </details>
-          <p class="coc-live-help">官方玩家接口没有建筑、陷阱、工人、资源和升级计时。导入时只更新接口实际返回的兵种、法术、英雄和装备；已有完整村庄数据不会被删除，规划器会清楚标示资料覆盖范围。</p>
-        </article>
-      </div>
-    </section>
     </div>
     </div>
   </main>
@@ -405,9 +439,21 @@
     <div class="dq-modal" id="dqModal" role="dialog" aria-modal="true" aria-labelledby="dqDialogTitle" tabindex="-1"></div>
   </div>
 
-  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260824-v5.2.0"></script>
-  <script defer src="https://wjtianze.github.io/coc/shared/snapshot-v2.js?v=20260823a"></script>
-  <script defer src="https://wjtianze.github.io/coc/data/live-query.js?v=20260824c"></script>
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260828i-v5.3.0"></script>
+  <script>
+  (function () {
+    var params = new URLSearchParams(location.search);
+    var oldView = String(params.get("source") || params.get("view") || params.get("tab") || "").toLowerCase();
+    var oldHash = location.hash.replace(/^#/, "").toLowerCase();
+    var oldLiveLink = oldView === "live" || oldHash === "live" || oldHash === "coclivepanel";
+    if (!oldLiveLink) return;
+    params.delete("source");
+    params.delete("view");
+    params.delete("tab");
+    var query = params.toString();
+    location.replace("../live/" + (query ? "?" + query : ""));
+  })();
+  </script>
   <script>
   (function () {
     "use strict";
@@ -428,6 +474,18 @@
     var SUB2BIG = {};
     BIG_CATS.forEach(function (c) { c.subs.forEach(function (s) { SUB2BIG[s] = c.key; }); });
     function bigMeta(key) { for (var i = 0; i < BIG_CATS.length; i++) if (BIG_CATS[i].key === key) return BIG_CATS[i]; return { key: key, zh: key, icon: "file" }; }
+    // 数据文件继续保留旧 category，界面统一显示游戏当前官方名称。
+    var CATEGORY_DISPLAY = {
+      "夜世界兵种": "建筑大师基地兵种",
+      "夜世界英雄": "建筑大师基地英雄",
+      "夜世界资源建筑": "建筑大师基地资源建筑",
+      "夜世界科技建筑": "建筑大师基地科技建筑",
+      "夜世界防御建筑": "建筑大师基地防御建筑",
+      "夜世界其它建筑": "建筑大师基地其它建筑",
+      "夜世界陷阱": "建筑大师基地陷阱",
+      "帮手角色": "帮手"
+    };
+    function categoryDisplay(value) { return CATEGORY_DISPLAY[value] || value || ""; }
 
     /* ---------- 字段翻译 ---------- */
     var RES_ZH = { Elixir: "圣水", Gold: "金币", DarkElixir: "暗黑重油", BuilderElixir: "建筑大师圣水", BuilderGold: "建筑大师金币" };
@@ -639,7 +697,7 @@
       }
       if (currentKw) {
         // 主单位的搜索域包含其附属单位名称（搜"小戈仑"可命中戈仑石人）
-        var hay = [u.englishName, u.chineseName, u.description, u.category];
+        var hay = [u.englishName, u.chineseName, u.description, u.category, categoryDisplay(u.category)];
         subsOf(u).forEach(function (s) { hay.push(s.unit.englishName, s.unit.chineseName); });
         var text = hay.filter(Boolean).join(" ").toLowerCase();
         if (text.indexOf(currentKw) === -1) return false;
@@ -686,7 +744,7 @@
                 (en ? '<div class="dc-en">' + esc(en) + '</div>' : '') +
               '</div>' +
             '</div>' +
-            '<span class="dc-pill">' + esc(u.category || "") + '</span>' +
+            '<span class="dc-pill">' + esc(categoryDisplay(u.category)) + '</span>' +
             (desc ? '<div class="dc-info">' + esc(desc) + '</div>' : '') +
             (statsHtml ? '<div class="dc-stats">' + statsHtml + '</div>' : '') +
             attachHtml +
@@ -726,7 +784,7 @@
 
       // pills
       var res = sa.UpgradeResource || sa.BuildResource;
-      var pills = '<span class="p">' + esc(u.category || "") + '</span>';
+      var pills = '<span class="p">' + esc(categoryDisplay(u.category)) + '</span>';
       // 附属单位标识：明确标注此单位为附属单位及来源
       if (isSub(u)) {
         var srcs = CHILD_OF[u.englishName] || [];

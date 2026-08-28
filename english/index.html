@@ -3,88 +3,105 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>英语专区 · 天择网</title>
-  <meta name="description" content="天择网英语专区 —— 一个按需生长的英语学习工作台，现阶段以四阶段词汇训练为核心，配合 AI 出题与自定义词库。" />
+  <title>英语学习 · 天择网</title>
+  <meta name="description" content="天择网英语学习页：导入自己的词库，用预习、回忆、辨析和拼写四轮练习记单词。" />
+  <meta name="theme-color" content="#102947" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260824-v5.2.0" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='.5' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Ctext x='16' y='22' font-size='16' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3EEN%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828i-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/english/english.css?v=20260827-v1.0.0" />
+  <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828i" />
 </head>
-<body>
-  <div class="bg-mesh"></div>
+<body class="english-home">
+  <div class="bg-mesh" aria-hidden="true"></div>
 
   <header class="topbar">
     <div class="wrap topbar-inner">
       <a class="brand" href="https://wjtianze.github.io/index.html" aria-label="天择网首页">
-        <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/></svg></span>
+        <span class="logo-mark" aria-hidden="true"></span>
         <span class="logo-text">天择网</span>
       </a>
-      <button class="nav-toggle" aria-label="菜单">☰</button>
-      <nav class="nav"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html" class="active"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a><a href="https://wjtianze.github.io/contact/index.html"><span>联系开发者</span></a></nav>
+      <button class="nav-toggle" type="button" aria-label="打开菜单" data-ui-icon="menu"></button>
+      <nav class="nav" aria-label="主导航">
+        <a href="https://wjtianze.github.io/index.html"><span>首页</span></a>
+        <a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a>
+        <a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a>
+        <a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a>
+        <a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a>
+        <a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a>
+        <a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a>
+        <a href="https://wjtianze.github.io/english/index.html" class="active"><span>英语专区</span></a>
+        <a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a>
+        <a href="https://wjtianze.github.io/contact/index.html"><span>联系</span></a>
+      </nav>
     </div>
   </header>
 
-  <main>
-    <section class="english-hero tz-page-hero wrap">
-      <div class="english-hero-copy">
-        <div class="english-kicker reveal in"><span>ENGLISH ZONE</span><b>英语学习工作台</b></div>
-        <h1 class="reveal in d1">把英语，<br/>变成可被<span class="grad">持续训练</span>的能力。</h1>
-        <p class="reveal in d2">这里收纳我自己在用的英语学习工具——围绕真实学习需求按需生长，不绑定单一方向。现阶段以词汇训练为核心，用预习、回忆、巩固与拼写组成完整学习闭环，配合 AI 出题与自定义词库；后续会随学习进度逐步补充新的训练模块。</p>
-        <div class="english-actions reveal in d3">
-          <a class="btn" href="https://wjtianze.github.io/english/words/index.html"><span>开始背单词</span><span>→</span></a>
-          <a class="btn btn--ghost" href="#method"><span>查看学习流程</span></a>
+  <main class="english-home-main">
+    <section class="english-home-hero wrap" aria-labelledby="english-title">
+      <div class="english-home-copy">
+        <p class="english-home-kicker">英语学习</p>
+        <h1 id="english-title">背单词，先找到能坚持的节奏。</h1>
+        <p>这是我自己也在使用的背单词工具。你可以导入词库，再用预习、回忆、辨析和拼写练习同一批单词；学习记录只保存在当前设备。</p>
+        <div class="english-home-actions">
+          <a class="btn" href="https://wjtianze.github.io/english/words/index.html">开始背单词</a>
+          <a class="btn btn--ghost" href="#method">看看练习方法</a>
         </div>
       </div>
-      <div class="english-word-stage tz-workspace-card reveal in d2" aria-label="词汇学习卡片示意">
-        <span class="english-stage-index">WORD / 001</span>
-        <span class="english-stage-label">TODAY'S WORD</span>
-        <strong>accommodate</strong>
-        <span class="english-phonetic">/əˈkɒmədeɪt/ · v.</span>
-        <div class="english-stage-rule"></div>
-        <p>容纳；提供空间<br/>迁就；照顾<br/>适应</p>
-        <span class="english-stage-status">LEARN · RECALL · SPELL</span>
-      </div>
+
+      <aside class="english-sample" aria-labelledby="sample-word">
+        <p>今天可以从这个词开始</p>
+        <h2 id="sample-word" lang="en">accommodate</h2>
+        <span lang="en">/əˈkɒmədeɪt/　v.</span>
+        <dl>
+          <div><dt>1</dt><dd>容纳；提供空间</dd></div>
+          <div><dt>2</dt><dd>迁就；照顾</dd></div>
+          <div><dt>3</dt><dd>适应</dd></div>
+        </dl>
+      </aside>
     </section>
 
-    <section class="english-ledger" aria-label="专区能力概览">
-      <div class="wrap english-ledger-inner">
-        <div><b>WORDS</b><span>词汇训练为核心</span></div>
-        <div><b>AI</b><span>出题解析与例句</span></div>
-        <div><b>∞</b><span>支持一词多义</span></div>
-        <div><b>JSON</b><span>自定义词库导入</span></div>
-      </div>
+    <section class="english-method wrap" id="method" aria-labelledby="method-title">
+      <header class="english-section-heading">
+        <p>练习方法</p>
+        <h2 id="method-title">同一批单词练 4 遍</h2>
+        <span>每一轮都比上一轮多要求你回忆一点。</span>
+      </header>
+      <ol class="english-method-list">
+        <li>
+          <span>01</span>
+          <div><h3>看英文，理解词义</h3><p>先看单词、音标和中文释义，建立第一遍联系。</p></div>
+        </li>
+        <li>
+          <span>02</span>
+          <div><h3>看中文，回忆英文</h3><p>不再依赖词形提示，试着主动想起单词。</p></div>
+        </li>
+        <li>
+          <span>03</span>
+          <div><h3>辨认相近释义</h3><p>从多个选项中找出正确含义，留意容易混淆的地方。</p></div>
+        </li>
+        <li>
+          <span>04</span>
+          <div><h3>完整拼写</h3><p>最后自己写出单词，把“看得懂”变成“写得出”。</p></div>
+        </li>
+      </ol>
     </section>
 
-    <section class="section wrap" id="method">
-      <div class="section-head reveal">
-        <h2><span class="bar"></span>词汇训练 · 四阶段学习法</h2>
-        <span class="more">从理解走向主动回忆</span>
+    <section class="english-tool-entry wrap" aria-labelledby="tool-title">
+      <div class="english-tool-entry__mark" aria-hidden="true">Aa</div>
+      <div>
+        <p>现在可以使用</p>
+        <h2 id="tool-title">天择背单词</h2>
+        <p>支持自定义词库、一词多义、错词复习和学习统计。需要时还可以配置 AI 生成例句或辅助解析。</p>
+        <ul aria-label="工具特点">
+          <li>浏览器直接使用</li>
+          <li>记录保存在本机</li>
+          <li>可以导入和导出词库</li>
+        </ul>
       </div>
-      <div class="english-process">
-        <article class="english-step tz-workspace-card reveal d1"><span>01</span><small>PREVIEW</small><h3>英译中预习</h3><p>先建立单词、音标与中文释义之间的联系。</p></article>
-        <article class="english-step tz-workspace-card reveal d2"><span>02</span><small>RECALL</small><h3>中译英回忆</h3><p>从中文主动提取英文，检验真实掌握程度。</p></article>
-        <article class="english-step tz-workspace-card reveal d3"><span>03</span><small>REINFORCE</small><h3>英译中巩固</h3><p>借助干扰项辨析词义，强化容易混淆的细节。</p></article>
-        <article class="english-step tz-workspace-card reveal d4"><span>04</span><small>SPELL</small><h3>完整拼写</h3><p>用最终拼写训练收尾，让词形进入长期记忆。</p></article>
-      </div>
-    </section>
-
-    <section class="section wrap">
-      <div class="section-head reveal">
-        <h2><span class="bar"></span>当前可用工具</h2>
-        <span class="more">现阶段核心 · 词汇训练</span>
-      </div>
-      <a class="card english-tool-card tz-workspace-card reveal" href="https://wjtianze.github.io/english/words/index.html">
-        <div class="english-tool-mark" aria-hidden="true">Aa</div>
-        <div class="english-tool-copy">
-          <span class="english-tool-kicker">VOCABULARY TRAINER · WEB APP</span>
-          <h3>天择背单词</h3>
-          <p>一套可直接在浏览器使用的词汇训练工具。按四阶段学习法逐步训练，支持自定义词库、一词多义、AI 例句、干扰项和深度解析，数据保存在浏览器本地。</p>
-          <div class="english-tool-tags"><span>四阶段训练</span><span>AI 辅助</span><span>自定义词库</span><span>浏览器即用</span></div>
-        </div>
-        <span class="english-tool-go">进入学习 <b>→</b></span>
-      </a>
+      <a class="btn" href="https://wjtianze.github.io/english/words/index.html">打开背单词</a>
     </section>
   </main>
 
-  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260824-v5.2.0"></script>
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260828i-v5.3.0"></script>
 </body>
 </html>

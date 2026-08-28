@@ -5,8 +5,8 @@
 ================================================
 功能：读取一个部落冲突（Clash of Clans）村庄存档 JSON，结合游戏静态数据，
       输出结构化中文报告，包括：
-        1. 村庄概况（玩家标签、采集时间、家乡/夜世界大本营等级、建筑工人数）
-        2. 家乡与夜世界按单位类型分类的完整清单
+        1. 村庄概况（玩家标签、采集时间、家乡村庄与建筑大师基地的大本营等级、建筑工人数）
+        2. 家乡村庄与建筑大师基地按单位类型分类的完整清单
         3. 各类单位到达当前大本营满级的「剩余升级时间」汇总
 
 用法：
@@ -359,13 +359,13 @@ def report(v, idm, th, bh, tasks):
     dt = datetime.datetime.fromtimestamp(ts) if ts else None
     print(f"  玩家标签：{v.get('tag', '-')}")
     print(f"  采集时间：{dt.strftime('%Y-%m-%d %H:%M:%S') if dt else '-'}")
-    print(f"  家乡大本营：{th} 本")
-    print(f"  夜世界大本营：{bh if bh else '未建'}{(' 本') if bh else ''}")
-    print(f"  家乡建筑工人：{builder_count(v, idm)} 个")
-    print(f"  夜世界建筑工人：{bb_builder_count(v, idm)} 个")
+    print(f"  家乡村庄大本营：{th} 本")
+    print(f"  建筑大师大本营：{bh if bh else '未建'}{(' 本') if bh else ''}")
+    print(f"  家乡村庄建筑工人：{builder_count(v, idm)} 个")
+    print(f"  建筑大师基地建筑工人：{bb_builder_count(v, idm)} 个")
     print(f"  待升级任务：{len(tasks)} 项")
 
-    print_section("【家乡 · Home Village】")
+    print_section("【家乡村庄】")
     print_cat("👑", "英雄", v.get("heroes", []), idm)
     print_cat("⚔️", "兵种", v.get("units", []), idm)
     print_cat("🛒", "攻城机器", v.get("siege_machines", []), idm)
@@ -376,7 +376,7 @@ def report(v, idm, th, bh, tasks):
     print_cat("🪤", "陷阱", v.get("traps", []), idm)
     print_cat("🧰", "帮手", v.get("helpers", []), idm, is_helper=True)
 
-    print_section("【夜世界 · Builder Base】")
+    print_section("【建筑大师基地】")
     print_cat("👑", "英雄", v.get("heroes2", []), idm)
     print_cat("⚔️", "兵种", v.get("units2", []), idm)
     print_cat("🏰", "建筑", v.get("buildings2", []), idm)
@@ -384,10 +384,10 @@ def report(v, idm, th, bh, tasks):
 
     print_section("【剩余升级时间（到达当前大本营满级）】")
     groups = {
-        "home_builder": ("家乡·建筑工人", 0, 0), "home_lab": ("家乡·实验室", 0, 0),
-        "home_hero": ("家乡·英雄殿堂", 0, 0), "home_pet": ("家乡·战宠小屋", 0, 0),
-        "bb_builder": ("夜世界·建筑工人", 0, 0), "bb_lab": ("夜世界·实验室", 0, 0),
-        "bb_hero": ("夜世界·英雄", 0, 0),
+        "home_builder": ("家乡村庄·建筑工人", 0, 0), "home_lab": ("家乡村庄·实验室", 0, 0),
+        "home_hero": ("家乡村庄·英雄殿堂", 0, 0), "home_pet": ("家乡村庄·战宠小屋", 0, 0),
+        "bb_builder": ("建筑大师基地·建筑工人", 0, 0), "bb_lab": ("建筑大师基地·星空实验室", 0, 0),
+        "bb_hero": ("建筑大师基地·英雄", 0, 0),
     }
     g = {k: list(v) for k, v in groups.items()}
     total = 0

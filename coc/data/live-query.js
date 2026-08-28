@@ -8,6 +8,27 @@
   var COC_TAG_CHARACTERS = "0289PYLQGRJCUV";
   var LIVE_KINDS = ["player", "clan", "advanced"];
   var STALE_QUERY = {};
+  var ROLE_NAMES = { leader: "首领", coLeader: "副首领", admin: "长老", member: "成员" };
+  var WAR_PREFERENCE_NAMES = { in: "参战", out: "不参战" };
+  var CLAN_TYPE_NAMES = { open: "任何人都能加入", inviteOnly: "只有被批准才能加入", closed: "不可加入" };
+  var WAR_FREQUENCY_NAMES = {
+    unknown: "未设置", always: "始终", moreThanOncePerWeek: "一周两次",
+    oncePerWeek: "一周一次", lessThanOncePerWeek: "很少", never: "从不"
+  };
+  var CUP_LEAGUE_STEMS = {
+    Bronze: "铜杯", Silver: "银杯", Gold: "金杯", Crystal: "水晶杯",
+    Master: "大师杯", Champion: "冠军杯", Titan: "泰坦杯", Legend: "传奇杯"
+  };
+  var RANKED_LEAGUE_STEMS = {
+    Skeleton: "骷髅兵", Barbarian: "野蛮人", Archer: "弓箭手", Wizard: "法师",
+    Valkyrie: "瓦基丽武神", Witch: "女巫", Golem: "戈仑石人", "P.E.K.K.A": "皮卡超人",
+    Titan: "泰坦", Dragon: "飞龙", Electro: "雷龙"
+  };
+  var BUILDER_LEAGUE_STEMS = {
+    Wood: "木头", Clay: "黏土", Stone: "石头", Copper: "红铜", Brass: "黄铜",
+    Iron: "精铁", Steel: "坚钢", Titanium: "钛金", Platinum: "铂金",
+    Emerald: "绿宝石", Ruby: "红宝石", Diamond: "钻石"
+  };
   var ACTION_DEFAULTS = {
     player: { action: "get_player", params: { player_tag: "#" } },
     clan: { action: "get_clan", params: { tag: "#" } },
@@ -361,25 +382,73 @@
     if (value && typeof value === "object") return firstValue(value, ["name", "tag"]);
     return value;
   }
+  function containsHan(value) {
+    return /[\u3400-\u9fff]/.test(String(value == null ? "" : value));
+  }
+  function enumName(map, value, fallback) {
+    if (value === undefined || value === null || value === "") return fallback;
+    var text = String(value).trim();
+    if (!text) return fallback;
+    if (containsHan(text)) return text;
+    if (map[text]) return map[text];
+    var compact = text.replace(/[\s_-]+/g, "").toLowerCase();
+    var key = Object.keys(map).find(function (item) {
+      return item.replace(/[\s_-]+/g, "").toLowerCase() === compact;
+    });
+    return key ? map[key] : fallback;
+  }
+  function officialRoleName(value) {
+    return enumName(ROLE_NAMES, value, "未标明");
+  }
+  function officialWarPreferenceName(value) {
+    return enumName(WAR_PREFERENCE_NAMES, value, "未标明");
+  }
+  function officialClanTypeName(value) {
+    return enumName(CLAN_TYPE_NAMES, value, "未设置");
+  }
+  function officialWarFrequencyName(value) {
+    return enumName(WAR_FREQUENCY_NAMES, value, "未设置");
+  }
+  function romanNumber(value) {
+    return ({ I: 1, II: 2, III: 3, IV: 4, V: 5 })[String(value || "").toUpperCase()] || 0;
+  }
+  function officialLeagueName(value, options) {
+    options = options || {};
+    if (value === undefined || value === null || value === "") return "未进入联赛";
+    var text = String(value).trim();
+    if (!text) return "未进入联赛";
+    if (containsHan(text)) {
+      if (/^传奇[123]$/.test(text)) return text.replace(/^传奇/, "传奇杯");
+      text = text.replace(/^(骷髅兵|野蛮人|弓箭手|法师|瓦基丽武神|女巫|戈仑石人|皮卡超人|泰坦|飞龙|雷龙|木头|黏土|石头|红铜|黄铜|精铁|坚钢|钛金|铂金|绿宝石|红宝石|钻石|铜杯|银杯|金杯|水晶杯|大师杯|冠军杯|泰坦杯|传奇杯)联赛(\d+)$/, "$1$2");
+      if (options.kind === "builder") text = text.replace(/^(木头|黏土|石头|红铜|黄铜|精铁|坚钢|钛金|铂金|绿宝石|红宝石|钻石)联赛$/, "$1");
+      return text;
+    }
+    if (/^(?:Unranked|None)$/i.test(text)) return "未进入联赛";
+    var legendRank = /^Legend\s+(I|II|III)$/i.exec(text);
+    if (legendRank) return "传奇杯" + romanNumber(legendRank[1]);
+    if (/^Legend League$/i.test(text)) return "传奇杯联赛";
+    var ranked = /^(.+?) League (\d+)$/.exec(text);
+    if (ranked && RANKED_LEAGUE_STEMS[ranked[1]]) return RANKED_LEAGUE_STEMS[ranked[1]] + ranked[2];
+    var divided = /^(.+?) League (I|II|III|IV|V)$/i.exec(text);
+    if (divided) {
+      var stem = options.kind === "builder" ? BUILDER_LEAGUE_STEMS[divided[1]] : CUP_LEAGUE_STEMS[divided[1]];
+      if (!stem && BUILDER_LEAGUE_STEMS[divided[1]]) stem = BUILDER_LEAGUE_STEMS[divided[1]];
+      if (stem) return stem + romanNumber(divided[2]);
+    }
+    var undivided = /^(.+?) League$/i.exec(text);
+    if (undivided) {
+      var plainStem = options.kind === "builder" ? BUILDER_LEAGUE_STEMS[undivided[1]] : CUP_LEAGUE_STEMS[undivided[1]];
+      if (!plainStem && BUILDER_LEAGUE_STEMS[undivided[1]]) plainStem = BUILDER_LEAGUE_STEMS[undivided[1]];
+      if (plainStem) return plainStem + (options.kind === "builder" || options.short ? "" : "联赛");
+    }
+    return "未收录联赛";
+  }
   function playerLeagueTierName(data) {
     var name = valueAt(data, "leagueTier.name");
-    return typeof name === "string" && name.trim() ? name.trim() : "尚未参加排位";
+    return typeof name === "string" && name.trim() ? name.trim() : "未进入联赛";
   }
   function displayPlayerLeagueTierName(data) {
-    var raw = playerLeagueTierName(data), legend = { "Legend III": "传奇3", "Legend II": "传奇2", "Legend I": "传奇1" };
-    if (legend[raw]) return legend[raw];
-    var families = [
-      ["Skeleton", "骷髅兵"], ["Barbarian", "野蛮人"], ["Archer", "弓箭手"], ["Wizard", "法师"],
-      ["Valkyrie", "瓦基丽武神"], ["Witch", "女巫"], ["Golem", "戈仑石人"], ["P.E.K.K.A", "皮卡超人"],
-      ["Titan", "泰坦"], ["Dragon", "飞龙"], ["Electro", "雷龙"]
-    ];
-    for (var i = 0; i < families.length; i += 1) {
-      var prefix = families[i][0], localized = families[i][1];
-      if (raw === prefix) return localized;
-      if (raw.indexOf(prefix + " League ") === 0) return localized + " " + raw.slice((prefix + " League ").length);
-      if (raw.indexOf(prefix + " ") === 0) return localized + " " + raw.slice((prefix + " ").length);
-    }
-    return raw;
+    return officialLeagueName(playerLeagueTierName(data), { kind: "ranked", short: true });
   }
   function clanCapitalHallLevel(data) {
     return valueAt(data, "clanCapital.capitalHallLevel");
@@ -475,10 +544,6 @@
     header.appendChild(copy);
     card.appendChild(header);
   }
-  function localizedClanType(value) {
-    var types = { open: "任何人均可加入", inviteOnly: "需要邀请", closed: "不开放" };
-    return types[value] || value;
-  }
   function renderPlayer(container, data) {
     var card = element("section", "coc-profile-card");
     card.setAttribute("data-result-kind", "player");
@@ -493,17 +558,20 @@
     appendStat(grid, "当前奖杯", firstValue(data, ["trophies"]));
     appendStat(grid, "最高奖杯", firstValue(data, ["bestTrophies", "best_trophies"]));
     appendStat(grid, "个人排位联赛（新版）", displayPlayerLeagueTierName(data));
+    appendStat(grid, "部落身份", officialRoleName(firstValue(data, ["role"])));
+    appendStat(grid, "部落对战偏好", officialWarPreferenceName(firstValue(data, ["warPreference", "war_preference"])));
     var clan = playerClan(data);
     if (clan) appendDrilldownStat(grid, "所属部落", (namedValue(clan) || "—") + " · " + clan.tag, "clan", clan.tag);
     else appendStat(grid, "所属部落", "未加入部落");
-    appendStat(grid, "战争之星", firstValue(data, ["warStars", "war_stars"]));
+    appendStat(grid, "部落对战之星", firstValue(data, ["warStars", "war_stars"]));
     appendStat(grid, "赛季进攻胜场", firstValue(data, ["attackWins", "attack_wins"]));
     appendStat(grid, "赛季防守胜场", firstValue(data, ["defenseWins", "defense_wins"]));
     appendStat(grid, "捐兵", firstValue(data, ["donations"]));
     appendStat(grid, "收兵", firstValue(data, ["donationsReceived", "received"]));
     appendStat(grid, "建筑大师奖杯", firstValue(data, ["builderBaseTrophies", "versusTrophies", "builder_base_trophies"]));
-    appendStat(grid, "建筑大师联赛", firstValue(data, ["builderBaseLeague.name", "builder_base_league.name"]));
-    appendStat(grid, "都城贡献", firstValue(data, ["clanCapitalContributions", "clan_capital_contributions"]));
+    var builderLeague = firstValue(data, ["builderBaseLeague.name", "builder_base_league.name"]);
+    appendStat(grid, "建筑大师基地联赛", builderLeague === undefined ? undefined : officialLeagueName(builderLeague, { kind: "builder", short: true }));
+    appendStat(grid, "都城金币", firstValue(data, ["clanCapitalContributions", "clan_capital_contributions"]));
     card.appendChild(grid);
     container.appendChild(card);
   }
@@ -515,20 +583,22 @@
     appendStat(grid, "部落等级", firstValue(data, ["clanLevel", "level", "clan_level"]));
     var members = firstValue(data, ["members"]);
     appendStat(grid, "成员", members === undefined ? undefined : members + " / 50");
-    appendStat(grid, "加入类型", localizedClanType(firstValue(data, ["type"])));
+    appendStat(grid, "加入类型", officialClanTypeName(firstValue(data, ["type"])));
     appendStat(grid, "所需奖杯", firstValue(data, ["requiredTrophies", "required_trophies"]));
     appendStat(grid, "部落总奖杯", firstValue(data, ["clanPoints", "points", "clan_points"]));
     appendStat(grid, "建筑大师总奖杯", firstValue(data, ["clanBuilderBasePoints", "versusPoints", "clan_builder_base_points"]));
     appendStat(grid, "都城总奖杯", firstValue(data, ["clanCapitalPoints", "capital_points"]));
-    appendStat(grid, "都城联赛", firstValue(data, ["capitalLeague.name", "capital_league.name"]));
+    var capitalLeague = firstValue(data, ["capitalLeague.name", "capital_league.name"]);
+    appendStat(grid, "都城联赛", capitalLeague === undefined ? undefined : officialLeagueName(capitalLeague, { kind: "capital", short: false }));
     appendStat(grid, "所在地区", firstValue(data, ["location.name"]));
     appendStat(grid, "所需大本营", firstValue(data, ["requiredTownhallLevel", "required_townhall_level"]));
-    appendStat(grid, "战争频率", firstValue(data, ["warFrequency", "war_frequency"]));
-    appendStat(grid, "战争胜场", firstValue(data, ["warWins", "war_wins"]));
-    appendStat(grid, "战争负场", firstValue(data, ["warLosses", "war_losses"]));
-    appendStat(grid, "战争平局", firstValue(data, ["warTies", "war_ties"]));
+    appendStat(grid, "部落对战频率", officialWarFrequencyName(firstValue(data, ["warFrequency", "war_frequency"])));
+    appendStat(grid, "部落对战胜场", firstValue(data, ["warWins", "war_wins"]));
+    appendStat(grid, "部落对战负场", firstValue(data, ["warLosses", "war_losses"]));
+    appendStat(grid, "部落对战平局", firstValue(data, ["warTies", "war_ties"]));
     appendStat(grid, "当前连胜", firstValue(data, ["warWinStreak", "war_win_streak"]));
-    appendStat(grid, "战争联赛", firstValue(data, ["warLeague.name", "war_league.name"]));
+    var warLeague = firstValue(data, ["warLeague.name", "war_league.name"]);
+    appendStat(grid, "部落对战联赛", warLeague === undefined ? undefined : officialLeagueName(warLeague, { kind: "war", short: false }));
     appendStat(grid, "都城大本营", clanCapitalHallLevel(data));
     card.appendChild(grid);
     var description = firstValue(data, ["description"]);
@@ -552,7 +622,7 @@
         var identity = element("span", "coc-member-identity");
         identity.appendChild(element("strong", "coc-member-name", memberName));
         identity.appendChild(element("span", "coc-member-tag", memberTag));
-        var role = { leader: "首领", coLeader: "副首领", admin: "长老", member: "成员" }[firstValue(member, ["role"])] || "成员";
+        var role = officialRoleName(firstValue(member, ["role"]));
         var townHall = firstValue(member, ["townHallLevel", "town_hall_level"]);
         identity.appendChild(element("span", "coc-member-meta", role + (townHall === undefined ? "" : " · " + townHall + " 本") + " · " + displayPlayerLeagueTierName(member)));
         button.appendChild(identity);
@@ -630,9 +700,10 @@
       if (!window.TianzeCocSnapshot) throw new Error("快照模块没有加载");
       var units = window.__TIANZE_COC_STATIC_UNITS__; if (!Array.isArray(units)) throw new Error("静态游戏目录尚未加载，请稍后重试");
       var raw = resultPayload(), incoming = window.TianzeCocSnapshot.fromOfficialPlayer(raw, units);
-      var existing = window.TianzeCocSnapshot.load(), merged = existing ? window.TianzeCocSnapshot.mergeSnapshots(existing, incoming) : incoming;
-      window.TianzeCocSnapshot.save(merged);
-      $("cocLiveError").textContent = "玩家公开资料已保存为 v2 快照。" + (merged.coverage.buildings ? "已与原有完整账号数据无损合并。" : "官方接口不含建筑与工人，规划器会明确按部分资料运行。") + " 未识别单位 " + (merged.unknownEntities || []).length + " 个。";
+      // 云端公开资料不能证明旧账号存档中的建筑、升级计时或截取时间仍然有效。
+      // 因此导入分析必须替换旧快照，不能把不受支持的字段从旧数据里合并回来。
+      window.TianzeCocSnapshot.save(incoming);
+      $("cocLiveError").textContent = "玩家公开资料已导入村庄分析，并替换原有分析数据。数据截取时间已更新为本次云端查询时间；接口不提供的建筑与升级状态将显示“无”。未识别单位 " + (incoming.unknownEntities || []).length + " 个。";
       $("cocOpenParser").hidden = false;
       $("cocOpenPlanner").hidden = false;
     } catch (error) { $("cocLiveError").textContent = error.message; }
@@ -698,6 +769,11 @@
     payloadFrom: payloadFrom,
     playerLeagueTierName: playerLeagueTierName,
     displayPlayerLeagueTierName: displayPlayerLeagueTierName,
+    officialLeagueName: officialLeagueName,
+    officialRoleName: officialRoleName,
+    officialWarPreferenceName: officialWarPreferenceName,
+    officialClanTypeName: officialClanTypeName,
+    officialWarFrequencyName: officialWarFrequencyName,
     clanCapitalHallLevel: clanCapitalHallLevel,
     playerClan: playerClan,
     clanMembers: clanMembers,
