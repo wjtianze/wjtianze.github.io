@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>微信群机器人 · 开源项目与部署教程 — 天择网</title>
+  <meta name="description" content="天择网微信群机器人项目介绍、Windows 部署、内核和插件选择、虚拟机或实体机接入、安全边界、测试与故障排查。" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828j-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/workspace-pages.css?v=20260828j-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/ai-manual.css?v=20260828a-v5.3.0" />
+  <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828j" />
+</head>
+<body class="ai-manual-page" data-workspace-page="wechat-group-bot">
+  <div class="bg-mesh"></div>
+  <header class="topbar"><div class="wrap topbar-inner"><a class="brand" href="https://wjtianze.github.io/index.html" aria-label="天择网首页"><span class="logo-mark" aria-hidden="true"></span><span class="logo-text">天择网</span></a><button class="nav-toggle" type="button" aria-label="菜单" data-ui-icon="menu"></button><nav class="nav" aria-label="主导航"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html" class="active"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a></nav></div></header>
+  <main id="main-content">
+    <section class="ai-doc-hero">
+      <div class="ai-doc-breadcrumb"><a href="https://wjtianze.github.io/ai/skill/index.html">项目目录</a><span>/</span><span>微信群机器人</span></div>
+      <div class="ai-doc-kicker">GPL-3.0 · WINDOWS · WECHAT 4.1</div><h1>把完整智能体带进普通微信群</h1>
+      <p>微信负责稳定收发，主机负责账号登录、AI 内核、插件和审计。你可以把微信放在 VirtualBox 虚拟机里，也可以直接运行在同一台实体机上。</p>
+      <div class="ai-doc-tags"><span>4 种 AI 内核</span><span>7 个可选插件</span><span>虚拟机或实体机</span><span>不保存模型接口密钥</span></div>
+      <div class="ai-doc-actions"><a class="btn" href="https://github.com/wjtianze/wechat-group-bot" target="_blank" rel="noopener" data-ui-icon="globe">打开 GitHub 仓库</a><a class="btn btn--ghost" href="https://github.com/wjtianze/wechat-group-bot/archive/refs/heads/main.zip" data-ui-icon="download">下载源码 ZIP</a></div>
+    </section>
+    <div class="ai-doc-layout">
+      <aside class="ai-doc-nav" aria-label="教程目录"><strong>部署教程</strong><a href="#architecture">先理解三层</a><a href="#prepare">准备环境</a><a href="#assemble">装配配置</a><a href="#guest">微信收发端</a><a href="#host">主机端</a><a href="#plugins">选择插件</a><a href="#acceptance">上线前验收</a><a href="#trouble">故障排查</a><a href="#update">更新与贡献</a></aside>
+      <article class="ai-doc-body">
+        <section class="ai-doc-section" id="architecture"><h2>先理解它为什么分成三层</h2><div class="ai-doc-table-wrap"><table class="ai-doc-table"><thead><tr><th>层</th><th>作用</th><th>怎么选</th></tr></thead><tbody><tr><td>基础收发</td><td>识别消息、收图、发送、队列、回执、去重、账号与目标群校验</td><td>必须安装</td></tr><tr><td>AI 内核</td><td>Codex 原版、OpenCode、Kimi Code、Grok Build</td><td>四选一</td></tr><tr><td>软件插件</td><td>定时任务、快捷指令、公告板、新人任务、长期记忆、知识缺口、COC</td><td>可以一个、多个或完全不装</td></tr></tbody></table></div><p>插件不等于 AI 技能。插件扩展机器人程序本身，很多功能完全不用模型；技能只是给智能体的工作说明，不能绕过程序权限。</p></section>
+        <section class="ai-doc-section" id="prepare"><h2>准备环境</h2><ul class="ai-checklist"><li>Windows 10 或 Windows 11。</li><li>微信 4.1，专用机器人账号已登录，并能打开目标群。</li><li>Python 3.12。</li><li>从四种 AI 内核中选一种，在主机按官方方式安装并登录。</li><li>若使用虚拟机，再安装 VirtualBox 与客体增强功能。</li></ul><div class="ai-doc-note" data-tone="warning"><strong>登录、扫码和系统授权必须由你本人完成。</strong>配置、日志和共享目录里不要放密码、Cookie、验证码、二维码或模型接口密钥。</div></section>
+        <section class="ai-doc-section" id="assemble"><h2>创建自己的装配配置</h2><p>复制 <code>profiles/example.json</code>，填写微信运行方式、目标群、机器人在群里的名称、预期微信账号、队列目录、AI 内核和插件列表。</p><div class="ai-doc-code">python .\scripts\assemble.py --profile .\profiles\my-bot.json --output .\build\my-bot</div><p>装配器只接受一个 AI 内核和零到多个插件，并生成主机配置、微信收发端配置与组件版本锁定文件。不要手改生成目录里的版本关系。</p></section>
+        <section class="ai-doc-section" id="guest"><h2>启动微信收发端</h2><div class="ai-doc-code">Set-Location .\guest-agent
+.\build.ps1 -Publish
+
+# 先自检，再常驻运行
+.\WeChatGroupAgentGuest.exe --self-test</div><p>虚拟机模式需要把主机队列目录设为固定共享文件夹；实体机模式则让主机配置和收发端配置指向同一本地目录。首次生成的 <code>guest-config.json</code> 会把账号绑定确认设为关闭，只有核对专用账号、微信号和目标群都正确后才可开启。</p><p>“调用了发送”不等于“对方已收到”。程序会区分发送调用、屏幕变化确认、事件回执和未确认隔离；没有确认的消息不会盲目重发。</p></section>
+        <section class="ai-doc-section" id="host"><h2>启动主机端</h2><div class="ai-doc-code">Set-Location .\host-app
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e .
+$env:PYTHONPATH = (Resolve-Path .\src).Path
+.\.venv\Scripts\python.exe -m wechat_group_bot.main --config ..\build\my-bot\host-config.json</div><p>主机端启动后会检查配置、队列、账号与群范围，再连接所选 AI 内核。Codex 使用 App Server 和用户自己的 ChatGPT 账号；其它三种内核使用各自支持的账号登录。项目不捆绑这些外部程序。</p></section>
+        <section class="ai-doc-section" id="plugins"><h2>七个插件怎么选</h2><div class="ai-doc-table-wrap"><table class="ai-doc-table"><thead><tr><th>插件</th><th>适合场景</th><th>是否必须调用 AI</th></tr></thead><tbody><tr><td>定时任务</td><td>一次性、间隔、每天或每周提醒</td><td>否</td></tr><tr><td>快捷指令</td><td>固定命令、别名、模板回复</td><td>否</td></tr><tr><td>公告板</td><td>群内查询、维护时段和通知</td><td>否</td></tr><tr><td>新人任务</td><td>群主自定义清单</td><td>否</td></tr><tr><td>长期记忆</td><td>按群隔离、候选审核和遗忘</td><td>按需</td></tr><tr><td>知识缺口</td><td>记录暂时无法可靠回答的问题</td><td>按需</td></tr><tr><td>COC 能力</td><td>国际服公开玩家、部落、战争、突袭、排名和赛季数据</td><td>查询脚本不需要模型计算</td></tr></tbody></table></div><p>插件没有微信发送权限，只能提交受控动作；最终目标检查、权限判断、发送去重和回执解释始终由基础层完成。</p></section>
+        <section class="ai-doc-section" id="acceptance"><h2>真正上线前必须验收</h2><ol><li>运行 <code>python .\scripts\check.py</code>，确认组件、版本、协议、插件和许可证检查全部通过。</li><li>收发端自检通过，账号和目标群由本人核对。</li><li>在测试群分别验证普通文字、图片、直接提及机器人、停止生成和发送失败隔离。</li><li>核对审计记录中的消息编号、目标群、发送调用和最终回执。</li><li>确认插件范围，不需要的插件保持关闭。</li></ol><div class="ai-doc-note"><strong>离线检查通过不代表微信实发成功。</strong>正式运行状态必须以真实收发回执为准，不能用构建成功或界面截图代替。</div></section>
+        <section class="ai-doc-section" id="trouble"><h2>常见问题与排查顺序</h2><h3>机器人没有回复</h3><p>依次检查收发端是否识别到消息、队列是否出现稳定消息编号、主机是否领取任务、AI 内核是否返回、发送动作是否被调用、回执是否确认。不要只看群里的一句错误文字猜原因。</p><h3>回复重复</h3><p>先核对同一消息编号是否被重复领取，或未确认发送是否被错误重试。正常实现会把“已调用但未确认”隔离，不会直接重发。</p><h3>图片没有被模型看到</h3><p>检查附件是否从微信提取到本地文件，再沿消息记录传到内核的图片输入。日志里只有“[图片]”占位不算模型真正收到了图片。</p><h3>虚拟机突然失联</h3><p>检查共享目录、客体增强功能、微信窗口和客体心跳；不要先删除队列。保留现场可以区分识别、共享目录和主机领取问题。</p></section>
+        <section class="ai-doc-section" id="update"><h2>更新、插件开发与贡献</h2><p>主机、收发端、四个 AI 内核和每个插件各自独立版本化，当前组合写在 <code>versions.lock.json</code>。更新时先阅读版本记录，再重新装配和自检，不要只替换某个生成文件。</p><div class="ai-doc-code">git pull
+python .\scripts\check.py
+python .\scripts\assemble.py --profile .\profiles\my-bot.json --output .\build\my-bot</div><p>自制插件从 <code>templates/software-plugin/</code> 开始，并用项目命令验证、打包和本机上传。上传只会复制到当前电脑的扩展目录，不会自动发布到 GitHub。欢迎通过议题和合并请求贡献新的内核适配器、插件、测试与修复。</p></section>
+      </article>
+    </div>
+  </main>
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260828j-v5.3.0"></script>
+</body>
+</html>

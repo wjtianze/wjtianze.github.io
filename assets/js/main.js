@@ -1880,62 +1880,6 @@
   }
 
   var TZ_SITE_AI_UI_KEY = "tz_site_ai_ui_v1";
-  var TZ_SITE_VISIT_HISTORY_KEY = "tz_site_visit_history_v1";
-  var TZ_SITE_VISIT_HISTORY_LIMIT = 24;
-
-  function normalizeTzSiteVisitPath(value, baseHref, expectedOrigin) {
-    try {
-      var base = new URL(baseHref || value);
-      var target = new URL(value, base);
-      var ownOrigin = String(expectedOrigin || base.origin);
-      if (!/^https?:$/i.test(target.protocol) || target.origin !== ownOrigin) return "";
-      var path = target.pathname || "/";
-      path = path.replace(/\/index\.html$/i, "/");
-      return path.charAt(0) === "/" ? path : "/" + path;
-    } catch (e) {
-      return "";
-    }
-  }
-
-  function readTzSiteVisitHistory(storage) {
-    if (!storage || typeof storage.getItem !== "function") return [];
-    try {
-      var parsed = JSON.parse(storage.getItem(TZ_SITE_VISIT_HISTORY_KEY) || "[]");
-      if (!Array.isArray(parsed)) return [];
-      var seen = Object.create(null);
-      return parsed.map(function (item) {
-        var path = String(item && item.path || "").trim();
-        var visitedAt = Number(item && item.visitedAt);
-        if (path.charAt(0) !== "/" || /[?#]/.test(path) || !isFinite(visitedAt) || visitedAt <= 0) return null;
-        path = path.replace(/\/index\.html$/i, "/");
-        if (seen[path]) return null;
-        seen[path] = true;
-        return {
-          path: path.slice(0, 500),
-          title: String(item && item.title || path).replace(/\s+/g, " ").trim().slice(0, 160),
-          visitedAt: Math.floor(visitedAt)
-        };
-      }).filter(Boolean).sort(function (a, b) { return b.visitedAt - a.visitedAt; }).slice(0, TZ_SITE_VISIT_HISTORY_LIMIT);
-    } catch (e) {
-      return [];
-    }
-  }
-
-  function recordTzSiteVisit(storage, href, title, now, ownOrigin) {
-    if (!storage || typeof storage.setItem !== "function") return [];
-    var path = normalizeTzSiteVisitPath(href, href, ownOrigin);
-    if (!path) return readTzSiteVisitHistory(storage);
-    var visitedAt = Number(now) || Date.now();
-    var history = readTzSiteVisitHistory(storage).filter(function (item) { return item.path !== path; });
-    history.unshift({
-      path: path,
-      title: String(title || path).replace(/\s+/g, " ").trim().slice(0, 160),
-      visitedAt: Math.floor(visitedAt)
-    });
-    history = history.slice(0, TZ_SITE_VISIT_HISTORY_LIMIT);
-    try { storage.setItem(TZ_SITE_VISIT_HISTORY_KEY, JSON.stringify(history)); } catch (e) {}
-    return history;
-  }
   function readTzSiteAssistantUiState() {
     try {
       var parsed = JSON.parse(sessionStorage.getItem(TZ_SITE_AI_UI_KEY) || "{}");
@@ -1962,10 +1906,10 @@
         document.body.classList.contains("nochrome") ||
         document.querySelector(".tz-site-ai-launcher")) return;
     try {
-      if (window.parent !== window && new URLSearchParams(location.search).get("nochrome") === "1") return;
+      var assistantFrameParams = new URLSearchParams(location.search);
+      if (assistantFrameParams.get("tz-tool-frame") === "1") return;
+      if (window.parent !== window && assistantFrameParams.get("nochrome") === "1") return;
     } catch (e) {}
-
-    recordTzSiteVisit(localStorage, location.href, document.title, Date.now(), location.origin);
 
     var rootUrl = getTzSiteRoot();
     var restoredUiState = readTzSiteAssistantUiState();
@@ -2120,7 +2064,6 @@
           });
         });
       }
-      var currentPath = normalizeTzSiteVisitPath(location.href, location.href, location.origin);
       return {
         url: location.href,
         title: document.title,
@@ -2128,10 +2071,7 @@
           description ? description.content : "",
           text.replace(/\s+/g, " ").trim().slice(0, 5200)
         ].filter(Boolean).join("\n"),
-        navigation: navigation,
-        history: readTzSiteVisitHistory(localStorage).filter(function (item) {
-          return item.path !== currentPath;
-        }).slice(0, 20)
+        navigation: navigation
       };
     }
 
@@ -2242,7 +2182,6 @@
       if (!document.hidden) syncAISetup();
     });
     window.addEventListener("popstate", function () {
-      recordTzSiteVisit(localStorage, location.href, document.title, Date.now(), location.origin);
       sendContext();
     });
     window.addEventListener("pagehide", function () {

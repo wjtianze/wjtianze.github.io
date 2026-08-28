@@ -31,6 +31,12 @@
     COC_PLAYER: 'coc_live_player',
     COC_CLAN: 'coc_live_clan',
     COC_CLAN_SEARCH: 'coc_live_clan_search',
+    COC_VILLAGE_ANALYZE: 'coc_village_analyze',
+    COC_UPGRADE_PLAN: 'coc_upgrade_plan',
+    COC_DAMAGE: 'coc_damage_calculate',
+    COC_ARMY_LINK: 'coc_army_link_parse',
+    GPA_WAR: 'tianze_gpa_war',
+    WORD_TRAINING: 'tianze_word_training',
     LOCAL_DATA_LIST: 'tianze_local_data_list',
     LOCAL_DATA_READ: 'tianze_local_data_read',
     LOCAL_DATA_PLAN: 'tianze_local_data_change_plan'
@@ -1331,6 +1337,102 @@
         }
       }
     ];
+    if (options && options.domainTools) tools.push(
+      {
+        type: 'function',
+        function: {
+          name: TOOL_NAMES.COC_VILLAGE_ANALYZE,
+          description: '用天择网本机脚本分析当前浏览器保存的完整 COC 村庄存档，计算家乡、建筑大师基地及各升级栏位距离当前大本营满级还要多久。不会调用 AI 估算。',
+          parameters: { type: 'object', additionalProperties: false, properties: {} }
+        }
+      },
+      {
+        type: 'function',
+        function: {
+          name: TOOL_NAMES.COC_UPGRADE_PLAN,
+          description: '用 COC 升级规划器的同一套确定性脚本，根据当前村庄存档生成速本或稳本方案。速本聚焦大本营路线；稳本按实验室、核心建筑、防御、英雄和其它项目分层并行排程。',
+          parameters: {
+            type: 'object', additionalProperties: false,
+            properties: {
+              mode: { type: 'string', enum: ['rush', 'steady'], description: 'rush 为速本，steady 为稳本' },
+              limit: { type: 'integer', minimum: 1, maximum: 40, default: 15, description: '返回最先开始的升级项目数量' }
+            }, required: ['mode']
+          }
+        }
+      },
+      {
+        type: 'function',
+        function: {
+          name: TOOL_NAMES.COC_DAMAGE,
+          description: '调用天择网伤害计算器的确定性脚本。支持三种模式：给定法术空间求最高伤害、反推摧毁目标所需最少法术、自定义闪震与英雄装备数量；还能生成或解析分享链接。所有数值来自本站当前 APK 数据。',
+          parameters: {
+            type: 'object', additionalProperties: false,
+            properties: {
+              action: { type: 'string', enum: ['calculate', 'create_share', 'parse_share'], default: 'calculate' },
+              mode: { type: 'string', enum: ['max', 'min', 'custom'], description: '三种计算模式之一' },
+              target_name: { type: 'string', description: '目标建筑中文名或英文名，例如 天鹰火炮' },
+              target_level: { type: 'integer', minimum: 1, maximum: 100 },
+              town_hall_level: { type: 'integer', minimum: 3, maximum: 18 },
+              lightning_level: { type: 'integer', minimum: 0, maximum: 100, default: 0 },
+              earthquake_level: { type: 'integer', minimum: 0, maximum: 100, default: 0 },
+              lightning_count: { type: 'integer', minimum: 0, maximum: 200, default: 0 },
+              earthquake_count: { type: 'integer', minimum: 0, maximum: 80, default: 0 },
+              spell_space: { type: 'integer', minimum: 0, maximum: 200, default: 11 },
+              equipment: {
+                type: 'array', maxItems: 8, description: '要计入的直接伤害型英雄装备',
+                items: { type: 'object', additionalProperties: false, properties: { name: { type: 'string' }, level: { type: 'integer', minimum: 1, maximum: 100 } }, required: ['name', 'level'] }
+              },
+              builder_hut_levels: { type: 'array', maxItems: 6, items: { type: 'integer', minimum: 1, maximum: 100 }, description: '参与维修的建筑工人小屋等级，用于计算回血容错时间' },
+              share_url: { type: 'string', maxLength: 12000, description: 'parse_share 时传入天择网伤害计算器分享链接' }
+            }, required: ['action']
+          }
+        }
+      },
+      {
+        type: 'function',
+        function: {
+          name: TOOL_NAMES.COC_ARMY_LINK,
+          description: '解析部落冲突官方复制军队分享链接，确定性返回兵种、法术、援军、英雄、战宠与装备编号；不会打开链接或修改升级优先级。',
+          parameters: { type: 'object', additionalProperties: false, properties: { link: { type: 'string', maxLength: 8192 } }, required: ['link'] }
+        }
+      },
+      {
+        type: 'function',
+        function: {
+          name: TOOL_NAMES.GPA_WAR,
+          description: '与用户进行有持久状态的绩点战争。规则、卡牌、技能和胜负由本机脚本执行；天择网 AI 只负责选择自己的合法动作。轮到 assistant 时必须根据返回状态调用 assistant_turn，不能自行篡改生命、能量或 GPA。',
+          parameters: {
+            type: 'object', additionalProperties: false,
+            properties: {
+              action: { type: 'string', enum: ['start', 'status', 'player_play', 'player_buy', 'player_skill', 'player_end_turn', 'assistant_turn', 'reset'] },
+              passive_skill: { type: 'string', enum: ['steady', 'comeback'], default: 'steady' },
+              active_skill: { type: 'string', enum: ['adjust', 'breathe'], default: 'adjust' },
+              card_id: { type: 'string' },
+              skill_id: { type: 'string' },
+              actions: {
+                type: 'array', maxItems: 12,
+                items: { type: 'object', additionalProperties: false, properties: { type: { type: 'string', enum: ['play', 'buy', 'skill'] }, card_id: { type: 'string' }, skill_id: { type: 'string' } }, required: ['type'] }
+              }
+            }, required: ['action']
+          }
+        }
+      },
+      {
+        type: 'function',
+        function: {
+          name: TOOL_NAMES.WORD_TRAINING,
+          description: '使用天择背单词当前设备上的词库，与用户完成英译中预习、中译英回忆、英译中辨析、完整拼写四个流程。题目与判分由本机脚本完成，AI 负责自然对话、追问和讲解。',
+          parameters: {
+            type: 'object', additionalProperties: false,
+            properties: {
+              action: { type: 'string', enum: ['start', 'status', 'answer', 'skip', 'reset'] },
+              count: { type: 'integer', minimum: 1, maximum: 30, default: 10 },
+              answer: { type: 'string', maxLength: 2000, description: '用户本轮作答；多选可传 A,C 或对应释义' }
+            }, required: ['action']
+          }
+        }
+      }
+    );
     if (options && options.localData) tools.push(
       {
         type: 'function',
@@ -1580,6 +1682,17 @@
           const data = await deps.cocData();
           const result = searchOwnCocData(data, args);
           return envelope(name, result.source, { query: result.query, totalMatched: result.totalMatched, items: result.items });
+        }
+        if ([
+          TOOL_NAMES.COC_VILLAGE_ANALYZE, TOOL_NAMES.COC_UPGRADE_PLAN, TOOL_NAMES.COC_DAMAGE,
+          TOOL_NAMES.COC_ARMY_LINK, TOOL_NAMES.GPA_WAR, TOOL_NAMES.WORD_TRAINING
+        ].includes(name)) {
+          if (!deps.domainTools || typeof deps.domainTools.invoke !== 'function') throw new Error('天择网站内领域工具尚未就绪');
+          const result = await deps.domainTools.invoke(name, args);
+          return envelope(name, {
+            kind: 'tianze-deterministic-tool', title: '天择网本机确定性工具',
+            path: name.startsWith('coc_') ? '/coc/' : (name === TOOL_NAMES.GPA_WAR ? '/game/gpa-card/' : '/english/words/')
+          }, sanitizeLocalValue(result));
         }
         if (name === TOOL_NAMES.LOCAL_DATA_LIST) {
           if (Object.keys(args).length) throw new Error('列出本地数据模块不接受额外参数');

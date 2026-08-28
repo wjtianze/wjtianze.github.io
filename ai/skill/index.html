@@ -8,9 +8,10 @@
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828j-v5.3.0" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/workspace-pages.css?v=20260827-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/ai-manual.css?v=20260828a-v5.3.0" />
   <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828j" />
 </head>
-<body data-workspace-page="skills">
+<body class="ai-manual-page" data-workspace-page="skills">
   <a class="wp-skip" href="#main-content">跳到主要内容</a>
   <div class="bg-mesh"></div>
 
@@ -26,51 +27,18 @@
   </header>
 
   <main id="main-content" tabindex="-1">
-    <section class="wp-hero wrap" aria-labelledby="skill-title">
-      <div>
-        <div class="wp-kicker">我做的 4 个工具</div>
-        <h1 id="skill-title">可以直接用的 <span class="grad">AI 工具</span></h1>
-        <p>这里放着我整理并持续维护的学习与数据工具。每一项都写清了适合做什么、怎么开始，以及能否下载。</p>
-        <div class="wp-commandbar"><span data-ui-icon="terminal" aria-hidden="true"></span><span>选一个感兴趣的工具，先看说明，再下载或打开体验。</span></div>
-      </div>
-      <div class="wp-hero-visual" aria-hidden="true"><span data-ui-icon="ai"></span></div>
+    <section class="ai-doc-hero">
+      <div class="ai-doc-breadcrumb"><a href="https://wjtianze.github.io/ai/index.html">AI 专区</a><span>/</span><span>项目目录</span></div>
+      <div class="ai-doc-kicker">PROJECT INDEX · 6 项</div><h1>选工具，先看它能解决什么</h1>
+      <p>每个入口都包含下载或仓库地址、从零开始的操作步骤、常见故障和更新方法。学习工具可以直接拿来用，开发工具则给出可验证的实施边界。</p>
     </section>
-
-    <section class="wp-section wrap" aria-labelledby="skill-catalog">
-      <div class="wp-section-head reveal">
-        <div><div class="wp-kicker">工具清单</div><h2 id="skill-catalog">目前可以使用</h2></div>
-        <p>共 4 项，持续维护</p>
-      </div>
-      <div class="wp-grid">
-        <a class="wp-card wp-catalog-card reveal d1" href="https://wjtianze.github.io/ai/skill/tlh/index.html">
-          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="book"></span></div>
-          <h3>课本学习助手</h3>
-          <p>把教材章节整理成可离线打开的学习页，里面有知识点演示、测验、错题本和对话辅导。</p>
-          <div class="wp-card-meta"><span class="wp-chip">两种版本</span><span class="wp-chip">在线体验</span><span class="wp-chip">可离线使用</span></div>
-          <span class="wp-action-link">查看使用方法 <span data-ui-icon="right" aria-hidden="true"></span></span>
-        </a>
-        <a class="wp-card wp-catalog-card reveal d2" href="https://wjtianze.github.io/ai/skill/codex-app-server/index.html">
-          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="terminal"></span></div>
-          <h3>Codex 桌面应用开发指南</h3>
-          <p>把自己的 ChatGPT 账号接入桌面软件，适合制作带对话、文件和工具能力的 Windows 应用。</p>
-          <div class="wp-card-meta"><span class="wp-chip">Windows</span><span class="wp-chip">ChatGPT 登录</span><span class="wp-chip">开发参考</span></div>
-          <span class="wp-action-link">查看指南并下载 <span data-ui-icon="right" aria-hidden="true"></span></span>
-        </a>
-        <a class="wp-card wp-catalog-card reveal d3" href="https://wjtianze.github.io/ai/skill/coc-units-data-exporter/index.html">
-          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="settings"></span></div>
-          <h3>COC 单位数据导出器</h3>
-          <p>整理《部落冲突》游戏数据，并读取村庄存档，算出剩余升级时间，生成容易查看的中文报告。</p>
-          <div class="wp-card-meta"><span class="wp-chip">Python</span><span class="wp-chip">JSON</span><span class="wp-chip">本地运行</span></div>
-          <span class="wp-action-link">查看使用方法 <span data-ui-icon="right" aria-hidden="true"></span></span>
-        </a>
-        <a class="wp-card wp-catalog-card reveal d4" href="https://wjtianze.github.io/ai/skill/vocab-to-json/index.html">
-          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="notes"></span></div>
-          <h3>词库转 JSON</h3>
-          <p>把 TXT、CSV、Excel、Word、PDF 或 Markdown 词库转换为天择背单词标准 JSON，并处理一词多义与重复项。</p>
-          <div class="wp-card-meta"><span class="wp-chip">6 种输入</span><span class="wp-chip">标准化</span><span class="wp-chip">自动去重</span></div>
-          <span class="wp-action-link">查看使用方法 <span data-ui-icon="right" aria-hidden="true"></span></span>
-        </a>
-      </div>
+    <section class="ai-project-grid" aria-label="AI 项目目录">
+      <a class="ai-project-card" href="https://wjtianze.github.io/ai/skill/tlh/index.html"><small>教材学习</small><h2>课本学习助手</h2><p>普通 API 版与 Codex 桌面版。适合把 PDF、扫描教材和章节内容整理成完整学习页。</p><span>介绍、体验与完整教程 →</span></a>
+      <a class="ai-project-card" href="https://wjtianze.github.io/ai/skill/python-learning-helper/index.html"><small>Python 学习</small><h2>Python 课本学习助手</h2><p>在课本学习助手上加入本机 Python 运行器、交互式输入、控制台、调试与运行历史。</p><span>下载 L8.0-codex →</span></a>
+      <a class="ai-project-card" href="https://wjtianze.github.io/ai/skill/codex-app-server/index.html"><small>桌面智能体</small><h2>Codex App Server 开发规范</h2><p>为原生桌面应用接入 ChatGPT 登录、线程、流式事件、工具审批、文件和图片。</p><span>开发手册与技能包 →</span></a>
+      <a class="ai-project-card" href="https://wjtianze.github.io/ai/skill/coc-units-data-exporter/index.html"><small>游戏数据</small><h2>COC 单位数据导出器</h2><p>从游戏安装包提取单位、等级和中文说明，生成结构化 JSON、散列与报告。</p><span>环境、命令与输出说明 →</span></a>
+      <a class="ai-project-card" href="https://wjtianze.github.io/ai/skill/vocab-to-json/index.html"><small>英语词库</small><h2>词库转 JSON</h2><p>把 TXT、CSV、Excel、Word、PDF 或 Markdown 词库整理成天择背单词可以导入的格式。</p><span>输入规范与转换教程 →</span></a>
+      <a class="ai-project-card" href="https://wjtianze.github.io/ai/wechat-group-bot/index.html"><small>微信自动化</small><h2>微信群机器人</h2><p>公开源码、版本记录和部署说明；模型适配器与插件独立开关，出错时有完整审计链。</p><span>仓库、部署与排错 →</span></a>
     </section>
   </main>
 

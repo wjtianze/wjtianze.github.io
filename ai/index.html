@@ -7,9 +7,11 @@
   <meta name="description" content="这里收着我做过的 AI 工具、使用心得和一些值得继续琢磨的问题。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828j-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/workspace-pages.css?v=20260828j-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/ai-manual.css?v=20260828a-v5.3.0" />
   <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828j" />
 </head>
-<body>
+<body class="ai-manual-page" data-workspace-page="ai-home">
   <div class="bg-mesh"></div>
 
   <!-- 顶部栏 -->
@@ -24,26 +26,20 @@
     </div>
   </header>
 
-  <main>
-    <section class="ai-hero tz-page-hero wrap">
-      <div class="ai-badge reveal in" data-ui-icon="ai">天择网 AI</div>
-      <h1 class="reveal in d1">AI 工具与笔记</h1>
-      <p class="reveal in d2">这里只收我实际用过、还在维护的工具。能在线用就直接给入口，需要准备什么也会写清楚。</p>
+  <main id="main-content">
+    <section class="ai-doc-hero">
+      <div class="ai-doc-kicker">AI 专区 · 持续维护</div>
+      <h1>真正拿来做事的工具</h1>
+      <p>这里不是模型新闻陈列柜。每个项目都来自实际需求，有可下载的文件、从零开始的教程，也会明确告诉你准备什么、哪里容易出错。</p>
+      <div class="ai-overview-strip" aria-label="专区概况"><div><b>6 个项目</b><span>学习、开发与自动化</span></div><div><b>完整教程</b><span>先安装，再使用，再排错</span></div><div><b>本机优先</b><span>能离线完成的步骤不交给模型</span></div></div>
+      <div class="ai-doc-actions"><a class="btn" href="https://wjtianze.github.io/ai/skill/index.html" data-ui-icon="right">打开项目目录</a><a class="btn btn--ghost" href="https://wjtianze.github.io/os/index.html" data-ui-icon="monitor">了解天择OS</a></div>
     </section>
 
-    <section class="section wrap">
-      <div class="section-head reveal">
-        <h2><span class="bar"></span>现在能用的工具</h2>
-        <span class="more">按用途整理</span>
-      </div>
-      <div class="grid grid-auto">
-        <a class="card zone-card tz-workspace-card reveal d1" href="https://wjtianze.github.io/ai/skill/index.html">
-          <div class="z-icon" data-ui-icon="settings" aria-hidden="true"></div>
-          <h3>工具目录</h3>
-          <p>学习、数据整理和写代码时常用的小工具，都从这里进入。</p>
-          <span class="z-go">打开目录</span>
-        </a>
-      </div>
+    <section class="ai-project-grid" aria-label="推荐项目">
+      <a class="ai-project-card" href="https://wjtianze.github.io/ai/skill/tlh/index.html"><small>学习</small><h2>课本学习助手</h2><p>把一章教材变成带知识点、原文、测验、错题本、交互演示和对话辅导的离线学习页。</p><span>选择 API 版或 Codex 版 →</span></a>
+      <a class="ai-project-card" href="https://wjtianze.github.io/ai/skill/python-learning-helper/index.html"><small>Python 学习</small><h2>Python 课本学习助手</h2><p>在完整学习页里加入真正可运行的本机 Python 编辑器、输入输出控制台和运行历史。</p><span>查看安装与使用教程 →</span></a>
+      <a class="ai-project-card" href="https://wjtianze.github.io/ai/skill/codex-app-server/index.html"><small>桌面开发</small><h2>Codex App Server 规范</h2><p>从账号登录、模型发现、流式事件到审批、文件、图片和测试，搭出可靠的桌面智能体应用。</p><span>阅读开发手册 →</span></a>
+      <a class="ai-project-card" href="https://wjtianze.github.io/ai/wechat-group-bot/index.html"><small>开源项目</small><h2>微信群机器人</h2><p>面向真实微信群运行的模块化机器人，带消息接入、模型适配、可选插件、审计记录和故障排查。</p><span>查看仓库与部署教程 →</span></a>
     </section>
   </main>
 

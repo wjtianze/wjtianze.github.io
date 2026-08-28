@@ -728,6 +728,103 @@
     }
     return next;
   }
+
+  /* 站内助手复用接口：直接调用与页面一致的数据表和伤害公式，不经模型计算。 */
+  function assistantTarget(query){
+    var needle=String(query||"").trim().toLowerCase();
+    if(!needle)throw new Error("请提供目标建筑名称");
+    var exact=buildList.find(function(item){return String(item.unit.chineseName||"").toLowerCase()===needle||String(item.unit.englishName||"").toLowerCase()===needle||item.gid===needle;});
+    var fuzzy=buildList.find(function(item){return String(item.unit.chineseName||"").toLowerCase().indexOf(needle)>=0||String(item.unit.englishName||"").toLowerCase().indexOf(needle)>=0;});
+    var target=exact||fuzzy;
+    if(!target)throw new Error("没有在当前游戏数据中找到目标建筑："+query);
+    return target;
+  }
+  function assistantEquipment(config){
+    var result=[],total=0;
+    (Array.isArray(config.equipment)?config.equipment:[]).slice(0,8).forEach(function(item){
+      var needle=String(item&&item.name||"").trim().toLowerCase(),level=Math.max(1,intv(item&&item.level));
+      var found=dmgEquips.find(function(entry){return String(entry.info.zh||"").toLowerCase()===needle||String(entry.unit.englishName||"").toLowerCase()===needle||String(entry.id)===needle;});
+      if(!found)throw new Error("没有找到可造成直接技能伤害的装备："+(item&&item.name||""));
+      if(!found.hasSkillDmg)throw new Error("该装备没有可计入的直接技能伤害："+found.info.zh);
+      var damage=equipSkillDmg(found.unit,level);
+      if(damage<=0)throw new Error(found.info.zh+"没有 "+level+" 级伤害数据");
+      total+=damage;result.push({id:String(found.id),name:found.info.zh,level:level,damage:damage});
+    });
+    return {items:result,total:total};
+  }
+  function assistantRepair(levels){
+    var items=(Array.isArray(levels)?levels:[]).slice(0,6).map(function(value){var level=Math.max(1,intv(value));return{level:level,perSecond:builderRepairRate(level)};});
+    return {items:items,perSecond:items.reduce(function(sum,item){return sum+item.perSecond;},0)};
+  }
+  function assistantCalculate(raw){
+    if(!G)throw new Error("伤害计算器数据仍在加载，请稍后重试");
+    var config=raw||{},mode=["max","min","custom"].indexOf(config.mode)>=0?config.mode:"custom";
+    var target=assistantTarget(config.target_name),targetLevel=Math.max(0,intv(config.target_level));
+    if(!targetLevel&&intv(config.town_hall_level)>0)targetLevel=maxLevelForTH(target.unit,intv(config.town_hall_level));
+    if(!targetLevel)throw new Error("请提供目标建筑等级，或提供大本营等级以使用该本最高建筑等级");
+    var H=buildHP(target.unit,targetLevel);if(H<=0)throw new Error(target.unit.chineseName+"没有 "+targetLevel+" 级生命值数据");
+    var ll=Math.max(0,intv(config.lightning_level)),ql=Math.max(0,intv(config.earthquake_level));
+    var Dl=lightDmg(ll),pct=quakePct(ql),wall=isWall(target.unit),immA=immuneAll(target.unit),immL=immuneLight(target.unit);
+    if(ll>0&&Dl<=0)throw new Error("没有 "+ll+" 级雷电法术数据");
+    if(ql>0&&pct<=0)throw new Error("没有 "+ql+" 级地震法术数据");
+    if(immA){Dl=0;pct=0;}else if(immL)Dl=0;
+    var equipment=assistantEquipment(config),repair=assistantRepair(config.builder_hut_levels),best=null;
+    if(mode==="max"){
+      var space=Math.max(0,Math.min(200,intv(config.spell_space||11)));
+      best={lightning:0,earthquake:0,total:equipment.total,space:space};
+      for(var q=0;q<=space;q++){
+        var l=space-q,total=equipment.total+l*Dl+(pct>0?quakeDmg(q,H,ql,wall):0);
+        if(total>best.total)best={lightning:l,earthquake:q,total:total,space:space};
+      }
+    }else if(mode==="min"){
+      if(equipment.total>=H)best={lightning:0,earthquake:0,total:equipment.total,space:0};
+      else{
+        for(var q2=0;q2<=QUAKE_SEARCH_CAP;q2++){
+          var qDamage=pct>0?quakeDmg(q2,H,ql,wall):0,remain=H-equipment.total-qDamage,l2=0;
+          if(remain>0){if(Dl<=0)continue;l2=Math.ceil(remain/Dl);}
+          var total2=equipment.total+l2*Dl+qDamage,space2=l2+q2;
+          if(!best||space2<best.space||(space2===best.space&&total2>best.total))best={lightning:l2,earthquake:q2,total:total2,space:space2};
+        }
+      }
+      if(!best)throw new Error("当前法术与装备组合无法摧毁目标建筑");
+    }else{
+      var customL=Math.max(0,Math.min(200,intv(config.lightning_count))),customQ=Math.max(0,Math.min(QUAKE_SEARCH_CAP,intv(config.earthquake_count)));
+      best={lightning:customL,earthquake:customQ,total:equipment.total+customL*Dl+(pct>0?quakeDmg(customQ,H,ql,wall):0),space:customL+customQ};
+    }
+    var qTotal=best.earthquake>0&&pct>0?quakeDmg(best.earthquake,H,ql,wall):0;
+    var overflow=Math.max(0,best.total-H),quakeHits=[];
+    for(var hit=1;hit<=best.earthquake;hit++)quakeHits.push({index:hit,damage:Math.round(quakeHitDmg(hit,H,ql,wall))});
+    return {
+      source:{version:String(G.meta&&G.meta.version||"未知"),path:"/coc/data/all_game_data_zh.json"},mode:mode,
+      target:{id:target.gid,name:target.unit.chineseName,englishName:target.unit.englishName,level:targetLevel,hitpoints:H,wall:wall,immuneAllSpells:immA,immuneLightning:immL},
+      spells:{lightningLevel:ll,lightningDamage:Dl,lightningCount:best.lightning,earthquakeLevel:ql,earthquakeFullPercent:pct*100,earthquakeCount:best.earthquake,earthquakeHits:quakeHits},
+      equipment:equipment,damage:{equipment:equipment.total,lightning:best.lightning*Dl,earthquake:qTotal,total:Math.round(best.total),targetHitpoints:H,destroyed:best.total>=H,overflow:Math.round(overflow),spellSpace:best.space},
+      repair:{builderHuts:repair.items,totalPerSecond:repair.perSecond,toleranceSeconds:repair.perSecond>0?overflow/repair.perSecond:null}
+    };
+  }
+  function assistantShareData(config,result){
+    var d={v:1,m:result.mode,l:intv(config.lightning_level),q:intv(config.earthquake_level),t:result.target.id,tl:result.target.level};
+    if(result.equipment.items.length){d.eq={};result.equipment.items.forEach(function(item){d.eq[item.id]=item.level;});}
+    var huts=(Array.isArray(config.builder_hut_levels)?config.builder_hut_levels:[]).slice(0,6).map(function(value){return Math.max(1,intv(value));});
+    if(huts.length)d.b={c:huts.length,ls:huts};
+    if(result.mode==="max")d.s=Math.max(0,Math.min(200,intv(config.spell_space||11)));
+    if(result.mode==="custom"){d.ca=Math.max(0,intv(config.lightning_count));d.cq=Math.max(0,Math.min(QUAKE_SEARCH_CAP,intv(config.earthquake_count)));}
+    return d;
+  }
+  function assistantCreateShare(config){
+    var result=assistantCalculate(config),data=assistantShareData(config,result);
+    return {url:"https://wjtianze.github.io/coc/dmg-calc/index.html#share="+b64urlEncode(JSON.stringify(data)),config:data,result:result};
+  }
+  function assistantParseShare(url){
+    var match=String(url||"").match(/#share=([A-Za-z0-9\-_]+)/);if(!match)throw new Error("链接中没有有效的伤害计算器分享参数");
+    var d;try{d=JSON.parse(b64urlDecode(match[1]));}catch(error){throw new Error("分享链接无法解码");}
+    if(!d||d.v!==1||!d.t||["max","min","custom"].indexOf(d.m)<0)throw new Error("分享链接版本或计算模式无效");
+    var target=findBuild(String(d.t));if(!target)throw new Error("分享链接中的目标建筑已不在当前数据中");
+    var equipment=[];Object.keys(d.eq||{}).forEach(function(id){var entry=dmgEquips.find(function(item){return String(item.id)===String(id);});if(entry)equipment.push({name:entry.info.zh,level:intv(d.eq[id])});});
+    var config={mode:d.m,target_name:target.unit.chineseName,target_level:intv(d.tl),lightning_level:intv(d.l),earthquake_level:intv(d.q),equipment:equipment,builder_hut_levels:d.b&&Array.isArray(d.b.ls)?d.b.ls:[]};
+    if(d.m==="max")config.spell_space=intv(d.s);if(d.m==="custom"){config.lightning_count=intv(d.ca);config.earthquake_count=intv(d.cq);}
+    return {config:config,result:assistantCalculate(config)};
+  }
   /* 用分享的数据构造一份只读 STATE（不读取访问者本地存档，save() 已被 SHARE_MODE 拦截） */
   function enterShareMode(d){
     SHARE_MODE=true;
@@ -978,6 +1075,12 @@
 
   /* 自动化测试钩子（界面无引用） */
   window.__dmgShare={ buildUrl:buildShareUrl, parse:parseShareHash, importData:copyShareToCalculator, isShareMode:function(){return SHARE_MODE;} };
+  window.__cocDamageFeature={
+    ready:function(){return !!G;},
+    calculate:assistantCalculate,
+    createShare:assistantCreateShare,
+    parseShare:assistantParseShare
+  };
 
   init();
 })();

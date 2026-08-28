@@ -3,210 +3,45 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>COC 单位数据导出器 · 技能 — 天择网</title>
-  <meta name="description" content="COC 本地数据导出器：校验部落冲突 18.400.22 APK 签名并生成 273 个精选单位的结构化 JSON，包含中文介绍、超级充能、装备技能和反击卡组。" />
-  <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
+  <title>COC 单位数据导出器 · 下载与完整教程 — 天择网</title>
+  <meta name="description" content="从部落冲突国际服安装包导出单位数值并解析村庄存档的完整教程，包含环境、命令、输出字段、校验、故障排查和更新流程。" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828j-v5.3.0" />
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/workspace-pages.css?v=20260828-editorial-v5.3.0" />
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/split-motion.css?v=20260827d-v5.3.0" data-tz-split-motion />
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/site-refactor.css?v=20260828-editorial-v5.3.0" data-tz-site-refactor />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/workspace-pages.css?v=20260828j-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/ai-manual.css?v=20260828a-v5.3.0" />
   <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828j" />
 </head>
-<body class="wp-editorial-page wp-editorial-page--skill" data-workspace-page="coc-skill">
-  <a class="wp-skip" href="#main-content">跳到主要内容</a>
+<body class="ai-manual-page" data-workspace-page="coc-skill">
   <div class="bg-mesh"></div>
-
-  <header class="topbar">
-    <div class="wrap topbar-inner">
-      <a class="brand" href="https://wjtianze.github.io/index.html" aria-label="天择网首页">
-        <span class="logo-mark">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/>
-          </svg>
-        </span>
-        <span class="logo-text">天择网</span>
-      </a>
-      <button class="nav-toggle" type="button" aria-label="菜单" data-ui-icon="menu"></button>
-      <nav class="nav"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html" class="active"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a></nav>
-    </div>
-  </header>
-
-  <main id="main-content" tabindex="-1">
-    <section class="wp-hero wrap" aria-labelledby="coc-skill-title">
-      <div>
-        <div class="wp-kicker">本地数据技能 · 可复现流水线</div>
-        <h1 id="coc-skill-title">COC 单位数据 <span class="grad">导出器</span></h1>
-        <p>一套针对《部落冲突》的本地数据工作流：从 APK 提取完整单位数据，也能解析村庄存档、计算剩余升级时间并输出中文报告。</p>
-        <div class="wp-chip-row">
-          <span class="wp-chip">18.400.22 数据源</span>
-          <span class="wp-chip">源码可查</span>
-          <span class="wp-chip">apk_data_pipeline.py</span>
-          <span class="wp-chip">village_parser.py</span>
-        </div>
-      </div>
-      <div class="wp-hero-visual" aria-hidden="true"><span data-ui-icon="settings"></span></div>
+  <header class="topbar"><div class="wrap topbar-inner"><a class="brand" href="https://wjtianze.github.io/index.html" aria-label="天择网首页"><span class="logo-mark" aria-hidden="true"></span><span class="logo-text">天择网</span></a><button class="nav-toggle" type="button" aria-label="菜单" data-ui-icon="menu"></button><nav class="nav" aria-label="主导航"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html" class="active"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a></nav></div></header>
+  <main id="main-content">
+    <section class="ai-doc-hero">
+      <div class="ai-doc-breadcrumb"><a href="https://wjtianze.github.io/ai/skill/index.html">项目目录</a><span>/</span><span>COC 单位数据导出器</span></div>
+      <div class="ai-doc-kicker">本地解析 · 18.400.22 · PYTHON 3.10+</div>
+      <h1>从国际服安装包导出可查询的完整单位数据</h1>
+      <p>脚本在本机校验安装包、提取游戏数值与简体中文文本，再输出单位等级、伤害、生命、费用、升级时间、装备和技能等结构化数据；不上传安装包，也不需要接口密钥。</p>
+      <div class="ai-doc-tags"><span>273 个精选单位</span><span>3491 行逐级数据</span><span>42 件装备</span><span>村庄存档解析</span></div>
+      <div class="ai-doc-actions"><a class="btn" href="https://wjtianze.github.io/ai/skill/coc-units-data-exporter/coc-units-data-exporter.zip" download data-ui-icon="download">下载技能包 ZIP</a><a class="btn btn--ghost" href="https://wjtianze.github.io/ai/skill/coc-units-data-exporter/village_parser.py" download data-ui-icon="download">单独下载存档解析器</a></div>
     </section>
-
-    <!-- 功能定位 -->
-    <section class="wp-section wrap" aria-labelledby="coc-skill-purpose">
-      <div class="wp-card wp-prose reveal">
-        <div class="wp-section-head"><div><div class="wp-kicker">用途</div><h2 id="coc-skill-purpose">这个技能做什么</h2></div></div>
-        <p>本技能包含两个独立可用的 Python 脚本：<b>apk_data_pipeline.py</b> 给定一份《部落冲突》APK，先验证 Android v2/v3 签名，再完成解码、解析、命名映射和导出，产出 <code>单位完整数据.json</code>；<b>village_parser.py</b> 读取你的游戏内账号 JSON，结合前者的数据计算普通升级与超级充能的剩余时间。</p>
-        <div class="wp-notice" data-tone="success">
-          <span class="wp-notice-icon" aria-hidden="true"><span data-ui-icon="shield"></span></span>
-          <div><strong>全程本地运行。</strong>脚本不会下载 APK、不会访问账号、不会联网或自动安装依赖；默认名称表随技能包提供。</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 核心功能 -->
-    <section class="wp-section wrap" aria-labelledby="coc-skill-features">
-      <div class="wp-section-head reveal">
-        <div><div class="wp-kicker">能做什么</div><h2 id="coc-skill-features">核心功能</h2></div>
-        <p>一条命令完成全部提取</p>
-      </div>
-      <div class="wp-grid">
-        <article class="wp-card wp-feature-card reveal d1">
-          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="file"></span></div>
-          <h3>全量单位覆盖</h3>
-          <p>兵种、法术、英雄、战宠、英雄装备、建筑、陷阱、守卫与帮手共 273 条；包含 16 组有效超级充能及反击卡组。</p>
-        </article>
-        <article class="wp-card wp-feature-card reveal d2">
-          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="burst"></span></div>
-          <h3>所有等级数值</h3>
-          <p>共 3491 行逐级数据与 42 件装备；生命值、伤害、升级花费与时间、所需大本营等级和技能均结构化输出。</p>
-        </article>
-        <article class="wp-card wp-feature-card reveal d3">
-          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="document"></span></div>
-          <h3>中文介绍</h3>
-          <p>从 APK 内置本地化文件提取每条单位的中文介绍文本，无需手动翻译，直接可用。</p>
-        </article>
-        <article class="wp-card wp-feature-card reveal d1">
-          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="edit"></span></div>
-          <h3>名称表可替换</h3>
-          <p>内置默认名称表覆盖家乡村庄、建筑大师基地与都城精选项目；也可用 <code>--roster-xlsx</code> 提供自定义表。</p>
-        </article>
-        <article class="wp-card wp-feature-card reveal d2">
-          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="unlock"></span></div>
-          <h3>无联网无密钥</h3>
-          <p>纯本地解析，不调用 coc.py 静态目录或外部 API，不读取凭据。缺少依赖时明确停止，不会自行联网安装。</p>
-        </article>
-        <article class="wp-card wp-feature-card reveal d3">
-          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="notes"></span></div>
-          <h3>结构化输出</h3>
-          <p>标准 JSON 格式，含 meta 元信息与 units 列表，可直接被网页、App、数据分析工具消费。</p>
-        </article>
-      </div>
-    </section>
-
-    <!-- 使用方法 -->
-    <section class="wp-section wrap" aria-labelledby="coc-pipeline-use">
-      <div class="wp-card wp-prose reveal">
-        <div class="wp-section-head"><div><div class="wp-kicker">流水线 01</div><h2 id="coc-pipeline-use">从 APK 导出完整数据</h2></div><p>Python 3.10+</p></div>
-        <p>下载技能包解压后，按 <code>requirements.txt</code> 安装密码学依赖，然后运行提取脚本：</p>
-        <div class="wp-code-panel">
-          <div class="wp-code-head"><span>PowerShell / 终端</span><button class="btn wp-copy" type="button" data-copy-target="pipeline-code" data-ui-icon="copy"><span data-copy-label>复制命令</span></button></div>
-          <pre id="pipeline-code"><code># 只读解析并验证签名，不写文件
-python apk_data_pipeline.py --apk "你的APK文件路径.apk"
-
-# 生成 JSON
+    <div class="ai-doc-layout">
+      <aside class="ai-doc-nav" aria-label="教程目录"><strong>使用教程</strong><a href="#purpose">能做什么</a><a href="#prepare">准备环境</a><a href="#export">导出单位数据</a><a href="#village">解析村庄存档</a><a href="#output">输出结构</a><a href="#verify">校验结果</a><a href="#trouble">故障排查</a><a href="#update">版本更新</a><a href="#rights">数据边界</a></aside>
+      <article class="ai-doc-body">
+        <section class="ai-doc-section" id="purpose"><h2>它解决的不是实时查询问题</h2><p>官方接口适合查询玩家、部落、战争和突袭等实时状态，但不会返回每个兵种、建筑、法术和装备的完整逐级数值。这个工具从你已经合法取得的国际服安装包中整理静态数据，适合做资料站、伤害计算、升级规划和版本对比。</p><div class="ai-doc-table-wrap"><table class="ai-doc-table"><thead><tr><th>任务</th><th>使用这里</th><th>使用实时查询</th></tr></thead><tbody><tr><td>兵种、建筑、装备各等级数值</td><td>是</td><td>否</td></tr><tr><td>玩家当前村庄存档</td><td>用存档解析器</td><td>部分数据可查</td></tr><tr><td>部落成员、战争、联赛、突袭</td><td>否</td><td>是</td></tr><tr><td>版本间数值变化</td><td>导出两个版本后比较</td><td>否</td></tr></tbody></table></div></section>
+        <section class="ai-doc-section" id="prepare"><h2>准备环境和文件</h2><ul class="ai-checklist"><li>Windows、macOS 或 Linux，Python 3.10 及以上。</li><li>完整解压技能包，并在项目目录安装 <code>requirements.txt</code> 里的依赖。</li><li>准备国际服 APK 或从分包安装包整理出的基础 APK；当前映射按 18.400.22 校验。</li><li>输入文件只读保存，输出放到单独目录，便于复现和比较。</li></ul><div class="ai-doc-code">python -m pip install -r requirements.txt
+python apk_data_pipeline.py --apk "C:\Downloads\Clash_of_Clans.apk" --output "output\coc-units.json"</div><p>路径含空格时必须加引号。脚本不会修改 APK；签名、证书和文件散列只用于确认输入文件与预期版本一致。</p></section>
+        <section class="ai-doc-section" id="export"><h2>导出完整单位数据</h2><p>最小命令只需要安装包和输出路径。需要替换名称时，再提供自定义名称表；名称表只改变显示名，不改变单位标识、等级或数值。</p><div class="ai-doc-code"># 默认简体中文名称
 python apk_data_pipeline.py --apk "APK.apk" --output "单位完整数据.json"
 
-# 使用自定义精选名称表
-python apk_data_pipeline.py --apk "APK.apk" --roster-xlsx "名称表.xlsx" --output "单位完整数据.json"</code></pre>
-        </div>
-        <p>脚本会读取 APK 内的数值表与简体中文本地化，显式解析每张表的等级列，并输出带文件散列、签名证书、数据聚合散列和统计摘要的 <code>单位完整数据.json</code>。</p>
-      </div>
-    </section>
-
-    <!-- 村庄存档解析脚本 -->
-    <section class="wp-section wrap" aria-labelledby="village-parser-use">
-      <div class="wp-card wp-prose reveal">
-        <div class="wp-section-head"><div><div class="wp-kicker">流水线 02</div><h2 id="village-parser-use">解析村庄存档</h2></div><p>village_parser.py</p></div>
-        <p>输入从游戏导出的村庄存档 JSON，脚本会结合 <code>单位完整数据.json</code>，输出村庄概况、家乡村庄与建筑大师基地完整清单，以及各类单位达到当前大本营满级的剩余升级时间。</p>
-        <div class="wp-code-panel">
-          <div class="wp-code-head"><span>PowerShell / 终端</span><button class="btn wp-copy" type="button" data-copy-target="village-code" data-ui-icon="copy"><span data-copy-label>复制命令</span></button></div>
-          <pre id="village-code"><code># 第一个参数是账号 JSON，第二个参数是本流水线生成的游戏数据
-python village_parser.py "村庄存档.json" "单位完整数据.json"</code></pre>
-        </div>
-        <p>脚本内置装备与帮手的 ID 到中文名映射，并正确处理建筑大师基地兵种等级不连续的情况。也可以前往 <a href="https://wjtianze.github.io/coc/village/index.html">村庄存档分析</a> 在线体验，或在 <a href="https://wjtianze.github.io/coc/planner/index.html">升级规划器</a> 用甘特图排程。</p>
-      </div>
-    </section>
-
-    <!-- 下载 -->
-    <section class="wp-section wrap" aria-labelledby="coc-downloads">
-      <div class="wp-section-head reveal">
-        <div><div class="wp-kicker">下载</div><h2 id="coc-downloads">下载技能包</h2></div>
-        <p>本地运行 · 附第三方许可证</p>
-      </div>
-      <div class="wp-grid">
-        <a class="wp-card wp-download-card reveal d1" href="https://wjtianze.github.io/ai/skill/coc-units-data-exporter/coc-units-data-exporter.zip" download>
-          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="file"></span></div>
-          <div>
-            <h3>coc-units-data-exporter.zip</h3>
-            <p>技能完整包，含 apk_data_pipeline.py、village_parser.py、默认名称表、依赖文件、第三方许可证与使用说明。</p>
-            <div class="wp-card-meta"><span class="wp-chip">ZIP · 57 KB</span><span class="wp-chip">18.400.22 数据源</span></div>
-          </div>
-          <span class="wp-action-link">下载技能包 <span data-ui-icon="download" aria-hidden="true"></span></span>
-        </a>
-        <a class="wp-card wp-download-card reveal d2" href="https://wjtianze.github.io/ai/skill/coc-units-data-exporter/village_parser.py" download>
-          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="terminal"></span></div>
-          <div>
-            <h3>village_parser.py</h3>
-            <p>村庄存档解析脚本单独下载，无需额外 Python 包；运行时同时传入村庄 JSON 与本流水线生成的单位完整数据 JSON，即可输出中文报告与剩余升级时间。</p>
-            <div class="wp-card-meta"><span class="wp-chip">Python</span><span class="wp-chip">单文件</span><span class="wp-chip">本地运行</span></div>
-          </div>
-          <span class="wp-action-link">下载脚本 <span data-ui-icon="download" aria-hidden="true"></span></span>
-        </a>
-      </div>
-    </section>
-
-    <!-- 关联数据 -->
-    <section class="wp-section wrap" aria-labelledby="coc-generated-data">
-      <div class="wp-card wp-prose reveal">
-        <div class="wp-section-head"><div><div class="wp-kicker">当前产物</div><h2 id="coc-generated-data">已用本技能生成的数据</h2></div></div>
-        <p>最新导出的 273 条精选单位数据已经更新，并驱动 COC 专区的静态查询、村庄解析、升级规划与伤害计算。</p>
-        <div class="wp-actions">
-          <a class="btn btn--ghost" href="https://wjtianze.github.io/open/index.html" data-ui-icon="download">前往数据开源</a>
-          <a class="btn btn--ghost" href="https://wjtianze.github.io/coc/data/index.html" data-ui-icon="search">在线查询</a>
-        </div>
-      </div>
-    </section>
+# 使用自己的名称表
+python apk_data_pipeline.py --apk "APK.apk" --roster-xlsx "名称表.xlsx" --output "单位完整数据.json"</div><p>流水线会依次完成文件与签名校验、表结构识别、数值抽取、本地化文本匹配、单位归类、逐级聚合和最终统计。建筑大师基地兵种等级不连续、装备技能和超级充能等特殊结构会单独处理。</p></section>
+        <section class="ai-doc-section" id="village"><h2>解析自己的村庄存档</h2><p><code>village_parser.py</code> 读取游戏导出的存档文本，并把建筑、英雄、装备、研究和帮手等编号映射为可读名称与等级。它适合给村庄离满防时间分析和升级规划器提供输入。</p><div class="ai-doc-code">python village_parser.py "village.json" --output "village-parsed.json"</div><ol><li>从游戏允许的方式取得自己的村庄存档。</li><li>不要上传账号、验证码或其它私人文件。</li><li>运行解析器后查看未识别编号列表。</li><li>把解析结果导入<a href="https://wjtianze.github.io/coc/village/index.html">村庄存档分析</a>或<a href="https://wjtianze.github.io/coc/planner/index.html">升级规划器</a>。</li></ol></section>
+        <section class="ai-doc-section" id="output"><h2>输出里有什么</h2><div class="ai-doc-table-wrap"><table class="ai-doc-table"><thead><tr><th>字段组</th><th>内容</th><th>用途</th></tr></thead><tbody><tr><td>identity</td><td>稳定编号、英文名、中文名、类型</td><td>搜索与跨版本匹配</td></tr><tr><td>levels</td><td>每级生命、伤害、费用、时间和所需大本营</td><td>资料查询与规划</td></tr><tr><td>combat</td><td>攻击间隔、目标、范围、移动与特殊效果</td><td>伤害计算</td></tr><tr><td>upgrade</td><td>资源、工期、实验室或建筑条件</td><td>升级规划</td></tr><tr><td>localization</td><td>名称、描述和来源语言</td><td>中文页面展示</td></tr><tr><td>metadata</td><td>游戏版本、文件散列、证书与生成时间</td><td>复现和审计</td></tr></tbody></table></div><p>如果你只需要浏览已生成的数据，可直接打开<a href="https://wjtianze.github.io/coc/data/index.html">游戏静态数据查询</a>，无需在本机再次导出。</p></section>
+        <section class="ai-doc-section" id="verify"><h2>怎样判断导出可信</h2><ul class="ai-checklist"><li>版本、包名、文件 SHA-256 和证书 SHA-256 与输入报告一致。</li><li>单位数、逐级数据行数、装备数和类型统计不出现异常骤减。</li><li>每个单位等级唯一，等级顺序和大本营条件合理。</li><li>名称未命中时保留稳定编号，不用猜测名称覆盖。</li><li>同一个输入重复运行得到相同核心 JSON。</li><li>抽查几项游戏内已知数值，并记录版本差异。</li></ul><div class="ai-doc-note"><strong>签名一致只说明“这份文件和校验对象一致”。</strong>它不能把第三方来源变成官方来源，也不能证明下载渠道本身受到官方认可。</div></section>
+        <section class="ai-doc-section" id="trouble"><h2>常见问题</h2><h3>提示版本或签名不匹配</h3><p>先确认输入是完整国际服基础 APK，文件没有被重新签名或二次打包。新游戏版本需要先更新解析规则和已知校验值，不应关闭校验强行继续。</p><h3>只导出了少量单位</h3><p>检查解码依赖是否完整、数据表路径是否变化，以及是否误把拆分包中的资源片段当成基础 APK。</p><h3>中文名缺失</h3><p>确认简体中文本地化资源存在。可用名称表补充显示名，但不要用名称表替换稳定编号。</p><h3>村庄里出现未知编号</h3><p>通常是新版本新增内容。保留原编号和原始字段，更新映射后重新解析；不要丢弃整条记录。</p></section>
+        <section class="ai-doc-section" id="update"><h2>游戏更新后的维护流程</h2><ol><li>保留旧 APK、旧输出和生成报告。</li><li>用新 APK 运行只读校验，确认包名、版本、签名和数据结构变化。</li><li>更新映射与解析规则，运行完整自动测试。</li><li>分别导出新旧版本并生成差异摘要。</li><li>抽查新增单位、平衡性改动和升级条件。</li><li>更新网站静态数据与版本说明，不覆盖旧版可追溯产物。</li></ol></section>
+        <section class="ai-doc-section" id="rights"><h2>数据与使用边界</h2><p>工具代码按包内许可证使用；游戏名称、数据和素材仍归各自权利人所有。不要公开玩家私人账号数据，不要把校验报告描述成“官方认证”，也不要把第三方安装包冒充官方分发。</p><footer class="coc-fan-notice">本页是非官方玩家内容，未经 Supercell 认可或赞助。详见 <a href="https://supercell.com/en/fan-content-policy/" target="_blank" rel="noopener noreferrer">Supercell 玩家内容政策</a>。</footer></section>
+      </article>
+    </div>
   </main>
-
-  <footer class="coc-fan-notice">本页是非官方玩家内容，未经 Supercell 认可或赞助。详见 <a href="https://supercell.com/en/fan-content-policy/" target="_blank" rel="noopener noreferrer">Supercell 玩家内容政策</a>。</footer>
-
   <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260828j-v5.3.0"></script>
-  <script>
-  document.querySelectorAll('[data-copy-target]').forEach(function (button) {
-    button.addEventListener('click', function () {
-      var target = document.getElementById(button.getAttribute('data-copy-target'));
-      var label = button.querySelector('[data-copy-label]');
-      if (!target || !label) return;
-      var text = target.textContent || '';
-      var complete = function () {
-        var old = label.textContent;
-        label.textContent = '已复制';
-        setTimeout(function () { label.textContent = old; }, 1400);
-      };
-      var fallbackCopy = function () {
-        var area = document.createElement('textarea');
-        area.value = text;
-        area.setAttribute('readonly', '');
-        area.style.position = 'fixed';
-        area.style.left = '-9999px';
-        document.body.appendChild(area);
-        area.select();
-        try { document.execCommand('copy'); complete(); } catch (e) {}
-        area.remove();
-      };
-      if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(text).then(complete, fallbackCopy);
-      } else {
-        fallbackCopy();
-      }
-    });
-  });
-  </script>
 </body>
 </html>

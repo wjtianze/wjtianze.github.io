@@ -569,6 +569,41 @@
   function activateTab(btn){ document.querySelectorAll(".vp-tab").forEach(function(b){b.classList.remove("active");b.setAttribute("aria-selected","false");}); btn.classList.add("active"); btn.setAttribute("aria-selected","true"); var w=btn.getAttribute("data-world"); document.querySelectorAll(".vp-pane").forEach(function(p){p.classList.remove("active");p.hidden=true;}); var pane=$(w==="home"?"vpHome":"vpBB"); pane.classList.add("active"); pane.hidden=false; }
   function rebuildAll(){ if(homeP&&bbP)rebuildBothModes("工人加成已变化，两套固定方案已重建。"); }
 
+  function assistantPlanSummary(requestedMode,requestedLimit){
+    var mode=requestedMode==="rush"?"rush":"steady",limit=Math.max(1,Math.min(40,num(requestedLimit)||18));
+    if(!PLAN_STATE||!BUILD)throw new Error("升级规划器尚未准备完成");
+    savePlanState();
+    var snapshot=sanitizeModeSnapshot(mode);
+    if(!snapshot){
+      rebuildMode(mode);
+      snapshot=sanitizeModeSnapshot(mode);
+    }
+    if(!snapshot)throw new Error("无法生成"+(mode==="rush"?"速本":"稳本")+"方案");
+    function taskRows(world,plan){
+      return (plan||[]).map(function(entry){
+        var task=BUILD.taskMap[entry.id];
+        if(!task)return null;
+        return {
+          id:entry.id,name:task.name,category:task.cat,world:world,
+          fromLevel:task.fromLvl,toLevel:task.toLvl,lane:entry.lane,slot:num(entry.slot)+1,
+          startSeconds:num(entry.start),durationSeconds:num(entry.dur),endSeconds:num(entry.start)+num(entry.dur),
+          startIn:fmtDur(entry.start),duration:fmtDur(entry.dur),finishIn:fmtDur(num(entry.start)+num(entry.dur)),
+          upgrading:!!task.locked,supercharge:!!task.isSupercharge
+        };
+      }).filter(Boolean).sort(function(a,b){return a.startSeconds-b.startSeconds||a.endSeconds-b.endSeconds||a.name.localeCompare(b.name,"zh-CN");});
+    }
+    var home=taskRows("home",snapshot.home),bb=taskRows("bb",snapshot.bb);
+    function span(rows){return rows.reduce(function(max,item){return Math.max(max,item.endSeconds);},0);}
+    var homeSpan=span(home),bbSpan=span(bb);
+    return {
+      mode:mode,modeLabel:mode==="rush"?"速本":"稳本",
+      description:(PARTIAL?"当前存档缺少完整建筑数据，以下方案按可见任务生成。":"")+(mode==="steady"?"稳本会先满足实验室、关键建筑、防御、英雄等阶段性前置，再安排其它升级。":"速本会跳过防御、陷阱、采集器、建筑工人小屋和英雄，集中资源推进大本营。"),
+      source:{playerTag:String(STORE&&STORE.village&&STORE.village.tag||""),townHallLevel:TH,builderHallLevel:BH,gameDataVersion:PLAN_IDENTITY&&PLAN_IDENTITY.gameDataVersion||"unknown",villageFingerprint:PLAN_IDENTITY&&PLAN_IDENTITY.villageFingerprint||"",partial:PARTIAL},
+      totals:{tasks:home.length+bb.length,homeTasks:home.length,builderBaseTasks:bb.length,homeSeconds:homeSpan,builderBaseSeconds:bbSpan,allSeconds:Math.max(homeSpan,bbSpan),homeTime:fmtDur(homeSpan),builderBaseTime:fmtDur(bbSpan),allTime:fmtDur(Math.max(homeSpan,bbSpan))},
+      nextTasks:home.concat(bb).sort(function(a,b){return a.startSeconds-b.startSeconds||a.endSeconds-b.endSeconds||a.name.localeCompare(b.name,"zh-CN");}).slice(0,limit)
+    };
+  }
+
   function init(){
     if(!STORE||!STORE.village){ $("vpNoData").style.display="block"; $("vpBody").style.display="none"; return; }
     if(!PLAN_STORAGE||!PRIORITY_ENGINE){ $("vpMetricsWrap").innerHTML='<p style="color:#f5b8b8">规划器核心模块加载失败，请刷新页面。</p>'; return; }
@@ -615,7 +650,7 @@
       $("vpGobLab").addEventListener("change",function(){STATE.gobLab=this.checked?1:0;saveOpts();rebuildAll();});
       document.querySelectorAll(".vp-mode-btn").forEach(function(btn){ btn.addEventListener("click",function(){switchMode(btn.getAttribute("data-mode"));}); });
       document.querySelectorAll(".vp-tab").forEach(function(btn){ btn.addEventListener("click",function(){ activateTab(btn); }); btn.addEventListener("keydown",function(e){ if(e.key!=="ArrowLeft"&&e.key!=="ArrowRight")return; e.preventDefault(); var tabs=Array.prototype.slice.call(document.querySelectorAll(".vp-tab")),i=tabs.indexOf(btn),next=tabs[(i+(e.key==="ArrowRight"?1:-1)+tabs.length)%tabs.length]; activateTab(next); next.focus(); }); });
-      window.__cocPlannerFeature={modes:PLAN_STORAGE.MODES.slice(),fingerprint:PLAN_IDENTITY.villageFingerprint,priorityFingerprint:PLAN_IDENTITY.priorityFingerprint,version:PLAN_IDENTITY.gameDataVersion,getSnapshot:function(){savePlanState();return JSON.parse(JSON.stringify(PLAN_STATE));},switchMode:switchMode,rebuildBoth:rebuildBothModes,parseArmyLink:PRIORITY_ENGINE.parseArmyLink};
+      window.__cocPlannerFeature={modes:PLAN_STORAGE.MODES.slice(),fingerprint:PLAN_IDENTITY.villageFingerprint,priorityFingerprint:PLAN_IDENTITY.priorityFingerprint,version:PLAN_IDENTITY.gameDataVersion,getSnapshot:function(){savePlanState();return JSON.parse(JSON.stringify(PLAN_STATE));},summary:assistantPlanSummary,switchMode:switchMode,rebuildBoth:rebuildBothModes,parseArmyLink:PRIORITY_ENGINE.parseArmyLink};
     }).catch(function(e){ $("vpMetricsWrap").innerHTML='<p style="color:#f5b8b8">游戏数据加载失败：'+e.message+'</p>'; });
   }
   function plannerTestRun(store,gameData,options,schedule){
