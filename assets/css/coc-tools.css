@@ -53,6 +53,11 @@
 .coc-tool .dq-close { border:1px solid var(--coc-stroke); }
 .coc-tool .dm-table-wrap { max-height: 52vh; scrollbar-color: var(--coc-purple) transparent; }
 .coc-tool .dm-table th { background:#151c39; }
+.coc-tool .dm-table td.dm-level-visual { padding:5px 9px; }
+.coc-tool .dm-level-visual-cell { display:grid; place-items:center; min-width:64px; min-height:56px; }
+.coc-tool .dm-level-image { grid-area:1/1; width:52px; height:52px; object-fit:contain; filter:drop-shadow(0 5px 8px rgba(0,0,0,.28)); }
+.coc-tool .dm-level-image-fallback { grid-area:1/1; color:var(--ink-faint); font-size:11px; }
+.coc-tool .dm-level-image:not([hidden]) + .dm-level-image-fallback { display:none; }
 .coc-tool .dq-loading { min-height:240px; }
 .coc-tool .dq-empty { border:1px dashed var(--coc-stroke); border-radius:16px; background:rgba(15,23,42,.4); }
 

@@ -501,6 +501,12 @@
         className: className || "", size: size || 54, alt: ""
       }) : "";
     }
+    function levelGameImage(unit, level, name) {
+      var image = window.CocGameAssets && unit ? window.CocGameAssets.image(unit.globalID, level, {
+        className: "dm-level-image", size: 52, alt: (name || unit.chineseName || unit.englishName || "单位") + " " + level + "级外观"
+      }) : "";
+      return '<span class="dm-level-visual-cell">' + image + '<span class="dm-level-image-fallback" aria-hidden="true">暂无</span></span>';
+    }
 
     /* ---------- 字段翻译 ---------- */
     var RES_ZH = { Elixir: "圣水", Gold: "金币", DarkElixir: "暗黑重油", BuilderElixir: "建筑大师圣水", BuilderGold: "建筑大师金币" };
@@ -827,7 +833,7 @@
         var head = showCols.map(function (k) {
           var lbl = LV_LABEL[k] || k;
           if (lbl === "") return ""; // 时间子字段不单独成列
-          return '<th>' + esc(lbl) + '</th>';
+          return '<th scope="col">' + esc(lbl) + '</th>' + ((k === "level" || k === "Level") ? '<th scope="col">外观</th>' : '');
         }).join("");
         var rows = lvs.map(function (lv) {
           return '<tr>' + showCols.map(function (k) {
@@ -844,7 +850,7 @@
             else if (k === "requiredTownHallLevel" || k === "RequiredTownHallLevel" || k === "TownHallLevel" || k === "LaboratoryLevel" || k === "RequiredBlacksmithLevel" || k === "BuildingLevel" || k === "MainAbilityLevels" || k === "UnitsInCamp" || k === "BoostMultiplier") d = esc(String(v));
             else if (typeof v === "string" && v.length > 30) d = esc(v.slice(0, 28)) + "…";
             else d = esc(String(v));
-            return '<td>' + d + '</td>';
+            return '<td>' + d + '</td>' + ((k === "level" || k === "Level") ? '<td class="dm-level-visual">' + levelGameImage(u, v, zh) + '</td>' : '');
           }).join("") + '</tr>';
         }).join("");
         lvHtml = '<div class="dm-section-h"><span class="bar"></span>等级数据（共 ' + lvs.length + ' 级）</div>' +
