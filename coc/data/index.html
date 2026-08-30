@@ -8,7 +8,7 @@
   <meta name="description" content="查询天择网从部落冲突 18.400.22 国际服安装包整理出的兵种、法术、英雄、装备、建筑与升级数值；页面可离线使用，不调用实时玩家或部落接口。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828j-v5.3.0" />
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css?v=20260830a" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css?v=20260830b" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-workspace.css?v=20260801-v4.1.6" />
   <style>
     /* CSS 自定义属性中的相对网址会在内联规则使用处按本文档解析，
@@ -445,7 +445,7 @@
   </div>
 
   <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260828j-v5.3.0"></script>
-  <script src="https://wjtianze.github.io/coc/shared/game-assets.js?v=20260830a"></script>
+  <script src="https://wjtianze.github.io/coc/shared/game-assets.js?v=20260830b"></script>
   <script>
   (function () {
     var params = new URLSearchParams(location.search);
@@ -502,10 +502,13 @@
       }) : "";
     }
     function levelGameImage(unit, level, name) {
-      var image = window.CocGameAssets && unit ? window.CocGameAssets.image(unit.globalID, level, {
+      var asset = window.CocGameAssets && unit ? window.CocGameAssets.entry(unit.globalID) : null;
+      var levelKey = String(parseInt(level, 10));
+      var hasLevelImage = !!(asset && asset.levels && asset.levels[levelKey]);
+      var image = hasLevelImage ? window.CocGameAssets.image(unit.globalID, level, {
         className: "dm-level-image", size: 52, alt: (name || unit.chineseName || unit.englishName || "单位") + " " + level + "级外观"
       }) : "";
-      return '<span class="dm-level-visual-cell">' + image + '<span class="dm-level-image-fallback" aria-hidden="true">暂无</span></span>';
+      return '<span class="dm-level-visual-cell">' + image + '<span class="dm-level-image-fallback">无逐级立绘</span></span>';
     }
 
     /* ---------- 字段翻译 ---------- */

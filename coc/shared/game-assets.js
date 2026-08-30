@@ -5,7 +5,7 @@
   var script = document.currentScript;
   var scriptUrl = script && script.src ? script.src : document.baseURI;
   var assetBase = new URL("../assets/game/", scriptUrl);
-  var manifestUrl = new URL("manifest.json?v=20260830a", assetBase);
+  var manifestUrl = new URL("manifest.json?v=20260830b", assetBase);
   var manifest = { entries: {} };
 
   function escapeHtml(value) {
