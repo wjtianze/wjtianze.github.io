@@ -8,7 +8,7 @@
   <meta name="description" content="查询天择网从部落冲突 18.400.22 国际服安装包整理出的兵种、法术、英雄、装备、建筑与升级数值；页面可离线使用，不调用实时玩家或部落接口。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828j-v5.3.0" />
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css?v=20260830b" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css?v=20260830c" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-workspace.css?v=20260801-v4.1.6" />
   <style>
     /* CSS 自定义属性中的相对网址会在内联规则使用处按本文档解析，
@@ -545,15 +545,58 @@
 
     /* ---------- 时间/费用格式化 ---------- */
     function num(v) { if (v === undefined || v === null || v === "") return ""; var n = Number(v); return isNaN(n) ? v : n.toLocaleString("en-US"); }
-    function upTime(lv) {
-      var h = Number(lv.UpgradeTimeH || 0), m = Number(lv.UpgradeTimeM || 0);
-      if (!h && !m) return "";
-      var p = []; if (h) p.push(h + "时"); if (m) p.push(m + "分"); return p.join("") || "";
+    function durationSeconds(lv, prefix) {
+      return Number(lv[prefix + "D"] || 0) * 86400 + Number(lv[prefix + "H"] || 0) * 3600 +
+        Number(lv[prefix + "M"] || 0) * 60 + Number(lv[prefix + "S"] || 0);
     }
-    function buildTime(lv) {
-      var d = Number(lv.BuildTimeD || 0), h = Number(lv.BuildTimeH || 0), m = Number(lv.BuildTimeM || 0), s = Number(lv.BuildTimeS || 0);
-      if (!d && !h && !m && !s) return "";
-      var p = []; if (d) p.push(d + "天"); if (h) p.push(h + "时"); if (m) p.push(m + "分"); if (s) p.push(s + "秒"); return p.join("") || "";
+    function readableDuration(seconds) {
+      if (!seconds) return "";
+      var total = Math.ceil(Number(seconds));
+      if (total < 60) return total + "秒";
+      total = Math.ceil(total / 60) * 60;
+      var d = Math.floor(total / 86400); total %= 86400;
+      var h = Math.floor(total / 3600); total %= 3600;
+      var m = Math.floor(total / 60);
+      var p = [];
+      if (d) p.push(d + "天");
+      if (h || d) p.push(h + "小时");
+      if (m) p.push(m + "分钟");
+      return p.join("");
+    }
+    function reductionFactor() {
+      return (1 - REDUCTIONS.pass / 100) * (1 - REDUCTIONS.event / 100);
+    }
+    function effectiveReduction() { return (1 - reductionFactor()) * 100; }
+    function pct(v) { return Number(v.toFixed(2)).toLocaleString("zh-CN") + "%"; }
+    function timeHtml(lv, prefix) {
+      var base = durationSeconds(lv, prefix);
+      if (!base) return "";
+      var factor = reductionFactor();
+      var current = readableDuration(Math.ceil(base * factor));
+      return current + (factor < 1 ? '<span class="dm-base-value">原 ' + readableDuration(base) + '</span>' : "");
+    }
+    function costHtml(v, res) {
+      var base = Number(v);
+      if (!isFinite(base)) return esc(String(v)) + resIcon(res);
+      var factor = reductionFactor();
+      var current = Math.ceil(base * factor);
+      return num(current) + resIcon(res) + (factor < 1 ? '<span class="dm-base-value">原 ' + num(base) + '</span>' : "");
+    }
+    function reductionOptions(values, selected) {
+      return values.map(function (v) {
+        return '<option value="' + v + '"' + (v === selected ? " selected" : "") + '>' + (v ? v + "%" : "无减免") + '</option>';
+      }).join("");
+    }
+    function reductionControlsHtml() {
+      return '<div class="dm-reduction-panel" aria-label="升级减免计算器">' +
+        '<div class="dm-reduction-head"><div><strong>升级减免</strong><span>实时重算表内升级时间与单资源费用</span></div>' +
+        '<output class="dm-reduction-total">等效总减免 ' + pct(effectiveReduction()) + '</output></div>' +
+        '<div class="dm-reduction-fields">' +
+          '<label><span>黄金令牌</span><select data-reduction="pass" aria-label="黄金令牌减免">' + reductionOptions([0, 10, 15, 20], REDUCTIONS.pass) + '</select></label>' +
+          '<label><span>夏日狂欢节／夯木节</span><select data-reduction="event" aria-label="活动减免">' + reductionOptions([0, 25, 40, 50], REDUCTIONS.event) + '</select></label>' +
+        '</div>' +
+        '<div class="dm-reduction-note">按剩余比例相乘，不直接相加；当前保留原费用与原时长的 ' + pct(reductionFactor() * 100) + '。费用按资源整数、时间按分钟向上取整。</div>' +
+      '</div>';
     }
     function resIcon(res) {
       if (res === "DarkElixir") return ' <span class="res-mark res-dark">DE</span>';
@@ -568,6 +611,18 @@
     var currentKw = "";
     var lastFocus = null;
     var lastBodyOverflow = "";
+    var REDUCTIONS = loadReductions();
+    function loadReductions() {
+      try {
+        var saved = JSON.parse(localStorage.getItem("tz-coc-upgrade-reductions-v1") || "{}");
+        var pass = [0, 10, 15, 20].indexOf(Number(saved.pass)) !== -1 ? Number(saved.pass) : 0;
+        var event = [0, 25, 40, 50].indexOf(Number(saved.event)) !== -1 ? Number(saved.event) : 0;
+        return { pass: pass, event: event };
+      } catch (e) { return { pass: 0, event: 0 }; }
+    }
+    function saveReductions() {
+      try { localStorage.setItem("tz-coc-upgrade-reductions-v1", JSON.stringify(REDUCTIONS)); } catch (e) {}
+    }
 
     /* ---------- 附属单位（被其它单位 SecondaryTroop/SummonTroop 引用的单位，如小戈仑石人） ---------- */
     var BY_EN = {};      // englishName -> unit
@@ -846,17 +901,22 @@
             var d = "";
             if (v === undefined || v === null || v === "") d = "-";
             else if (k === "level" || k === "Level") d = '<span class="lv">' + esc(String(v)) + '</span>';
-            else if (k === "UpgradeTimeH") d = upTime(lv) || "-";
-            else if (k === "BuildTimeD") d = buildTime(lv) || "-";
-            else if (k === "UpgradeCost" || k === "BuildCost" || k === "TrainingCost") d = num(v) + resIcon(res);
+            else if (k === "UpgradeTimeH") d = timeHtml(lv, "UpgradeTime") || "-";
+            else if (k === "BuildTimeD") d = timeHtml(lv, "BuildTime") || "-";
+            else if (k === "UpgradeCost" || k === "BuildCost") d = costHtml(v, res);
+            else if (k === "TrainingCost") d = num(v) + resIcon(res);
             else if (k === "UpgradeCosts") d = esc(String(v)) + resIcon(res);
             else if (k === "requiredTownHallLevel" || k === "RequiredTownHallLevel" || k === "TownHallLevel" || k === "LaboratoryLevel" || k === "RequiredBlacksmithLevel" || k === "BuildingLevel" || k === "MainAbilityLevels" || k === "UnitsInCamp" || k === "BoostMultiplier") d = esc(String(v));
             else if (typeof v === "string" && v.length > 30) d = esc(v.slice(0, 28)) + "…";
             else d = esc(String(v));
-            return '<td>' + d + '</td>' + ((k === "level" || k === "Level") ? '<td class="dm-level-visual">' + levelGameImage(u, v, zh) + '</td>' : '');
+            return lbl === "" ? "" : '<td>' + d + '</td>' + ((k === "level" || k === "Level") ? '<td class="dm-level-visual">' + levelGameImage(u, v, zh) + '</td>' : '');
           }).join("") + '</tr>';
         }).join("");
-        lvHtml = '<div class="dm-section-h"><span class="bar"></span>等级数据（共 ' + lvs.length + ' 级）</div>' +
+        var hasReductionData = lvs.some(function (lv) {
+          return durationSeconds(lv, "UpgradeTime") || durationSeconds(lv, "BuildTime") || Number(lv.UpgradeCost) || Number(lv.BuildCost);
+        });
+        lvHtml = (hasReductionData ? reductionControlsHtml() : "") +
+          '<div class="dm-section-h"><span class="bar"></span>等级数据（共 ' + lvs.length + ' 级）</div>' +
           '<div class="dm-table-wrap" tabindex="0" role="region" aria-label="' + esc(zh) + '等级数据表，可横向滚动"><table class="dm-table"><caption class="dq-visually-hidden">' + esc(zh) + '各等级属性</caption><thead><tr>' + head + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
 
         // 装备技能数据（主技能 + 副技能全等级，与装备数据展示在一块，不再单列）
@@ -941,6 +1001,19 @@
         node.addEventListener("click", function () {
           var s = subs[Number(node.getAttribute("data-sub"))];
           if (s) openDetail(s.unit, u);
+        });
+      });
+      document.getElementById("dqModal").querySelectorAll("[data-reduction]").forEach(function (node) {
+        node.addEventListener("change", function () {
+          var key = node.getAttribute("data-reduction");
+          REDUCTIONS[key] = Number(node.value);
+          saveReductions();
+          var overlay = document.getElementById("dqOverlay");
+          var scrollTop = overlay.scrollTop;
+          openDetail(u, parentUnit);
+          overlay.scrollTop = scrollTop;
+          var replacement = document.querySelector('[data-reduction="' + key + '"]');
+          if (replacement) replacement.focus();
         });
       });
       var overlay = document.getElementById("dqOverlay");

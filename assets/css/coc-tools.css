@@ -58,6 +58,26 @@
 .coc-tool .dm-level-image { grid-area:1/1; width:52px; height:52px; object-fit:contain; filter:drop-shadow(0 5px 8px rgba(0,0,0,.28)); }
 .coc-tool .dm-level-image-fallback { grid-area:1/1; min-width:64px; color:var(--ink-faint); font-size:11px; line-height:1.35; text-align:center; }
 .coc-tool .dm-level-image:not([hidden]) + .dm-level-image-fallback { display:none; }
+.coc-tool .dm-reduction-panel {
+  margin:18px 0 20px; padding:15px 16px; border:1px solid rgba(var(--coc-blue-rgb),.24); border-radius:14px;
+  background:linear-gradient(135deg,rgba(var(--coc-blue-rgb),.08),rgba(var(--c-violet-rgb),.07));
+}
+.coc-tool .dm-reduction-head { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:13px; }
+.coc-tool .dm-reduction-head > div { display:flex; flex-direction:column; gap:3px; }
+.coc-tool .dm-reduction-head strong { color:var(--ink); font-size:14px; }
+.coc-tool .dm-reduction-head span, .coc-tool .dm-reduction-note { color:var(--ink-faint); font-size:11.5px; line-height:1.55; }
+.coc-tool .dm-reduction-total {
+  flex:0 0 auto; padding:6px 10px; border:1px solid rgba(var(--c-green-rgb),.25); border-radius:999px;
+  background:rgba(var(--c-green-rgb),.08); color:var(--coc-green); font-size:12px; font-weight:700;
+}
+.coc-tool .dm-reduction-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.coc-tool .dm-reduction-fields label { display:flex; flex-direction:column; gap:6px; color:var(--ink-dim); font-size:12px; font-weight:650; }
+.coc-tool .dm-reduction-fields select {
+  width:100%; min-height:40px; padding:8px 34px 8px 11px; border:1px solid var(--coc-stroke); border-radius:9px;
+  background:#0c132b; color:var(--ink); font:inherit; cursor:pointer;
+}
+.coc-tool .dm-reduction-note { margin-top:10px; }
+.coc-tool .dm-base-value { display:block; margin-top:3px; color:var(--ink-faint); font-size:10.5px; font-weight:500; white-space:nowrap; }
 .coc-tool .dq-loading { min-height:240px; }
 .coc-tool .dq-empty { border:1px dashed var(--coc-stroke); border-radius:16px; background:rgba(15,23,42,.4); }
 
@@ -178,6 +198,8 @@
   .coc-tool .dq-card { min-height:0; }
   .coc-tool .dq-modal { width:calc(100% - 16px); margin:8px auto; padding:24px 16px; border-radius:14px; }
   .coc-tool .dm-attrs { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .coc-tool .dm-reduction-head { flex-direction:column; }
+  .coc-tool .dm-reduction-fields { grid-template-columns:1fr; }
   .coc-tool .v-input-area { padding:20px 16px; }
   .coc-tool .v-input-area textarea { min-height:190px; }
   .coc-tool .v-actions .btn { flex:1 1 120px; text-align:center; }
