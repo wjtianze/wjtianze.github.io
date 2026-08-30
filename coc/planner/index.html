@@ -3,18 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#102947" />
   <title>升级规划器 · COC 专区 · 天择网</title>
   <meta name="description" content="基于村庄存档的升级规划器，单级拆分+前置依赖，稳本/速本模式，甘特图缩放滚动，待规划区拖拽安排。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828j-v5.3.0" />
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css?v=20260801-v4.1.6" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css?v=20260830a" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-workspace.css?v=20260801-v4.1.6" />
-  <link rel="stylesheet" href="https://wjtianze.github.io/coc/planner/priority.css?v=20260823a" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/coc/planner/priority.css?v=20260830a" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tactical.css?v=20260827" />
   <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828j" />
 </head>
 <body class="coc-tool coc-planner-tool">
-  <div class="bg-mesh"></div>
+  <a class="tz-skip-link" href="#mainContent">跳到主要内容</a>
+  <div class="bg-mesh" aria-hidden="true"></div>
 
   <header class="topbar">
     <div class="wrap topbar-inner">
@@ -23,11 +25,11 @@
         <span class="logo-text">天择网</span>
       </a>
       <button class="nav-toggle" type="button" aria-label="菜单" data-ui-icon="menu"></button>
-      <nav class="nav"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a><a href="https://wjtianze.github.io/contact/index.html"><span>联系开发者</span></a></nav>
+      <nav class="nav" aria-label="主导航"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a><a href="https://wjtianze.github.io/contact/index.html"><span>联系开发者</span></a></nav>
     </div>
   </header>
 
-  <main class="coc-console">
+  <main class="coc-console" id="mainContent" tabindex="-1">
     <div class="coc-tool-layout wrap">
     <section class="page-head coc-tool-brief" aria-labelledby="cocPlannerTitle">
       <div class="crumb reveal in">
@@ -87,7 +89,7 @@
         </div>
         <div class="vp-army-import">
           <label class="sr-only" for="vpArmyLink">游戏配兵链接</label>
-          <input id="vpArmyLink" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="粘贴 https://link.clashofclans.com/…&army=…" />
+          <input id="vpArmyLink" name="army_link" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="粘贴配兵链接，例如 https://link.clashofclans.com/…&army=…" />
           <button class="btn btn--sm btn--primary" id="vpImportArmy" type="button">导入配兵链接</button>
         </div>
         <p class="vp-army-status" id="vpArmyStatus" role="status" aria-live="polite"></p>
@@ -176,6 +178,7 @@
   <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260828j-v5.3.0"></script>
   <script defer src="https://wjtianze.github.io/coc/planner/storage.js?v=20260820a"></script>
   <script defer src="https://wjtianze.github.io/coc/planner/priority.js?v=20260823a"></script>
-  <script defer src="https://wjtianze.github.io/coc/planner/app.js?v=20260823c"></script>
+  <script defer src="https://wjtianze.github.io/coc/shared/game-assets.js?v=20260830a"></script>
+  <script defer src="https://wjtianze.github.io/coc/planner/app.js?v=20260830a"></script>
 </body>
 </html>

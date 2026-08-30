@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#102947" />
   <title>COC 游戏静态数据 · 天择网</title>
   <meta name="description" content="查询天择网从部落冲突 18.400.22 国际服安装包整理出的兵种、法术、英雄、装备、建筑与升级数值；页面可离线使用，不调用实时玩家或部落接口。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828j-v5.3.0" />
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css?v=20260801-v4.1.6" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css?v=20260830a" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-workspace.css?v=20260801-v4.1.6" />
   <style>
     /* CSS 自定义属性中的相对网址会在内联规则使用处按本文档解析，
@@ -44,6 +45,9 @@
     .dq-sub-card:hover { border-color:var(--coc-purple,var(--c-violet)); background:rgba(var(--c-violet-rgb),.16); }
     .dq-sub-badge { display:inline-block; font-size:11px; padding:2px 8px; border-radius:999px; background:linear-gradient(135deg,#f59e0b,#ef4444); color:#fff; margin-bottom:6px; }
     .dq-sub-name { font-size:14px; font-weight:700; }
+    .dq-sub-top { display:flex; align-items:center; gap:9px; min-width:0; }
+    .dq-sub-top > div { min-width:0; }
+    .dq-sub-image { flex:0 0 auto; object-fit:contain; }
     .dq-sub-en { font-size:11px; color:var(--ink-faint); margin-top:1px; }
     .dq-sub-kind { font-size:11.5px; color:var(--ink-faint); margin-top:6px; }
     .dq-sub-stats { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
@@ -342,7 +346,8 @@
   <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828j" />
 </head>
 <body class="coc-tool coc-data-tool">
-  <div class="bg-mesh"></div>
+  <a class="tz-skip-link" href="#mainContent">跳到主要内容</a>
+  <div class="bg-mesh" aria-hidden="true"></div>
 
   <header class="topbar">
     <div class="wrap topbar-inner">
@@ -359,7 +364,7 @@
     </div>
   </header>
 
-  <main class="coc-console">
+  <main class="coc-console" id="mainContent" tabindex="-1">
     <div class="coc-data-layout wrap">
     <section class="page-head coc-data-brief">
       <div class="crumb reveal in">
@@ -383,7 +388,7 @@
       <div class="dq-toolbar reveal">
         <div class="dq-search" role="search">
           <span class="dq-ic" data-ui-icon="search" aria-hidden="true"></span>
-          <input id="dqInput" type="search" placeholder="搜索单位中英文名称或关键字…" autocomplete="off" aria-label="搜索游戏数据" aria-controls="dqGrid" />
+          <input id="dqInput" name="static_search" type="search" placeholder="搜索单位中英文名称或关键字…" autocomplete="off" aria-label="搜索游戏数据" aria-controls="dqGrid" />
           <button class="dq-clear" id="dqClear" type="button" aria-label="清除搜索关键词" hidden><span class="tz-icon" data-icon="close" aria-hidden="true"></span></button>
         </div>
         <span class="dq-count" id="dqCount" role="status" aria-live="polite">加载中…</span>
@@ -440,6 +445,7 @@
   </div>
 
   <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260828j-v5.3.0"></script>
+  <script src="https://wjtianze.github.io/coc/shared/game-assets.js?v=20260830a"></script>
   <script>
   (function () {
     var params = new URLSearchParams(location.search);
@@ -486,6 +492,15 @@
       "帮手角色": "帮手"
     };
     function categoryDisplay(value) { return CATEGORY_DISPLAY[value] || value || ""; }
+    function visualLevel(unit) {
+      var levels = unit && unit.levels || [];
+      return levels.length ? levels[levels.length - 1].level : null;
+    }
+    function gameImage(unit, className, size) {
+      return window.CocGameAssets && unit ? window.CocGameAssets.image(unit.globalID, visualLevel(unit), {
+        className: className || "", size: size || 54, alt: ""
+      }) : "";
+    }
 
     /* ---------- 字段翻译 ---------- */
     var RES_ZH = { Elixir: "圣水", Gold: "金币", DarkElixir: "暗黑重油", BuilderElixir: "建筑大师圣水", BuilderGold: "建筑大师金币" };
@@ -615,9 +630,13 @@
       grid.setAttribute("aria-busy", "true");
       empty.style.display = "none";
       document.getElementById("dqCount").textContent = "加载中…";
-      fetch("all_game_data_zh.json?v=20260823a", { cache: "default" })
-        .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
-        .then(function (d) {
+      var assetsReady = window.CocGameAssets ? window.CocGameAssets.ready() : Promise.resolve();
+      Promise.all([
+        fetch("all_game_data_zh.json?v=20260830a", { cache: "default" }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }),
+        assetsReady
+      ])
+        .then(function (values) {
+          var d = values[0];
           UNITS = (d && d.units) ? d.units : [];
           window.__TIANZE_COC_STATIC_UNITS__ = UNITS;
           buildSubIndex();
@@ -738,7 +757,7 @@
         frag += '' +
           '<button type="button" class="card dq-card" data-idx="' + idx + '" style="--dq-i:' + Math.min(idx, 12) + '" aria-label="查看' + esc(zh) + '详细数据">' +
             '<div class="dc-top">' +
-              '<div class="dc-emoji">' + uiGlyph(bm.icon) + '</div>' +
+              '<div class="dc-emoji">' + (gameImage(u, "dc-game-image", 52) || uiGlyph(bm.icon)) + '</div>' +
               '<div class="dc-name">' +
                 '<h3>' + esc(zh) + '</h3>' +
                 (en ? '<div class="dc-en">' + esc(en) + '</div>' : '') +
@@ -884,8 +903,8 @@
             var cstats = cardStats(cu).map(function (x) { return '<span>' + esc(x.k) + ' ' + esc(String(x.v)) + '</span>'; }).join("");
             return '<button type="button" class="dq-sub-card" data-sub="' + i + '" aria-label="查看附属单位 ' + esc(cu.chineseName || cu.englishName) + ' 详细数据">' +
               '<span class="dq-sub-badge">附属单位</span>' +
-              '<div class="dq-sub-name">' + esc(cu.chineseName || cu.englishName) + '</div>' +
-              (cu.englishName ? '<div class="dq-sub-en">' + esc(cu.englishName) + '</div>' : '') +
+              '<div class="dq-sub-top">' + gameImage(cu, "dq-sub-image", 42) + '<div><div class="dq-sub-name">' + esc(cu.chineseName || cu.englishName) + '</div>' +
+              (cu.englishName ? '<div class="dq-sub-en">' + esc(cu.englishName) + '</div>' : '') + '</div></div>' +
               '<div class="dq-sub-kind">来源：' + esc(zh) + ' · ' + s.kind + '</div>' +
               (cstats ? '<div class="dq-sub-stats">' + cstats + '</div>' : '') +
             '</button>';
@@ -899,7 +918,7 @@
         '<button type="button" class="dq-close" id="dqClose" aria-label="关闭详情">' + uiGlyph("close") + '</button>' +
         (parentUnit ? '<button type="button" class="dq-back" id="dqBack">' + uiGlyph("left") + '<span>返回 ' + esc(parentUnit.chineseName || parentUnit.englishName) + '</span></button>' : '') +
         '<div class="dm-head">' +
-          '<div class="dm-emoji" aria-hidden="true">' + uiGlyph(bm.icon) + '</div>' +
+          '<div class="dm-emoji" aria-hidden="true">' + (gameImage(u, "dm-game-image", 64) || uiGlyph(bm.icon)) + '</div>' +
           '<div class="dm-title"><h2 id="dqDialogTitle">' + esc(zh) + '</h2>' + (en ? '<div class="dm-en">' + esc(en) + '</div>' : '') + '</div>' +
         '</div>' +
         '<div class="dm-pills">' + pills + '</div>' +

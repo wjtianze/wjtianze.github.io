@@ -5,6 +5,7 @@
   function $(id){ return document.getElementById(id); }
   function esc(value){ return String(value==null?"":value).replace(/[&<>"']/g,function(ch){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch];}); }
   function uiGlyph(key){ return '<span data-ui-icon="'+key+'" aria-hidden="true"></span>'; }
+  function assetImage(id,level,className,size){ return window.CocGameAssets?window.CocGameAssets.image(id,level,{className:className||"",size:size||32,alt:""}):""; }
   function fmtDur(sec){ sec=Math.max(0,Math.round(sec)); var d=Math.floor(sec/86400),h=Math.floor(sec%86400/3600),m=Math.floor(sec%3600/60),s=sec%60,p=[]; if(d)p.push(d+"天"); if(h)p.push(h+"时"); if(m)p.push(m+"分"); if(!p.length)p.push(s+"秒"); return p.join(""); }
   function num(v){ v=parseInt(v,10); return isNaN(v)?0:v; }
 
@@ -22,8 +23,7 @@
   var persistTimer = null;
   var staleNotice = "";
   var G=null, IDMAP={};
-  // 玩家快照使用的稳定编号。APK 的 heroes/pets 表并不总是重复写 GlobalID，
-  // 因此只在原始编号缺失时按本包英文名补索引；静态数值仍全部来自本站数据。
+  // 兼容旧版静态数据：新版权威导出已包含这些编号，旧版缺失时仍按英文名补索引。
   var UNIT_ID_ALIASES={
     "28000007":"Dragon Duke",
     "73000000":"LASSI","73000001":"Mighty Yak","73000002":"Electro Owl","73000003":"Unicorn","73000004":"Phoenix",
@@ -350,7 +350,7 @@
     this.drawGantt();
   };
   Planner.prototype.snapValid=function(p,newStart){ var task=BUILD.taskMap[p.id],depMin=task?this.depEnd(task):0,t=Math.max(depMin,newStart||0),laneTasks=this._slotPlans[this.slotKey(p.lane,p.slot)]||[];for(var i=0;i<laneTasks.length;i++){var q=laneTasks[i];if(q.id===p.id)continue;if(t+p.dur<=q.start)return t;if(t<q.start+q.dur)t=q.start+q.dur;}return t; };
-  Planner.prototype.drawPending=function(){ var self=this,grid=$(this.pendingGridId); var up=this.unplanned(); $(this.pendingCountId).textContent=up.length+" 项"; grid.setAttribute("tabindex","-1"); if(!up.length){ grid.innerHTML='<div class="vp-pending-empty">全部任务已安排</div>'; return; } var h=""; up.forEach(function(t){ var lockTag=t.locked?' '+uiGlyph("key"):''; var lockLabel=t.locked?'，升级进行中':''; h+='<button type="button" class="vp-pending-item" draggable="true" data-tid="'+t.id+'" aria-label="安排 '+t.name+' '+t.fromLvl+' 到 '+t.toLvl+' 级'+lockLabel+'">'+t.name+' '+t.fromLvl+'→'+t.toLvl+' · '+fmtDur(t.sec)+lockTag+'</button>'; }); grid.innerHTML=h; grid.querySelectorAll(".vp-pending-item").forEach(function(el){ el.addEventListener("click",function(){ var t=BUILD.taskMap[el.getAttribute("data-tid")]; if(t){ self.scheduleWithDeps(t); self.redraw(); } }); el.addEventListener("dragstart",function(e){ e.dataTransfer.setData("text/plain","add:"+el.getAttribute("data-tid")); e.dataTransfer.effectAllowed="move"; el.classList.add("dragging"); }); el.addEventListener("dragend",function(){ el.classList.remove("dragging"); }); }); };
+  Planner.prototype.drawPending=function(){ var self=this,grid=$(this.pendingGridId); var up=this.unplanned(); $(this.pendingCountId).textContent=up.length+" 项"; grid.setAttribute("tabindex","-1"); if(!up.length){ grid.innerHTML='<div class="vp-pending-empty">全部任务已安排</div>'; return; } var h=""; up.forEach(function(t){ var lockTag=t.locked?' '+uiGlyph("key"):''; var lockLabel=t.locked?'，升级进行中':''; h+='<button type="button" class="vp-pending-item" draggable="true" data-tid="'+t.id+'" aria-label="安排 '+t.name+' '+t.fromLvl+' 到 '+t.toLvl+' 级'+lockLabel+'">'+assetImage(t.gid,t.toLvl,"vp-task-image",32)+'<span>'+t.name+' '+t.fromLvl+'→'+t.toLvl+' · '+fmtDur(t.sec)+lockTag+'</span></button>'; }); grid.innerHTML=h; grid.querySelectorAll(".vp-pending-item").forEach(function(el){ el.addEventListener("click",function(){ var t=BUILD.taskMap[el.getAttribute("data-tid")]; if(t){ self.scheduleWithDeps(t); self.redraw(); } }); el.addEventListener("dragstart",function(e){ e.dataTransfer.setData("text/plain","add:"+el.getAttribute("data-tid")); e.dataTransfer.effectAllowed="move"; el.classList.add("dragging"); }); el.addEventListener("dragend",function(){ el.classList.remove("dragging"); }); }); };
 
   var BUILD=null, homeP=null, bbP=null;
 
@@ -517,7 +517,7 @@
     units.forEach(function(unit){(groups[unit.group]||(groups[unit.group]=[])).push(unit);});
     root.innerHTML=["兵种与攻城机器","法术","英雄","战宠"].map(function(group){
       var list=groups[group]||[];
-      return '<section class="vp-army-group"><h3>'+esc(group)+'</h3><div class="vp-army-options">'+(list.length?list.map(function(unit){return '<label class="vp-army-choice"><input type="checkbox" data-army-gid="'+unit.gid+'"'+(ARMY_SELECTED[unit.gid]?' checked':'')+'> '+esc(unit.name)+'</label>';}).join(''):'<span class="vp-army-summary">当前存档没有已解锁项目</span>')+'</div></section>';
+      return '<section class="vp-army-group"><h3>'+esc(group)+'</h3><div class="vp-army-options">'+(list.length?list.map(function(unit){return '<label class="vp-army-choice"><input type="checkbox" data-army-gid="'+unit.gid+'"'+(ARMY_SELECTED[unit.gid]?' checked':'')+'>'+assetImage(unit.gid,null,"vp-army-image",28)+'<span>'+esc(unit.name)+'</span></label>';}).join(''):'<span class="vp-army-summary">当前存档没有已解锁项目</span>')+'</div></section>';
     }).join('');
     updateArmySummary();
   }
@@ -607,8 +607,9 @@
   function init(){
     if(!STORE||!STORE.village){ $("vpNoData").style.display="block"; $("vpBody").style.display="none"; return; }
     if(!PLAN_STORAGE||!PRIORITY_ENGINE){ $("vpMetricsWrap").innerHTML='<p style="color:#f5b8b8">规划器核心模块加载失败，请刷新页面。</p>'; return; }
-    fetch("../data/all_game_data_zh.json").then(function(r){return r.json();}).then(function(d){
-      G=d; IDMAP=indexGameDataUnits(d);
+    var assetsReady=window.CocGameAssets?window.CocGameAssets.ready():Promise.resolve();
+    Promise.all([fetch("../data/all_game_data_zh.json?v=20260830a").then(function(r){return r.json();}),assetsReady]).then(function(values){
+      var d=values[0]; G=d; IDMAP=indexGameDataUnits(d);
       BUILD=buildTasks(); $("vpBody").style.display="block"; renderCoverageNotice();
       var v=STORE.village, dt=v.timestamp?new Date(v.timestamp*1000):null, wc=workerCounts();
       PLAN_IDENTITY={

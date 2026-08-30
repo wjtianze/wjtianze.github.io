@@ -590,6 +590,8 @@ html[data-palette="porcelain"] .coc-live-page{
 .live-table tbody tr:last-child td{border-bottom:0}
 .live-table tbody tr:hover{background:color-mix(in srgb,var(--live-info) 8%,transparent)}
 .live-table td.is-number{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.live-game-unit{display:inline-flex;align-items:center;gap:8px;min-width:0}
+.live-game-unit-image{flex:0 0 auto;object-fit:contain}
 .live-table a{color:var(--live-info);font-weight:750;text-decoration-thickness:1px;text-underline-offset:3px}
 .live-table a:hover{color:var(--live-accent)}
 .live-list-grid{

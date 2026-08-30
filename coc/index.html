@@ -3,17 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#102947" />
   <title>COC 专区 · 村庄存档分析 · 天择网</title>
   <meta name="description" content="天择网 COC 专区 —— 粘贴部落冲突村庄 JSON，自动解析并按家乡村庄、建筑大师基地分类展示完整数据，计算剩余升级时间（含墙钟时间），并可分别进入实时数据查询、游戏静态数据、升级规划与法术伤害计算。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828j-v5.3.0" />
-  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css?v=20260801-v4.1.6" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css?v=20260830a" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-workspace.css?v=20260801-v4.1.6" />
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tactical.css?v=20260827" />
   <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828j" />
 </head>
 <body class="coc-tool coc-village-tool">
-  <div class="bg-mesh"></div>
+  <a class="tz-skip-link" href="#mainContent">跳到主要内容</a>
+  <div class="bg-mesh" aria-hidden="true"></div>
 
   <header class="topbar">
     <div class="wrap topbar-inner">
@@ -22,11 +24,11 @@
         <span class="logo-text">天择网</span>
       </a>
       <button class="nav-toggle" type="button" aria-label="菜单" data-ui-icon="menu"></button>
-      <nav class="nav"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html" class="active"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a><a href="https://wjtianze.github.io/contact/index.html"><span>联系我</span></a></nav>
+      <nav class="nav" aria-label="主导航"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html" class="active"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a><a href="https://wjtianze.github.io/contact/index.html"><span>联系我</span></a></nav>
     </div>
   </header>
 
-  <main class="coc-console">
+  <main class="coc-console" id="mainContent" tabindex="-1">
     <div class="coc-tool-layout wrap">
     <section class="page-head coc-tool-brief" aria-labelledby="cocVillageTitle">
       <div class="coc-kicker reveal in d1">COC 工具台 · 村庄档案</div>
@@ -59,7 +61,7 @@
         </div>
         <p id="vJsonHelp" style="font-size:13.5px; color:var(--ink-dim); margin-bottom:12px; line-height:1.7;"><span class="coc-status-dot"></span>将游戏中导出的村庄 JSON 粘贴到下方文本框，点击「解析数据」即可。解析结果会自动保存到本地，升级规划器与伤害计算器可直接读取；数据仅在浏览器中处理。</p>
         <label class="coc-section-label" for="vJsonInput">村庄 JSON 数据</label>
-        <textarea id="vJsonInput" spellcheck="false" autocomplete="off" aria-describedby="vJsonHelp vError" placeholder='{"tag":"#XXXXX","timestamp":1783589176,"buildings":[...],"units":[...],"heroes":[...] ...}'></textarea>
+        <textarea id="vJsonInput" name="village_json" spellcheck="false" autocomplete="off" aria-describedby="vJsonHelp vError" placeholder='{"tag":"#XXXXX","timestamp":1783589176,"buildings":[…],"units":[…],"heroes":[…]}'></textarea>
         <div class="v-actions">
           <button class="btn" id="vParseBtn"><span>解析数据</span></button>
           <button class="btn btn--sm" id="vSampleBtn"><span>填入示例</span></button>
@@ -138,6 +140,7 @@
 
   <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260828j-v5.3.0"></script>
   <script defer src="https://wjtianze.github.io/coc/shared/snapshot-v2.js?v=20260823a"></script>
-  <script defer src="https://wjtianze.github.io/coc/app.js?v=20260823a"></script>
+  <script defer src="https://wjtianze.github.io/coc/shared/game-assets.js?v=20260830a"></script>
+  <script defer src="https://wjtianze.github.io/coc/app.js?v=20260830a"></script>
 </body>
 </html>

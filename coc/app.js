@@ -24,6 +24,7 @@
   function num(v){ v=parseInt(v,10); return isNaN(v)?0:v; }
   function safeCount(v){ var n=num(v); return Math.max(1,Math.min(n||1,1000)); }
   function safeId(id){ var value=String(id==null?"":id).trim(); return /^-?\d+$/.test(value)?value:"未知"; }
+  function assetImage(id,level,className,size){ return window.CocGameAssets?window.CocGameAssets.image(id,level,{className:className||"",size:size||50,alt:""}):""; }
   function nameOf(id){ var u=IDMAP[String(id)]; if(u&&u.chineseName)return u.chineseName; if(EQUIP_MAP[id])return EQUIP_MAP[id].zh; if(HELPER_MAP[id])return HELPER_MAP[id].zh; return "ID"+safeId(id); }
   function unitOf(id){ return IDMAP[String(id)]||null; }
   function catOf(id){ var u=IDMAP[String(id)]; return u?u.category:""; }
@@ -105,8 +106,9 @@
   }
 
   function loadGame(cb){
-    fetch("data/all_game_data_zh.json?v=18.400.22").then(function(r){return r.json();}).then(function(d){
-      G=d; d.units.forEach(function(u){ var g=String(u.globalID||"").trim(); if(g)IDMAP[g]=u; }); cb();
+    var assetsReady=window.CocGameAssets?window.CocGameAssets.ready():Promise.resolve();
+    Promise.all([fetch("data/all_game_data_zh.json?v=20260830a").then(function(r){return r.json();}),assetsReady]).then(function(values){
+      var d=values[0]; G=d; d.units.forEach(function(u){ var g=String(u.globalID||"").trim(); if(g)IDMAP[g]=u; }); cb();
     }).catch(function(e){ showError("游戏数据加载失败："+e.message+"（请通过 http 访问本页）"); });
   }
   function parseVillage(text){
@@ -171,7 +173,7 @@
     if(superchargeLevel)tags+='<span class="vi-tag v-tag-gear">超级充能 '+superchargeLevel+'级</span>';
     if(it.timer)tags+='<span class="vi-tag v-tag-up">升级中 '+fmtDur(it.timer)+'</span>';
     var cnt=num(it.cnt)>0?'<span class="vi-cnt">×'+safeCount(it.cnt)+'</span>':'';
-    return '<div class="v-item"><span class="vi-name">'+nm+cnt+'</span><span class="vi-meta"><span class="vi-lvl">'+num(it.lvl)+'级</span>'+tags+'</span></div>';
+    return '<div class="v-item">'+assetImage(it.data,it.lvl,"vi-image",50)+'<span class="vi-copy"><span class="vi-name">'+nm+cnt+'</span><span class="vi-meta"><span class="vi-lvl">'+num(it.lvl)+'级</span>'+tags+'</span></span></div>';
   }
   function renderCat(title,iconKey,items){
     if(!items||!items.length)return '<div class="v-cat"><div class="v-cat-head"><span class="vc-emoji" data-ui-icon="'+esc(iconKey)+'" aria-hidden="true"></span>'+esc(title)+'</div><div class="v-empty">无</div></div>';
@@ -188,7 +190,7 @@
     var eqs=v.equipment||[];
     if(eqs.length){
       h+='<div class="v-cat"><div class="v-cat-head"><span class="vc-emoji" data-ui-icon="shield" aria-hidden="true"></span>英雄装备 <span class="vc-count">'+eqs.length+' 件</span></div><div class="v-cat-grid">';
-      eqs.forEach(function(e){ var info=EQUIP_MAP[e.data]||{zh:nameOf(e.data),hero:"?"}; var level=num(e.lvl), unit=unitOf(e.data), maximum=maxLevelForTH(unit,99)||18; h+='<div class="v-item"><span class="vi-name">'+esc(info.zh)+' <span class="vi-cnt">'+esc(info.hero)+'</span></span><span class="vi-meta"><span class="vi-lvl">'+level+'级</span>'+(level>=maximum?'<span class="vi-tag v-tag-done">满级</span>':'')+'</span></div>'; });
+      eqs.forEach(function(e){ var info=EQUIP_MAP[e.data]||{zh:nameOf(e.data),hero:"?"}; var level=num(e.lvl), unit=unitOf(e.data), maximum=maxLevelForTH(unit,99)||18; h+='<div class="v-item">'+assetImage(e.data,level,"vi-image",50)+'<span class="vi-copy"><span class="vi-name">'+esc(info.zh)+' <span class="vi-cnt">'+esc(info.hero)+'</span></span><span class="vi-meta"><span class="vi-lvl">'+level+'级</span>'+(level>=maximum?'<span class="vi-tag v-tag-done">满级</span>':'')+'</span></span></div>'; });
       h+='</div></div>';
     }
     h+=renderCat("建筑","home",v.buildings||[]);
@@ -196,7 +198,7 @@
     var hs=v.helpers||[];
     if(hs.length){
       h+='<div class="v-cat"><div class="v-cat-head"><span class="vc-emoji" data-ui-icon="settings" aria-hidden="true"></span>帮手 <span class="vc-count">'+hs.length+' 个</span></div><div class="v-cat-grid">';
-      hs.forEach(function(it){ var info=HELPER_MAP[it.data]||{zh:nameOf(it.data)}; var cd=it.helper_cooldown?'<span class="vi-tag v-tag-up">冷却 '+fmtDur(it.helper_cooldown)+'</span>':''; h+='<div class="v-item"><span class="vi-name">'+esc(info.zh)+'</span><span class="vi-meta"><span class="vi-lvl">'+num(it.lvl)+'级</span>'+cd+'</span></div>'; });
+      hs.forEach(function(it){ var info=HELPER_MAP[it.data]||{zh:nameOf(it.data)}; var cd=it.helper_cooldown?'<span class="vi-tag v-tag-up">冷却 '+fmtDur(it.helper_cooldown)+'</span>':''; h+='<div class="v-item">'+assetImage(it.data,it.lvl,"vi-image",50)+'<span class="vi-copy"><span class="vi-name">'+esc(info.zh)+'</span><span class="vi-meta"><span class="vi-lvl">'+num(it.lvl)+'级</span>'+cd+'</span></span></div>'; });
       h+='</div></div>';
     }
     $("vHome").innerHTML=h;

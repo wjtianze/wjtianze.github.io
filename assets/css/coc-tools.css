@@ -44,6 +44,9 @@
 .coc-tool .dq-card::before { content:""; position:absolute; inset:0 auto 0 0; width:2px; background:linear-gradient(var(--coc-purple),var(--coc-blue),var(--coc-green)); opacity:.5; }
 .coc-tool .dq-card:hover { border-color: rgba(var(--coc-blue-rgb),.45); transform: translateY(-3px); }
 .coc-tool .dq-card .dc-emoji { background: linear-gradient(145deg, rgba(var(--c-violet-rgb),.22), rgba(var(--coc-blue-rgb),.1)); border: 1px solid var(--coc-stroke); }
+.coc-tool .coc-game-image { object-fit:contain; }
+.coc-tool .coc-game-image[hidden] { display:none; }
+.coc-tool :is(.dc-emoji,.dm-emoji) > .coc-game-image { width:100%; height:100%; }
 .coc-tool .dq-card .dc-pill { color:var(--c-violet-soft); background:rgba(var(--c-violet-rgb),.11); }
 .coc-tool .dq-overlay { backdrop-filter: blur(12px); background: rgba(2,6,23,.78); }
 .coc-tool .dq-modal { border:1px solid rgba(var(--c-violet-rgb),.32); background:linear-gradient(145deg,#111832,#080d1f); box-shadow:0 32px 100px rgba(0,0,0,.6); }
@@ -93,10 +96,12 @@
 .coc-tool .v-cat-head { display:flex; align-items:center; gap:8px; font-size:15px; font-weight:700; margin-bottom:10px; color:var(--ink); }
 .coc-tool .v-cat-head .vc-emoji { font-size:17px; }
 .coc-tool .v-cat-head .vc-count { font-size:11px; color:var(--ink-faint); font-weight:500; }
-.coc-tool .v-cat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:9px; }
+.coc-tool .v-cat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:9px; }
 .coc-tool .v-item { background:rgba(9,15,36,.72); border:1px solid var(--line); border-radius:9px; padding:10px 12px; font-size:13px; display:flex; justify-content:space-between; align-items:center; gap:8px; transition:border-color .15s,transform .15s; }
 .coc-tool .v-item:hover { border-color:rgba(var(--coc-blue-rgb),.28); transform:translateY(-1px); }
-.coc-tool .v-item .vi-name { color:var(--ink); }
+.coc-tool .v-item .vi-name { color:var(--ink); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.coc-tool .v-item .vi-image { flex:0 0 auto; object-fit:contain; }
+.coc-tool .v-item .vi-copy { display:flex; align-items:center; justify-content:space-between; gap:8px; min-width:0; flex:1; }
 .coc-tool .v-item .vi-meta { display:flex; align-items:center; gap:6px; flex-shrink:0; }
 .coc-tool .v-item .vi-lvl { font-weight:700; color:#e2e8f0; }
 .coc-tool .v-item .vi-cnt { font-size:11px; color:var(--ink-faint); }
@@ -149,7 +154,8 @@
 .coc-tool .vp-pending-head { font-size:13px; color:var(--ink-faint); margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; gap:12px; }
 .coc-tool .vp-pending-head b { color:var(--ink-dim); font-weight:700; }
 .coc-tool .vp-pending-grid { display:flex; flex-wrap:wrap; gap:8px; }
-.coc-tool .vp-pending-item { appearance:none; text-align:left; background:rgba(15,23,42,.82); border:1px solid var(--coc-stroke); border-radius:8px; padding:8px 12px; font:inherit; font-size:12.5px; color:var(--ink-dim); cursor:grab; user-select:none; transition:opacity .15s,border-color .15s,color .15s,transform .15s; }
+.coc-tool .vp-pending-item { appearance:none; display:inline-flex; align-items:center; gap:8px; text-align:left; background:rgba(15,23,42,.82); border:1px solid var(--coc-stroke); border-radius:8px; padding:6px 10px; font:inherit; font-size:12.5px; color:var(--ink-dim); cursor:grab; user-select:none; transition:opacity .15s,border-color .15s,color .15s,transform .15s; }
+.coc-tool .vp-pending-item .vp-task-image { flex:0 0 auto; object-fit:contain; }
 .coc-tool .vp-pending-item:hover { border-color:var(--coc-blue); color:var(--ink); transform:translateY(-1px); }
 .coc-tool .vp-pending-item:active { cursor:grabbing; }
 .coc-tool .vp-pending-item.dragging { opacity:.4; }
@@ -198,6 +204,7 @@
 @media (max-width: 420px) {
   .coc-tool .v-metrics, .coc-tool .dm-attrs { grid-template-columns:1fr; }
   .coc-tool .v-item { align-items:flex-start; }
+  .coc-tool .v-item .vi-copy { align-items:flex-start; }
   .coc-tool .v-item .vi-meta { flex-wrap:wrap; justify-content:flex-end; }
 }
 @media (prefers-reduced-motion: reduce) {

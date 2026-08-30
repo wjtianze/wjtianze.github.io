@@ -19759,7 +19759,7 @@
     {
       "englishName": "Dragon Duke",
       "chineseName": "飞龙公爵",
-      "globalID": "",
+      "globalID": "28000007",
       "category": "英雄",
       "table": "heroes",
       "staticAttributes": {
@@ -20169,7 +20169,7 @@
     {
       "englishName": "LASSI",
       "chineseName": "莱希",
-      "globalID": "",
+      "globalID": "73000000",
       "category": "战宠",
       "table": "pets",
       "staticAttributes": {
@@ -20398,7 +20398,7 @@
     {
       "englishName": "Mighty Yak",
       "chineseName": "大牦",
-      "globalID": "",
+      "globalID": "73000001",
       "category": "战宠",
       "table": "pets",
       "staticAttributes": {
@@ -20634,7 +20634,7 @@
     {
       "englishName": "Electro Owl",
       "chineseName": "闪枭",
-      "globalID": "",
+      "globalID": "73000002",
       "category": "战宠",
       "table": "pets",
       "staticAttributes": {
@@ -20869,7 +20869,7 @@
     {
       "englishName": "Unicorn",
       "chineseName": "独角",
-      "globalID": "",
+      "globalID": "73000003",
       "category": "战宠",
       "table": "pets",
       "staticAttributes": {
@@ -21101,7 +21101,7 @@
     {
       "englishName": "Phoenix",
       "chineseName": "凤凰",
-      "globalID": "",
+      "globalID": "73000004",
       "category": "战宠",
       "table": "pets",
       "staticAttributes": {
@@ -21274,7 +21274,7 @@
     {
       "englishName": "Phoenix Egg",
       "chineseName": "凤凰",
-      "globalID": "",
+      "globalID": "73000005",
       "category": "战宠",
       "table": "pets",
       "staticAttributes": {
@@ -21406,7 +21406,7 @@
     {
       "englishName": "Poison Lizard",
       "chineseName": "猛蜥",
-      "globalID": "",
+      "globalID": "73000007",
       "category": "战宠",
       "table": "pets",
       "staticAttributes": {
@@ -21654,7 +21654,7 @@
     {
       "englishName": "Diggy",
       "chineseName": "地兽",
-      "globalID": "",
+      "globalID": "73000008",
       "category": "战宠",
       "table": "pets",
       "staticAttributes": {
@@ -21831,7 +21831,7 @@
     {
       "englishName": "Frosty",
       "chineseName": "冰牙",
-      "globalID": "",
+      "globalID": "73000009",
       "category": "战宠",
       "table": "pets",
       "staticAttributes": {
@@ -22157,7 +22157,7 @@
     {
       "englishName": "Spirit Fox",
       "chineseName": "灵狐",
-      "globalID": "",
+      "globalID": "73000010",
       "category": "战宠",
       "table": "pets",
       "staticAttributes": {
@@ -22327,7 +22327,7 @@
     {
       "englishName": "Angry Jelly",
       "chineseName": "愤怒水母",
-      "globalID": "",
+      "globalID": "73000011",
       "category": "战宠",
       "table": "pets",
       "staticAttributes": {
@@ -22497,7 +22497,7 @@
     {
       "englishName": "Sneezy",
       "chineseName": "阿啾",
-      "globalID": "",
+      "globalID": "73000016",
       "category": "战宠",
       "table": "pets",
       "staticAttributes": {
@@ -22781,7 +22781,7 @@
     {
       "englishName": "Crow",
       "chineseName": "贪婪渡鸦",
-      "globalID": "",
+      "globalID": "73000017",
       "category": "战宠",
       "table": "pets",
       "staticAttributes": {
@@ -71636,7 +71636,7 @@
     {
       "englishName": "BuilderApprentice",
       "chineseName": "建筑工人学徒",
-      "globalID": "",
+      "globalID": "93000000",
       "category": "帮手角色",
       "table": "villager_apprentices",
       "staticAttributes": {
@@ -71719,7 +71719,7 @@
     {
       "englishName": "ResearchApprentice",
       "chineseName": "实验助手",
-      "globalID": "",
+      "globalID": "93000001",
       "category": "帮手角色",
       "table": "villager_apprentices",
       "staticAttributes": {
@@ -71830,7 +71830,7 @@
     {
       "englishName": "Alchemist",
       "chineseName": "炼金术士",
-      "globalID": "",
+      "globalID": "93000002",
       "category": "帮手角色",
       "table": "villager_apprentices",
       "staticAttributes": {
@@ -71918,7 +71918,7 @@
     {
       "englishName": "Prospector",
       "chineseName": "探矿者",
-      "globalID": "",
+      "globalID": "93000003",
       "category": "帮手角色",
       "table": "villager_apprentices",
       "staticAttributes": {

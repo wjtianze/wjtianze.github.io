@@ -9,6 +9,7 @@
   var MAX_RENDER_ITEMS = 100;
   var STALE_QUERY = {};
   var LOCAL_GAME_NAMES = Object.create(null);
+  var LOCAL_GAME_UNITS_BY_NAME = Object.create(null);
   var LOCAL_GAME_UNITS = [];
   var localGameNamesTask = null;
 
@@ -685,10 +686,13 @@
       var chinese = unit && unit.chineseName;
       if (!english || !chinese || !containsHan(chinese)) return;
       LOCAL_GAME_NAMES[normalizedNameKey(english)] = String(chinese).trim();
+      LOCAL_GAME_UNITS_BY_NAME[normalizedNameKey(english)] = unit;
       if (/^BB\s+/i.test(english)) LOCAL_GAME_NAMES[normalizedNameKey(String(english).replace(/^BB\s+/i, ""))] = String(chinese).trim();
+      if (/^BB\s+/i.test(english)) LOCAL_GAME_UNITS_BY_NAME[normalizedNameKey(String(english).replace(/^BB\s+/i, ""))] = unit;
       if (english === "Piercing Arrow") LOCAL_GAME_NAMES[normalizedNameKey("Giant Arrow")] = String(chinese).trim();
       if (/法术/.test(String(unit.category || "")) && !/spell$/i.test(english)) {
         LOCAL_GAME_NAMES[normalizedNameKey(english + " Spell")] = String(chinese).trim();
+        LOCAL_GAME_UNITS_BY_NAME[normalizedNameKey(english + " Spell")] = unit;
       }
     });
     return units.length;
@@ -696,10 +700,11 @@
   function loadLocalGameNames() {
     if (localGameNamesTask) return localGameNamesTask;
     if (typeof root.fetch !== "function") return Promise.resolve(0);
-    localGameNamesTask = root.fetch("../data/all_game_data_zh.json", { credentials: "same-origin", cache: "force-cache" }).then(function (response) {
+    var assetsReady = root.CocGameAssets ? root.CocGameAssets.ready() : Promise.resolve();
+    localGameNamesTask = Promise.all([root.fetch("../data/all_game_data_zh.json?v=20260830a", { credentials: "same-origin", cache: "force-cache" }).then(function (response) {
       if (!response || !response.ok) throw new Error("本地中文名称表不可用");
       return response.json();
-    }).then(indexLocalGameNames).catch(function () {
+    }), assetsReady]).then(function (values) { return indexLocalGameNames(values[0]); }).catch(function () {
       localGameNamesTask = null;
       return 0;
     });
@@ -1113,7 +1118,20 @@
       var rows = Array.isArray(group[1]) ? group[1] : [];
       if (!rows.length) return;
       container.appendChild(listSection(group[0], rows, [
-        { label: "名称", render: function (row) { return officialGameName(row.name); } },
+        { label: "名称", render: function (row) {
+          var unit = LOCAL_GAME_UNITS_BY_NAME[normalizedNameKey(row.name)];
+          var wrapper = element("span", "live-game-unit");
+          var source = unit && root.CocGameAssets ? root.CocGameAssets.url(unit.globalID, row.level) : "";
+          if (source) {
+            var image = element("img", "live-game-unit-image");
+            image.src = source; image.alt = ""; image.width = 36; image.height = 36;
+            image.loading = "lazy"; image.decoding = "async";
+            image.addEventListener("error", function () { image.hidden = true; });
+            wrapper.appendChild(image);
+          }
+          wrapper.appendChild(element("span", "", officialGameName(row.name)));
+          return wrapper;
+        } },
         { label: "等级", number: true, render: function (row) { return formatNumber(row.level); } },
         { label: "最高等级", number: true, render: function (row) { return formatNumber(row.maxLevel); } },
         { label: "村庄", render: function (row) { return officialVillageName(row.village); } }

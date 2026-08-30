@@ -1339,7 +1339,7 @@
       11: "palette", 12: "monitor", 13: "book", 14: "lightning",
       15: "burst", 16: "ai", 17: "terminal", 18: "settings",
       19: "globe", 20: "pin", 21: "chat", 22: "terminal",
-      23: "notes", 24: "camera", 25: "copy", 26: "sparkle"
+      23: "notes", 24: "camera", 25: "copy", 26: "sparkle", 31: "camera"
     };
 
     function normalizePath(path) {

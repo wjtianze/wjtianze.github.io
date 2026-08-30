@@ -46,6 +46,7 @@
   function fmt(n){ n=Math.round(n); return n.toLocaleString("zh-CN"); }
   function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];}); }
   function uiGlyph(key){ return '<span data-ui-icon="'+key+'" aria-hidden="true"></span>'; }
+  function assetImage(id,level,className,size){ return window.CocGameAssets?window.CocGameAssets.image(id,level,{className:className||"",size:size||38,alt:""}):""; }
 
   function thOf(r){ if(!r) return 99; var v=r.requiredTownHallLevel!=null?r.requiredTownHallLevel:(r.RequiredTownHallLevel!=null?r.RequiredTownHallLevel:(r.TownHallLevel!=null?r.TownHallLevel:99)); return intv(v); }
   function lvlData(unit, lvl){ if(!unit||!unit.levels)return null; for(var i=0;i<unit.levels.length;i++){ if(intv(unit.levels[i].level)===lvl)return unit.levels[i]; } return null; }
@@ -82,8 +83,9 @@
   function equipSkillDmg(unit, lvl){ var r=lvlData(unit,lvl); if(!r)return 0; return num(r.SkillDamage); }
 
   function loadGame(cb){
-    fetch("../data/all_game_data_zh.json?v=18.400.22").then(function(r){return r.json();}).then(function(d){
-      G=d;
+    var assetsReady=window.CocGameAssets?window.CocGameAssets.ready():Promise.resolve();
+    Promise.all([fetch("../data/all_game_data_zh.json?v=20260830a").then(function(r){return r.json();}),assetsReady]).then(function(values){
+      var d=values[0]; G=d;
       d.units.forEach(function(u){
         var g=String(u.globalID||"").trim();
         if(g)IDMAP[g]=u;
@@ -152,7 +154,7 @@
       list.forEach(function(e){
         var cur=STATE.eq[e.id]||0;
         var on=!!STATE.eqOn[e.id];
-        h+='<div class="dm-eq-row'+(on?' dm-eq-on':'')+'"><label class="dm-eq-check"><input type="checkbox" data-eqon="'+e.id+'" '+(on?'checked':'')+' aria-label="勾选将'+esc(e.info.zh)+'的伤害计入"/></label>';
+        h+='<div class="dm-eq-row'+(on?' dm-eq-on':'')+'"><label class="dm-eq-check"><input type="checkbox" data-eqon="'+e.id+'" '+(on?'checked':'')+' aria-label="勾选将'+esc(e.info.zh)+'的伤害计入"/></label>'+assetImage(e.id,cur,"dm-eq-image",38);
         h+='<span class="dm-eq-name" title="'+esc(e.info.zh)+'">'+esc(e.info.zh)+'</span>';
         if(cur>0){ h+='<span class="dm-eq-dmg">伤害 '+fmt(equipSkillDmg(e.unit,cur))+'</span>'; }
         h+='<select class="dm-lvl-select" data-eqid="'+e.id+'">';
@@ -280,7 +282,7 @@
       list.forEach(function(b){
         var gid=b.gid, cur=STATE.build[gid]||0;
         var hp=cur>0?buildHP(b.unit,cur):0;
-        h+='<div class="dm-build-row"><span class="dm-bn" title="'+esc(b.unit.chineseName)+'">'+esc(b.unit.chineseName)+'</span>';
+        h+='<div class="dm-build-row">'+assetImage(gid,cur,"dm-build-image",38)+'<span class="dm-bn" title="'+esc(b.unit.chineseName)+'">'+esc(b.unit.chineseName)+'</span>';
         if(cur>0){ h+='<span class="dm-bhp">HP '+fmt(hp)+'</span>'; }
         h+='<select class="dm-lvl-select" data-bgid="'+gid+'">';
         h+='<option value="0"'+(cur===0?' selected':'')+'>未设</option>';
@@ -319,13 +321,13 @@
     var info=$("dmTargetInfo");
     if(!b){ info.textContent="—"; renderBuilders(); return; }
     var cur=STATE.build[STATE.target]||0;
-    if(cur<=0){ info.innerHTML=esc(b.unit.chineseName)+"：<span style='color:var(--ink-faint)'>未设置等级，请先在上方设定等级</span>"; renderBuilders(); return; }
+    if(cur<=0){ info.innerHTML=assetImage(b.gid,0,"dm-target-image",46)+esc(b.unit.chineseName)+"：<span style='color:var(--ink-faint)'>未设置等级，请先在上方设定等级</span>"; renderBuilders(); return; }
     var hp=buildHP(b.unit,cur);
     var ql=STATE.spell.q, qpRaw=quakePctRaw(ql);
     var immHtml="";
     if(immuneAll(b.unit))immHtml=' · <span style="color:#fbbf24">'+uiGlyph("shield")+' 对所有法术免疫（仅装备伤害有效）</span>';
     else if(immuneLight(b.unit))immHtml=' · <span style="color:#fbbf24">'+uiGlyph("shield")+' 对雷电法术免疫（地震有效）</span>';
-    info.innerHTML = esc(b.unit.chineseName)+" · Lv"+cur+" · 最大生命值 <b>"+fmt(hp)+"</b>"+(ql>0?(' · 地震全额 '+(qpRaw*100).toFixed(1)+'%'):'')+immHtml;
+    info.innerHTML = assetImage(b.gid,cur,"dm-target-image",46)+esc(b.unit.chineseName)+" · Lv"+cur+" · 最大生命值 <b>"+fmt(hp)+"</b>"+(ql>0?(' · 地震全额 '+(qpRaw*100).toFixed(1)+'%'):'')+immHtml;
     /* 目标变化时同步刷新"建筑工人小屋回血"区的实时容错时间 */
     renderBuilders();
   }
