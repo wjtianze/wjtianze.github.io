@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "section": {
+    "id": "coc-tutorial",
+    "title": "COC 教程",
+    "description": "天择网 COC 专区的教程文章索引"
+  },
+  "articles": [
+    {
+      "id": "capital-miner-guide",
+      "title": "还在三刀一个子城？混合矿工宝典手把手教你周入三万！",
+      "description": "10 级都城满级矿工的配兵、路线、法术时机与各子城实战策略。",
+      "category": "都城突袭 · 矿工流",
+      "publishedAt": "2026-07-12T20:23:00+08:00",
+      "updatedAt": "2026-08-10T00:00:00+08:00",
+      "source": "1/index.html",
+      "exportPath": "混合矿工宝典"
+    }
+  ]
+}

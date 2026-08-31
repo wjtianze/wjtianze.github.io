@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Codex App Server 应用开发 · 下载与完整教程 — 天择网</title>
+  <meta name="description" content="Codex App Server 桌面应用开发技能的安装、架构、登录、模型发现、流式事件、审批、文件图片、测试和故障排查教程。" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828j-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/workspace-pages.css?v=20260828j-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/ai-manual.css?v=20260828a-v5.3.0" />
+  <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828j" />
+</head>
+<body class="ai-manual-page" data-workspace-page="codex-app-server">
+  <div class="bg-mesh"></div>
+  <header class="topbar"><div class="wrap topbar-inner"><a class="brand" href="https://wjtianze.github.io/index.html" aria-label="天择网首页"><span class="logo-mark" aria-hidden="true"></span><span class="logo-text">天择网</span></a><button class="nav-toggle" type="button" aria-label="菜单" data-ui-icon="menu"></button><nav class="nav" aria-label="主导航"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html" class="active"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a></nav></div></header>
+  <main id="main-content">
+    <section class="ai-doc-hero">
+      <div class="ai-doc-breadcrumb"><a href="https://wjtianze.github.io/ai/skill/index.html">项目目录</a><span>/</span><span>Codex App Server</span></div>
+      <div class="ai-doc-kicker">桌面智能体接入 · WINDOWS · CHATGPT 账号</div>
+      <h1>把 Codex 的完整智能体过程接进你的软件</h1>
+      <p>不是再套一层聊天接口，而是接入账号登录、模型发现、多对话、流式事件、计划与工具过程、审批、文件、图片和用量状态。</p>
+      <div class="ai-doc-tags"><span>动态协议结构</span><span>完整流式事件</span><span>受控审批</span><span>零额度假服务测试</span></div>
+      <div class="ai-doc-actions"><a class="btn" href="https://wjtianze.github.io/ai/skill/codex-app-server/build-codex-app-server-apps.zip" download data-ui-icon="download">下载最新版 ZIP</a><a class="btn btn--ghost" href="https://learn.chatgpt.com/docs/app-server" target="_blank" rel="noopener" data-ui-icon="globe">查看官方文档</a></div>
+    </section>
+    <div class="ai-doc-layout">
+      <aside class="ai-doc-nav" aria-label="教程目录"><strong>开发教程</strong><a href="#fit">适用范围</a><a href="#install">安装</a><a href="#architecture">架构</a><a href="#login">登录与模型</a><a href="#thread">对话与流式事件</a><a href="#approval">审批与文件</a><a href="#ui">界面设计</a><a href="#test">测试门禁</a><a href="#trouble">故障排查</a><a href="#quality">能力要求</a></aside>
+      <article class="ai-doc-body">
+        <section class="ai-doc-section" id="fit"><h2>接入后有什么不同</h2><p>适合需要“用户看得见、能中止、能审批、能切换多对话”的桌面应用，例如编程工具、学习助手、文件工作台和智能体客户端。应用本身负责界面与本地资源，Codex App Server 负责账号、对话和智能体运行。</p><div class="ai-doc-table-wrap"><table class="ai-doc-table"><thead><tr><th>需求</th><th>建议</th></tr></thead><tbody><tr><td>桌面端多对话、审批、文件和流式过程</td><td>使用 App Server</td></tr><tr><td>批处理、持续集成或无人值守自动化</td><td>优先使用 Codex SDK</td></tr><tr><td>只要一次普通文本补全</td><td>兼容接口通常更简单</td></tr><tr><td>纯网页且无法启动本机进程</td><td>不能直接使用 App Server</td></tr></tbody></table></div></section>
+        <section class="ai-doc-section" id="install"><h2>安装技能与准备项目</h2><ol><li>下载 ZIP 并完整解压，把技能文件夹交给 Codex 或放进本机技能目录。</li><li>在目标项目中明确桌面框架、主进程、渲染进程和可写工作区。</li><li>确认本机 Codex 可执行文件能够启动，并由用户本人完成 ChatGPT 登录。</li><li>让 Codex 先读取当前安装版本的官方文档、可执行文件帮助和协议结构，再修改源码。</li></ol><div class="ai-doc-code">使用 build-codex-app-server-apps，把这个 Electron 项目的 AI 对话重构为 Codex App Server。保留现有文件管理器和网页接口，先生成本机协议结构，再设计登录、对话、审批和流式事件。</div><p>技能包包含协议、Windows、界面、测试参考，可复用的 Node JSONL 客户端、原生对话界面、结构生成器和假服务测试；当前压缩包约 55 KB，不含账号秘密。</p></section>
+        <section class="ai-doc-section" id="architecture"><h2>推荐的四层架构</h2><div class="ai-doc-table-wrap"><table class="ai-doc-table"><thead><tr><th>层</th><th>职责</th><th>禁止事项</th></tr></thead><tbody><tr><td>App Server 进程</td><td>协议、线程、轮次、模型、认证和事件</td><td>不要把进程句柄直接交给网页</td></tr><tr><td>主进程适配器</td><td>启动、重连、请求编号、审批、文件桥和安全策略</td><td>不要把任意命令执行暴露给渲染层</td></tr><tr><td>状态存储</td><td>线程映射、进行中轮次、配置和恢复信息</td><td>不要把账号令牌写进业务存档</td></tr><tr><td>渲染界面</td><td>消息、过程卡、输入、停止、设置和可访问性</td><td>不要自行猜协议状态</td></tr></tbody></table></div><p>通信默认使用标准输入输出上的 JSONL。每一行是一个完整 JSON 对象；日志必须走标准错误或独立文件，避免污染协议流。WebSocket 目前属于实验性能力，不应作为正式桌面端唯一通道。</p></section>
+        <section class="ai-doc-section" id="login"><h2>登录、模型和能力发现</h2><p>启动后先完成初始化，再读取认证状态。未登录时显示明确入口，由用户本人在系统流程中登录；登录完成后重新读取状态，不在应用里收集密码、Cookie 或恢复代码。</p><ol><li>从 App Server 获取当前支持的模型列表。</li><li>按每个模型返回的思考档位、上下文、图片和速度能力生成设置项。</li><li>保存稳定标识，不把展示名称当协议常量。</li><li>版本更新后重新发现，不在源码中写死“最新模型”。</li></ol><p>模型列表为空时，先检查初始化和账号状态，再检查当前可执行文件是否支持对应方法；不要退回一份长期不更新的静态列表。</p></section>
+        <section class="ai-doc-section" id="thread"><h2>多对话和流式事件</h2><p>应用里的每个对话对应一个 App Server 线程。发送消息会创建一轮运行；轮次开始后持续消费文本、思考摘要、计划、命令、文件改动、工具调用、用量和完成事件。</p><ul class="ai-checklist"><li>切换页面或对话时，后台轮次继续，不因界面卸载而中断。</li><li>事件先写入中央状态，再由当前界面订阅，避免丢片段。</li><li>停止按钮只终止当前对话的当前轮次。</li><li>同一事件按编号去重；重连后从已确认位置恢复。</li><li>刷新界面后从线程状态重建消息和过程卡。</li></ul><p>文本增量只更新当前消息的尾部；命令、文件和审批应使用独立过程卡，不要把原始事件对象整段倾倒给用户。</p></section>
+        <section class="ai-doc-section" id="approval"><h2>审批、文件、图片和工具</h2><p>审批是一条双向协议：App Server 发出请求，主进程根据范围展示给用户，再把明确结果回传。用户未决定时不能当成允许，应用关闭时也不能留下永久等待的请求。</p><div class="ai-doc-table-wrap"><table class="ai-doc-table"><thead><tr><th>能力</th><th>界面应展示</th><th>默认边界</th></tr></thead><tbody><tr><td>命令</td><td>完整命令、工作目录、风险和影响范围</td><td>高风险操作必须逐次审批</td></tr><tr><td>文件修改</td><td>文件、变更摘要和可恢复性</td><td>限定到应用工作区</td></tr><tr><td>图片与附件</td><td>缩略图、文件名、大小和来源</td><td>按受控本地桥传递</td></tr><tr><td>外部工具</td><td>工具名、参数摘要和结果</td><td>不把秘密写进日志</td></tr></tbody></table></div><p>图片不能用“[图片]”占位代替真实媒体输入。必须从选择或粘贴一路追踪到本地路径、协议媒体项和模型事件，测试也要验证模型侧实际收到图片。</p></section>
+        <section class="ai-doc-section" id="ui"><h2>界面应该让人看得懂</h2><p>消息正文和智能体过程分层展示：正文用于最终解释，过程卡用于计划、命令、文件和工具。默认只显示对用户有用的状态，技术细节放进可展开区域。</p><ul class="ai-checklist"><li>输入框、发送、停止和附件始终属于当前对话。</li><li>用户向上阅读时不强制滚到底部；接近底部时再自动跟随。</li><li>后台生成用标签或计数提示，切回后完整恢复。</li><li>错误写清可重试条件，不把断线、取消和服务拒绝混为一谈。</li><li>键盘、屏幕阅读器、缩放和明暗主题都能使用。</li></ul></section>
+        <section class="ai-doc-section" id="test"><h2>不消耗额度的测试门禁</h2><p>技能包附假 App Server 和协议夹具，先用它覆盖完整流程，再由用户登录后的真实环境做一次最小验收。自动回归不应调用真实模型。</p><ol><li>生成当前安装版本的协议结构并做快照差异检查。</li><li>测试初始化、登录状态、模型列表、线程和轮次。</li><li>测试文本、思考、计划、命令、文件、图片和审批事件。</li><li>测试停止、断线、重连、重复事件、应用重启和后台对话。</li><li>测试错误映射、日志脱敏、无障碍和打包后资源路径。</li><li>打包安装后运行烟测，再进入正式发布。</li></ol></section>
+        <section class="ai-doc-section" id="trouble"><h2>常见故障</h2><h3>启动后立刻退出</h3><p>检查可执行文件路径、工作目录和标准错误日志。Windows 打包后不能假设开发机的绝对路径仍存在。</p><h3>能发送但没有流式内容</h3><p>核对通知事件是否由主进程持续转发，是否错误地只等待请求响应，以及渲染层是否按线程和轮次过滤。</p><h3>审批卡住</h3><p>确认审批请求编号、允许值和回传方法来自当前协议结构。关闭窗口或取消轮次时应有明确清理。</p><h3>模型或字段突然失效</h3><p>重新生成本机协议结构并与适配层对照。版本敏感字段必须通过兼容层解析，不能凭旧示例猜测。</p></section>
+        <section class="ai-doc-section" id="quality"><h2>AI能力要求</h2><div class="ai-doc-note" data-tone="warning"><strong>运行本技能的AI至少需要有AA 45分的水平，也就是Claude Sonnet 4.6及以上。</strong>经实测，Claude Haiku 4.5和DeepSeek V4 Flash Preview无法正确运行本技能。</div><p>完成标准不是“聊天框能回字”，而是账号、模型、线程、流式事件、停止、审批、文件、图片、恢复和安装包测试全部形成闭环。</p></section>
+      </article>
+    </div>
+  </main>
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260828j-v5.3.0"></script>
+</body>
+</html>

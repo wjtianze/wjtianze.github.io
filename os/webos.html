@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>天择OS · 天择网操作系统</title>
+  <meta name="description" content="天择OS 5.3 —— 本地优先的网页与 Windows 工作台，提供安全受管 AI、COC 实时查询、恢复中心、内部文件空间、应用管理器和交互式 Python。" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/os/assets/css/os.css?v=5.3.0" />
+  <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828j" />
+</head>
+<body class="tzos">
+  <div id="tzLivePolite" class="tz-sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+  <div id="tzLiveAssertive" class="tz-sr-only" role="alert" aria-live="assertive" aria-atomic="true"></div>
+  <script>
+    try {
+      var __tzBootState = JSON.parse(localStorage.getItem("tzos_state_v1") || "{}");
+      if (__tzBootState.theme === "light") document.body.classList.add("light");
+      if (__tzBootState.palette === "mid" || __tzBootState.palette === "warm") {
+        document.body.setAttribute("data-palette", __tzBootState.palette);
+      }
+    } catch (_) {}
+  </script>
+  <!-- 开机动画 -->
+  <div id="bootScreen" class="boot-screen">
+    <div class="boot-logo"><span class="tz-icon tz-icon-hero" style="--tz-ix:7;--tz-iy:7" aria-hidden="true"></span></div>
+    <div class="boot-name" aria-label="天择OS 5.3.0">天择OS <span>5.3.0</span></div>
+    <div class="boot-edition">桌面工作台</div>
+    <div class="boot-spinner"><span></span><span></span><span></span></div>
+    <div class="boot-tip" id="bootTip">正在唤醒系统…</div>
+  </div>
+
+  <!-- 桌面 -->
+  <div id="desktop" class="desktop" hidden>
+    <!-- 5.2 顶部态势线：只承载系统状态与入口，层级保持低于普通窗口 -->
+    <header id="osTopline" class="os-topline" aria-label="天择OS 5.3.0 系统状态">
+      <button class="os-brand-chip" data-shell-app="about" title="关于天择OS 5.3.0">
+        <span class="tz-icon" style="--tz-ix:7;--tz-iy:7" aria-hidden="true"></span>
+        <span><b>天择OS</b><small>5.3.0 · 桌面工作台</small></span>
+      </button>
+      <button class="os-command-chip" id="shellSearch" title="搜索应用">
+        <span class="tz-icon" style="--tz-ix:0;--tz-iy:4" aria-hidden="true"></span>
+        <span>搜索应用</span><kbd>Ctrl + Space</kbd>
+      </button>
+      <div class="os-top-status">
+        <span class="os-live-dot" aria-hidden="true"></span>
+        <span id="osTopStatus">系统就绪</span>
+        <span id="osTopClock">--:--</span>
+      </div>
+    </header>
+
+    <!-- 5.2 系统轨道：文件、原生应用、Python 与 AI 协同入口 -->
+    <aside id="systemRail" class="system-rail" aria-label="系统轨道">
+      <button data-shell-app="ai-chat" title="AI 对话"><span class="tz-icon" style="--tz-ix:5;--tz-iy:1"></span><span>AI</span></button>
+      <button data-shell-app="agent-center" title="Agent 与命令中心"><span class="tz-icon" style="--tz-ix:6;--tz-iy:2"></span><span>Agent</span></button>
+      <button data-shell-app="app-store" title="软件商城"><span class="tz-icon" style="--tz-ix:6;--tz-iy:1"></span><span>商城</span></button>
+      <button data-shell-app="file-explorer" title="文件与知识库"><span class="tz-icon" style="--tz-ix:2;--tz-iy:2"></span><span>文件</span></button>
+      <button data-shell-app="app-manager" title="应用管理器"><span class="tz-icon" style="--tz-ix:1;--tz-iy:3"></span><span>应用</span></button>
+      <button data-shell-app="python-tools" title="Python 工具"><span class="tz-icon" style="--tz-ix:6;--tz-iy:2"></span><span>Python</span></button>
+      <button data-shell-app="tz-tree" title="天择导航"><span class="tz-icon" style="--tz-ix:5;--tz-iy:2"></span><span>导航</span></button>
+      <button data-shell-app="growth" title="等级、VIP 与外观"><span class="tz-icon" style="--tz-ix:2;--tz-iy:1"></span><span>VIP</span></button>
+      <button data-shell-app="settings" title="系统设置"><span class="tz-icon" style="--tz-ix:0;--tz-iy:2"></span><span>设置</span></button>
+    </aside>
+
+    <!-- 桌面图标层 -->
+    <div id="desktopIcons" class="desktop-icons"></div>
+
+    <!-- 移动端主屏（与桌面图标共用数据，仅布局不同） -->
+    <div id="homeScreen" class="home-screen" hidden></div>
+
+    <!-- 窗口容器 -->
+    <div id="windows" class="windows-layer"></div>
+
+    <!-- 右键菜单 -->
+    <div id="ctxMenu" class="ctx-menu" hidden></div>
+
+    <!-- 开始菜单（Windows 风格） -->
+    <div id="startMenu" class="start-menu" role="dialog" aria-modal="false" aria-label="开始菜单" hidden>
+      <div class="start-search">
+        <input id="startSearch" type="text" placeholder="搜索应用…" aria-label="搜索应用" />
+      </div>
+      <div class="start-apps" id="startApps"></div>
+      <div class="start-footer">
+        <button class="start-close-btn" id="btnStartClose" title="关闭开始菜单"><span class="tz-icon" style="--tz-ix:1;--tz-iy:4"></span><span>关闭</span></button>
+        <button class="start-power" id="btnPower" title="关机/刷新" aria-label="打开电源菜单"><span class="tz-icon" style="--tz-ix:2;--tz-iy:4"></span></button>
+        <button class="start-settings" id="btnSettings" title="系统设置" aria-label="打开系统设置"><span class="tz-icon" style="--tz-ix:0;--tz-iy:2"></span></button>
+      </div>
+    </div>
+
+    <!-- 左下角悬浮窗（可拖拽 / 可关闭） -->
+    <div id="floatingWidget" class="floating-widget">
+      <div class="fw-header" id="fwHeader">
+        <span class="fw-title"><span class="tz-icon" style="--tz-ix:3;--tz-iy:7"></span>快捷轨道</span>
+        <button class="fw-close" id="fwClose" title="关闭" aria-label="关闭快捷轨道"><span class="tz-icon" style="--tz-ix:1;--tz-iy:4"></span></button>
+      </div>
+      <div class="fw-body">
+        <div class="fw-clock" id="fwClock">--:--</div>
+        <div class="fw-actions">
+          <button class="fw-btn" data-app="ai-chat" title="AI 对话" aria-label="打开 AI 对话"><span class="tz-icon" style="--tz-ix:5;--tz-iy:1"></span></button>
+          <button class="fw-btn" data-app="app-store" title="软件商城" aria-label="打开软件商城"><span class="tz-icon" style="--tz-ix:6;--tz-iy:1"></span></button>
+          <button class="fw-btn" data-app="settings" title="系统设置" aria-label="打开系统设置"><span class="tz-icon" style="--tz-ix:0;--tz-iy:2"></span></button>
+        </div>
+      </div>
+    </div>
+    <button id="fwReopen" class="fw-reopen hidden" title="显示快捷面板" aria-label="显示快捷轨道"><span class="tz-icon" style="--tz-ix:3;--tz-iy:7"></span></button>
+
+    <!-- 任务栏（Windows 风格 / 通用底栏） -->
+    <div id="taskbar" class="taskbar">
+      <button class="tb-start" id="btnStart" title="开始" aria-label="打开开始菜单" aria-expanded="false" aria-controls="startMenu">
+        <span class="tz-icon" style="--tz-ix:3;--tz-iy:3"></span>
+      </button>
+      <div class="tb-running" id="tbRunning"></div>
+      <div class="tb-tray">
+        <button class="tb-tray-btn" id="btnTheme" title="切换浅色/深色主题" aria-label="切换浅色或深色主题"><span class="tz-icon" style="--tz-ix:6;--tz-iy:4"></span></button>
+        <button class="tb-tray-btn" id="btnStyle" title="切换桌面风格" aria-label="切换桌面风格"><span class="tz-icon" style="--tz-ix:0;--tz-iy:1"></span></button>
+        <button class="tb-tray-btn" id="btnAiConfig" title="AI 配置" aria-label="打开 AI 配置"><span class="tz-icon" style="--tz-ix:4;--tz-iy:1"></span></button>
+        <span class="tb-status" id="tbNet" title="联网状态"><span class="tz-icon" style="--tz-ix:3;--tz-iy:4"></span></span>
+        <button class="tb-status tb-vol" id="tbVol" title="音量 / 静音切换" aria-label="切换静音"><span class="tz-icon" style="--tz-ix:4;--tz-iy:4"></span></button>
+        <span class="tb-status" id="tbBattery" title="电量"><span class="tz-icon" style="--tz-ix:5;--tz-iy:4"></span></span>
+        <button type="button" class="tb-clock" id="tbClock" aria-label="打开通知中心" aria-expanded="false" aria-controls="notifCenter"></button>
+      </div>
+      <button class="tb-show-desktop" id="btnShowDesktop" title="显示桌面（最小化所有窗口，再点复原）" aria-label="显示桌面"></button>
+    </div>
+
+    <!-- 移动端底栏 Home 条 + Dock -->
+    <div id="mobileDock" class="mobile-dock" hidden></div>
+    <div id="homeBar" class="home-bar" hidden></div>
+
+    <!-- 通知中心 -->
+    <div id="notifCenter" class="notif-center" role="region" aria-label="通知中心" hidden></div>
+  </div>
+
+  <script defer src="https://wjtianze.github.io/assets/js/cloud-security.js?v=5.3.0"></script>
+  <script defer src="https://wjtianze.github.io/os/assets/js/coc-live-service.js?v=5.3.0"></script>
+  <script defer src="https://wjtianze.github.io/os/assets/js/ai-tools.js?v=5.3.0"></script>
+  <script defer src="https://wjtianze.github.io/os/assets/js/local-data-actions.js?v=5.3.0"></script>
+  <script defer src="https://wjtianze.github.io/os/assets/js/cli-engine.js?v=5.3.0"></script>
+  <script defer src="https://wjtianze.github.io/os/assets/js/os.js?v=5.3.0-20260828j"></script>
+</body>
+</html>

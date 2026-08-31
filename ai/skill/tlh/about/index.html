@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>课本学习助手 · 下载、生成与使用教程 — 天择网</title>
+  <meta name="description" content="课本学习助手的完整使用教程：选择版本、安装、生成学习页、阅读、测验、错题、AI对话、数据迁移和故障排查。" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828j-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/workspace-pages.css?v=20260828j-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/ai-manual.css?v=20260828a-v5.3.0" />
+  <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828j" />
+</head>
+<body class="ai-manual-page" data-workspace-page="tlh-docs">
+  <div class="bg-mesh"></div>
+  <header class="topbar"><div class="wrap topbar-inner"><a class="brand" href="https://wjtianze.github.io/index.html" aria-label="天择网首页"><span class="logo-mark" aria-hidden="true"></span><span class="logo-text">天择网</span></a><button class="nav-toggle" type="button" aria-label="菜单" data-ui-icon="menu"></button><nav class="nav" aria-label="主导航"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html" class="active"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a></nav></div></header>
+  <main id="main-content">
+    <section class="ai-doc-hero">
+      <div class="ai-doc-breadcrumb"><a href="https://wjtianze.github.io/ai/skill/tlh/index.html">课本学习助手</a><span>/</span><span>完整教程</span></div>
+      <div class="ai-doc-kicker">完整使用说明 · L7.0 普通接口版 · L8.0-CODEX 桌面版</div>
+      <h1>把一章教材变成真正能学的交互页面</h1>
+      <p>知识点、教材原文、章节摘要、交互演示、六类测验、错题复习和学习对话都在同一页。下面按实际使用顺序说明，不要求你先读技能内部文件。</p>
+      <div class="ai-doc-tags"><span>离线阅读</span><span>六类题型</span><span>交互演示</span><span>学习记录保存在本机</span></div>
+      <div class="ai-doc-actions"><a class="btn" href="https://wjtianze.github.io/ai/skill/tlh/textbook-learning-helper-L7.0.zip" download data-ui-icon="download">下载普通接口版</a><a class="btn btn--ghost" href="https://wjtianze.github.io/ai/skill/tlh/textbook-learning-helper-L8.0-codex.zip" download data-ui-icon="download">下载 Codex 版</a></div>
+    </section>
+    <div class="ai-doc-layout">
+      <aside class="ai-doc-nav" aria-label="教程目录"><strong>使用教程</strong><a href="#choose">选择版本</a><a href="#install">安装</a><a href="#create">生成学习页</a><a href="#read">阅读与演示</a><a href="#quiz">测验与错题</a><a href="#chat">学习对话</a><a href="#data">数据与迁移</a><a href="#trouble">故障排查</a><a href="#quality">生成质量</a><a href="#update">更新</a></aside>
+      <article class="ai-doc-body">
+        <section class="ai-doc-section" id="choose"><h2>先选对版本</h2><div class="ai-doc-table-wrap"><table class="ai-doc-table"><thead><tr><th>版本</th><th>适合谁</th><th>AI怎么接入</th></tr></thead><tbody><tr><td>普通接口版 L7.0</td><td>想在浏览器直接打开，或已经有兼容接口</td><td>在学习页设置里填写自己的接口地址、模型和密钥</td></tr><tr><td>Codex 版 L8.0-codex</td><td>Windows 用户，希望使用自己的 ChatGPT 账号</td><td>通过本机启动器连接 Codex App Server，不填写传统接口密钥</td></tr></tbody></table></div><p>两版的阅读、测验、错题、批阅和交互演示相同。区别只在右侧学习对话的连接方式；如果教材主要是 Python，请改用专门的 Python 课本学习助手。</p><p>下载后的 L7.0 与 L7.0-d 是自包含的本地 API 技能包，需要你自行配置兼容接口；本站的「在线体验」则走天择后端代理，无需填写或保存 API Key。</p></section>
+        <section class="ai-doc-section" id="install"><h2>安装和第一次使用</h2><ol><li>下载对应 ZIP，完整解压到新文件夹；不要直接在压缩包预览窗口里运行。</li><li>把技能文件夹交给 Codex，或放进本机 Codex 的技能目录。</li><li>准备教材文件，PDF、扫描件或可读取的文档都可以；扫描件会先做文字识别。</li><li>在 Codex 中说明教材、章节和你的重点，技能会生成一份独立 HTML 学习页。</li><li>Codex 版按生成包内的启动说明打开；普通接口版可直接用浏览器打开。</li></ol><div class="ai-doc-code">使用课本学习助手学习这份教材的第 5 章。保留教材原文，先讲直觉再讲推导，每个知识点都要有能操作的演示。</div></section>
+        <section class="ai-doc-section" id="create"><h2>怎样生成一份好用的学习页</h2><p>范围说得越明确，生成结果越稳定。一次处理一个章节或一个完整主题；跨越太多章节时，页面会很长，题目和原文也更难核对。</p><ul class="ai-checklist"><li>明确教材名称、章节起止和是否包含附录、例题。</li><li>说明自己的基础，例如“先补线性代数预备知识”。</li><li>指出重点，例如“偏重物理直觉”或“证明步骤不能省”。</li><li>要求保留教材原文，不让摘要替代原文。</li><li>指定题量、难度和是否需要主观题批阅。</li></ul><p>生成结束后会校验知识点索引、六类题型、演示页、引用关系和最终页面。失败时应修正源数据并重新注入，不要在成品 HTML 里手工改一大段数据。</p></section>
+        <section class="ai-doc-section" id="read"><h2>阅读、原文和交互演示</h2><p>左侧可以在“知识点、教材原文、章节摘要、测验、错题本、批阅数据”之间切换。知识点按一页一个主题组织，先解释核心直觉，再逐步展开公式和例子。</p><p>需要观察变化的内容会配交互演示。拖动参数、切换状态或运行步骤后，图形应真实反映概念变化，而不是只播放装饰动画。点击页面中的公式可以复制原始 LaTeX；标题栏的公式助手可按数学、物理、化学和通用类别查找写法。</p><div class="ai-doc-note"><strong>看不懂时不要只反复读摘要。</strong>先操作演示，再回到教材原文核对定义，最后让右侧学习对话解释你卡住的那一步。</div></section>
+        <section class="ai-doc-section" id="quiz"><h2>测验、判分和错题复习</h2><div class="ai-doc-table-wrap"><table class="ai-doc-table"><thead><tr><th>题型</th><th>判分方式</th><th>提交后</th></tr></thead><tbody><tr><td>单选、判断</td><td>本地即时判分</td><td>显示得分和解析</td></tr><tr><td>多选、不定项</td><td>全对满分；只漏选且没有错选得一半</td><td>标出漏选与错选</td></tr><tr><td>填空</td><td>按标准答案和允许变体判定</td><td>展示差异与解析</td></tr><tr><td>解答</td><td>提交给学习对话批阅</td><td>保存评分、评语和改进建议</td></tr></tbody></table></div><p>答错或得分不足的题自动进入错题本。复习时先重新作答，再看旧答案和解析；不要让页面提前显示未作答题目的答案。</p></section>
+        <section class="ai-doc-section" id="chat"><h2>右侧学习对话怎么用</h2><p>可以引用当前知识点、教材段落或题目，再要求解释、举例、出相似题或批阅。多对话彼此分开，切换时保留草稿和历史。</p><h3>普通接口版</h3><p>在设置中选择预设或填写兼容接口。接口密钥只保存在当前设备的浏览器存储中；分享学习页前应清除密钥和个人对话。</p><h3>Codex 版</h3><p>由配套启动器管理 ChatGPT 登录、模型、思考档位、审批和流式输出。页面不读取账号文件或 Cookie；测试应使用假服务，不消耗真实额度。</p><div class="ai-doc-code">请只解释我引用的第 3 个等号为什么成立。先讲直觉，再逐行补全推导，不要直接把后面练习的答案告诉我。</div></section>
+        <section class="ai-doc-section" id="data"><h2>学习记录、备份与迁移</h2><p>阅读位置、作答、错题、批阅、对话、设置和演示状态默认保存在当前设备。浏览器会按学习页路径区分不同教材；移动或重命名文件后，浏览器可能把它视为新页面。</p><ol><li>更新或移动前先从页面导出学习数据。</li><li>把 HTML、配套资源目录和导出的数据放在一起备份。</li><li>在新位置打开页面后导入数据，核对题目数量和对话。</li><li>对外分享前删除个人作答、对话、接口密钥和不应公开的教材。</li></ol></section>
+        <section class="ai-doc-section" id="trouble"><h2>常见问题按这个顺序排查</h2><h3>页面空白或按钮失效</h3><p>确认已经完整解压，并通过本地 HTTP 或配套启动器打开。再尝试页面内的“清除缓存”，避免旧版本状态与新页面结构冲突。</p><h3>公式没有渲染</h3><p>检查配套资源是否和 HTML 一起移动，公式是否使用页面支持的 LaTeX 写法。断网时需要保留包内的离线依赖。</p><h3>演示区域是空的</h3><p>确认对应演示文件存在，浏览器没有拦截脚本，且不是从压缩包内部打开。演示报错应修复演示源文件后重新生成。</p><h3>AI对话连不上</h3><p>普通接口版检查地址、模型、密钥和跨域限制；Codex 版检查启动器、登录状态、模型列表和 App Server 事件日志。阅读与本地判分不依赖 AI，故障期间不会丢失。</p></section>
+        <section class="ai-doc-section" id="quality"><h2>什么样的结果才算完成</h2><ul class="ai-checklist"><li>教材原文完整，知识点能回到原文位置核对。</li><li>每个知识点的演示真实编码关键差异，移动端也能操作。</li><li>六类题型按规则判分，未作答时不泄露答案。</li><li>公式、Markdown、图片和本地链接离线可用。</li><li>作答、错题、对话、滚动位置在刷新后恢复。</li><li>明亮和深色皮肤都保持足够对比度，不出现白底白字。</li></ul><div class="ai-doc-note" data-tone="warning"><strong>运行本技能的AI至少需要有AA 45分的水平，也就是Claude Sonnet 4.6及以上。</strong>经实测，Claude Haiku 4.5和DeepSeek V4 Flash Preview无法正确运行本技能。</div></section>
+        <section class="ai-doc-section" id="update"><h2>更新已有学习包</h2><ol><li>先备份现有 HTML、资源目录和导出的学习数据。</li><li>下载新技能到新目录，不覆盖旧技能。</li><li>让 Codex 使用技能自带的更新脚本迁移页面结构。</li><li>重新运行知识点、测验、演示、保存、对话和移动端检查。</li><li>确认无误后再替换旧学习包。</li></ol><p>技能更新不应改写你的教材内容、答案或个人学习记录；发现结构不兼容时应保留旧包并报告具体页面。</p></section>
+      </article>
+    </div>
+  </main>
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260828j-v5.3.0"></script>
+</body>
+</html>

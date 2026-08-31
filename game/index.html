@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>游戏专区 · 天择网</title>
+  <meta name="description" content="这里放着我做的小游戏，打开网页就能玩。" />
+  <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828j-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/game-workspace.css?v=20260827-v5.3.0" />
+  <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828j" />
+</head>
+<body class="game-hub">
+  <div class="bg-mesh"></div>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="https://wjtianze.github.io/index.html" aria-label="天择网首页">
+        <span class="logo-mark" aria-hidden="true"></span>
+        <span class="logo-text">天择网</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-label="菜单" data-ui-icon="menu"></button>
+      <nav class="nav" aria-label="主导航"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html" class="active"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a><a href="https://wjtianze.github.io/contact/index.html"><span>联系我</span></a></nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="game-zone-hero tz-page-hero wrap">
+      <div class="game-zone-copy reveal in">
+        <span class="game-zone-kicker">我做的小游戏 · 打开就能玩</span>
+        <h1>我做的游戏，<br/><span class="grad">都放在这里。</span></h1>
+        <p>目前有一款卡牌对战游戏可以试玩。不用注册，打开就能开始，进度只保存在你的设备上。</p>
+      </div>
+      <div class="game-zone-content reveal in d2">
+        <div class="game-content-head">
+          <div>
+            <span>打开就能玩</span>
+            <h2>现在可以玩的</h2>
+          </div>
+          <span class="game-count">1 款</span>
+        </div>
+
+        <div class="game-signal-row" aria-label="游戏关键指标">
+          <div><span class="game-signal-icon"><span class="tz-icon" data-icon="trophy" aria-hidden="true"></span></span><span><b>4.3</b><small>目标 GPA</small></span></div>
+          <div><span class="game-signal-icon"><span class="tz-icon" data-icon="lightning" aria-hidden="true"></span></span><span><b>3</b><small>初始能量</small></span></div>
+          <div><span class="game-signal-icon"><span class="tz-icon" data-icon="swords" aria-hidden="true"></span></span><span><b>3 路</b><small>攻守与成长</small></span></div>
+        </div>
+
+        <a class="game-feature tz-workspace-card reveal" href="https://wjtianze.github.io/game/gpa-card/index.html">
+          <div class="game-feature-art" aria-hidden="true">
+            <span class="mini-card mc-1">基础题<small>造成 8 伤害</small></span>
+            <span class="mini-card mc-2">课间休息<small>获得 10 护盾</small></span>
+            <span class="mini-card mc-3">平时作业<small>GPA +0.1</small></span>
+            <div class="score-stamp">1.0–4.3</div>
+          </div>
+          <div class="game-feature-copy">
+            <div class="game-feature-meta"><span>测试版 v0.1</span><span>与电脑对战</span><span>约 8–12 分钟</span></div>
+            <h2>绩点战争：GPA 4.3</h2>
+            <p>在攻击、防守和学习成长之间分配能量。你可以击倒对手，也可以率先把 GPA 推到 4.3——但领先从来不等于安全。</p>
+            <ul>
+              <li>目前有 12 张卡牌</li>
+              <li>4 个技能可以搭配不同打法</li>
+              <li>无需登录，进度与战绩只保存在本机</li>
+            </ul>
+            <span class="game-play-cta">开始试玩 <span class="tz-icon" data-icon="right" aria-hidden="true"></span></span>
+          </div>
+        </a>
+      </div>
+    </section>
+  </main>
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260828j-v5.3.0"></script>
+</body>
+</html>

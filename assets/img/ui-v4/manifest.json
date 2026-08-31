@@ -1,0 +1,111 @@
+{
+  "version": "4.0.0",
+  "generatedAt": "2026-07-31",
+  "palettes": {
+    "cold": {
+      "colors": ["#7c3aed", "#3b82f6", "#10b981"],
+      "wallpaper": "wallpaper-cold.webp",
+      "button": "button-cold.webp",
+      "surface": "surface-cold.webp",
+      "iconWell": "icon-well-cold.webp",
+      "iconWellPng": "icon-well-cold.png",
+      "iconAtlas": "icon-atlas-cold.png",
+      "iconMain": "#f6f9ff",
+      "iconAccent": "#7c8aff",
+      "sources": ["wallpaper-cold.png", "button-cold.png", "surface-cold.png"]
+    },
+    "mid": {
+      "colors": ["#3b82f6", "#10b981", "#eab308"],
+      "wallpaper": "wallpaper-mid.webp",
+      "button": "button-mid.webp",
+      "surface": "surface-mid.webp",
+      "iconWell": "icon-well-mid.webp",
+      "iconWellPng": "icon-well-mid.png",
+      "iconAtlas": "icon-atlas-mid.png",
+      "iconMain": "#f4fcfa",
+      "iconAccent": "#4bbe99",
+      "sources": ["wallpaper-mid.png", "button-mid.png", "surface-mid.png"]
+    },
+    "warm": {
+      "colors": ["#10b981", "#eab308", "#f97316"],
+      "wallpaper": "wallpaper-warm.webp",
+      "button": "button-warm.webp",
+      "surface": "surface-warm.webp",
+      "iconWell": "icon-well-warm.webp",
+      "iconWellPng": "icon-well-warm.png",
+      "iconAtlas": "icon-atlas-warm.png",
+      "iconMain": "#fffaf1",
+      "iconAccent": "#ec9d4c",
+      "sources": ["wallpaper-warm.png", "button-warm.png", "surface-warm.png"]
+    }
+  },
+  "iconMaterial": {
+    "source": "icon-well-source.png",
+    "sourceSize": [1254, 1254],
+    "outputSize": [512, 512],
+    "mode": "low-saturation-luminance-map",
+    "variants": {
+      "cold": ["icon-well-cold.png", "icon-well-cold.webp"],
+      "mid": ["icon-well-mid.png", "icon-well-mid.webp"],
+      "warm": ["icon-well-warm.png", "icon-well-warm.webp"]
+    }
+  },
+  "iconAtlas": {
+    "file": "icon-atlas.png",
+    "status": "legacy-preserved-not-runtime",
+    "backup": "icon-atlas-legacy.png",
+    "sourceWithKey": "icon-atlas-key.png",
+    "size": [1254, 1254],
+    "columns": 8,
+    "rows": 8,
+    "icons": [
+      ["home", "newspaper", "pen", "unlock", "ai", "shield", "gamepad", "book"],
+      ["monitor", "user", "palette", "menu", "key", "chat", "cart", "trophy"],
+      ["settings", "info", "folder", "globe", "bulb", "tree", "terminal", "clock"],
+      ["document", "notes", "calendar", "burst", "swords", "windows", "laptop", "android"],
+      ["search", "close", "power", "network", "volume", "battery", "moon", "pin"],
+      ["refresh", "left", "right", "download", "upload", "camera", "paperclip", "stop"],
+      ["play", "pause", "trash", "save", "edit", "copy", "check", "warning"],
+      ["rocket", "star", "heart", "lightning", "sparkle", "file", "cursor", "crystal"]
+    ]
+  },
+  "iconAtlasV2": {
+    "status": "runtime-wired",
+    "mode": "direct-duotone-raster",
+    "master": "icon-atlas-glyph-master.png",
+    "variants": {
+      "cold": "icon-atlas-cold.png",
+      "mid": "icon-atlas-mid.png",
+      "warm": "icon-atlas-warm.png"
+    },
+    "width": 1024,
+    "height": 1024,
+    "columns": 8,
+    "rows": 8,
+    "cellSize": 128,
+    "sourceTargetLongestSide": 98,
+    "edgeFeatherSigma": 0.45,
+    "accentEdgeOffset": [1, 1],
+    "requiresMask": false,
+    "requiresFilter": false,
+    "positionsPercent": [0, 14.285714, 28.571429, 42.857143, 57.142857, 71.428571, 85.714286, 100],
+    "validation": {
+      "nonEmptyCells": 64,
+      "masterLongestSidePercent": [75.78, 76.56],
+      "directLongestSidePercent": [76.56, 77.34],
+      "masterCentroidXPercent": [-0.39, 0.39],
+      "masterCentroidYPercent": [-0.37, 0.38],
+      "directCentroidXPercent": [-0.21, 0.93],
+      "directCentroidYPercent": [-0.19, 0.79],
+      "minimumCellMarginPx": 2,
+      "alphaPixelsInOuter2Px": 0
+    },
+    "recommendedCss": {
+      "backgroundSize": "800% 800%",
+      "filter": "none",
+      "mask": "none",
+      "siteAssetPrefix": "../img/ui-v4/",
+      "osAssetPrefix": "../../../assets/img/ui-v4/"
+    }
+  }
+}

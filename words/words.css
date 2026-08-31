@@ -1,0 +1,10 @@
+@charset "UTF-8";
+
+/*
+ * 旧版 /words/ 静态资源兼容入口。
+ * 唯一维护源：/english/words/words.css
+ *
+ * 旧页面已直接引用规范文件；保留本入口是为了兼容收藏、缓存清单或
+ * 外部页面仍然请求 /words/words.css 的情况。
+ */
+@import url("../english/words/words.css?v=20260801-v4.1.6");

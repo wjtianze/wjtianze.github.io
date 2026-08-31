@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#102947" />
+  <title>COC 游戏静态数据 · 天择网</title>
+  <meta name="description" content="查询天择网从部落冲突 18.400.22 国际服安装包整理出的兵种、法术、英雄、装备、建筑与升级数值；页面可离线使用，不调用实时玩家或部落接口。" />
+  <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828j-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css?v=20260830c" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-workspace.css?v=20260801-v4.1.6" />
+  <style>
+    /* CSS 自定义属性中的相对网址会在内联规则使用处按本文档解析，
+       因此为这个两级路由提供文档相对的纹理地址。 */
+    :root {
+      --tz-v4-wallpaper:url("../../assets/img/ui-v4/wallpaper-cold.webp");
+      --tz-v4-button:url("../../assets/img/ui-v4/button-cold.webp");
+      --tz-v4-surface:url("../../assets/img/ui-v4/surface-cold.webp");
+      --tz-v4-icon-atlas:url("../../assets/img/ui-v4/icon-atlas-cold.png");
+      --tz-v4-icon-well:url("../../assets/img/ui-v4/icon-well-cold.webp");
+    }
+    html[data-palette="mid"] {
+      --tz-v4-wallpaper:url("../../assets/img/ui-v4/wallpaper-mid.webp");
+      --tz-v4-button:url("../../assets/img/ui-v4/button-mid.webp");
+      --tz-v4-surface:url("../../assets/img/ui-v4/surface-mid.webp");
+      --tz-v4-icon-atlas:url("../../assets/img/ui-v4/icon-atlas-mid.png");
+      --tz-v4-icon-well:url("../../assets/img/ui-v4/icon-well-mid.webp");
+    }
+    html[data-palette="warm"] {
+      --tz-v4-wallpaper:url("../../assets/img/ui-v4/wallpaper-warm.webp");
+      --tz-v4-button:url("../../assets/img/ui-v4/button-warm.webp");
+      --tz-v4-surface:url("../../assets/img/ui-v4/surface-warm.webp");
+      --tz-v4-icon-atlas:url("../../assets/img/ui-v4/icon-atlas-warm.png");
+      --tz-v4-icon-well:url("../../assets/img/ui-v4/icon-well-warm.webp");
+    }
+
+    /* 附属单位（仅数据查询页使用，dq-sub- 前缀） */
+    .dc-attach { margin-top:8px; font-size:12px; color:var(--ink-faint); line-height:1.6; border-top:1px dashed rgba(255,255,255,.1); padding-top:8px; }
+    .dc-attach b { color:var(--ink-dim); font-weight:600; }
+    .dm-cols { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:18px; align-items:start; }
+    @media (max-width:720px){ .dm-cols { grid-template-columns:1fr; } }
+    .dq-sub-side h4 { font-size:13px; color:var(--ink-faint); margin:0 0 10px; letter-spacing:.5px; }
+    .dq-sub-card { position:relative; display:block; width:100%; text-align:left; cursor:pointer; border:1px solid rgba(var(--c-violet-rgb),.35); background:rgba(var(--c-violet-rgb),.08); border-radius:12px; padding:12px; margin-bottom:10px; color:var(--ink); transition:border-color .15s, background .15s; }
+    .dq-sub-card:hover { border-color:var(--coc-purple,var(--c-violet)); background:rgba(var(--c-violet-rgb),.16); }
+    .dq-sub-badge { display:inline-block; font-size:11px; padding:2px 8px; border-radius:999px; background:linear-gradient(135deg,#f59e0b,#ef4444); color:#fff; margin-bottom:6px; }
+    .dq-sub-name { font-size:14px; font-weight:700; }
+    .dq-sub-top { display:flex; align-items:center; gap:9px; min-width:0; }
+    .dq-sub-top > div { min-width:0; }
+    .dq-sub-image { flex:0 0 auto; object-fit:contain; }
+    .dq-sub-en { font-size:11px; color:var(--ink-faint); margin-top:1px; }
+    .dq-sub-kind { font-size:11.5px; color:var(--ink-faint); margin-top:6px; }
+    .dq-sub-stats { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+    .dq-sub-stats span { font-size:11px; padding:2px 8px; border-radius:6px; background:rgba(255,255,255,.06); color:var(--ink-dim); }
+    .dq-badge-sub-inline { display:inline-block; font-size:11px; padding:2px 8px; border-radius:999px; background:linear-gradient(135deg,#f59e0b,#ef4444); color:#fff; }
+    .dq-back { display:inline-flex; align-items:center; gap:6px; margin-bottom:12px; font-size:12.5px; padding:6px 12px; border-radius:8px; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12); color:var(--ink-dim); cursor:pointer; }
+    .dq-back:hover { background:rgba(255,255,255,.12); }
+    .dq-close:hover { transform:none; }
+    .dq-close .tz-icon { width:18px; height:18px; }
+    .dq-back .tz-icon { width:14px; height:14px; }
+    .dq-abil { margin-top:6px; }
+    .dq-abil-head { display:flex; align-items:center; gap:8px; margin:14px 0 8px; }
+    .dq-abil-tag { font-size:11px; padding:2px 8px; border-radius:999px; background:rgba(var(--c-blue-rgb),.2); color:#93c5fd; }
+    .dq-abil-tag.extra { background:rgba(var(--c-green-rgb),.18); color:var(--c-green-soft); }
+    .dq-abil-name { font-size:14px; font-weight:700; color:var(--ink); }
+    .dq-visually-hidden { position:absolute!important; width:1px!important; height:1px!important; padding:0!important; margin:-1px!important; overflow:hidden!important; clip:rect(0,0,0,0)!important; white-space:nowrap!important; border:0!important; }
+    .coc-data-tool .dq-search {
+      position:relative;
+      display:flex;
+      min-width:0;
+      min-height:50px;
+      align-items:center;
+      gap:12px;
+      padding:0 14px;
+      overflow:hidden;
+      border:1px solid var(--coc-line);
+      border-radius:11px;
+      outline:0;
+      background:var(--coc-input);
+      box-shadow:none;
+    }
+    .coc-data-tool .dq-search:focus-within {
+      border-color:#258699!important;
+      outline:0!important;
+      background:var(--coc-input)!important;
+      box-shadow:0 0 0 2px rgba(37,134,153,.24)!important;
+    }
+    .coc-data-tool .dq-search .dq-ic {
+      display:grid;
+      width:18px;
+      height:18px;
+      flex:0 0 18px;
+      place-items:center;
+      margin:0;
+      color:var(--ink-faint);
+      font-size:16px;
+      line-height:1;
+    }
+    .coc-data-tool .dq-search input,
+    .coc-data-tool .dq-search input:focus,
+    .coc-data-tool .dq-search input:focus-visible {
+      width:100%;
+      min-width:0;
+      min-height:48px;
+      margin:0;
+      padding:0;
+      border:0!important;
+      border-radius:0;
+      outline:0!important;
+      background:transparent!important;
+      box-shadow:none!important;
+      color:var(--ink);
+      appearance:none;
+      -webkit-appearance:none;
+    }
+    .coc-data-tool .dq-search input::-webkit-search-decoration,
+    .coc-data-tool .dq-search input::-webkit-search-cancel-button {
+      display:none;
+      appearance:none;
+      -webkit-appearance:none;
+    }
+    .coc-data-tool .dq-toolbar {
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      align-items:center;
+      gap:14px;
+    }
+    .coc-data-tool .dq-count {
+      min-width:92px;
+      margin:0;
+      text-align:right;
+      line-height:1.4;
+    }
+    .dq-clear {
+      display:grid;
+      place-items:center;
+      flex:0 0 auto;
+      width:34px;
+      height:34px;
+      margin-right:6px;
+      border:1px solid var(--tz-v4-line);
+      border-radius:9px;
+      color:var(--ink-dim);
+      background-color:var(--tz-v4-surface-color);
+      background-image:var(--tz-v4-button);
+      background-position:center;
+      background-size:cover;
+      background-blend-mode:soft-light;
+      cursor:pointer;
+    }
+    .dq-clear[hidden] { display:none; }
+    .dq-clear:hover { color:var(--ink); border-color:color-mix(in srgb,var(--coc-accent) 48%,var(--tz-v4-line)); }
+    .dq-clear .tz-icon { width:15px; height:15px; }
+    .dq-loading-error { display:grid; justify-items:center; gap:10px; max-width:520px; margin:0 auto; }
+    .dq-loading-error .coc-empty-icon { margin-bottom:2px; }
+    .dq-loading-error p { color:var(--ink-faint); font-size:13px; line-height:1.7; }
+    .dq-retry { margin-top:2px; }
+    .dm-table-wrap:focus-visible { outline:2px solid rgba(var(--c-green-soft-rgb),.65); outline-offset:3px; }
+
+    html[data-palette="porcelain"] .coc-data-tool .dq-search {
+      border-color:rgba(25,74,76,.28);
+      background:#f4f4ee;
+    }
+    html[data-palette="porcelain"] .coc-data-tool .dq-search:focus-within {
+      border-color:#075f53!important;
+      background:#f8f8f3!important;
+      box-shadow:0 0 0 2px rgba(7,95,83,.18)!important;
+    }
+
+    @media (max-width:640px) {
+      .coc-data-tool .dq-toolbar {
+        grid-template-columns:minmax(0,1fr);
+        gap:8px;
+        padding:12px;
+      }
+      .coc-data-tool .dq-search {
+        width:100%;
+      }
+      .coc-data-tool .dq-count {
+        min-width:0;
+        padding-inline:2px;
+        text-align:left;
+      }
+    }
+
+    .coc-data-tool {
+      --tz-type-coc: "Supercell-Magic", "Supercell Magic", "Arial Rounded MT Bold", "Trebuchet MS", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+      font-family: Inter, "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+    }
+    .coc-data-layout {
+      display:grid;
+      grid-template-columns:minmax(260px,1fr) minmax(0,2fr);
+      align-items:start;
+      gap:clamp(16px,2.4vw,32px);
+      margin-top:24px;
+    }
+    .coc-data-tool .coc-data-layout .coc-data-brief {
+      position:sticky;
+      top:var(--tz-shell-sticky-top,86px);
+      display:flex!important;
+      min-height:min(690px,calc(100vh - 102px));
+      margin:0!important;
+      padding:clamp(24px,3vw,36px)!important;
+      flex-direction:column;
+      align-items:stretch;
+      justify-content:flex-start;
+      border-radius:20px;
+    }
+    .coc-data-tool .coc-data-layout .coc-data-brief .crumb { margin:0 0 24px; }
+    .coc-data-tool .coc-data-layout .coc-data-brief .coc-kicker {
+      display:flex;
+      width:auto;
+      margin:0 0 12px;
+      color:var(--coc-accent);
+    }
+    .coc-data-tool .coc-data-layout .coc-data-brief h1 {
+      margin:0;
+      font-family:var(--tz-type-coc);
+      font-size:clamp(30px,3.2vw,40px);
+      font-weight:700;
+      line-height:1.12;
+      letter-spacing:-.025em;
+      -webkit-text-stroke:.25px rgba(4,10,22,.3);
+      text-shadow:0 2px 0 rgba(0,0,0,.22),0 7px 18px rgba(0,0,0,.16);
+    }
+    .coc-data-tool .coc-data-layout .coc-data-brief > p {
+      max-width:none;
+      margin:20px 0 0;
+      padding:0;
+      border:0;
+      color:var(--ink-dim);
+      font-size:13.5px;
+      line-height:1.85;
+    }
+    .coc-data-brief-meta {
+      display:grid;
+      gap:8px;
+      margin-top:26px;
+    }
+    .coc-data-brief-meta > span {
+      display:flex;
+      align-items:center;
+      gap:9px;
+      min-height:40px;
+      padding:8px 10px;
+      border:1px solid var(--coc-line);
+      border-radius:9px;
+      color:var(--ink-dim);
+      background-color:var(--coc-canvas);
+      background-image:var(--coc-surface-texture);
+      background-position:center;
+      background-size:520px auto;
+      background-blend-mode:soft-light;
+      font-size:11.5px;
+    }
+    .coc-data-brief-meta .tz-icon { width:16px; height:16px; }
+    .coc-data-content { min-width:0; }
+    .coc-data-results-section,
+    .coc-data-open-section {
+      width:100%;
+      padding:0!important;
+    }
+    .coc-data-results-section .dq-toolbar { margin-bottom:14px; }
+    .coc-data-results-section .dq-cats { margin-bottom:8px; }
+    .coc-data-open-section { margin-top:14px; }
+    .coc-data-open-card {
+      display:flex;
+      gap:16px;
+      align-items:center;
+      flex-wrap:wrap;
+      padding:18px 20px;
+      text-decoration:none;
+    }
+    .coc-data-open-copy { flex:1; min-width:200px; }
+    .coc-data-open-copy h3,
+    .coc-data-tool .dc-name h3,
+    .coc-data-tool .dm-title h2 {
+      font-family:var(--tz-type-coc);
+      font-weight:680;
+      -webkit-text-stroke:.18px rgba(4,10,22,.22);
+      text-shadow:0 2px 6px rgba(0,0,0,.14);
+    }
+    .coc-data-open-copy h3 { margin-bottom:3px; font-size:16px; }
+    .coc-data-open-copy p { color:var(--ink-dim); font-size:12.5px; line-height:1.7; }
+    .coc-data-open-action { flex-shrink:0; }
+    .coc-data-tool .dq-empty h3 {
+      margin-bottom:8px;
+      font-family:var(--tz-type-coc);
+      font-size:18px;
+      font-weight:680;
+    }
+    .coc-data-tool .dq-card:hover .dc-emoji { transform:translateY(-2px) scale(1.03); }
+
+    @keyframes cocBriefIn {
+      from { opacity:0; transform:translate3d(-18px,0,0); }
+      to { opacity:1; transform:translate3d(0,0,0); }
+    }
+    @keyframes cocContentIn {
+      from { opacity:0; transform:translate3d(22px,0,0); }
+      to { opacity:1; transform:translate3d(0,0,0); }
+    }
+    @keyframes cocContentInMobile {
+      from { opacity:0; transform:translate3d(0,12px,0); }
+      to { opacity:1; transform:translate3d(0,0,0); }
+    }
+    @keyframes cocDataCardIn {
+      from { opacity:0; transform:translateY(10px) scale(.985); }
+      to { opacity:1; transform:translateY(0) scale(1); }
+    }
+    .coc-data-brief { animation:cocBriefIn .58s cubic-bezier(.16,1,.3,1) both; }
+    .coc-data-content { animation:cocContentIn .68s .06s cubic-bezier(.16,1,.3,1) both; }
+    .coc-data-tool .dq-card { animation:cocDataCardIn .38s cubic-bezier(.16,1,.3,1) both; animation-delay:calc(var(--dq-i,0) * 22ms); }
+
+    @media (max-width:1120px) {
+      .coc-data-layout { grid-template-columns:1fr; }
+      .coc-data-tool .coc-data-layout .coc-data-brief {
+        position:relative;
+        top:auto;
+        min-height:0;
+      }
+      .coc-data-brief-meta { grid-template-columns:repeat(3,minmax(0,1fr)); }
+    }
+    @media (min-width:1121px) and (max-height:760px) {
+      .coc-data-tool .coc-data-layout .coc-data-brief {
+        position:relative;
+        top:auto;
+      }
+    }
+    @media (max-width:680px) {
+      .coc-data-layout { width:min(100% - 24px,1260px); gap:12px; margin-top:14px; }
+      .coc-data-content { animation-name:cocContentInMobile; }
+      .coc-data-tool .coc-data-layout .coc-data-brief { padding:20px!important; border-radius:17px; }
+      .coc-data-tool .coc-data-layout .coc-data-brief h1 { font-size:30px; }
+      .coc-data-brief-meta { grid-template-columns:1fr; margin-top:18px; }
+      .coc-data-open-card { align-items:flex-start; padding:16px; }
+      .coc-data-open-action { width:100%; justify-content:center; }
+    }
+    @media (prefers-reduced-motion:reduce) {
+      .coc-data-brief,
+      .coc-data-content,
+      .coc-data-tool .dq-card { animation:none!important; }
+      .coc-data-tool .dq-card:hover .dc-emoji { transform:none; }
+    }
+  </style>
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tactical.css?v=20260827" />
+  <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828j" />
+</head>
+<body class="coc-tool coc-data-tool">
+  <a class="tz-skip-link" href="#mainContent">跳到主要内容</a>
+  <div class="bg-mesh" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="https://wjtianze.github.io/index.html" aria-label="天择网首页">
+        <span class="logo-mark">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/>
+          </svg>
+        </span>
+        <span class="logo-text">天择网</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-label="菜单" data-ui-icon="menu"></button>
+      <nav class="nav" aria-label="主导航"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html" class="active"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a><a href="https://wjtianze.github.io/contact/index.html"><span>联系开发者</span></a></nav>
+    </div>
+  </header>
+
+  <main class="coc-console" id="mainContent" tabindex="-1">
+    <div class="coc-data-layout wrap">
+    <section class="page-head coc-data-brief">
+      <div class="crumb reveal in">
+        <a href="https://wjtianze.github.io/index.html">主页</a> <span>›</span>
+        <a href="https://wjtianze.github.io/coc/index.html">COC 专区</a> <span>›</span>
+        <span>游戏静态数据</span>
+      </div>
+      <div class="coc-kicker reveal in d1">游戏静态数据 · 18.400.22</div>
+      <h1 class="reveal in d1">查单位、等级与升级数值</h1>
+      <p class="reveal in d2">这里收录从 18.400.22 国际服安装包整理出的游戏数值。按中英文名称搜索，就能查看等级、伤害、生命值、费用和升级时间；数据下载到页面后不需要联网。</p>
+      <div class="coc-data-brief-meta" aria-label="数据集信息">
+        <span><span class="tz-icon" data-icon="folder" aria-hidden="true"></span>273 个精选单位</span>
+        <span><span class="tz-icon" data-icon="search" aria-hidden="true"></span>支持中英文搜索</span>
+        <span><span class="tz-icon" data-icon="shield" aria-hidden="true"></span>本页不查询玩家资料</span>
+      </div>
+    </section>
+
+    <div class="coc-data-content">
+    <div class="coc-static-panel" id="dqStaticPanel">
+    <section class="section coc-data-results-section">
+      <div class="dq-toolbar reveal">
+        <div class="dq-search" role="search">
+          <span class="dq-ic" data-ui-icon="search" aria-hidden="true"></span>
+          <input id="dqInput" name="static_search" type="search" placeholder="搜索单位中英文名称或关键字…" autocomplete="off" aria-label="搜索游戏数据" aria-controls="dqGrid" />
+          <button class="dq-clear" id="dqClear" type="button" aria-label="清除搜索关键词" hidden><span class="tz-icon" data-icon="close" aria-hidden="true"></span></button>
+        </div>
+        <span class="dq-count" id="dqCount" role="status" aria-live="polite">加载中…</span>
+      </div>
+
+      <div class="dq-cats reveal d1" id="dqCats" role="group" aria-label="数据分类筛选"></div>
+
+      <div class="dq-loading" id="dqLoading" role="status" aria-live="polite">
+        <div class="spinner"></div>
+        <div>正在加载游戏数据…</div>
+      </div>
+
+      <div class="dq-grid" id="dqGrid" style="display:none;" aria-label="游戏数据查询结果" aria-busy="true"></div>
+
+      <div class="dq-empty" id="dqEmpty" style="display:none;" role="status">
+        <div class="de-icon" data-ui-icon="search" aria-hidden="true"></div>
+        <h3>没有找到匹配的数据</h3>
+        <p>换个关键词，或选择「全部」分类试试。</p>
+      </div>
+    </section>
+
+    <section class="section coc-data-open-section">
+      <a class="card reveal coc-data-open-card" href="https://wjtianze.github.io/coc/live/index.html">
+        <div class="coc-link-icon" data-ui-icon="search" aria-hidden="true"></div>
+        <div class="coc-data-open-copy">
+          <h3>要查玩家、部落或部落对战？</h3>
+          <p>实时资料已经放到独立专区，可查询玩家、部落、部落对战、部落对战联赛、突袭、地区与排行榜。</p>
+        </div>
+        <span class="btn btn--sm coc-data-open-action"><span>打开实时查询</span><span class="tz-icon" data-icon="right" aria-hidden="true"></span></span>
+      </a>
+    </section>
+
+    <!-- 底部：指向数据开源 -->
+    <section class="section coc-data-open-section">
+      <a class="card reveal coc-data-open-card" href="https://wjtianze.github.io/open/index.html">
+        <div class="coc-link-icon" data-ui-icon="folder" aria-hidden="true"></div>
+        <div class="coc-data-open-copy">
+          <h3>本页数据已开源</h3>
+          <p>下载 18.400.22 数据文件与整理工具，也可以自己复现查询结果。</p>
+        </div>
+        <span class="btn btn--sm coc-data-open-action"><span>前往数据开源</span><span class="tz-icon" data-icon="right" aria-hidden="true"></span></span>
+      </a>
+    </section>
+    </div>
+
+    </div>
+    </div>
+  </main>
+
+  <footer class="coc-fan-notice">本页是非官方玩家内容，未经 Supercell 认可或赞助。详见 <a href="https://supercell.com/en/fan-content-policy/" target="_blank" rel="noopener noreferrer">Supercell 玩家内容政策</a>。</footer>
+
+  <div class="dq-overlay" id="dqOverlay" aria-hidden="true">
+    <div class="dq-modal" id="dqModal" role="dialog" aria-modal="true" aria-labelledby="dqDialogTitle" tabindex="-1"></div>
+  </div>
+
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260828j-v5.3.0"></script>
+  <script src="https://wjtianze.github.io/coc/shared/game-assets.js?v=20260830b"></script>
+  <script>
+  (function () {
+    var params = new URLSearchParams(location.search);
+    var oldView = String(params.get("source") || params.get("view") || params.get("tab") || "").toLowerCase();
+    var oldHash = location.hash.replace(/^#/, "").toLowerCase();
+    var oldLiveLink = oldView === "live" || oldHash === "live" || oldHash === "coclivepanel";
+    if (!oldLiveLink) return;
+    params.delete("source");
+    params.delete("view");
+    params.delete("tab");
+    var query = params.toString();
+    location.replace("../live/" + (query ? "?" + query : ""));
+  })();
+  </script>
+  <script>
+  (function () {
+    "use strict";
+
+    /* ---------- 大类配置（细分 category 归并） ---------- */
+    var BIG_CATS = [
+      { key: "troop",  zh: "兵种", icon: "swords", subs: ["圣水兵","超级兵","黑油兵","攻城机器","夜世界兵种"] },
+      { key: "spell",  zh: "法术", icon: "sparkle", subs: ["圣水法术","黑油法术"] },
+      { key: "hero",   zh: "英雄", icon: "trophy", subs: ["英雄","夜世界英雄"] },
+      { key: "pet",    zh: "战宠", icon: "heart", subs: ["战宠"] },
+      { key: "equip",  zh: "装备", icon: "shield", subs: ["蛮王装备","女王装备","永王装备","王子装备","闰土装备","龙王装备"] },
+      { key: "build",  zh: "建筑", icon: "home", subs: ["防御建筑","科技建筑","资源建筑","其它建筑","夜世界防御建筑","夜世界科技建筑","夜世界资源建筑","夜世界其它建筑"] },
+      { key: "trap",   zh: "陷阱", icon: "warning", subs: ["陷阱","夜世界陷阱"] },
+      { key: "guard",  zh: "守卫", icon: "shield", subs: ["守卫"] },
+      { key: "helper", zh: "帮手", icon: "settings", subs: ["帮手角色"] }
+    ];
+    function uiGlyph(key) { return '<span class="tz-icon" data-icon="' + esc(key || "file") + '" aria-hidden="true"></span>'; }
+    var SUB2BIG = {};
+    BIG_CATS.forEach(function (c) { c.subs.forEach(function (s) { SUB2BIG[s] = c.key; }); });
+    function bigMeta(key) { for (var i = 0; i < BIG_CATS.length; i++) if (BIG_CATS[i].key === key) return BIG_CATS[i]; return { key: key, zh: key, icon: "file" }; }
+    // 数据文件继续保留旧 category，界面统一显示游戏当前官方名称。
+    var CATEGORY_DISPLAY = {
+      "夜世界兵种": "建筑大师基地兵种",
+      "夜世界英雄": "建筑大师基地英雄",
+      "夜世界资源建筑": "建筑大师基地资源建筑",
+      "夜世界科技建筑": "建筑大师基地科技建筑",
+      "夜世界防御建筑": "建筑大师基地防御建筑",
+      "夜世界其它建筑": "建筑大师基地其它建筑",
+      "夜世界陷阱": "建筑大师基地陷阱",
+      "帮手角色": "帮手"
+    };
+    function categoryDisplay(value) { return CATEGORY_DISPLAY[value] || value || ""; }
+    function visualLevel(unit) {
+      var levels = unit && unit.levels || [];
+      return levels.length ? levels[levels.length - 1].level : null;
+    }
+    function gameImage(unit, className, size) {
+      return window.CocGameAssets && unit ? window.CocGameAssets.image(unit.globalID, visualLevel(unit), {
+        className: className || "", size: size || 54, alt: ""
+      }) : "";
+    }
+    function levelGameImage(unit, level, name) {
+      var asset = window.CocGameAssets && unit ? window.CocGameAssets.entry(unit.globalID) : null;
+      var levelKey = String(parseInt(level, 10));
+      var hasLevelImage = !!(asset && asset.levels && asset.levels[levelKey]);
+      var image = hasLevelImage ? window.CocGameAssets.image(unit.globalID, level, {
+        className: "dm-level-image", size: 52, alt: (name || unit.chineseName || unit.englishName || "单位") + " " + level + "级外观"
+      }) : "";
+      return '<span class="dm-level-visual-cell">' + image + '<span class="dm-level-image-fallback">无逐级立绘</span></span>';
+    }
+
+    /* ---------- 字段翻译 ---------- */
+    var RES_ZH = { Elixir: "圣水", Gold: "金币", DarkElixir: "暗黑重油", BuilderElixir: "建筑大师圣水", BuilderGold: "建筑大师金币" };
+    function resZh(v) { return RES_ZH[v] || v || "-"; }
+    function isBB(sub) { return sub && sub.indexOf("夜世界") === 0; }
+
+    var SA_LABEL = {
+      HousingSpace: "占用人口", Speed: "移动速度", AttackRange: "攻击范围", AttackSpeed: "攻击间隔",
+      IsFlying: "飞行单位", AirTargets: "对空攻击", GroundTargets: "对地攻击", UpgradeResource: "升级资源",
+      ProductionBuilding: "生产建筑", BarrackLevel: "需训练营等级", MovementOffsetSpeed: "移动偏移",
+      DamageRadius: "伤害范围", HousingSpaceAlt: "_alt人口", HousingSpaceSiege: "攻城人口",
+      TrainingTime: "训练时间", TrainingCost: "训练费用", RegenTime: "恢复时间"
+    };
+    var SA_BOOL = { IsFlying: 1, AirTargets: 1, GroundTargets: 1, IsJumper: 1, TriggersTraps: 1 };
+
+    var LV_LABEL = {
+      level: "等级", Level: "等级", VisualLevel: "显示等级", Hitpoints: "生命值", HitPoints: "生命值",
+      DPS: "伤害/秒", Damage: "伤害", Damage2: "伤害2", UpgradeCost: "升级费用", UpgradeCosts: "升级费用",
+      UpgradeTimeH: "升级时间", UpgradeTimeM: "", UpgradeTimeS: "", BuildCost: "建造费用",
+      BuildTimeD: "建造时间", BuildTimeH: "", BuildTimeM: "", BuildTimeS: "",
+      LaboratoryLevel: "需实验室", RequiredBlacksmithLevel: "需铁匠铺", requiredTownHallLevel: "需大本营",
+      RequiredTownHallLevel: "需大本营", TownHallLevel: "大本营等级", BuildingLevel: "建筑等级",
+      TrainingCost: "训练费用", TrainingTime: "训练时间", MainAbilityLevels: "主技能等级",
+      ExtraAbilityLevels: "副技能等级", HousingSpace: "人口", RegenTime: "恢复时间",
+      DamageRadius: "伤害范围", UnitsInCamp: "营内数量", BoostMultiplier: "加成倍数",
+      Cost: "费用", HealOnActivation: "激活治疗", AttackSpeedPercentage: "攻速百分比",
+      HousingSpaceAlt: "_alt人口", HousingSpaceSiege: "攻城人口", CapitalHallLevel: "都城等级",
+      AmmoCost: "弹药费用", PoisonDPS: "毒伤/秒", SpeedBoost: "提速", SpeedBoost2: "提速2",
+      AttackSpeedBoost: "攻速提升", ShieldTime: "护盾时间", InvisibilityTime: "隐身时间",
+      NumberOfHits: "攻击次数", BurstCount: "连发数", SummonTroopCount: "召唤数量", SummonTime: "召唤时间",
+      SkillDamage: "技能伤害"
+    };
+
+    /* ---------- 时间/费用格式化 ---------- */
+    function num(v) { if (v === undefined || v === null || v === "") return ""; var n = Number(v); return isNaN(n) ? v : n.toLocaleString("en-US"); }
+    function durationSeconds(lv, prefix) {
+      return Number(lv[prefix + "D"] || 0) * 86400 + Number(lv[prefix + "H"] || 0) * 3600 +
+        Number(lv[prefix + "M"] || 0) * 60 + Number(lv[prefix + "S"] || 0);
+    }
+    function readableDuration(seconds) {
+      if (!seconds) return "";
+      var total = Math.ceil(Number(seconds));
+      if (total < 60) return total + "秒";
+      total = Math.ceil(total / 60) * 60;
+      var d = Math.floor(total / 86400); total %= 86400;
+      var h = Math.floor(total / 3600); total %= 3600;
+      var m = Math.floor(total / 60);
+      var p = [];
+      if (d) p.push(d + "天");
+      if (h || d) p.push(h + "小时");
+      if (m) p.push(m + "分钟");
+      return p.join("");
+    }
+    function reductionFactor() {
+      return (1 - REDUCTIONS.pass / 100) * (1 - REDUCTIONS.event / 100);
+    }
+    function effectiveReduction() { return (1 - reductionFactor()) * 100; }
+    function pct(v) { return Number(v.toFixed(2)).toLocaleString("zh-CN") + "%"; }
+    function timeHtml(lv, prefix) {
+      var base = durationSeconds(lv, prefix);
+      if (!base) return "";
+      var factor = reductionFactor();
+      var current = readableDuration(Math.ceil(base * factor));
+      return current + (factor < 1 ? '<span class="dm-base-value">原 ' + readableDuration(base) + '</span>' : "");
+    }
+    function costHtml(v, res) {
+      var base = Number(v);
+      if (!isFinite(base)) return esc(String(v)) + resIcon(res);
+      var factor = reductionFactor();
+      var current = Math.ceil(base * factor);
+      return num(current) + resIcon(res) + (factor < 1 ? '<span class="dm-base-value">原 ' + num(base) + '</span>' : "");
+    }
+    function reductionOptions(values, selected) {
+      return values.map(function (v) {
+        return '<option value="' + v + '"' + (v === selected ? " selected" : "") + '>' + (v ? v + "%" : "无减免") + '</option>';
+      }).join("");
+    }
+    function reductionControlsHtml() {
+      return '<div class="dm-reduction-panel" aria-label="升级减免计算器">' +
+        '<div class="dm-reduction-head"><div><strong>升级减免</strong><span>实时重算表内升级时间与单资源费用</span></div>' +
+        '<output class="dm-reduction-total">等效总减免 ' + pct(effectiveReduction()) + '</output></div>' +
+        '<div class="dm-reduction-fields">' +
+          '<label><span>黄金令牌</span><select data-reduction="pass" aria-label="黄金令牌减免">' + reductionOptions([0, 10, 15, 20], REDUCTIONS.pass) + '</select></label>' +
+          '<label><span>夏日狂欢节／夯木节</span><select data-reduction="event" aria-label="活动减免">' + reductionOptions([0, 25, 40, 50], REDUCTIONS.event) + '</select></label>' +
+        '</div>' +
+        '<div class="dm-reduction-note">按剩余比例相乘，不直接相加；当前保留原费用与原时长的 ' + pct(reductionFactor() * 100) + '。费用按资源整数、时间按分钟向上取整。</div>' +
+      '</div>';
+    }
+    function resIcon(res) {
+      if (res === "DarkElixir") return ' <span class="res-mark res-dark">DE</span>';
+      if (res === "Elixir" || res === "BuilderElixir") return ' <span class="res-mark res-elixir">E</span>';
+      if (res === "Gold" || res === "BuilderGold") return ' <span class="res-mark res-gold">G</span>';
+      return "";
+    }
+
+    /* ---------- 状态 ---------- */
+    var UNITS = [];
+    var currentBig = "all";
+    var currentKw = "";
+    var lastFocus = null;
+    var lastBodyOverflow = "";
+    var REDUCTIONS = loadReductions();
+    function loadReductions() {
+      try {
+        var saved = JSON.parse(localStorage.getItem("tz-coc-upgrade-reductions-v1") || "{}");
+        var pass = [0, 10, 15, 20].indexOf(Number(saved.pass)) !== -1 ? Number(saved.pass) : 0;
+        var event = [0, 25, 40, 50].indexOf(Number(saved.event)) !== -1 ? Number(saved.event) : 0;
+        return { pass: pass, event: event };
+      } catch (e) { return { pass: 0, event: 0 }; }
+    }
+    function saveReductions() {
+      try { localStorage.setItem("tz-coc-upgrade-reductions-v1", JSON.stringify(REDUCTIONS)); } catch (e) {}
+    }
+
+    /* ---------- 附属单位（被其它单位 SecondaryTroop/SummonTroop 引用的单位，如小戈仑石人） ---------- */
+    var BY_EN = {};      // englishName -> unit
+    var CHILD_OF = {};   // child englishName -> [{parent, kind}]
+    function buildSubIndex() {
+      BY_EN = {}; CHILD_OF = {};
+      UNITS.forEach(function (u) { if (u.englishName) BY_EN[u.englishName] = u; });
+      UNITS.forEach(function (u) {
+        var sa = u.staticAttributes || {};
+        [["SecondaryTroop", "死亡分裂"], ["SummonTroop", "召唤"]].forEach(function (pair) {
+          var v = sa[pair[0]];
+          if (!v) return;
+          String(v).split(";").forEach(function (c) {
+            c = c.trim(); if (!c) return;
+            (CHILD_OF[c] = CHILD_OF[c] || []).push({ parent: u, kind: pair[1] });
+          });
+        });
+      });
+    }
+    function isSub(u) { return !!(u && u.englishName && CHILD_OF[u.englishName]); }
+    function subsOf(u) {  // 主单位 -> 附属单位列表 [{unit, kind}]
+      var sa = (u && u.staticAttributes) || {};
+      var out = [];
+      [["SecondaryTroop", "死亡分裂"], ["SummonTroop", "召唤"]].forEach(function (pair) {
+        var v = sa[pair[0]];
+        if (!v) return;
+        String(v).split(";").forEach(function (c) {
+          c = c.trim(); if (!c) return;
+          var child = BY_EN[c];
+          if (child) out.push({ unit: child, kind: pair[1] });
+        });
+      });
+      return out;
+    }
+
+    /* ---------- 卡片关键属性 ---------- */
+    function cardStats(u) {
+      var sa = u.staticAttributes || {};
+      var lvs = u.levels || [];
+      var max = lvs.length ? lvs[lvs.length - 1] : {};
+      var out = [];
+      function add(k, v) { if (v !== undefined && v !== null && v !== "" && v !== "0" || (v === "0" && k.indexOf("人口") === -1)) { if (v !== undefined && v !== null && v !== "" && v !== "0" || k === "生命值" || k === "伤害") out.push({ k: k, v: v }); } }
+      var big = SUB2BIG[u.category] || "";
+      if (big === "troop" || big === "hero" || big === "pet" || big === "guard") {
+        add("DPS", max.DPS); add("生命", max.Hitpoints); add("人口", sa.HousingSpace);
+      } else if (big === "spell") {
+        add("伤害", max.Damage); add("人口", sa.HousingSpace);
+      } else if (big === "build") {
+        add("生命", max.Hitpoints); if (max.DPS) add("DPS", max.DPS);
+      } else if (big === "trap") {
+        add("伤害", max.Damage);
+      } else if (big === "equip") {
+        if (max.MainAbilityLevels) add("主技能", max.MainAbilityLevels);
+        if (sa.HousingSpace) add("人口", sa.HousingSpace);
+      } else if (big === "helper") {
+        if (max.BoostMultiplier) add("加成", max.BoostMultiplier);
+      }
+      return out.slice(0, 4);
+    }
+
+    /* ---------- 初始化 ---------- */
+    function loadData() {
+      var loading = document.getElementById("dqLoading");
+      var grid = document.getElementById("dqGrid");
+      var empty = document.getElementById("dqEmpty");
+      loading.style.display = "";
+      loading.innerHTML = '<div class="spinner" aria-hidden="true"></div><div>正在加载游戏数据…</div>';
+      grid.style.display = "none";
+      grid.setAttribute("aria-busy", "true");
+      empty.style.display = "none";
+      document.getElementById("dqCount").textContent = "加载中…";
+      var assetsReady = window.CocGameAssets ? window.CocGameAssets.ready() : Promise.resolve();
+      Promise.all([
+        fetch("all_game_data_zh.json?v=20260830a", { cache: "default" }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }),
+        assetsReady
+      ])
+        .then(function (values) {
+          var d = values[0];
+          UNITS = (d && d.units) ? d.units : [];
+          window.__TIANZE_COC_STATIC_UNITS__ = UNITS;
+          buildSubIndex();
+          renderCats();
+          render();
+          loading.style.display = "none";
+          grid.setAttribute("aria-busy", "false");
+        })
+        .catch(function (err) {
+          grid.setAttribute("aria-busy", "false");
+          document.getElementById("dqCount").textContent = "加载失败";
+          loading.innerHTML =
+            '<div class="dq-loading-error">' +
+              '<div class="coc-empty-icon">' + uiGlyph("warning") + '</div>' +
+              '<strong>游戏数据加载失败</strong>' +
+              '<div>' + esc(err && err.message ? err.message : String(err)) + '</div>' +
+              '<p>请确认当前页面通过天择网本地服务器或线上站点打开，然后重试。</p>' +
+              '<button type="button" class="btn btn--sm dq-retry" id="dqRetry">' + uiGlyph("refresh") + '<span>重新加载</span></button>' +
+            '</div>';
+          document.getElementById("dqRetry").addEventListener("click", loadData);
+        });
+    }
+
+    function init() {
+      var input = document.getElementById("dqInput"), timer = null;
+      var clear = document.getElementById("dqClear");
+      input.addEventListener("input", function () {
+        clearTimeout(timer);
+        clear.hidden = !input.value;
+        timer = setTimeout(function () { currentKw = input.value.trim().toLowerCase(); render(); }, 160);
+      });
+      clear.addEventListener("click", function () {
+        clearTimeout(timer);
+        input.value = "";
+        clear.hidden = true;
+        currentKw = "";
+        render();
+        input.focus();
+      });
+      var overlay = document.getElementById("dqOverlay");
+      overlay.addEventListener("click", function (e) { if (e.target === overlay) closeDetail(); });
+      document.addEventListener("keydown", function (e) {
+        if (!overlay.classList.contains("open")) return;
+        if (e.key === "Escape") { closeDetail(); return; }
+        if (e.key === "Tab") trapModalFocus(e);
+      });
+      loadData();
+    }
+
+    function renderCats() {
+      var box = document.getElementById("dqCats");
+      var primaryUnits = UNITS.filter(function (u) { return !isSub(u); });
+      var html = '<button type="button" class="dq-cat active" data-big="all" aria-pressed="true"><span>全部</span><span class="ct-num">' + primaryUnits.length + '</span></button>';
+      BIG_CATS.forEach(function (c) {
+        var n = primaryUnits.filter(function (u) { return c.subs.indexOf(u.category) !== -1; }).length;
+        html += '<button type="button" class="dq-cat" data-big="' + c.key + '" aria-pressed="false">' + uiGlyph(c.icon) + '<span>' + c.zh + '</span><span class="ct-num">' + n + '</span></button>';
+      });
+      box.innerHTML = html;
+      box.querySelectorAll(".dq-cat").forEach(function (el) {
+        el.addEventListener("click", function () {
+          box.querySelectorAll(".dq-cat").forEach(function (x) { x.classList.remove("active"); x.setAttribute("aria-pressed", "false"); });
+          el.classList.add("active");
+          el.setAttribute("aria-pressed", "true");
+          currentBig = el.getAttribute("data-big");
+          render();
+          var left = el.offsetLeft - (box.clientWidth - el.offsetWidth) / 2;
+          var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+          box.scrollTo({ left: Math.max(0, left), behavior: reduceMotion ? "auto" : "smooth" });
+        });
+      });
+    }
+
+    function match(u) {
+      if (currentBig !== "all") {
+        var bm = SUB2BIG[u.category];
+        if (bm !== currentBig) return false;
+      }
+      if (currentKw) {
+        // 主单位的搜索域包含其附属单位名称（搜"小戈仑"可命中戈仑石人）
+        var hay = [u.englishName, u.chineseName, u.description, u.category, categoryDisplay(u.category)];
+        subsOf(u).forEach(function (s) { hay.push(s.unit.englishName, s.unit.chineseName); });
+        var text = hay.filter(Boolean).join(" ").toLowerCase();
+        if (text.indexOf(currentKw) === -1) return false;
+      }
+      return true;
+    }
+
+    function displayText(value) {
+      var openQuote = true;
+      return String(value || "")
+        .replace(/\\q/g, function () { var quote = openQuote ? "“" : "”"; openQuote = !openQuote; return quote; })
+        .replace(/\\n/g, "\n");
+    }
+
+    function render() {
+      // 附属单位不单独成卡，合并到主单位卡片中展示
+      var list = UNITS.filter(function (u) { return !isSub(u); }).filter(match);
+      document.getElementById("dqCount").innerHTML = '共 <b>' + list.length + '</b> 条结果';
+      var grid = document.getElementById("dqGrid"), empty = document.getElementById("dqEmpty");
+      if (!list.length) { grid.innerHTML = ""; grid.style.display = "none"; empty.style.display = ""; return; }
+      empty.style.display = "none"; grid.style.display = "";
+      var frag = "";
+      list.forEach(function (u, idx) {
+        var bm = bigMeta(SUB2BIG[u.category] || "");
+        var zh = u.chineseName || u.englishName || "(未命名)";
+        var en = u.englishName || "";
+        var desc = displayText(u.description);
+        var stats = cardStats(u);
+        var statsHtml = stats.map(function (s) { return '<span class="dc-stat">' + esc(s.k) + ' <b>' + esc(String(s.v)) + '</b></span>'; }).join("");
+        // 附属单位概览：显示在主单位卡片下部
+        var subs = subsOf(u);
+        var attachHtml = "";
+        if (subs.length) {
+          attachHtml = '<div class="dc-attach">附属单位：' + subs.map(function (s) {
+            return '<b>' + esc(s.unit.chineseName || s.unit.englishName) + '</b><span style="opacity:.75">（' + s.kind + '）</span>';
+          }).join("、") + '</div>';
+        }
+        frag += '' +
+          '<button type="button" class="card dq-card" data-idx="' + idx + '" style="--dq-i:' + Math.min(idx, 12) + '" aria-label="查看' + esc(zh) + '详细数据">' +
+            '<div class="dc-top">' +
+              '<div class="dc-emoji">' + (gameImage(u, "dc-game-image", 52) || uiGlyph(bm.icon)) + '</div>' +
+              '<div class="dc-name">' +
+                '<h3>' + esc(zh) + '</h3>' +
+                (en ? '<div class="dc-en">' + esc(en) + '</div>' : '') +
+              '</div>' +
+            '</div>' +
+            '<span class="dc-pill">' + esc(categoryDisplay(u.category)) + '</span>' +
+            (desc ? '<div class="dc-info">' + esc(desc) + '</div>' : '') +
+            (statsHtml ? '<div class="dc-stats">' + statsHtml + '</div>' : '') +
+            attachHtml +
+          '</button>';
+      });
+      grid.innerHTML = frag;
+      grid.querySelectorAll(".dq-card").forEach(function (node, i) {
+        var entry = list[i];
+        node.addEventListener("click", function () { openDetail(entry); });
+      });
+    }
+
+    /* ---------- 详情弹窗 ---------- */
+    function openDetail(u, parentUnit) {
+      var bm = bigMeta(SUB2BIG[u.category] || "");
+      var sa = u.staticAttributes || {};
+      var lvs = u.levels || [];
+      var zh = u.chineseName || u.englishName || "(未命名)";
+      var en = u.englishName || "";
+      var desc = displayText(u.description);
+
+      // 基础属性（白名单）
+      var attrs = [];
+      Object.keys(SA_LABEL).forEach(function (k) {
+        if (k.charAt(0) === "_") return;
+        var v = sa[k];
+        if (v === undefined || v === null || v === "") return;
+        var d = v;
+        if (SA_BOOL[k]) d = (v === "TRUE" || v === "true") ? "是" : "否";
+        else if (k === "UpgradeResource") d = resZh(v);
+        else if (k === "AttackSpeed") d = num(v) + " ms";
+        else if (k === "Speed") d = num(v);
+        else d = num(v);
+        attrs.push({ k: SA_LABEL[k], v: d });
+      });
+      var attrsHtml = attrs.map(function (a) { return '<div class="dm-attr"><div class="ak">' + esc(a.k) + '</div><div class="av">' + esc(String(a.v)) + '</div></div>'; }).join("");
+
+      // pills
+      var res = sa.UpgradeResource || sa.BuildResource;
+      var pills = '<span class="p">' + esc(categoryDisplay(u.category)) + '</span>';
+      // 附属单位标识：明确标注此单位为附属单位及来源
+      if (isSub(u)) {
+        var srcs = CHILD_OF[u.englishName] || [];
+        pills += '<span class="p"><span class="dq-badge-sub-inline">附属单位</span></span>';
+        if (srcs.length) pills += '<span class="p">来源：' + srcs.map(function (s) { return esc(s.parent.chineseName || s.parent.englishName) + "（" + s.kind + "）"; }).join("、") + '</span>';
+      }
+      pills += '<span class="p tz-icon-label">' + uiGlyph('pin') + '<span>' + (isBB(u.category) ? "建筑大师基地" : "家乡村庄") + '</span></span>';
+      if (res) pills += '<span class="p tz-icon-label">' + uiGlyph('refresh') + '<span>' + resZh(res) + '</span></span>';
+      if (sa.HousingSpace) pills += '<span class="p tz-icon-label">' + uiGlyph('user') + '<span>人口 ' + esc(String(sa.HousingSpace)) + '</span></span>';
+
+      // 等级表
+      var lvHtml = "";
+      if (lvs.length) {
+        // 选列：固定 level + 出现率高的关键列
+        var prefer = ["level","Hitpoints","HitPoints","DPS","Damage","SkillDamage","UpgradeCost","UpgradeCosts","UpgradeTimeH","BuildCost","BuildTimeD","LaboratoryLevel","RequiredBlacksmithLevel","requiredTownHallLevel","RequiredTownHallLevel","MainAbilityLevels","HousingSpace","UnitsInCamp","TrainingCost","TrainingTime","BoostMultiplier","Cost","RegenTime","DamageRadius","HealOnActivation","AttackSpeedPercentage"];
+        var cols = [];
+        lvs.forEach(function (lv) { Object.keys(lv).forEach(function (k) { if (cols.indexOf(k) === -1) cols.push(k); }); });
+        // 按 prefer 排序，未在 prefer 里的跳过（避免视觉/效果字段）
+        var showCols = prefer.filter(function (k) { return cols.indexOf(k) !== -1; });
+        // 合并时间列：UpgradeTimeH 显示为"升级时间"，BuildTimeD 显示为"建造时间"
+        var head = showCols.map(function (k) {
+          var lbl = LV_LABEL[k] || k;
+          if (lbl === "") return ""; // 时间子字段不单独成列
+          return '<th scope="col">' + esc(lbl) + '</th>' + ((k === "level" || k === "Level") ? '<th scope="col">外观</th>' : '');
+        }).join("");
+        var rows = lvs.map(function (lv) {
+          return '<tr>' + showCols.map(function (k) {
+            var lbl = LV_LABEL[k] || k;
+            if (lbl === "") return '<td></td>';
+            var v = lv[k];
+            var d = "";
+            if (v === undefined || v === null || v === "") d = "-";
+            else if (k === "level" || k === "Level") d = '<span class="lv">' + esc(String(v)) + '</span>';
+            else if (k === "UpgradeTimeH") d = timeHtml(lv, "UpgradeTime") || "-";
+            else if (k === "BuildTimeD") d = timeHtml(lv, "BuildTime") || "-";
+            else if (k === "UpgradeCost" || k === "BuildCost") d = costHtml(v, res);
+            else if (k === "TrainingCost") d = num(v) + resIcon(res);
+            else if (k === "UpgradeCosts") d = esc(String(v)) + resIcon(res);
+            else if (k === "requiredTownHallLevel" || k === "RequiredTownHallLevel" || k === "TownHallLevel" || k === "LaboratoryLevel" || k === "RequiredBlacksmithLevel" || k === "BuildingLevel" || k === "MainAbilityLevels" || k === "UnitsInCamp" || k === "BoostMultiplier") d = esc(String(v));
+            else if (typeof v === "string" && v.length > 30) d = esc(v.slice(0, 28)) + "…";
+            else d = esc(String(v));
+            return lbl === "" ? "" : '<td>' + d + '</td>' + ((k === "level" || k === "Level") ? '<td class="dm-level-visual">' + levelGameImage(u, v, zh) + '</td>' : '');
+          }).join("") + '</tr>';
+        }).join("");
+        var hasReductionData = lvs.some(function (lv) {
+          return durationSeconds(lv, "UpgradeTime") || durationSeconds(lv, "BuildTime") || Number(lv.UpgradeCost) || Number(lv.BuildCost);
+        });
+        lvHtml = (hasReductionData ? reductionControlsHtml() : "") +
+          '<div class="dm-section-h"><span class="bar"></span>等级数据（共 ' + lvs.length + ' 级）</div>' +
+          '<div class="dm-table-wrap" tabindex="0" role="region" aria-label="' + esc(zh) + '等级数据表，可横向滚动"><table class="dm-table"><caption class="dq-visually-hidden">' + esc(zh) + '各等级属性</caption><thead><tr>' + head + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+
+        // 装备技能数据（主技能 + 副技能全等级，与装备数据展示在一块，不再单列）
+        if (u.abilityData && u.abilityData.length) {
+          u.abilityData.forEach(function (ab) {
+            var abLvs = ab.levels || [];
+            if (!abLvs.length) return;
+            // 列并集（等级在前）
+            var keys = [];
+            abLvs.forEach(function (lv) {
+              Object.keys(lv).forEach(function (k) { if (k !== "等级" && keys.indexOf(k) === -1) keys.push(k); });
+            });
+            var head = '<th>技能等级</th>' + keys.map(function (k) { return '<th>' + esc(k) + '</th>'; }).join("");
+            var rows = abLvs.map(function (lv) {
+              return '<tr><td><span class="lv">' + esc(String(lv["等级"] || "-")) + '</span></td>' +
+                keys.map(function (k) {
+                  var v = lv[k];
+                  return '<td>' + (v === undefined || v === null || v === "" ? "-" : esc(String(v))) + '</td>';
+                }).join("") + '</tr>';
+            }).join("");
+            var isMain = ab.type === "主技能";
+            lvHtml += '<div class="dq-abil"><div class="dq-abil-head">' +
+              '<span class="dq-abil-tag' + (isMain ? "" : " extra") + '">' + esc(ab.type || "技能") + '</span>' +
+              '<span class="dq-abil-name">' + esc(ab.chineseName || ab.name || "技能") + '</span></div>' +
+              '<div class="dm-table-wrap" tabindex="0" role="region" aria-label="' + esc(ab.chineseName || ab.name || "技能") + '等级数据表，可横向滚动"><table class="dm-table"><caption class="dq-visually-hidden">' + esc(ab.chineseName || ab.name || "技能") + '各等级属性</caption><thead><tr>' + head + '</tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+          });
+        } else {
+          var hasSkills = lvs.some(function (lv) { return lv.skills && lv.skills.length; });
+          if (hasSkills) {
+            var maxSkills = lvs[lvs.length - 1].skills || [];
+            var skHtml = maxSkills.map(function (sk) {
+              return '<div class="dm-attr"><div class="ak">' + esc(sk.chineseName || sk.name || "技能") + (sk.type ? " (" + sk.type + ")" : "") + '</div><div class="av">技能等级 ' + esc(String(sk.abilityLevel || "-")) + '</div></div>';
+            }).join("");
+            lvHtml += '<div class="dm-section-h"><span class="bar"></span>满级装备技能</div><div class="dm-attrs">' + skHtml + '</div>';
+          }
+        }
+        lvHtml += '<div class="dm-note">数据来自《部落冲突》APK 提取的静态游戏数据，时间已换算为可读格式，资源数量带图标标注。所需大本营等级为该等级解锁的最低大本营等级。</div>';
+      } else {
+        lvHtml = '<div class="dm-section-h"><span class="bar"></span>等级数据</div><div class="dm-note">该单位无等级数据。</div>';
+      }
+
+      // 主体内容
+      var mainHtml = (desc ? '<div class="dm-desc">' + esc(desc) + '</div>' : '') +
+        (attrsHtml ? '<div class="dm-section-h"><span class="bar"></span>基础属性</div><div class="dm-attrs">' + attrsHtml + '</div>' : '') +
+        lvHtml;
+      // 附属单位：详细信息中显示在主单位右侧，带明确标识
+      var subs = subsOf(u);
+      var bodyHtml;
+      if (subs.length) {
+        var sideHtml = '<div class="dq-sub-side"><h4>附属单位（' + subs.length + '）</h4>' +
+          subs.map(function (s, i) {
+            var cu = s.unit;
+            var cstats = cardStats(cu).map(function (x) { return '<span>' + esc(x.k) + ' ' + esc(String(x.v)) + '</span>'; }).join("");
+            return '<button type="button" class="dq-sub-card" data-sub="' + i + '" aria-label="查看附属单位 ' + esc(cu.chineseName || cu.englishName) + ' 详细数据">' +
+              '<span class="dq-sub-badge">附属单位</span>' +
+              '<div class="dq-sub-top">' + gameImage(cu, "dq-sub-image", 42) + '<div><div class="dq-sub-name">' + esc(cu.chineseName || cu.englishName) + '</div>' +
+              (cu.englishName ? '<div class="dq-sub-en">' + esc(cu.englishName) + '</div>' : '') + '</div></div>' +
+              '<div class="dq-sub-kind">来源：' + esc(zh) + ' · ' + s.kind + '</div>' +
+              (cstats ? '<div class="dq-sub-stats">' + cstats + '</div>' : '') +
+            '</button>';
+          }).join("") + '</div>';
+        bodyHtml = '<div class="dm-cols"><div class="dm-maincol">' + mainHtml + '</div>' + sideHtml + '</div>';
+      } else {
+        bodyHtml = mainHtml;
+      }
+
+      document.getElementById("dqModal").innerHTML = '' +
+        '<button type="button" class="dq-close" id="dqClose" aria-label="关闭详情">' + uiGlyph("close") + '</button>' +
+        (parentUnit ? '<button type="button" class="dq-back" id="dqBack">' + uiGlyph("left") + '<span>返回 ' + esc(parentUnit.chineseName || parentUnit.englishName) + '</span></button>' : '') +
+        '<div class="dm-head">' +
+          '<div class="dm-emoji" aria-hidden="true">' + (gameImage(u, "dm-game-image", 64) || uiGlyph(bm.icon)) + '</div>' +
+          '<div class="dm-title"><h2 id="dqDialogTitle">' + esc(zh) + '</h2>' + (en ? '<div class="dm-en">' + esc(en) + '</div>' : '') + '</div>' +
+        '</div>' +
+        '<div class="dm-pills">' + pills + '</div>' +
+        bodyHtml;
+
+      document.getElementById("dqClose").addEventListener("click", closeDetail);
+      if (parentUnit) {
+        document.getElementById("dqBack").addEventListener("click", function () { openDetail(parentUnit); });
+      }
+      document.getElementById("dqModal").querySelectorAll("[data-sub]").forEach(function (node) {
+        node.addEventListener("click", function () {
+          var s = subs[Number(node.getAttribute("data-sub"))];
+          if (s) openDetail(s.unit, u);
+        });
+      });
+      document.getElementById("dqModal").querySelectorAll("[data-reduction]").forEach(function (node) {
+        node.addEventListener("change", function () {
+          var key = node.getAttribute("data-reduction");
+          REDUCTIONS[key] = Number(node.value);
+          saveReductions();
+          var overlay = document.getElementById("dqOverlay");
+          var scrollTop = overlay.scrollTop;
+          openDetail(u, parentUnit);
+          overlay.scrollTop = scrollTop;
+          var replacement = document.querySelector('[data-reduction="' + key + '"]');
+          if (replacement) replacement.focus();
+        });
+      });
+      var overlay = document.getElementById("dqOverlay");
+      if (!overlay.classList.contains("open")) {
+        lastFocus = document.activeElement;
+        lastBodyOverflow = document.body.style.overflow;
+      }
+      overlay.classList.add("open");
+      overlay.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+      overlay.scrollTop = 0;
+      document.getElementById("dqClose").focus();
+    }
+    function trapModalFocus(e) {
+      var modal = document.getElementById("dqModal");
+      var nodes = modal.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])');
+      if (!nodes.length) { e.preventDefault(); modal.focus(); return; }
+      var first = nodes[0], last = nodes[nodes.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+    function closeDetail() {
+      var overlay = document.getElementById("dqOverlay");
+      if (!overlay.classList.contains("open")) return;
+      overlay.classList.remove("open");
+      overlay.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = lastBodyOverflow;
+      if (lastFocus && document.contains(lastFocus) && typeof lastFocus.focus === "function") lastFocus.focus();
+      lastFocus = null;
+      lastBodyOverflow = "";
+    }
+
+    function esc(s) {
+      return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+
+    init();
+  })();
+  </script>
+</body>
+</html>

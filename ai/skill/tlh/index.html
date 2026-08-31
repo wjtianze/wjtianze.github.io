@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>课本学习助手 (TLH) · 技能 — 天择网</title>
+  <meta name="description" content="textbook-learning-helper（课本学习助手）：把教材章节一键转化为可离线打开的交互式 HTML 学习页，内置知识点演示、章节切换器、测验、错题本与 Codex 对话。" />
+  <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828j-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/workspace-pages.css?v=20260828-editorial-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/split-motion.css?v=20260827d-v5.3.0" data-tz-split-motion />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/site-refactor.css?v=20260828-editorial-v5.3.0" data-tz-site-refactor />
+  <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828j" />
+</head>
+<body class="wp-editorial-page wp-editorial-page--skill" data-workspace-page="tlh-skill">
+  <a class="wp-skip" href="#main-content">跳到主要内容</a>
+  <div class="bg-mesh"></div>
+
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="https://wjtianze.github.io/index.html" aria-label="天择网首页">
+        <span class="logo-mark">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/>
+          </svg>
+        </span>
+        <span class="logo-text">天择网</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-label="菜单" data-ui-icon="menu"></button>
+      <nav class="nav"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html" class="active"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a></nav>
+    </div>
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    <!-- 标题 -->
+    <section class="wp-hero wrap" aria-labelledby="tlh-title">
+      <div>
+        <div class="wp-kicker">把教材变成学习页</div>
+        <h1 id="tlh-title">课本学习助手 <span class="grad">TLH</span></h1>
+        <p>把一章教材整理成可以离线打开、也能与 AI 对话的学习页。知识点、章节摘要、教材原文、测验、错题本、批阅记录和交互演示都放在一起，普通 API 版与 L8.0-codex 桌面版均可下载。</p>
+        <div class="wp-chip-row">
+          <span class="wp-chip">L7.0 API 版</span>
+          <span class="wp-chip">L8.0-codex 桌面版</span>
+          <span class="wp-chip">完全开源</span>
+          <span class="wp-chip">离线 HTML</span>
+        </div>
+      </div>
+      <div class="wp-hero-visual" aria-hidden="true"><span data-ui-icon="book"></span></div>
+    </section>
+
+    <!-- 功能定位 -->
+    <section class="wp-section wrap" aria-labelledby="tlh-purpose">
+      <div class="wp-card wp-prose reveal">
+        <div class="wp-section-head"><div><div class="wp-kicker">从读到练</div><h2 id="tlh-purpose">适合拿来做什么</h2></div></div>
+        <p>课本学习助手可以读数理化教材、PDF 和扫描件，整理指定章节的知识点，再把“读教材、理知识点、做题、对答案、问 AI”放进一个可以离线打开的学习页。</p>
+        <div class="wp-step-list">
+          <article class="wp-step"><div><h3>自学理工科教材</h3><p>把数学、物理、化学等章节变成带交互演示的知识点与题库。</p></div></article>
+          <article class="wp-step"><div><h3>期末复习与章节精练</h3><p>一屏一题，答题卡与错题本自动收集结果，AI 批阅主观题。</p></div></article>
+          <article class="wp-step"><div><h3>教师与助教</h3><p>批量生成指定章节的课后练习、演示与讲解页。</p></div></article>
+          <article class="wp-step"><div><h3>开发者二次开发</h3><p>基于完全开源的模板与注入脚本定制功能，包括商业用途。</p></div></article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 核心功能 -->
+    <section class="wp-section wrap" aria-labelledby="tlh-features">
+      <div class="wp-section-head reveal">
+        <div><div class="wp-kicker">可以做什么</div><h2 id="tlh-features">核心功能</h2></div>
+        <p>更多细节见使用教程</p>
+      </div>
+      <div class="wp-grid">
+        <article class="wp-card wp-feature-card reveal d1">
+          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="folder"></span></div>
+          <h3>五视图两栏布局</h3>
+          <p>左栏切换知识点 / 教材原文 / 测验 / 错题本 / 批阅数据，右栏 AI 对话；列宽可拖动。</p>
+        </article>
+        <article class="wp-card wp-feature-card reveal d2">
+          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="edit"></span></div>
+          <h3>六大题型 + 判分</h3>
+          <p>单选/多选/不定项/判断/填空/解答；客观题本地判分，主观题 AI 批阅；多选漏选但没错选得一半分。</p>
+        </article>
+        <article class="wp-card wp-feature-card reveal d2">
+          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="play"></span></div>
+          <h3>交互式演示</h3>
+          <p>每个知识点都配一段可以动手操作的演示；调参数、点按钮，就能直接看到概念如何变化，公式和说明也会自动排版。</p>
+        </article>
+        <article class="wp-card wp-feature-card reveal d3">
+          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="ai"></span></div>
+          <h3>AI 对话</h3>
+          <p>在线体验点开就能用；Codex 版登录你自己的 ChatGPT 账号，可以按账号选择模型、思考强度和回答速度，也能处理图片。</p>
+        </article>
+        <article class="wp-card wp-feature-card reveal d3">
+          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="burst"></span></div>
+          <h3>公式 + LaTeX 助手</h3>
+          <p>正文和公式会清晰排版；按鼠标中键可以复制任意公式的 LaTeX 源码，标题栏里还有按学科和难度整理的公式助手。</p>
+        </article>
+        <article class="wp-card wp-feature-card reveal d4">
+          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="save"></span></div>
+          <h3>状态持久化</h3>
+          <p>作答、批阅、对话、阅读位置和演示修改都会保存在本机；Codex 版还会显示处理过程、工具使用、词元与账号额度。</p>
+        </article>
+      </div>
+      <div class="wp-actions"><a class="btn btn--ghost" href="https://wjtianze.github.io/ai/skill/tlh/about/index.html" data-ui-icon="document">查看完整使用教程</a></div>
+    </section>
+
+    <!-- 下载 -->
+    <section class="wp-section wrap" aria-labelledby="tlh-download">
+      <div class="wp-section-head reveal"><div><div class="wp-kicker">下载</div><h2 id="tlh-download">选择适合你的版本</h2></div></div>
+      <div class="wp-grid">
+        <div class="wp-card wp-download-card reveal d1">
+          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="globe"></span></div>
+          <div>
+            <h3>textbook-learning-helper L7.0 · API 版</h3>
+            <p>普通 API 版可在网页和桌面中使用，下载后按说明填入自己的兼容接口即可；如果只想先试试，直接用下方在线体验，不用填写接口令牌。</p>
+            <div class="wp-card-meta"><span class="wp-chip">约 156 KB</span><span class="wp-chip">网页可用</span><span class="wp-chip">兼容 API</span></div>
+          </div>
+          <div class="wp-actions"><a class="btn" href="https://wjtianze.github.io/ai/skill/tlh/textbook-learning-helper-L7.0.zip" download data-ui-icon="download">下载 API 版</a></div>
+        </div>
+        <div class="wp-card wp-download-card reveal d2">
+          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="terminal"></span></div>
+          <div>
+            <h3>textbook-learning-helper L8.0-codex</h3>
+            <p>仅供桌面使用。运行配套启动器后登录自己的 ChatGPT 账号，就能选择模型与思考强度、查看额度，并处理工具、图片和文件任务。</p>
+            <div class="wp-card-meta"><span class="wp-chip">约 746 KB</span><span class="wp-chip">Windows 桌面</span><span class="wp-chip">登录 ChatGPT 即用</span></div>
+          </div>
+          <div class="wp-actions"><a class="btn" href="https://wjtianze.github.io/ai/skill/tlh/textbook-learning-helper-L8.0-codex.zip" download data-ui-icon="download">下载 Codex 版</a></div>
+        </div>
+      </div>
+      <div class="wp-notice" data-tone="warning"><span class="wp-notice-icon" aria-hidden="true"><span data-ui-icon="monitor"></span></span><div><strong>网页版请使用普通 API 版。</strong>L8.0-codex 只能在电脑上运行，下载解压后请从配套启动脚本进入。</div></div>
+    </section>
+
+    <!-- 在线体验 -->
+    <section class="wp-section wrap" aria-labelledby="tlh-demo">
+      <div class="wp-section-head reveal">
+        <div><div class="wp-kicker">直接试用</div><h2 id="tlh-demo">在线体验</h2></div>
+        <p>Codex 版仅支持桌面端</p>
+      </div>
+
+      <div class="wp-card wp-api-console reveal">
+        <div>
+          <h3>无需填写 API Key</h3>
+          <p>启动后，下方会加载针对「狭义相对论基础」生成的完整学习页。知识点、演示、测验、教材原文、AI 对话与批阅均可体验。</p>
+        </div>
+
+        <div class="wp-notice" data-tone="success">
+          <span class="wp-notice-icon" aria-hidden="true"><span data-ui-icon="shield"></span></span>
+          <div><strong>本站已经配好模型。</strong>页面不会保存或显示模型密钥；遇到短暂断线或服务拥挤时，只会在回答开始前自动重试。</div>
+        </div>
+
+        <div class="wp-actions">
+          <button class="btn" type="button" id="launchBtn" data-ui-icon="rocket"><span>启动体验</span></button>
+        </div>
+        <div class="wp-api-status" id="akStatus" role="status" aria-live="polite">尚未启动 · 在线体验无需 API Key</div>
+      </div>
+
+      <div class="exp-wrap wp-demo-shell reveal d1" id="expWrap">
+        <div class="exp-placeholder" id="expPlaceholder">
+          <div>
+            <div class="wp-card-icon ph-icon" aria-hidden="true"><span data-ui-icon="rocket"></span></div>
+            <h3>体验区尚未启动</h3>
+            <p>点击上方「启动体验」即可打开狭义相对论学习页。知识点、演示、测验、AI 对话和批阅都可直接使用，无需填写 API Key。</p>
+          </div>
+        </div>
+        <button class="exp-fs-btn" id="expFsBtn" type="button" title="全屏体验（按 Esc 退出）" data-ui-icon="monitor" hidden><span>全屏</span></button>
+        <iframe class="exp-frame" id="expFrame" hidden title="课本学习助手 · 狭义相对论体验" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-fullscreen"></iframe>
+      </div>
+    </section>
+
+    <!-- 快速导航 -->
+    <section class="wp-section wrap" aria-labelledby="tlh-next">
+      <div class="wp-section-head reveal"><div><div class="wp-kicker">下一步</div><h2 id="tlh-next">继续使用</h2></div></div>
+      <div class="wp-grid">
+        <a class="wp-card wp-catalog-card reveal d1" href="https://wjtianze.github.io/ai/skill/tlh/about/index.html">
+          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="document"></span></div>
+          <h3>使用教程</h3>
+          <p>从安装、配置到源文件格式和调用方法，都有完整说明。</p>
+          <span class="wp-action-link">查看教程 <span data-ui-icon="right" aria-hidden="true"></span></span>
+        </a>
+        <a class="wp-card wp-catalog-card reveal d2" href="https://wjtianze.github.io/ai/skill/tlh/textbook-learning-helper-L8.0-codex.zip" download>
+          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="file"></span></div>
+          <h3>下载 Codex 桌面版</h3>
+          <p>获取 L8.0-codex 技能与本地启动器，用自己的 ChatGPT 账号完成对话、章节引用、图片和文件任务。</p>
+          <span class="wp-action-link">立即下载 <span data-ui-icon="download" aria-hidden="true"></span></span>
+        </a>
+        <a class="wp-card wp-catalog-card reveal d3" href="https://wjtianze.github.io/ai/skill/tlh/about/index.html">
+          <div class="wp-card-icon" aria-hidden="true"><span data-ui-icon="key"></span></div>
+          <h3>离线 API 版说明</h3>
+          <p>在线体验无需密钥；如需下载后自行接入模型，请查看普通 API 技能包的配置说明。</p>
+          <span class="wp-action-link">查看说明 <span data-ui-icon="right" aria-hidden="true"></span></span>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260828j-v5.3.0"></script>
+  <script>
+  (function(){
+    var DEMO_URL='relativity-demo.html';
+    var btn=document.getElementById('launchBtn');
+    var status=document.getElementById('akStatus');
+    var ph=document.getElementById('expPlaceholder');
+    var frame=document.getElementById('expFrame');
+    var expWrap=document.getElementById('expWrap');
+    var fsBtn=document.getElementById('expFsBtn');
+
+    function setStatus(msg,type){status.textContent=msg;status.className='wp-api-status'+(type?(' '+type):'');}
+
+    btn.addEventListener('click',function(){
+      launch();
+    });
+
+    function launch(){
+      setStatus('正在加载学习页…','');
+      btn.disabled=true;
+      // 直接用 iframe.src 加载本地 HTML（file:// 与 http:// 均允许 iframe 加载相对 HTML，不依赖 fetch，避免 failed to fetch）
+      frame.onload=function(){
+        var ok=false;
+        try{
+          ok=true;
+        }catch(e){ok=false;}
+        if(ok){
+          setStatus('已启动：AI 对话与批阅可以使用','ok');
+        }else{
+          setStatus('学习页已加载，但当前环境无法建立安全连接。知识点、演示与测验仍可用；请刷新后重试 AI 功能。','err');
+        }
+        btn.disabled=false;
+      };
+      frame.onerror=function(){
+        setStatus('加载学习页失败，请确认通过 http 服务器访问本页面','err');
+        btn.disabled=false;
+      };
+      frame.src=DEMO_URL;
+      frame.hidden=false;
+      ph.hidden=true;
+      fsBtn.hidden=false;
+    }
+
+    // 体验区浏览器全屏切换（全屏后学习页内部的演示「⛶ 全屏」浮层会真正占满整个屏幕）
+    function setFsBtnLabel(){
+      var label=fsBtn.querySelector('span:not(.tz-icon)');
+      if(label)label.textContent=document.fullscreenElement?'退出全屏':'全屏';
+    }
+    fsBtn.addEventListener('click',function(){
+      try{
+        if(document.fullscreenElement){
+          document.exitFullscreen();
+        }else if(expWrap.requestFullscreen){
+          expWrap.requestFullscreen();
+        }else if(expWrap.webkitRequestFullscreen){
+          expWrap.webkitRequestFullscreen();
+        }
+      }catch(e){}
+    });
+    document.addEventListener('fullscreenchange',setFsBtnLabel);
+    document.addEventListener('webkitfullscreenchange',setFsBtnLabel);
+  })();
+  </script>
+</body>
+</html>

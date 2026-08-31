@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>天择OS · 天择网</title>
+  <meta name="description" content="天择OS 5.3.0 可以直接在浏览器使用，也可以安装 Windows 普通版或 Codex 桌面版。" />
+  <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828j-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/workspace-pages.css?v=20260802-v4.1.7" />
+  <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828j" />
+</head>
+<body data-workspace-page="os">
+  <a class="wp-skip" href="#main-content">跳到主要内容</a>
+  <div class="bg-mesh"></div>
+
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="https://wjtianze.github.io/index.html" aria-label="天择网首页">
+        <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/></svg></span>
+        <span class="logo-text">天择网</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-label="菜单" data-ui-icon="menu"></button>
+      <nav class="nav"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html" class="active"><span>天择OS</span></a><a href="https://wjtianze.github.io/contact/index.html"><span>联系我</span></a></nav>
+    </div>
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    <section class="tz-page-hero tz-os-landing-hero wrap">
+      <div class="tz-os-hero-copy reveal in">
+        <span class="tz-os-kicker">网页能用 · 也能装到电脑上</span>
+        <h1><span class="grad">天择OS</span><span class="tz-os-version">v5.3.0</span></h1>
+        <p>这是我做的一套网页桌面：打开浏览器就能用，也可以安装到 Windows。普通版自带 AI；另有可同时安装的 Codex 版，用你自己的 ChatGPT 账号登录。</p>
+        <div class="tz-os-hero-actions">
+          <a class="btn" href="https://wjtianze.github.io/os/webos.html"><span>进入网页版</span><span data-ui-icon="right" aria-hidden="true"></span></a>
+          <a class="btn btn--ghost" href="#downloads"><span>查看桌面版本</span><span data-ui-icon="download" aria-hidden="true"></span></a>
+        </div>
+      </div>
+      <div class="tz-os-hero-node reveal in d2" aria-hidden="true">
+        <div class="tz-os-hero-icon" data-ui-icon="monitor"></div>
+        <div class="tz-os-node-meta"><span>打开网页即用</span><span>安装 Windows 版</span><span>登录 Codex</span><span>管理本机文件</span></div>
+      </div>
+    </section>
+
+    <section class="section wrap tz-workspace-section" id="downloads">
+      <div class="section-head reveal">
+        <h2><span class="bar"></span>挑一个适合你的版本</h2>
+        <span class="more">普通版 5.3.0 · Codex 桌面版 v5.3.0-codex</span>
+      </div>
+      <div class="os-pick">
+        <div class="card os-card tz-workspace-card d reveal d1">
+          <div class="oc-icon" data-ui-icon="windows" aria-hidden="true"></div>
+          <h3>电脑端 · 普通版</h3>
+          <p class="oc-tag">Windows 原生应用 · 当前安装包 v5.3.0</p>
+          <ul>
+            <li>独立窗口运行，不占浏览器标签</li>
+            <li>网页会在独立标签页里打开，遇到不允许嵌入的网站也能正常访问</li>
+            <li>浏览器下载、知识库和 AI 助手共用一个文件空间，不用来回找</li>
+            <li>自带 Python 3.13，也能连接电脑上的 Ollama 模型</li>
+            <li>普通版已经配好智谱 GLM-4.7-Flash，打开 AI 助手就能聊；想用自己的云端接口或 Ollama，也能随时切换</li>
+          </ul>
+          <a class="btn" id="os-dl-btn"
+             href="https://github.com/wjtianze/wjtianze.github.io/releases/download/v5.3.0/tianze-os-setup-5.3.0.exe"
+             download
+             data-fallback-url="https://github.com/wjtianze/wjtianze.github.io/releases/download/v5.3.0/tianze-os-setup-5.3.0.exe"
+             data-fallback-ver="v5.3.0">
+            <span id="os-dl-text">下载 Windows 安装包（v5.3.0）</span><span data-ui-icon="download" aria-hidden="true"></span>
+          </a>
+          <div class="dl-meta" id="os-dl-meta">正在查看最新的桌面安装包…</div>
+        </div>
+        <div class="card os-card tz-workspace-card c reveal d2">
+          <div class="oc-icon" data-ui-icon="terminal" aria-hidden="true"></div>
+          <h3>电脑端 · Codex 版</h3>
+          <p class="oc-tag">Windows Codex 版 · v5.3.0-codex</p>
+          <ul>
+            <li>直接登录你自己的 ChatGPT 账号，不需要填写接口令牌</li>
+            <li>可用模型、思考强度、回答速度和剩余额度都会按你的账号显示</li>
+            <li>对话时可以看到 Codex 的思考摘要、计划、命令和文件修改，也能使用工具和图片</li>
+            <li>Codex 可以直接整理天择OS里的文件，也能通过系统命令完成更多操作</li>
+            <li>它和普通版各用各的设置与文件，可以同时安装</li>
+          </ul>
+          <a class="btn" id="os-codex-dl-btn"
+             href="https://github.com/wjtianze/wjtianze.github.io/releases/download/v5.3.0-codex/tianze-os-codex-setup-5.3.0-codex.exe"
+             download>
+            <span>下载 Codex 桌面版（v5.3.0-codex）</span><span data-ui-icon="download" aria-hidden="true"></span>
+          </a>
+          <div class="dl-meta">仅 Windows 桌面端 · 需要用户自己的 ChatGPT 账号</div>
+        </div>
+        <div class="card os-card tz-workspace-card w reveal d3">
+          <div class="oc-icon" data-ui-icon="globe" aria-hidden="true"></div>
+          <h3>网页端 5.3 · 普通版</h3>
+          <p class="oc-tag">免安装 · 浏览器直接使用</p>
+          <ul>
+            <li>无需下载，打开网页即可使用</li>
+            <li>手机、平板和电脑都能用</li>
+            <li>数据保存在当前浏览器里，可以自己备份或清除</li>
+            <li>可以聊天、用命令行、查 COC，也能打开站内工具</li>
+            <li>如果要访问 Windows 文件、打开本机软件或用内置 Python，请安装桌面版</li>
+            <li>Codex 版需要连接电脑上的 Codex，因此只提供 Windows 桌面版</li>
+          </ul>
+          <a class="btn btn--ghost" href="https://wjtianze.github.io/os/webos.html">
+            <span>进入网页版</span><span data-ui-icon="right" aria-hidden="true"></span>
+          </a>
+        </div>
+        <div class="card os-card tz-workspace-card cl reveal d4">
+          <h3><span data-ui-icon="clock" aria-hidden="true"></span>更新日志</h3>
+          <p class="oc-tag">从 1.0 开始，每次更新都记在这里</p>
+          <div class="changelog">
+            <div class="cl-item">
+              <div class="cl-ver">v5.3.0 <span class="cl-badge">最新</span></div>
+              <div class="cl-date">2026-08-28</div>
+              <ul>
+                <li>首页和全站界面重新整理；站内助手在首页主内容区展开，离开该位置后回到右下角</li>
+                <li>站内助手改为单对话，保留深度思考、流式回复和断线重试；还能结合当前页面、浏览记录、本站内容与 COC 数据回答</li>
+                <li>普通版未填写自己的接口配置时，可以直接使用智谱 GLM-4.7-Flash；默认通道不提供智谱原生联网搜索等额外计费工具，站内查询、COC 查询和本地数据工具仍可正常使用</li>
+                <li>COC 游戏静态资料与实时查询分成两个入口，村庄存档、升级规划和查询结果之间的交接也更清楚</li>
+              </ul>
+            </div>
+            <div class="cl-item">
+              <div class="cl-ver">v5.2.1</div>
+              <div class="cl-date">2026-08-24</div>
+              <ul>
+                <li>修复 COC 云端实时查询首次请求失败，玩家资料可直接进入当前部落，部落成员概况也可继续进入玩家查询</li>
+                <li>修复连续快速查询时旧响应覆盖新结果、失败后旧数据操作仍可用的问题，并补齐键盘页签与焦点导航</li>
+                <li>统一天择OS 5.2 的正式发布日期显示</li>
+              </ul>
+            </div>
+            <div class="cl-item">
+              <div class="cl-ver">v5.2.0</div>
+              <div class="cl-date">2026-08-24</div>
+              <ul>
+                <li>COC 数据中心升级至国际服 18.400.22：补齐超级充能、反击卡组与按等级计算的城墙地震伤害；现在可直接查询玩家、部落和公开赛季资料，并把结果带入村庄分析和升级规划</li>
+                <li>稳本规划重新安排优先级：实验室优先，配兵链接或自定义常用单位会影响兵种、法术、攻城机器与战宠的升级顺序</li>
+                <li>AI 助手默认改用智谱 GLM-4.7-Flash，不用填写接口令牌；遇到短暂断线或服务拥挤，只会在回答开始前自动重试</li>
+                <li>AI 助手能查天择网内容、本站 COC 资料和公开实时数据；还修好了它操作天择OS时偶尔卡住的问题，并加强了文档与命令的权限保护</li>
+              </ul>
+            </div>
+            <div class="cl-item">
+              <div class="cl-ver">v5.0.0</div>
+              <div class="cl-date">2026-08-07</div>
+              <ul>
+                <li>DeepSeek V4 Flash 预设支持边生成边显示、用量统计和联网查资料</li>
+                <li>桌面浏览器可以正常打开不允许嵌入的网站；可选豆包、千问、DeepSeek、Kimi、智谱、ChatGPT、Claude、Gemini 与 Grok，打开国际站前会提示网络条件</li>
+                <li>新增<b>内部文件资源管理器</b>，与知识库、浏览器下载和 Agent 文件工具合并，支持导入导出、创建、预览、编辑、重命名、复制、移动、搜索与回收站删除</li>
+                <li>新增 Windows 应用管理器、EXE 安装包归档与受确认启动；原生软件遵循 Windows 安全边界，以独立顶层窗口运行</li>
+                <li>安装包内置官方 Python 3.13，支持内部脚本、参数、大输出记录、停止任务及 Agent 逐次授权</li>
+                <li>AI 可以固定使用云端或本地模型，也能在云端连接失败且尚未开始回答时自动改用本地模型；Ollama 的模型、上下文长度与能力可以自动读取，切换原因会一直显示在对话里</li>
+                <li>新增按模型安全窗口自动或手动执行的上下文压缩；只压缩发给模型的较早上下文，不删除界面中的完整聊天记录</li>
+                <li>天择网站点助手恢复流式输出与深度思考开关，跨页面保持展开状态和当前对话，Markdown 与完整 LaTeX 公式随生成持续渲染</li>
+                <li>COC 伤害计算分享配置可一键复制回主页；新增可从博客和 COC 专区进入的 COC教程入口</li>
+                <li>命令行的 166 条命令和 47 个兼容写法都重新核对了一遍；Windows 任务栏、窗口、安装包和快捷方式也统一换成天择OS图标</li>
+                <li>AI 生成的软件现在各自保存数据，关闭重开不会丢，也不会串到其他软件；卸载时会把对应数据一并清理</li>
+              </ul>
+            </div>
+            <div class="cl-item">
+              <div class="cl-ver">v4.1.0</div>
+              <div class="cl-date">2026-08-01</div>
+              <ul>
+                <li>主页与天择OS采用更简洁的图片背景，各专区使用带标志性元素的专属背景</li>
+                <li>AI 对话支持<b>归档、查看、还原与永久删除</b>；归档对话仍保留在本地知识库</li>
+                <li>AI Agent 可调用包括 <code>ask</code> 与 <code>agent</code> 子智能体在内的全部系统命令；无次数/轮数硬限制，由系统自动检测并掐断无进展循环</li>
+                <li>新增<b>词元用量与计费</b>软件，累计统计历史输入、输出、总词元与单价快照费用</li>
+                <li>新增青铜至钻石六档积分 VIP 月卡及六套专属完整皮肤；等级门槛为 Lv.1–10、月费为 200–2600 分，均低于 30 天 3600 分的理论上限；高档权益包含本档及以下皮肤，不会自动续费</li>
+                <li>全量存档默认使用 PBKDF2 + AES-GCM 密码加密；明文导出改为显式危险操作</li>
+                <li>天择网移动端与首页树状导航完成适配；网页版与桌面工程已更新至 4.1.0</li>
+              </ul>
+            </div>
+            <div class="cl-item">
+              <div class="cl-ver">v4.0.0</div>
+              <div class="cl-date">2026-07-31</div>
+              <ul>
+                <li>全面升级为生成式星图工作台，重构桌面、系统导航、应用入口与 AI 多会话体验</li>
+                <li>加入冷 / 中 / 暖三套配色、图片壁纸、按钮材质与统一图片图标图集</li>
+              </ul>
+            </div>
+            <div class="cl-item">
+              <div class="cl-ver">v3.5.0</div>
+              <div class="cl-date">2026-07-25</div>
+              <ul>
+                <li>新增<b>用户等级与积分</b>：每日启动、AI 对话、终端命令、新建笔记、安装软件、导出存档均可获积分（各项有每日上限），累计积分升级并获称号；终端 <code>level</code> 查看，数据加密存储、随全量存档迁移</li>
+                <li>新增<b>界面配色皮肤</b>：冷（紫·蓝·绿）/ 中（蓝·绿·黄）/ 暖（绿·黄·橙）三套配色；OS 内冷色默认解锁，中、暖色用积分兑换（系统设置或终端 <code>skin</code> 命令）；<b>天择网三色全部免费</b>，网站左下角 🎨 随时切换</li>
+                <li>AI 对话工具栏新增「🌐 联网」「⌨️ 命令行」开关，不用进设置即可切换</li>
+                <li>纯文本模型支持上传图片：本地 <b>OCR</b> 识别成文字随消息发送（不上传图片本身）；文本类文件（txt/md/json/代码等）直接读取内容发送，不再发 base64</li>
+                <li>AI 软件可反向调用系统命令行：软件内 <code>await TZOS_CMD.exec('命令')</code> 即可执行任意系统命令并拿到输出</li>
+                <li>修复上下文用量条刷新页面后数值大幅缩水：持久化上一轮真实词元用量，历史未变时刷新后显示与刷新前一致；估算器改为中英文分别计权并计入系统提示词与图片</li>
+              </ul>
+            </div>
+            <div class="cl-item">
+              <div class="cl-ver">v3.2.0</div>
+              <div class="cl-date">2026-07-24</div>
+              <ul>
+                <li>笔记命令行新增 <code>note view</code>（查看内容）、<code>note edit</code>（整体替换）、<code>note undo</code>（撤销最近一次改动）；<code>note new</code> 输出包含分配的固定编号</li>
+                <li>笔记编号改为<b>创建顺序</b>且永不改变（最早创建的为 1，后续递增，旧笔记自动迁移补齐），便于长期 CLI 引用</li>
+                <li>修复笔记保存占位"双进度条"——改为与 AI 对话修复同源的轻量圆点占位，确保状态栏是唯一的进度反馈通道</li>
+                <li>COC 伤害计算器新增第三个标签页 ③「<b>自定义闪震数量计算伤害</b>」，可自定义雷电/地震数量精确计算总伤害、逐瓶明细与回血容错时间</li>
+              </ul>
+            </div>
+            <div class="cl-item">
+              <div class="cl-ver">v3.1.1</div>
+              <div class="cl-date">2026-07-23</div>
+              <ul>
+                <li>修复 AI 生成软件的命令包注册失效：软件内自动注入真实应用 id 与 TZOS_CMD.register，命令在软件内部执行可直接调用软件函数；旧写法自动兼容，卸载自动清理注册</li>
+                <li>实用工具新增「笔记」：Markdown / LaTeX 编辑与实时预览，可用命令行 note 全面操控（new / list / open / append / export / search / del）</li>
+                <li>文档阅读器标签页并入窗口标题栏（与浏览器一致），取消缩放工具栏，缩放仅 Ctrl + 滚轮并带瞬时百分比提示</li>
+                <li>命令行输入输出取消字符限制；补全 AI 命令行模式提示词（agent / widget / note 等全部命令）</li>
+              </ul>
+            </div>
+            <div class="cl-item">
+              <div class="cl-ver">v3.1</div>
+              <div class="cl-date">2026-07-22（07-23 修订）</div>
+              <ul>
+                <li><b>修订</b>：COC 专区、升级规划、伤害计算和背单词都随天择OS安装，数据直接保存在本机，桌面版断网也能使用</li>
+                <li><b>修订</b>：村庄存档分析并入 COC 专区首页（独立应用下线）；修复规划器/伤害计算与首页存档冲突（建筑工人 NaN、夜世界丢失）与小屋座数导入</li>
+                <li><b>修订</b>：修复悬浮窗命令 failed to fetch、词库永远返回示例数据；AI 对话与悬浮窗内容互通（🔄 手动 + 定时自动同步），API 配置共享，深度思考/豆包/截图各自独立</li>
+                <li><b>修订</b>：AI 命令行模式取消 3 轮限制，「调用了 N 条命令行」卡片内联在所属回答下方，agent 式交错展示；联系开发者页修复全屏空白；修复清空对话栈溢出</li>
+                <li>修复时钟应用走 1 秒就停（废弃 DOMNodeRemoved 事件改用自检方案）；修复 AI 悬浮窗无法清空对话、无法切换豆包；悬浮窗仅保留顶栏一个关闭按钮，关闭时记忆位置与大小</li>
+                <li>天择网系列应用精简为天择网主页 + 天择导航；命令行重构：coc-data 读写本地玩家村庄存档（save/json/clear）、coc-game 查询游戏静态数据、words 支持导入例句；浏览器↗按钮改为在系统外打开网址</li>
+                <li>天择OS 官网改为电脑端/网页端/更新日志三栏，不再提供历史版本下载</li>
+              </ul>
+            </div>
+            <div class="cl-item">
+              <div class="cl-ver">v3.0</div>
+              <div class="cl-date">2026-07-21</div>
+              <ul>
+                <li>新增 AI 悬浮窗：Ctrl+1 一键召唤，独立于 OS 主窗口之外。桌面版为独立始终置顶 Electron 窗口，网页版为页面固定覆盖层</li>
+                <li>悬浮窗复用完整 AI 对话功能，共享同一份配置与对话历史；专注纯对话，不启用命令行模式</li>
+                <li>桌面版 Ctrl+1 注册为系统全局快捷键；拖拽采用 Electron 原生 -webkit-app-region: drag，丝滑无跳跃</li>
+              </ul>
+            </div>
+            <div class="cl-item">
+              <div class="cl-ver">v2.6</div>
+              <div class="cl-date">2026-07-20</div>
+              <ul>
+                <li>新增窗口置顶（图钉/右键/命令行四种方式）；文档阅读器缩放工具栏</li>
+                <li>命令行全面扩展：每个自有软件均有顶层命令；words 支持 add/list/count/find/del</li>
+                <li>修复置顶窗口层级过高遮挡任务栏/开始菜单；CLI 引擎支持异步命令</li>
+              </ul>
+            </div>
+            <div class="cl-item">
+              <div class="cl-ver">v2.5</div>
+              <div class="cl-date">2026-07-20</div>
+              <ul>
+                <li>AI 对话联网搜索、图片与文件上传；AI 能力设置与上下文用量显示</li>
+                <li>新增文档阅读器、时钟应用、任务栏电量与联网状态；同一软件只开一个窗口</li>
+              </ul>
+            </div>
+            <div class="cl-item">
+              <div class="cl-ver">v2.2</div>
+              <div class="cl-date">2026-07-19</div>
+              <ul>
+                <li>修复桌面版 AI 停止生成未中断、自动截图 TypeError、长对话双进度条、终端输出截断</li>
+                <li>COC 伤害计算器新增建筑工人小屋回血与法术容错，加固城墙三震不毁、四震必毁</li>
+              </ul>
+            </div>
+            <div class="cl-item">
+              <div class="cl-ver">v2.1</div>
+              <div class="cl-date">2026-07-18</div>
+              <ul>
+                <li>新增命令行终端与 AI 命令行模式（Agent 直接改系统）</li>
+                <li>对话自动截图、词元费用统计、消息复制；修复双滚动条、浅色模式白字等 9 处</li>
+              </ul>
+            </div>
+            <div class="cl-item">
+              <div class="cl-ver">v2.0</div>
+              <div class="cl-date">2026-07-18</div>
+              <ul>
+                <li>AI 全链路升级：记忆、词元统计、停止/重发、LaTeX 流式渲染</li>
+                <li>浅色主题、浏览器收藏夹、模拟器；全量存档导入导出、在线更新检查</li>
+              </ul>
+            </div>
+            <div class="cl-item">
+              <div class="cl-ver">v1.0</div>
+              <div class="cl-date">2026-07-14</div>
+              <ul>
+                <li>天择OS 首个版本发布并开源：浏览器里运行的全屏模拟操作系统</li>
+                <li>预装天择网全部功能；窗口系统、任务栏、开始菜单，PC/移动端自适应；内置 AI 对话与软件商城</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="os-note">三个版本各自保存数据，可以同时使用。<b>网页端只有普通版；Codex 版只能安装在 Windows 上。</b><br/>普通版已经配好智谱 GLM-4.7-Flash，打开 AI 助手就能聊，不用先填接口令牌。遇到短暂断线或服务拥挤，只会在回答开始前自动重试；你也可以在“AI 配置”里换成自己的接口。Codex 版需要在“Codex 管理”中登录自己的 ChatGPT 账号。安装包没有商业代码签名，Windows 可能弹出 SmartScreen 提示；执行高权限操作时，仍要经过 Codex 审批和 Windows 权限确认。</p>
+    </section>
+  </main>
+
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260828j-v5.3.0"></script>
+  <script>
+  // 自动检测 GitHub Release 已发布的最新安装包
+  // 修复（v3.2）：旧版用 fetch(HEAD) 直接探测 github.com 的 release download URL，
+  //   但该响应不带 CORS 头，从 wjtianze.github.io 跨域 HEAD 永远被浏览器拦截 → catch → 永远回退到 fallback，
+  //   表现为"电脑端始终落后一个版本"。
+  //   现改用 GitHub REST API（api.github.com 支持 CORS：Access-Control-Allow-Origin:*），
+  //   列出 releases，取第一个含 tianze-os-setup-*.exe asset 的，用其 browser_download_url；
+  //   API 失败时回退到页面写死的 primary（最新版）。localStorage 缓存 30 分钟避免触发未认证限流（60/小时/IP）。
+  (function () {
+    var btn = document.getElementById('os-dl-btn');
+    var text = document.getElementById('os-dl-text');
+    var meta = document.getElementById('os-dl-meta');
+    if (!btn || !text || !meta) return;
+
+    var primary = btn.getAttribute('href');
+    var fallbackUrl = btn.getAttribute('data-fallback-url');
+    var fallbackVer = btn.getAttribute('data-fallback-ver');
+
+    function parseVer(url) {
+      var m = String(url).match(/v(\d+)\.(\d+)(?:\.(\d+))?\/[^/?#]+\.exe$/);
+      if (!m) return '最新版';
+      return 'v' + m[1] + '.' + m[2] + (m[3] ? '.' + m[3] : '');
+    }
+    function setBtn(url, shortVer) {
+      btn.setAttribute('href', url);
+      btn.removeAttribute('data-fallback-url');
+      btn.removeAttribute('data-fallback-ver');
+      text.textContent = '下载 Windows 安装包（' + shortVer + '）';
+    }
+    function setMeta(msg) { meta.textContent = msg; }
+
+    var primaryShort = parseVer(primary);
+
+    // 30 分钟缓存命中则直接用，不打 API
+    var CACHE_KEY = 'tz_os_release_probe_v3';
+    var cached = null;
+    try { cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null'); } catch (e) {}
+    if (cached && cached.t && (Date.now() - cached.t < 30 * 60 * 1000) && cached.url) {
+      setBtn(cached.url, cached.ver);
+      setMeta('来自 GitHub Releases · ' + cached.ver + ' 官方发布版');
+      return;
+    }
+
+    btn.setAttribute('data-loading', '');
+    fetch('https://api.github.com/repos/wjtianze/wjtianze.github.io/releases?per_page=30', { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (releases) {
+        btn.removeAttribute('data-loading');
+        // GitHub API 不保证按版本号排序（实测顺序乱），需自行按 tag 版本号排序取最大
+        var candidates = [];
+        for (var i = 0; i < releases.length; i++) {
+          var rel = releases[i];
+          if (rel.draft || rel.prerelease) continue; // 跳过草稿/预发布
+          var asset = null;
+          (rel.assets || []).forEach(function (a) {
+            if (/tianze-os-setup.*\.exe$/i.test(a.name) && a.browser_download_url && (a.state !== 'uploading')) asset = a;
+          });
+          if (asset) {
+            var tag = rel.tag_name || '';
+            var m = tag.match(/^v?(\d+)\.(\d+)\.(\d+)/) || tag.match(/^v?(\d+)\.(\d+)/);
+            var key = m ? (parseInt(m[1], 10) * 1e6 + parseInt(m[2], 10) * 1e3 + (m[3] ? parseInt(m[3], 10) : 0)) : 0;
+            candidates.push({ ver: tag, url: asset.browser_download_url, key: key });
+          }
+        }
+        candidates.sort(function (a, b) { return b.key - a.key; });
+        if (candidates.length) {
+          var c = candidates[0];
+          setBtn(c.url, c.ver);
+          setMeta('来自 GitHub Releases · ' + c.ver + ' 官方发布版');
+          try { localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), url: c.url, ver: c.ver })); } catch (e) {}
+        } else {
+          // 没有已发布的 exe → 使用页面写死且已确认存在的安全回退版本
+          setBtn(fallbackUrl, fallbackVer);
+          setMeta(primaryShort + ' 暂未发布安装包 · 已自动切到 ' + fallbackVer);
+        }
+      })
+      .catch(function () {
+        btn.removeAttribute('data-loading');
+        // API 失败（限流/网络）→ 使用页面写死且已确认存在的 primary
+        setBtn(primary, primaryShort);
+        setMeta('来自 GitHub Releases · ' + primaryShort);
+      });
+  })();
+  </script>
+  <script>
+  (function () {
+    var items = Array.prototype.slice.call(document.querySelectorAll('.changelog .cl-item'));
+    items.forEach(function (item, index) {
+      var version = item.querySelector(':scope > .cl-ver');
+      var date = item.querySelector(':scope > .cl-date');
+      var content = item.querySelector(':scope > ul');
+      if (!version || !date || !content) return;
+      var button = document.createElement('button');
+      var contentId = 'os-changelog-' + index;
+      button.type = 'button';
+      button.className = 'cl-toggle';
+      button.setAttribute('aria-controls', contentId);
+      button.setAttribute('aria-expanded', index === 0 ? 'true' : 'false');
+      content.id = contentId;
+      content.hidden = index !== 0;
+      button.appendChild(version);
+      button.appendChild(date);
+      item.insertBefore(button, content);
+      button.addEventListener('click', function () {
+        var open = button.getAttribute('aria-expanded') === 'true';
+        button.setAttribute('aria-expanded', open ? 'false' : 'true');
+        content.hidden = open;
+      });
+    });
+  })();
+  </script>
+</body>
+</html>

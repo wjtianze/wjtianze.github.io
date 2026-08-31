@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>天择网 5.3 · 作品、文章与学习工具</title>
+  <meta name="description" content="天择网是我整理作品、文章、游戏资料和学习工具的个人网站。" />
+  <meta name="theme-color" content="#102947" />
+  <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828j-v5.3.0" />
+  <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828j" />
+</head>
+<body class="tz-homepage home-journal">
+  <div class="bg-mesh" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="https://wjtianze.github.io/index.html" aria-label="天择网首页">
+        <span class="logo-mark" aria-hidden="true"></span>
+        <span class="brand-copy">
+          <span class="logo-text">天择网</span>
+          <small>个人作品与学习记录</small>
+        </span>
+      </a>
+      <button class="nav-toggle" type="button" data-ui-icon="menu" aria-label="打开菜单"></button>
+      <nav class="nav" aria-label="主导航">
+        <a href="https://wjtianze.github.io/index.html" class="active"><span>首页</span></a>
+        <a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a>
+        <a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a>
+        <a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a>
+        <a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a>
+        <a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a>
+        <a href="https://wjtianze.github.io/darwin/index.html"><span>达尔文小屋</span></a>
+        <a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a>
+        <a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a>
+        <a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a>
+        <a href="https://wjtianze.github.io/contact/index.html"><span>联系</span></a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="home-main" class="home-journal-main">
+    <section class="home-journal-hero wrap" aria-labelledby="home-title">
+      <div class="home-journal-hero__copy">
+        <p class="home-journal-motto">物竞天择，适者生存。</p>
+        <h1 id="home-title">天择网</h1>
+        <p class="home-journal-hero__intro">文章、游戏资料和我平时在用的工具，都整理在这里。想找哪一页，直接问右边的站内助手；往下翻也能慢慢看。</p>
+        <div class="home-journal-actions">
+          <a class="btn" href="#home-ai">问问站内助手</a>
+          <a class="btn btn--ghost" href="https://wjtianze.github.io/os/index.html">体验天择OS</a>
+        </div>
+      </div>
+      <div class="home-ai-stage" id="home-ai" data-home-ai-stage data-home-ai-mode="loading" aria-label="天择网站内助手">
+        <p class="home-ai-stage__waiting" role="status">正在打开站内助手…</p>
+        <noscript><p class="home-ai-stage__noscript">启用 JavaScript 后可以使用站内助手。</p></noscript>
+      </div>
+    </section>
+
+    <section class="home-current wrap" aria-labelledby="current-title">
+      <div class="home-section-heading">
+        <p>最近更新</p>
+        <h2 id="current-title">这次更新了什么</h2>
+      </div>
+      <a class="home-current-link" href="https://wjtianze.github.io/news/31/index.html">
+        <time datetime="2026-08-30">2026 年 8 月 30 日</time>
+        <strong>COC 专区终于有了游戏里的样子</strong>
+          <span>273 项单位与建筑已按等级配图，村庄分析、数据查询、伤害计算和升级规划都更直观。</span>
+        <b>阅读全文</b>
+      </a>
+    </section>
+
+    <section class="home-reading wrap" aria-labelledby="reading-title">
+      <div class="home-section-heading">
+        <p>继续看看</p>
+        <h2 id="reading-title">最近值得打开的内容</h2>
+      </div>
+      <div class="home-reading-list">
+        <a href="https://wjtianze.github.io/darwin/index.html"><time datetime="2026-08-31">持续更新</time><strong>达尔文小屋：双部落战况与第一届达尔文杯</strong><span>部落官网</span></a>
+        <a href="https://wjtianze.github.io/coc/tutorial/1/index.html"><time datetime="2026-07-12">7 月 12 日</time><strong>混合矿工玩法：路线、法术和进攻时机</strong><span>COC 教程</span></a>
+        <a href="https://wjtianze.github.io/news/27/index.html"><time datetime="2026-08-02">8 月 2 日</time><strong>天择OS 4.1 正式发布</strong><span>版本记录</span></a>
+        <a href="https://wjtianze.github.io/english/index.html"><time datetime="2026-08-27">持续维护</time><strong>用四轮练习真正记住一个单词</strong><span>英语学习</span></a>
+      </div>
+    </section>
+  </main>
+
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260831a"></script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>助手回到首页，资料也更好找了：天择网与天择OS 5.3 — 天择网</title>
+  <meta name="description" content="天择网与天择OS 5.3 重新整理了全站界面、站内助手、COC 查询、背单词和 Windows 桌面版。" />
+  <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828j-v5.3.0" />
+  <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828j" />
+</head>
+<body>
+  <div class="bg-mesh"></div>
+
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="https://wjtianze.github.io/index.html" aria-label="天择网首页">
+        <span class="logo-mark" aria-hidden="true"></span>
+        <span class="logo-text">天择网</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-label="菜单" data-ui-icon="menu"></button>
+      <nav class="nav"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html" class="active"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a><a href="https://wjtianze.github.io/contact/index.html"><span>联系我</span></a></nav>
+    </div>
+  </header>
+
+  <main>
+    <article class="article wrap">
+      <div class="article-head reveal">
+        <span class="a-tag">用起来终于像一个整体</span>
+        <h1>助手回到首页，资料也更好找了：天择网与天择OS 5.3</h1>
+        <div class="article-meta">
+          <span>发布：2026-08-28</span>
+          <span>作者：天择网</span>
+        </div>
+      </div>
+
+      <div class="article-body reveal d1">
+        <p>首页原来那块星图好看，却帮不上多少忙；右下角的小助手又挤得难受。5.3 把两件事一起理顺了：打开首页就能在最显眼的位置提问，继续往下看时，助手会缩回右下角陪着你。页面、资料和工具也重新排过一遍，不用再靠记地址找入口。</p>
+
+        <blockquote><strong>直接用就行：</strong>没有填写自己的模型配置时，天择网与天择OS都会使用 GLM-4.7-Flash。回答支持流式显示，临时断线会自动重试。</blockquote>
+
+        <h2>站内助手不再只是找页面</h2>
+        <p><a href="https://wjtianze.github.io/ai/index.html">站内助手</a>现在只保留一段连续对话，换页面时窗口、聊天记录和正在生成的回答都会接着保留；需要仔细分析时可以打开深度思考。它会读取当前页面，并按需检索全站内容，不再额外维护访问历史或四套知识库开关。自己的接口、模型、深度思考协议、输出长度和上下文档位会保存在当前浏览器，刷新后不用重新填写。</p>
+
+        <h2>COC 的静态资料和实时资料各归其位</h2>
+        <p><a href="https://wjtianze.github.io/coc/data/index.html">游戏静态数据</a>负责查单位、等级与升级数值，<a href="https://wjtianze.github.io/coc/live/index.html">实时数据查询</a>负责玩家、部落、联赛和都城资料。云端查询得到的村庄也能直接送进<a href="https://wjtianze.github.io/coc/planner/index.html">升级规划器</a>，采集时间按这次查询的实际时刻记录；接口没有提供的升级队列会明确显示“无”，不会混进旧存档的状态。联赛、部落身份、都城金币等名称也按《部落冲突》简体中文资料重新核对过。</p>
+
+        <p>这些能力也接进了站内助手：它能查实时或静态资料，直接分析村庄离满防还有多久，按速本或稳本模式生成升级计划，按最大值、最小值或自定义数值计算伤害，并生成或解析伤害计算器、配兵分享链接。计算由页面原有脚本完成，模型负责听懂问题和解释结果，不会凭感觉编数值。</p>
+
+        <h2>背单词和小游戏少绕一步</h2>
+        <p><a href="https://wjtianze.github.io/english/words/index.html">网页版单词本</a>可以手动添加单词：既可以自己写释义，也可以只输入单词，让助手补上释义和例句。默认配置与全站一致，不需要重复填写。现在也能直接和站内助手按“预习、回忆、复习、检测”四个流程背当前词库。<a href="https://wjtianze.github.io/game/gpa-card/index.html">绩点战争</a>把关键数据、手牌、行动和战况尽量收进一屏，也可以让站内助手成为对手，陪你完整打完一局。</p>
+
+        <h2>AI 项目终于有了真正能照着用的说明</h2>
+        <p><a href="https://wjtianze.github.io/ai/skill/index.html">AI 项目目录</a>收录课本学习助手、Python课本学习助手、Codex App Server接入规范、COC数据导出器、词库转JSON和微信群机器人。每个项目都重新写了面向使用者的长教程，把适用场景、安装、第一次运行、常用操作、输出、迁移和排错讲清楚；不再把技能内部说明原样丢给读者。</p>
+
+        <h2>界面安静下来，入口反而更醒目</h2>
+        <p>全站换上了重新制作的标志和专区背景，新闻、博客、数据开源、联系页与 COC 工具都重排了层级。按钮不再铺满花纹和渐变，明亮配色也改成低眩光的浅色底，正文、卡片和输入框之间有足够的对比；手机上的首页助手和导航也一并重新适配。</p>
+
+        <h2>现在就可以下载</h2>
+        <p>天择OS 5.3.0 普通版与 Codex 桌面版都放在<a href="https://wjtianze.github.io/os/index.html">天择OS 下载页</a>。需要《部落冲突》18.400.22 国际服安装包，可以从<a href="https://wjtianze.github.io/coc/install/index.html">安装与校验页</a>下载，并对照页面上的文件大小和 SHA-256 校验值检查文件是否完整。</p>
+      </div>
+    </article>
+  </main>
+
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260828j-v5.3.0"></script>
+</body>
+</html>

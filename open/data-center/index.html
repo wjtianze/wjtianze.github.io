@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>本地数据中心 · 天择网</title>
+  <meta name="description" content="统一查看、加密备份、恢复或清除天择网保存在当前浏览器中的网站设置、COC、英语学习和学习助手数据。" />
+  <meta name="theme-color" content="#102947" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; frame-src 'self' https://challenges.cloudflare.com; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://challenges.cloudflare.com https://tianze-ai-proxy.xia-xilin-sgy.workers.dev; worker-src 'self'; manifest-src 'self'" />
+  <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";p=String(p||"cold").trim().toLowerCase();if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";document.documentElement.setAttribute("data-palette",p);document.documentElement.style.colorScheme=p==="porcelain"?"light":"dark";}catch(e){}})();</script>
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828j-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/open/data-center/data-center.css?v=20260820a" />
+  <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828j" />
+</head>
+<body class="data-center-page">
+  <div class="bg-mesh"></div>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="https://wjtianze.github.io/index.html" aria-label="天择网首页"><span class="logo-mark" aria-hidden="true"></span><span class="logo-text">天择网</span></a>
+      <button class="nav-toggle" type="button" aria-label="菜单" data-ui-icon="menu"></button>
+      <nav class="nav"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html" class="active"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a><a href="https://wjtianze.github.io/contact/index.html"><span>联系开发者</span></a></nav>
+    </div>
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    <section class="dc-hero wrap" aria-labelledby="dcTitle">
+      <div class="dc-kicker" data-ui-icon="save">当前设备的数据</div>
+      <h1 id="dcTitle">本地数据 <span class="grad">中心</span></h1>
+      <p>这里仅管理普通天择网页面保存在当前浏览器中的数据。天择OS 拥有独立的加密系统存档，本页不会读取、覆盖或清除 <code>tzos_state_v1</code>。</p>
+      <div class="dc-trust"><span data-ui-icon="shield">默认不备份 API Key</span><span data-ui-icon="key">AES-256-GCM 加密</span><span data-ui-icon="laptop">全部在当前设备处理</span></div>
+    </section>
+
+    <section class="dc-layout wrap" aria-label="本地数据管理工作区">
+      <div class="dc-main">
+        <section class="dc-panel" aria-labelledby="moduleTitle">
+          <div class="dc-panel-head"><div><small>可管理的内容</small><h2 id="moduleTitle">选择数据模块</h2></div><button class="btn btn--sm" id="refreshModules" type="button" data-ui-icon="refresh">重新统计</button></div>
+          <p class="dc-help">容量为 JSON 序列化后的近似值；英语词库与学习记录来自 IndexedDB，其余来自 localStorage。</p>
+          <div class="dc-modules" id="moduleList" aria-live="polite">
+            <label class="dc-module" data-module="settings"><input type="checkbox" value="settings" checked /><span data-ui-icon="palette"></span><span><b>网站设置</b><small>五套外观及兼容设置</small></span><strong data-module-size>统计中</strong></label>
+            <label class="dc-module" data-module="coc"><input type="checkbox" value="coc" checked /><span data-ui-icon="shield"></span><span><b>COC 工作区</b><small>村庄、伤害计算与双方案规划</small></span><strong data-module-size>统计中</strong></label>
+            <label class="dc-module" data-module="english"><input type="checkbox" value="english" checked /><span data-ui-icon="book"></span><span><b>英语学习</b><small>词库、记录、错词与统计</small></span><strong data-module-size>统计中</strong></label>
+            <label class="dc-module" data-module="learning"><input type="checkbox" value="learning" checked /><span data-ui-icon="bulb"></span><span><b>学习助手进度</b><small>课本学习页的本地作答与对话状态</small></span><strong data-module-size>统计中</strong></label>
+          </div>
+          <div class="dc-danger-row"><button class="btn btn--sm dc-danger" id="clearSelected" type="button" data-ui-icon="trash">清除所选模块</button><span>清除不可撤销，请先导出备份。</span></div>
+        </section>
+
+        <section class="dc-panel" aria-labelledby="backupTitle">
+          <div class="dc-panel-head"><div><small>加密备份</small><h2 id="backupTitle">导出加密归档</h2></div></div>
+          <div class="dc-form-grid">
+            <label><span>归档密码</span><input id="exportPassword" type="password" minlength="6" autocomplete="new-password" placeholder="至少 6 个字符" /></label>
+            <label><span>再次输入</span><input id="exportPassword2" type="password" minlength="6" autocomplete="new-password" placeholder="重复密码" /></label>
+          </div>
+          <label class="dc-secret-option"><input id="includeSecrets" type="checkbox" /><span><b>包含 API Key</b><small>默认关闭。开启后英语和学习助手密钥也会进入加密归档。</small></span></label>
+          <button class="btn" id="exportArchive" type="button" data-ui-icon="download">导出所选模块</button>
+          <p class="dc-status" id="exportStatus" role="status" aria-live="polite"></p>
+        </section>
+
+        <section class="dc-panel" aria-labelledby="restoreTitle">
+          <div class="dc-panel-head"><div><small>恢复前预览</small><h2 id="restoreTitle">恢复归档</h2></div></div>
+          <div class="dc-form-grid">
+            <label><span>选择归档</span><input id="archiveFile" type="file" accept=".tzwebarchive,application/json" /></label>
+            <label><span>归档密码</span><input id="importPassword" type="password" autocomplete="current-password" placeholder="输入导出时的密码" /></label>
+          </div>
+          <button class="btn btn--ghost" id="previewArchive" type="button" data-ui-icon="search">解密并预览</button>
+          <div class="dc-preview" id="restorePreview" hidden></div>
+          <label class="dc-secret-option"><input id="restoreSecrets" type="checkbox" disabled /><span><b>恢复归档中的密钥</b><small>默认关闭并保留当前设备已有密钥；开启时还会在执行前再次确认风险。</small></span></label>
+          <button class="btn" id="restoreArchive" type="button" data-ui-icon="upload" disabled>恢复预览中选中的模块</button>
+          <p class="dc-status" id="restoreStatus" role="status" aria-live="polite"></p>
+        </section>
+      </div>
+
+      <aside class="dc-side">
+        <section class="dc-panel dc-offline" aria-labelledby="offlineTitle">
+          <div class="dc-panel-head"><div><small>按需离线</small><h2 id="offlineTitle">离线内容包</h2></div></div>
+          <p class="dc-help">核心页面自动缓存；COC、英语和游戏按需下载。安装包、大型 ZIP 与真实 AI 请求永不进入离线缓存。</p>
+          <div id="offlineSupport" class="dc-offline-support" role="status">正在检查浏览器支持…</div>
+          <div class="dc-pack-list">
+            <article data-pack="coc"><span data-ui-icon="shield"></span><div><b>COC 工具包</b><small>村庄、数据、规划、伤害与教程</small></div><strong data-pack-state>未下载</strong><button type="button" class="btn btn--sm" data-pack-action>下载</button></article>
+            <article data-pack="english"><span data-ui-icon="book"></span><div><b>英语学习包</b><small>四阶段训练、词库与本地素材</small></div><strong data-pack-state>未下载</strong><button type="button" class="btn btn--sm" data-pack-action>下载</button></article>
+            <article data-pack="game"><span data-ui-icon="gamepad"></span><div><b>游戏包</b><small>绩点战争及游戏专区</small></div><strong data-pack-state>未下载</strong><button type="button" class="btn btn--sm" data-pack-action>下载</button></article>
+          </div>
+          <div class="dc-offline-actions"><button class="btn btn--ghost" id="installSite" type="button" data-ui-icon="download" hidden>安装天择网应用</button><button class="btn btn--ghost" id="checkUpdate" type="button" data-ui-icon="refresh">检查站点更新</button></div>
+          <p class="dc-status" id="offlineStatus" role="status" aria-live="polite"></p>
+        </section>
+        <section class="dc-panel dc-note"><h2>安全边界</h2><ul><li>恢复前只展示模块、条目数与容量，不自动写入。</li><li>恢复某模块时会替换该模块现有数据，不触碰其它模块。</li><li>天择OS、浏览器 Cookie、账号令牌和真实 AI 请求不在管理范围内。</li><li>忘记归档密码后无法解密，本站也无法找回。</li></ul></section>
+      </aside>
+    </section>
+  </main>
+
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260828j-v5.3.0"></script>
+  <script defer src="https://wjtianze.github.io/open/data-center/core.js?v=20260820a"></script>
+  <script defer src="https://wjtianze.github.io/open/data-center/data-center.js?v=20260820a"></script>
+</body>
+</html>

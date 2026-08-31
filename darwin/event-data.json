@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-08-31",
+  "entrants": [
+    {
+      "id": "wu-jing-tian-ze",
+      "nickname": "物竞天择",
+      "townHall": 14,
+      "group": "middle",
+      "registrationOrder": 1
+    },
+    {
+      "id": "chun-gui",
+      "nickname": "春贵",
+      "townHall": 18,
+      "group": "high",
+      "registrationOrder": 2
+    },
+    {
+      "id": "jiami",
+      "nickname": "jiami",
+      "townHall": 11,
+      "group": "low",
+      "registrationOrder": 3
+    },
+    {
+      "id": "mamms",
+      "nickname": "14本mamms",
+      "townHall": 14,
+      "group": "middle",
+      "registrationOrder": 4
+    },
+    {
+      "id": "xing-he",
+      "nickname": "星河",
+      "townHall": 17,
+      "group": "high",
+      "registrationOrder": 5
+    },
+    {
+      "id": "simple",
+      "nickname": "simple",
+      "townHall": 13,
+      "group": "middle",
+      "registrationOrder": 6
+    },
+    {
+      "id": "citrus",
+      "nickname": "citrus-本部15本",
+      "townHall": 15,
+      "group": "middle",
+      "registrationOrder": 7
+    },
+    {
+      "id": "ai-de-shen-60",
+      "nickname": "爱的神60-13本",
+      "townHall": 13,
+      "group": "middle",
+      "registrationOrder": 8
+    },
+    {
+      "id": "xiao-mo",
+      "nickname": "小沫",
+      "townHall": 18,
+      "group": "high",
+      "registrationOrder": 9
+    }
+  ],
+  "matches": [
+    {
+      "id": "high-001",
+      "group": "high",
+      "status": "completed",
+      "playedAt": "",
+      "left": {
+        "entrantId": "chun-gui",
+        "attacks": [
+          { "stars": 2, "destruction": 81 },
+          { "stars": 3, "destruction": 100 },
+          { "stars": 2, "destruction": 88 }
+        ]
+      },
+      "right": {
+        "entrantId": "xiao-mo",
+        "attacks": [
+          { "stars": 3, "destruction": 100 },
+          { "stars": 3, "destruction": 100 },
+          { "stars": 3, "destruction": 100 }
+        ]
+      }
+    }
+  ]
+}

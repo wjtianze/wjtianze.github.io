@@ -1,0 +1,78 @@
+[
+  {
+    "word": "accommodate",
+    "phonetic": "/əˈkɒmədeɪt/",
+    "pos": "v.",
+    "meaning": ["容纳；提供空间", "迁就；照顾", "适应"],
+    "examples": [
+      { "en": "The hotel can accommodate 500 guests.", "zh": "这家酒店能容纳500位客人。" }
+    ],
+    "tags": ["CET-6", "核心"]
+  },
+  {
+    "word": "abandon",
+    "phonetic": "/əˈbændən/",
+    "pos": "v.",
+    "meaning": ["放弃；遗弃", "放纵"]
+  },
+  {
+    "word": "ambiguous",
+    "phonetic": "/æmˈbɪɡjuəs/",
+    "pos": "adj.",
+    "meaning": ["模棱两可的", "含糊不清的"]
+  },
+  {
+    "word": "benevolent",
+    "phonetic": "/bɪˈnevələnt/",
+    "pos": "adj.",
+    "meaning": ["仁慈的", "慈善的"]
+  },
+  {
+    "word": "comprehensive",
+    "phonetic": "/ˌkɒmprɪˈhensɪv/",
+    "pos": "adj.",
+    "meaning": ["全面的；综合的", "理解的"]
+  },
+  {
+    "word": "diligent",
+    "phonetic": "/ˈdɪlɪdʒənt/",
+    "pos": "adj.",
+    "meaning": ["勤奋的", "用功的"]
+  },
+  {
+    "word": "elaborate",
+    "phonetic": "/ɪˈlæbərət/",
+    "pos": "adj./v.",
+    "meaning": ["精心制作的", "详细阐述"]
+  },
+  {
+    "word": "fundamental",
+    "phonetic": "/ˌfʌndəˈmentl/",
+    "pos": "adj./n.",
+    "meaning": ["基本的；根本的", "基本原理"]
+  },
+  {
+    "word": "genuine",
+    "phonetic": "/ˈdʒenjuɪn/",
+    "pos": "adj.",
+    "meaning": ["真正的", "真诚的"]
+  },
+  {
+    "word": "hypothesis",
+    "phonetic": "/haɪˈpɒθəsɪs/",
+    "pos": "n.",
+    "meaning": ["假设", "假说"]
+  },
+  {
+    "word": "intricate",
+    "phonetic": "/ˈɪntrɪkət/",
+    "pos": "adj.",
+    "meaning": ["复杂的", "错综的"]
+  },
+  {
+    "word": "justify",
+    "phonetic": "/ˈdʒʌstɪfaɪ/",
+    "pos": "v.",
+    "meaning": ["证明...正当", "为...辩护"]
+  }
+]

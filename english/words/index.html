@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#12203a" />
+  <title>天择背单词 · 天择网</title>
+  <meta name="description" content="手动添加或导入自己的词库，用预习、回忆、辨析和拼写四轮练习背单词；学习记录保存在当前设备。" />
+  <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828j-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/english/words/words.css?v=20260827-v5.3.2" />
+  <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828j" />
+</head>
+<body class="tzw">
+  <!-- 全站公共页眉 -->
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="https://wjtianze.github.io/index.html" aria-label="天择网首页">
+        <span class="logo-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/>
+          </svg>
+        </span>
+        <span class="logo-text">天择网</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-label="菜单" data-ui-icon="menu"><span class="sr-only">菜单</span></button>
+      <nav class="nav" aria-label="主导航"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html" class="active"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a></nav>
+    </div>
+  </header>
+
+  <div class="words-app words-workspace">
+    <div class="bg-mesh" aria-hidden="true"></div>
+    <section class="app-toolbar learning-command" aria-labelledby="workspaceTitle">
+      <div class="wrap app-toolbar-inner">
+        <div class="app-title command-identity">
+          <span class="app-icon" data-ui-icon="book" aria-hidden="true"></span>
+          <div>
+            <h1 id="workspaceTitle">背单词</h1>
+            <p>收好自己的词，按预习、回忆、辨析、拼写四步练熟。</p>
+          </div>
+        </div>
+        <div class="app-toolbar-actions">
+          <div class="app-stats" aria-label="学习概览">
+            <span class="ts-chip"><small>已学词数</small><b id="tsLearned">0</b></span>
+            <span class="ts-chip"><small>累计正确率</small><b id="tsAcc">0%</b></span>
+            <span class="ts-chip"><small>连续学习</small><b><span id="tsStreak">0</span><em>天</em></b></span>
+          </div>
+          <div class="command-actions">
+            <span class="local-state"><span aria-hidden="true"></span>记录只存本机</span>
+            <button type="button" class="btn btn--secondary btn--sm" id="btnAiConfig" data-ui-icon="key">AI 使用设置</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  <!-- 主工作区 -->
+  <main class="wrap tzw-main">
+    <!-- 学习模式切换 -->
+    <nav class="tzw-nav mode-switcher" id="tzwNav" aria-label="学习工作区">
+      <button type="button" class="nav-item active" data-view="vocab" data-ui-icon="folder" aria-current="page">
+        <span>词库</span><small>导入与查找</small>
+      </button>
+      <button type="button" class="nav-item" data-view="study" data-ui-icon="book">
+        <span>学习</span><small>开始一轮练习</small>
+      </button>
+      <button type="button" class="nav-item" data-view="stats" data-ui-icon="info">
+        <span>统计</span><small>查看学习记录</small>
+      </button>
+      <button type="button" class="nav-item" data-view="wrong" data-ui-icon="warning">
+        <span>错词</span><small>集中复习</small>
+      </button>
+    </nav>
+
+    <!-- 面板容器 -->
+    <section class="tzw-panel-wrap">
+
+      <!-- 1. 词库面板 -->
+      <div class="panel active" id="view-vocab">
+        <header class="view-heading">
+          <div>
+            <h2>词库</h2>
+            <p>逐个记下，或一次导入一批；原有学习进度不会被新词覆盖。</p>
+          </div>
+          <span class="view-state"><span aria-hidden="true"></span>本地存储</span>
+        </header>
+
+        <div class="library-command-grid">
+          <section class="card workspace-intro import-console" aria-labelledby="importConsoleTitle">
+            <div class="workspace-card-head">
+              <div>
+                <span class="section-index">收词</span>
+                <h3 id="importConsoleTitle">把要学的词放进来</h3>
+              </div>
+              <span class="workspace-state">JSON 格式</span>
+            </div>
+            <p class="muted">少量单词可以直接填写；已有词表可用 JSON 批量导入。同名单词只补充内容，不重置学习记录。</p>
+            <div class="actions action-cluster">
+              <input type="file" id="fileVocab" name="vocab-file" accept=".json,application/json" hidden />
+              <button type="button" class="btn btn--primary" id="btnAddWord" data-ui-icon="plus">手动添加</button>
+              <button type="button" class="btn btn--secondary" id="btnImport" data-ui-icon="upload">导入 JSON</button>
+              <button type="button" class="btn btn--quiet" id="btnPaste" data-ui-icon="notes">粘贴 JSON</button>
+              <button type="button" class="btn btn--quiet" id="btnSample" data-ui-icon="document">查看格式</button>
+            </div>
+            <div class="library-maintenance">
+              <span>词库管理</span>
+              <button type="button" class="btn btn--quiet btn--sm" id="btnExport" data-ui-icon="download">导出词库</button>
+              <button type="button" class="btn btn--quiet btn--danger btn--sm" id="btnClearVocab" data-ui-icon="trash">清空数据</button>
+            </div>
+            <div class="import-status" id="importStatus" role="status" aria-live="polite" hidden>
+              <span class="spinner" aria-hidden="true"></span><span id="importStatusText">正在导入…</span>
+            </div>
+          </section>
+
+          <section class="card vocab-stats library-telemetry" aria-label="词库数据概览">
+            <div class="telemetry-head">
+              <span class="section-index">词库概况</span>
+              <p>这些数字来自当前设备中的学习记录。</p>
+            </div>
+            <div class="vs-item" data-tone="blue"><span>总词数</span><b id="vsTotal">0</b><small>全部词条</small></div>
+            <div class="vs-item" data-tone="violet"><span>已学习</span><b id="vsLearned">0</b><small>练习过</small></div>
+            <div class="vs-item" data-tone="amber"><span>待复习</span><b id="vsWrong">0</b><small>曾经答错</small></div>
+            <div class="vs-item" data-tone="green"><span>已掌握</span><b id="vsMastered">0</b><small>较为熟悉</small></div>
+          </section>
+        </div>
+
+        <section class="card vocab-list-wrap library-browser" aria-labelledby="libraryBrowserTitle">
+          <div class="library-browser-head">
+            <div>
+              <span class="section-index">查找单词</span>
+              <h3 id="libraryBrowserTitle">词库中的单词</h3>
+            </div>
+            <label class="search-shell" for="vocabSearch">
+              <span data-ui-icon="search">搜索</span>
+              <input class="search" id="vocabSearch" name="vocab-search" type="search" placeholder="输入单词、释义或标签…" autocomplete="off" />
+            </label>
+          </div>
+          <div class="vocab-list" id="vocabList">
+            <div class="empty-state">
+              <div class="es-icon" data-ui-icon="book" aria-hidden="true"></div>
+              <strong>还没有词条</strong>
+              <span>手动记下第一个词，或在上方导入现成词表。</span>
+              <button type="button" class="btn btn--secondary btn--sm" data-act="add-word">添加第一个词</button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- 2. 学习面板（四阶段：英译中预习→中译英→英译中→拼写） -->
+      <div class="panel" id="view-study" hidden>
+        <header class="view-heading">
+          <div>
+            <h2>开始学习</h2>
+            <p>同一批单词依次经过预习、回忆、辨析和拼写。</p>
+          </div>
+          <span class="view-state view-state--active"><span aria-hidden="true"></span>4 步练习</span>
+        </header>
+
+        <section class="card study-card training-deck">
+          <!-- 开始态 -->
+          <div id="studyStart">
+            <div class="training-start-grid">
+              <div class="training-route">
+                <div class="training-route-head">
+                  <span class="section-index">学习顺序</span>
+                  <h3>同一批单词练 4 遍</h3>
+                  <p>每一步都减少一点提示，直到你能完整拼写。</p>
+                </div>
+                <ol class="study-flow">
+                  <li class="sf-step"><b>01</b><div><strong>英译中预习</strong><span>建立词形与释义联系</span></div></li>
+                  <li class="sf-step"><b>02</b><div><strong>中译英回忆</strong><span>由语义主动提取单词</span></div></li>
+                  <li class="sf-step"><b>03</b><div><strong>英译中巩固</strong><span>识别多义与相近干扰</span></div></li>
+                  <li class="sf-step"><b>04</b><div><strong>完整拼写</strong><span>完成最终主动输出</span></div></li>
+                </ol>
+              </div>
+
+              <aside class="session-config" aria-labelledby="sessionConfigTitle">
+                <span class="section-index">本轮设置</span>
+                <h3 id="sessionConfigTitle">选择练习数量</h3>
+                <label class="config-field" for="stCount">
+                  <span>单词数量</span>
+                  <small>每轮 3 至 50 个</small>
+                  <input type="number" id="stCount" name="study-count" value="10" min="3" max="50" inputmode="numeric" autocomplete="off" />
+                </label>
+                <label class="option-switch">
+                  <input type="checkbox" id="stWrongOnly" name="wrong-only" />
+                  <span class="option-switch-ui" aria-hidden="true"></span>
+                  <span><b>仅练错词</b><small>从复习队列抽取</small></span>
+                </label>
+                <label class="option-switch">
+                  <input type="checkbox" id="stAiDistractor" name="ai-distractor" />
+                  <span class="option-switch-ui" aria-hidden="true"></span>
+                  <span><b>AI 干扰项</b><small>生成更接近真实语境的选项</small></span>
+                </label>
+                <button type="button" class="btn btn--primary btn--launch" id="btnStudyStart" data-ui-icon="play">开始学习</button>
+                <p class="session-note" data-ui-icon="shield">所有答题记录仅保存在本机</p>
+              </aside>
+            </div>
+          </div>
+
+          <!-- 阶段过渡态 -->
+          <div id="studyStage" hidden>
+            <div class="stage-indicator" id="stIndicator"></div>
+            <div class="stage-info stage-briefing">
+              <span class="section-index">接下来</span>
+              <h3 id="stStageTitle"></h3>
+              <p class="muted" id="stStageDesc"></p>
+              <div id="stStageResult" class="stage-result"></div>
+            </div>
+            <button type="button" class="btn btn--primary" id="btnStageStart" data-ui-icon="play">开始本阶段</button>
+          </div>
+
+          <!-- AI 加载态 -->
+          <div id="studyLoading" hidden>
+            <div class="ai-loading"><div class="spinner"></div><span id="stLoadingText" data-ui-icon="ai">AI 正在生成干扰项…</span></div>
+          </div>
+
+          <!-- 答题态 -->
+          <div id="studyPlay" hidden>
+            <div class="stage-indicator" id="stIndicator2"></div>
+            <div class="quiz-progress">
+              <span id="stProg">1 / 10</span>
+              <div class="bar"><i id="stBar"></i></div>
+            </div>
+            <div class="quiz-question">
+              <div class="question-content">
+                <div class="q-prompt" id="stPrompt"></div>
+                <div class="q-sub" id="stSub"></div>
+              </div>
+            </div>
+            <div class="quiz-options" id="stOptions"></div>
+            <input class="spell-input" id="stInput" name="spelling-answer" type="text" placeholder="输入拼写…" autocomplete="off" autocapitalize="off" spellcheck="false" hidden />
+            <div class="spell-prompt-row" id="stSpellExtra" hidden>
+              <button type="button" class="tts-btn" id="stTts" title="听发音" data-ui-icon="volume">听发音</button>
+              <button type="button" class="btn btn--quiet btn--sm" id="stHint" data-ui-icon="bulb">提示首字母</button>
+            </div>
+            <div class="quiz-feedback" id="stFeedback" hidden></div>
+            <div class="quiz-actions">
+              <button type="button" class="btn btn--quiet" id="stSkip" data-ui-icon="right">跳过此题</button>
+              <button type="button" class="btn btn--primary" id="stSubmit" data-ui-icon="check" hidden>提交答案</button>
+              <button type="button" class="btn btn--primary" id="stNext" data-ui-icon="right" hidden>下一题</button>
+            </div>
+          </div>
+
+          <!-- 最终结果态 -->
+          <div class="quiz-result" id="studyResult" hidden></div>
+        </section>
+      </div>
+
+      <!-- 3. 统计面板 -->
+      <div class="panel" id="view-stats" hidden>
+        <header class="view-heading">
+          <div>
+            <h2>学习统计</h2>
+            <p>看看最近练了多少，以及哪些单词还不熟。</p>
+          </div>
+          <span class="view-state"><span aria-hidden="true"></span>近 14 天</span>
+        </header>
+
+        <div class="stats-grid">
+          <article class="card stat-card" data-tone="blue"><span>已学词数</span><b id="sLearned">0</b><small>练习过</small></article>
+          <article class="card stat-card" data-tone="green"><span>累计正确率</span><b id="sAccuracy">0%</b><small>全部答题</small></article>
+          <article class="card stat-card" data-tone="violet"><span>连续学习</span><b id="sStreak">0</b><small>天</small></article>
+          <article class="card stat-card" data-tone="amber"><span>已掌握词数</span><b id="sMastered">0</b><small>较为熟悉</small></article>
+        </div>
+
+        <div class="insight-grid">
+          <section class="card insight-card insight-card--wide" aria-labelledby="learningCurveTitle">
+            <div class="insight-head">
+              <div><span class="section-index">学习频率</span><h3 id="learningCurveTitle">近 14 天学习曲线</h3></div>
+              <span class="chart-legend"><i aria-hidden="true"></i>每日答题量</span>
+            </div>
+            <div class="chart-bars" id="chartBars"></div>
+          </section>
+
+          <section class="card insight-card" aria-labelledby="masteryTitle">
+            <div class="insight-head">
+              <div><span class="section-index">熟悉程度</span><h3 id="masteryTitle">掌握度分布</h3></div>
+            </div>
+            <div class="mastery-dist" id="masteryDist"></div>
+          </section>
+
+          <section class="card insight-card insight-card--review" aria-labelledby="statsWrongTitle">
+            <div class="insight-head">
+              <div><span class="section-index">容易忘的词</span><h3 id="statsWrongTitle">高频错词</h3></div>
+              <button type="button" class="btn btn--secondary btn--sm" id="btnPracticeWrong" data-ui-icon="refresh">开始复习</button>
+            </div>
+            <div class="wrong-list" id="wrongList"></div>
+          </section>
+        </div>
+      </div>
+
+      <!-- 5. 错词本面板 -->
+      <div class="panel" id="view-wrong" hidden>
+        <header class="view-heading">
+          <div>
+            <h2>错词</h2>
+            <p>按错误频率自动排序；连续答对 3 次后，词条会自动离开队列。</p>
+          </div>
+          <button type="button" class="btn btn--primary" id="btnPracticeWrong2" data-ui-icon="refresh">复习全部错词</button>
+        </header>
+
+        <section class="card review-queue" aria-labelledby="reviewQueueTitle">
+          <div class="review-queue-head">
+            <div>
+              <span class="section-index">按错误次数排序</span>
+              <h3 id="reviewQueueTitle">需要再次巩固</h3>
+            </div>
+            <p data-ui-icon="info">可从每个词条直接进入 AI 解析或单词练习。</p>
+          </div>
+          <div class="wrong-list" id="wrongListFull"></div>
+        </section>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- 手动添加单词弹层 -->
+  <div class="modal" id="addWordModal" role="dialog" aria-modal="true" aria-labelledby="addWordTitle" aria-describedby="addWordDesc" hidden>
+    <div class="modal-mask" id="addWordMask" aria-hidden="true"></div>
+    <div class="card modal-card modal-card--word" role="document" tabindex="-1">
+      <div class="modal-head">
+        <div>
+          <span class="section-index">新词条</span>
+          <h2 id="addWordTitle">手动添加单词</h2>
+          <p id="addWordDesc">可以自己填写释义；也可以只填单词，让 AI 先生成一份供你核对。</p>
+        </div>
+        <button type="button" class="modal-close" id="addWordClose" title="关闭" aria-label="关闭添加单词" data-ui-icon="close"></button>
+      </div>
+      <form id="addWordForm" novalidate>
+        <div class="modal-body add-word-form">
+          <label class="config-field config-field--wide" for="addWordText"><span>单词或短语 <b aria-hidden="true">*</b></span><small>必填，最多 100 个字符</small>
+            <input id="addWordText" name="word" type="text" maxlength="100" autocomplete="off" autocapitalize="none" spellcheck="true" required autofocus />
+          </label>
+          <div class="add-word-meta-grid">
+            <label class="config-field" for="addWordPhonetic"><span>音标</span><small>可选</small>
+              <input id="addWordPhonetic" name="phonetic" type="text" maxlength="120" autocomplete="off" spellcheck="false" placeholder="例如：/əˈbændən/" />
+            </label>
+            <label class="config-field" for="addWordPos"><span>词性</span><small>可选</small>
+              <input id="addWordPos" name="part-of-speech" type="text" maxlength="60" autocomplete="off" spellcheck="false" placeholder="例如：v." />
+            </label>
+          </div>
+          <label class="config-field config-field--wide" for="addWordMeanings"><span>中文释义</span><small>每行一个；留空可让 AI 生成</small>
+            <textarea id="addWordMeanings" name="meanings" rows="5" maxlength="4000" placeholder="放弃；遗弃&#10;中止" autocomplete="off"></textarea>
+          </label>
+          <label class="config-field config-field--wide" for="addWordTags"><span>标签</span><small>可选，用逗号分隔</small>
+            <input id="addWordTags" name="tags" type="text" maxlength="500" autocomplete="off" placeholder="例如：四级，写作" />
+          </label>
+          <p class="form-message form-message--error" id="addWordError" role="alert" hidden></p>
+          <p class="form-message" id="addWordStatus" role="status" aria-live="polite">AI 生成的内容不会自动保存，请核对后再确认。</p>
+        </div>
+        <div class="modal-foot add-word-actions">
+          <button type="button" class="btn btn--quiet" id="addWordCancel">取消</button>
+          <button type="button" class="btn btn--secondary" id="addWordGenerate" data-ui-icon="ai">用 AI 补全</button>
+          <button type="submit" class="btn btn--primary" id="addWordSave" data-ui-icon="save">确认添加</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- AI 使用设置弹层 -->
+  <div class="modal" id="aiConfigModal" role="dialog" aria-modal="true" aria-labelledby="aiConfigTitle" aria-describedby="aiConfigDesc" hidden>
+    <div class="modal-mask" id="aiCfgMask" aria-hidden="true"></div>
+    <div class="card modal-card" role="document" tabindex="-1">
+      <div class="modal-head">
+        <div>
+              <span class="section-index">AI 辅助</span>
+              <h2 id="aiConfigTitle" data-ui-icon="key">选择 AI 使用方式</h2>
+              <p id="aiConfigDesc">默认使用天择网提供的 GLM-4.7-Flash；也可以改用自己的模型服务。</p>
+        </div>
+        <button type="button" class="modal-close" id="aiCfgClose" title="关闭" aria-label="关闭 AI 配置" data-ui-icon="close"></button>
+      </div>
+      <div class="modal-body">
+        <fieldset class="ai-mode-picker">
+          <legend>使用方式</legend>
+          <label class="ai-mode-option" for="cfgModeSite">
+            <input id="cfgModeSite" name="ai-config-mode" type="radio" value="site" checked />
+            <span><b>天择网默认配置</b><small>GLM-4.7-Flash，无需填写密钥</small></span>
+          </label>
+          <label class="ai-mode-option" for="cfgModeCustom">
+            <input id="cfgModeCustom" name="ai-config-mode" type="radio" value="custom" />
+            <span><b>使用自己的配置</b><small>与天择网站内助手共享，保存于当前设备</small></span>
+          </label>
+        </fieldset>
+        <div class="managed-ai-note" id="managedAiNote" data-ui-icon="shield">
+          <div><b>打开即可使用</b><span>默认使用 GLM-4.7-Flash，无需填写密钥；让 AI 补全释义时，会把你填写的单词交给模型处理。</span></div>
+        </div>
+        <div id="customAiFields" hidden>
+        <section class="preset-section" aria-labelledby="presetTitle">
+          <div class="form-section-head">
+            <span id="presetTitle">自定义预设</span>
+            <small>选择后仍可手动修改</small>
+          </div>
+          <div class="preset-chips" id="presetChips">
+            <button type="button" class="chip preset-card" data-url="https://api.deepseek.com/v1/chat/completions" data-model="deepseek-v4-flash"><span>DeepSeek V4 Flash</span><small>文本模型 · 使用自己的密钥</small></button>
+            <button type="button" class="chip preset-card" data-url="https://api.deepseek.com/v1/chat/completions" data-model="deepseek-v4-pro"><span>DeepSeek V4 Pro</span><small>文本模型 · 使用自己的密钥</small></button>
+            <button type="button" class="chip preset-card" data-url="https://api.xiaomimimo.com/v1/chat/completions" data-model="mimo-v2.5"><span>MiMo V2.5</span><small>多模态模型 · 使用自己的密钥</small></button>
+            <button type="button" class="chip preset-card" data-url="https://open.bigmodel.cn/api/paas/v4/chat/completions" data-model="glm-4.7-flash"><span>GLM 4.7 Flash</span><small>文本模型 · 使用自己的密钥</small></button>
+          </div>
+        </section>
+        <div class="config-form-grid">
+          <label class="config-field config-field--wide" for="cfgUrl"><span>API 地址</span><small>完整的 Chat Completions 地址</small>
+            <input id="cfgUrl" name="ai-url" type="url" placeholder="例如：https://api.deepseek.com/v1/chat/completions…" autocomplete="url" spellcheck="false" />
+          </label>
+          <label class="config-field config-field--wide" for="cfgKey"><span>API Key</span><small>仅保存到当前设备</small>
+            <input id="cfgKey" name="ai-api-key" type="password" placeholder="输入服务密钥…" autocomplete="off" spellcheck="false" />
+          </label>
+          <label class="config-field" for="cfgModel"><span>模型名</span><small>使用接口要求的模型 ID</small>
+            <input id="cfgModel" name="ai-model" type="text" placeholder="例如：deepseek-v4-flash…" autocomplete="off" spellcheck="false" />
+          </label>
+          <label class="config-field" for="cfgTemp"><span>温度</span><small>0 稳定，2 更发散</small>
+            <input id="cfgTemp" name="ai-temperature" type="number" step="0.1" value="0.6" min="0" max="2" inputmode="decimal" />
+          </label>
+          <label class="config-field config-field--wide" for="cfgApi"><span>接口格式</span><small>应与模型服务的地址一致</small>
+            <select id="cfgApi" name="ai-api-format">
+              <option value="chat-completions">Chat Completions</option>
+              <option value="responses">Responses</option>
+            </select>
+          </label>
+        </div>
+        <p class="privacy-note" data-ui-icon="shield">自定义密钥只保存在当前设备，并只发送到你填写的模型服务。页面不会把密钥写进词库、提示或错误信息。</p>
+        </div>
+        <p class="form-message form-message--error" id="cfgError" role="alert" hidden></p>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn--secondary" id="cfgTest" data-ui-icon="network">测试连接</button>
+        <button type="button" class="btn btn--primary" id="cfgSave" data-ui-icon="save">保存配置</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI 解析弹层（通用，词库/答题/错词本共用） -->
+  <div class="modal" id="aiAnalyzeModal" role="dialog" aria-modal="true" aria-labelledby="aiAnTitle" hidden>
+    <div class="modal-mask" id="aiAnMask" aria-hidden="true"></div>
+    <div class="card modal-card modal-card--wide" role="document" tabindex="-1">
+      <div class="modal-head">
+        <div>
+          <span class="section-index">单词解析</span>
+          <h2 id="aiAnTitle" data-ui-icon="ai">AI 解析</h2>
+        </div>
+        <button type="button" class="modal-close" id="aiAnClose" title="关闭" aria-label="关闭 AI 解析" data-ui-icon="close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="ai-status" id="aiAnStatus" role="status" aria-live="polite"></div>
+        <div class="ai-stream" id="aiAnStream" hidden></div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn--secondary" id="aiAnClose2" data-ui-icon="close">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 例句弹层（AI 生成） -->
+  <div class="modal" id="examplesModal" role="dialog" aria-modal="true" aria-labelledby="exTitle" hidden>
+    <div class="modal-mask" id="exMask" aria-hidden="true"></div>
+    <div class="card modal-card modal-card--wide" role="document" tabindex="-1">
+      <div class="modal-head">
+        <div>
+          <span class="section-index">例句练习</span>
+          <h2 id="exTitle" data-ui-icon="book">例句</h2>
+        </div>
+        <button type="button" class="modal-close" id="exClose" title="关闭" aria-label="关闭例句" data-ui-icon="close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="ai-status" id="exStatus" role="status" aria-live="polite"></div>
+        <div id="exContent"></div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn--secondary" id="exRegen" data-ui-icon="refresh">重新生成</button>
+        <button type="button" class="btn btn--primary" id="exClose2" data-ui-icon="close">完成</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 粘贴导入弹层 -->
+  <div class="modal" id="pasteModal" role="dialog" aria-modal="true" aria-labelledby="pasteTitle" aria-describedby="pasteDesc" hidden>
+    <div class="modal-mask" id="pasteMask" aria-hidden="true"></div>
+    <div class="card modal-card" role="document" tabindex="-1">
+      <div class="modal-head">
+        <div>
+          <span class="section-index">导入词库</span>
+          <h2 id="pasteTitle" data-ui-icon="notes">粘贴 JSON 词库</h2>
+          <p id="pasteDesc">支持数组或带 vocab 字段的对象格式。</p>
+        </div>
+        <button type="button" class="modal-close" id="pasteClose" title="关闭" aria-label="关闭粘贴导入" data-ui-icon="close"></button>
+      </div>
+      <div class="modal-body">
+        <label class="code-input" for="pasteArea">
+          <span>JSON 内容</span>
+          <textarea id="pasteArea" name="vocab-json" rows="12" placeholder='例如：[{"word":"accommodate","meaning":["容纳","迁就","适应"]}]…' autocomplete="off" spellcheck="false"></textarea>
+        </label>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn--secondary" id="pasteCancel">取消</button>
+        <button type="button" class="btn btn--primary" id="pasteImport" data-ui-icon="upload">开始导入</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 示例格式弹层 -->
+  <div class="modal" id="sampleModal" role="dialog" aria-modal="true" aria-labelledby="sampleTitle" aria-describedby="sampleDesc" hidden>
+    <div class="modal-mask" id="sampleMask" aria-hidden="true"></div>
+    <div class="card modal-card" role="document" tabindex="-1">
+      <div class="modal-head">
+        <div>
+          <span class="section-index">词库格式</span>
+          <h2 id="sampleTitle" data-ui-icon="document">词库 JSON 示例</h2>
+          <p id="sampleDesc">复制模板后替换内容，即可导入自己的词库。</p>
+        </div>
+        <button type="button" class="modal-close" id="sampleClose" title="关闭" aria-label="关闭示例格式" data-ui-icon="close"></button>
+      </div>
+      <div class="modal-body">
+        <pre id="sampleCode" class="schema-code"></pre>
+        <dl class="schema-fields">
+          <div><dt><code>word</code><span>必填</span></dt><dd>单词字符串</dd></div>
+          <div><dt><code>meaning</code><span>必填</span></dt><dd>释义数组，支持一词多义</dd></div>
+          <div><dt><code>phonetic</code><span>可选</span></dt><dd>音标</dd></div>
+          <div><dt><code>pos</code><span>可选</span></dt><dd>词性</dd></div>
+          <div><dt><code>examples</code><span>可选</span></dt><dd>包含 en、zh 的例句数组</dd></div>
+          <div><dt><code>tags</code><span>可选</span></dt><dd>标签数组</dd></div>
+        </dl>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn--primary" id="sampleCopy" data-ui-icon="copy">复制示例</button>
+        <button type="button" class="btn btn--secondary" id="sampleClose2">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast 容器 -->
+  <div class="toast-wrap" id="toastWrap" aria-live="polite" aria-atomic="false"></div>
+  </div>
+
+  <!-- 全站公共页脚 -->
+
+  <script src="https://wjtianze.github.io/assets/js/main.js?v=20260828j-v5.3.0"></script>
+  <script src="https://wjtianze.github.io/english/words/words.js?v=20260827-v5.3.2"></script>
+</body>
+</html>

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#102947" />
+  <title>伤害计算器 · COC 专区 · 天择网</title>
+  <meta name="description" content="部落冲突家乡伤害计算器：基于雷电法术、地震法术与英雄装备数据，计算给定法术空间内的最高伤害、摧毁建筑所需最少法术；新增建筑工人小屋回血量与法术方案容错时间计算，支持从村庄存档JSON一键导入等级。城墙固定规则：3 震不毁、4 震必毁。" />
+  <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828j-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css?v=20260830a" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-workspace.css?v=20260801-v4.1.6" />
+  <style>
+    /* 伤害计算器专属样式，前缀 dm-*（damage-calc），不污染其他 COC 页 */
+    .coc-tool.dmg-calc .dm-mech { padding: 22px 26px; }
+    .coc-tool.dmg-calc .dm-mech-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 14px; }
+    .coc-tool.dmg-calc .dm-mech-card { background: rgba(4,9,27,.5); border: 1px solid var(--coc-stroke); border-radius: 12px; padding: 14px 16px; }
+    .coc-tool.dmg-calc .dm-mech-card h4 { font-size: 14px; font-weight: 700; color: var(--coc-blue); margin-bottom: 8px; display: flex; align-items: center; gap: 7px; }
+    .coc-tool.dmg-calc .dm-mech-card p { font-size: 13px; color: var(--ink-dim); line-height: 1.7; }
+    .coc-tool.dmg-calc .dm-mech-card .dm-formula { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; color: #a5f3fc; background: rgba(56,189,248,.07); border: 1px solid rgba(56,189,248,.18); border-radius: 7px; padding: 7px 10px; margin-top: 8px; display: inline-block; }
+
+    .coc-tool.dmg-calc .dm-import-area { margin-bottom: 16px; }
+    .coc-tool.dmg-calc .dm-import-area textarea { width: 100%; min-height: 90px; resize: vertical; background: rgba(2,6,23,.5); border: 1px solid var(--coc-stroke); border-radius: 10px; padding: 12px 14px; color: var(--ink); font: 13px/1.6 ui-monospace, Menlo, Consolas, monospace; }
+    .coc-tool.dmg-calc .dm-import-area textarea:focus-visible { outline: 2px solid var(--coc-blue); outline-offset: 2px; border-color: var(--coc-blue); box-shadow: 0 0 0 3px rgba(56,189,248,.1); }
+    .coc-tool.dmg-calc .dm-import-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 10px; align-items: center; }
+    .coc-tool.dmg-calc .dm-import-note { font-size: 12.5px; color: var(--ink-faint); margin-left: auto; }
+
+    .coc-tool.dmg-calc .dm-eq-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+    .coc-tool.dmg-calc .dm-eq-group { background: rgba(4,9,27,.45); border: 1px solid var(--coc-stroke); border-radius: 12px; padding: 13px 15px; }
+    .coc-tool.dmg-calc .dm-eq-group > h4 { font-size: 13.5px; font-weight: 700; color: var(--ink); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; padding-bottom: 8px; border-bottom: 1px solid var(--coc-stroke); }
+    .coc-tool.dmg-calc .dm-eq-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 0; font-size: 13px; }
+    .coc-tool.dmg-calc .dm-eq-row .dm-eq-check { flex-shrink: 0; display: flex; align-items: center; cursor: pointer; }
+    .coc-tool.dmg-calc .dm-eq-row .dm-eq-check input { width: 16px; height: 16px; accent-color: var(--coc-purple); cursor: pointer; margin: 0; }
+    .coc-tool.dmg-calc .dm-eq-row.dm-eq-on .dm-eq-name { color: var(--ink); }
+    .coc-tool.dmg-calc .dm-eq-row.dm-eq-on { background: rgba(var(--c-green-rgb),.06); border-radius: 7px; padding: 6px 8px; margin: 0 -8px; }
+    .coc-tool.dmg-calc .dm-eq-row .dm-eq-name { color: var(--ink-dim); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .coc-tool.dmg-calc .dm-eq-image, .coc-tool.dmg-calc .dm-build-image { flex: 0 0 auto; object-fit: contain; }
+    .coc-tool.dmg-calc .dm-eq-row .dm-eq-dmg { font-size: 11.5px; color: var(--coc-green); font-family: ui-monospace, Menlo, Consolas, monospace; flex-shrink: 0; }
+    .coc-tool.dmg-calc .dm-lvl-select { background: rgba(15,23,42,.8); border: 1px solid var(--coc-stroke); border-radius: 7px; color: var(--ink); font: 12.5px/1.3 inherit; padding: 4px 8px; cursor: pointer; flex-shrink: 0; }
+    .coc-tool.dmg-calc .dm-lvl-select:focus-visible { outline: 2px solid var(--coc-blue); outline-offset: 2px; border-color: var(--coc-blue); }
+
+    .coc-tool.dmg-calc .dm-th-fill { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 14px; padding: 13px 16px; background: rgba(4,9,27,.5); border: 1px solid var(--coc-stroke); border-radius: 12px; }
+    .coc-tool.dmg-calc .dm-th-fill label { font-size: 13.5px; color: var(--ink-dim); display: flex; align-items: center; gap: 7px; }
+
+    .coc-tool.dmg-calc .dm-build-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px 14px; max-height: 320px; overflow-y: auto; padding: 4px; }
+    .coc-tool.dmg-calc .dm-build-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; padding: 5px 2px; }
+    .coc-tool.dmg-calc .dm-build-row .dm-bn { color: var(--ink-dim); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .coc-tool.dmg-calc .dm-build-row .dm-bhp { font-size: 11px; color: var(--ink-faint); font-family: ui-monospace, Menlo, Consolas, monospace; }
+
+    .coc-tool.dmg-calc .dm-calc-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; margin-bottom: 16px; }
+    .coc-tool.dmg-calc .dm-field { display: flex; flex-direction: column; gap: 5px; }
+    .coc-tool.dmg-calc .dm-field label { font-size: 12px; color: var(--ink-faint); letter-spacing: .04em; }
+    .coc-tool.dmg-calc .dm-field select, .coc-tool.dmg-calc .dm-field input { background: rgba(15,23,42,.8); border: 1px solid var(--coc-stroke); border-radius: 9px; color: var(--ink); font: 14px/1.3 inherit; padding: 9px 12px; cursor: pointer; min-width: 150px; }
+    .coc-tool.dmg-calc .dm-field input[type=number] { cursor: text; }
+    .coc-tool.dmg-calc .dm-field select:focus-visible, .coc-tool.dmg-calc .dm-field input:focus-visible { outline: 2px solid var(--coc-blue); outline-offset: 2px; border-color: var(--coc-blue); box-shadow: 0 0 0 3px rgba(56,189,248,.1); }
+    .coc-tool.dmg-calc .dm-target-info { font-size: 12.5px; color: var(--coc-green); font-family: ui-monospace, Menlo, Consolas, monospace; padding: 9px 0; }
+    .coc-tool.dmg-calc .dm-target-image { object-fit: contain; vertical-align: middle; margin-right: 9px; }
+
+    .coc-tool.dmg-calc .dm-result { display: none; margin-top: 16px; }
+    .coc-tool.dmg-calc .dm-result.show { display: block; }
+    .coc-tool.dmg-calc .dm-result-headline { background: linear-gradient(145deg, rgba(var(--c-purple-rgb),.14), rgba(var(--c-green-rgb),.08)); border: 1px solid rgba(var(--c-violet-rgb),.32); border-radius: 14px; padding: 20px 24px; margin-bottom: 14px; }
+    .coc-tool.dmg-calc .dm-result-headline .dm-rh-label { font-size: 12px; color: var(--ink-faint); letter-spacing: .06em; text-transform: uppercase; }
+    .coc-tool.dmg-calc .dm-result-headline .dm-rh-value { font-size: 30px; font-weight: 800; margin: 4px 0 2px; }
+    .coc-tool.dmg-calc .dm-result-headline .dm-rh-value .dm-grad { background: var(--grad-main); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    .coc-tool.dmg-calc .dm-result-headline .dm-rh-sub { font-size: 13.5px; color: var(--ink-dim); }
+    .coc-tool.dmg-calc .dm-config { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+    .coc-tool.dmg-calc .dm-chip { background: rgba(4,9,27,.6); border: 1px solid var(--coc-stroke); border-radius: 9px; padding: 7px 13px; font-size: 13px; color: var(--ink); }
+    .coc-tool.dmg-calc .dm-chip b { color: var(--coc-blue); }
+    .coc-tool.dmg-calc .dm-chip.dm-chip-eq b { color: var(--coc-purple); }
+    .coc-tool.dmg-calc .dm-chip.dm-chip-q b { color: #fbbf24; }
+    .coc-tool.dmg-calc .dm-chip.dm-chip-l b { color: var(--c-blue-soft); }
+
+    .coc-tool.dmg-calc .dm-breakdown { background: rgba(4,9,27,.5); border: 1px solid var(--coc-stroke); border-radius: 12px; overflow: hidden; }
+    .coc-tool.dmg-calc .dm-breakdown table { width: 100%; border-collapse: collapse; }
+    .coc-tool.dmg-calc .dm-breakdown th { background: #151c39; font-size: 12px; color: var(--ink-faint); font-weight: 600; text-align: left; padding: 9px 14px; letter-spacing: .04em; }
+    .coc-tool.dmg-calc .dm-breakdown td { font-size: 13px; padding: 9px 14px; border-top: 1px solid var(--coc-stroke); color: var(--ink-dim); }
+    .coc-tool.dmg-calc .dm-breakdown td.dm-num { font-family: ui-monospace, Menlo, Consolas, monospace; color: var(--ink); text-align: right; }
+    .coc-tool.dmg-calc .dm-breakdown tr.dm-total td { font-weight: 700; color: var(--coc-green); border-top: 2px solid rgba(var(--c-green-rgb),.3); }
+
+    .coc-tool.dmg-calc .dm-warn { background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.3); color: #fde68a; border-radius: 10px; padding: 11px 15px; font-size: 13px; margin-top: 12px; }
+    .coc-tool.dmg-calc .dm-ok { background: rgba(var(--c-green-rgb),.1); border: 1px solid rgba(var(--c-green-rgb),.3); color: #a7f3d0; }
+
+    .coc-tool.dmg-calc .dm-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .coc-tool.dmg-calc .dm-tab { background: rgba(15,23,42,.6); border: 1px solid var(--coc-stroke); color: var(--ink-dim); padding: 8px 16px; border-radius: 9px; font-size: 13px; cursor: pointer; }
+    .coc-tool.dmg-calc .dm-tab.active { background: linear-gradient(135deg, rgba(var(--c-purple-rgb),.9), rgba(var(--c-blue-rgb),.85)); color: #fff; border-color: transparent; }
+    .coc-tool.dmg-calc .dm-tab-pane { display: none; }
+    .coc-tool.dmg-calc .dm-tab-pane.active { display: block; }
+    .coc-tool.dmg-calc .dm-subhead { font-size: 13px; color: var(--ink-faint); margin: 6px 0 12px; }
+    .coc-tool.dmg-calc .dm-eq-total { font-size: 12.5px; color: var(--coc-green); font-family: ui-monospace, Menlo, Consolas, monospace; margin-top: 10px; padding: 8px 12px; background: rgba(var(--c-green-rgb),.07); border-radius: 8px; border: 1px solid rgba(var(--c-green-rgb),.18); }
+    .coc-tool.dmg-calc .dm-builder-box { margin-top: 14px; padding: 14px 16px; background: rgba(4,9,27,.5); border: 1px solid var(--coc-stroke); border-radius: 12px; }
+    .coc-tool.dmg-calc .dm-builder-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+    .coc-tool.dmg-calc .dm-builder-head label { color: var(--ink-dim); font-size: 13px; }
+    .coc-tool.dmg-calc .dm-builder-head input { width: 74px; margin-left: 8px; background: rgba(15,23,42,.8); border: 1px solid var(--coc-stroke); border-radius: 8px; color: var(--ink); padding: 7px 9px; }
+    .coc-tool.dmg-calc .dm-builder-levels { display: grid; grid-template-columns: repeat(auto-fit,minmax(210px,1fr)); gap: 8px 14px; margin-top: 12px; }
+    .coc-tool.dmg-calc .dm-builder-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--ink-dim); font-size: 12.5px; }
+    .coc-tool.dmg-calc .dm-builder-empty { color: var(--ink-faint); font-size: 12.5px; }
+    .coc-tool.dmg-calc .dm-builder-total { margin-left: auto; color: var(--coc-green); font: 12.5px/1.4 ui-monospace,Menlo,Consolas,monospace; }
+    .coc-tool.dmg-calc .dm-tolerance { margin-top: 12px; padding: 11px 15px; border-radius: 10px; border: 1px solid rgba(56,189,248,.28); background: rgba(56,189,248,.08); color: var(--ink-dim); font-size: 13px; }
+    .coc-tool.dmg-calc .dm-tolerance strong { color: var(--coc-blue); }
+    @media (max-width: 620px) { .coc-tool.dmg-calc .dm-builder-total { width: 100%; margin-left: 0; } }
+
+    /* 分享链接：结果区分享按钮 + 分享查看模式横幅 */
+    .coc-tool.dmg-calc .dm-share-row { margin-top: 14px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .coc-tool.dmg-calc .dm-share-tip { font-size: 12.5px; color: var(--ink-faint); flex: 1; min-width: 220px; }
+    .coc-tool.dmg-calc #dmShareView[hidden] { display: none; }
+    /* 横幅初始 hidden，解除隐藏时不能继承通用 section 入场动画的首帧 opacity:0。 */
+    .coc-tool.dmg-calc #dmShareView:not([hidden]) { opacity: 1; transform: none; animation: none; }
+    .dm-share-mode .coc-tool.dmg-calc .coc-tool-content > .section { opacity: 1; transform: none; animation: none; }
+    .coc-tool.dmg-calc .dm-share-banner { padding: 22px 26px; background: linear-gradient(145deg, rgba(var(--c-purple-rgb),.13), rgba(var(--c-blue-rgb),.07)); border: 1px solid rgba(var(--c-violet-rgb),.35); }
+    .coc-tool.dmg-calc .dm-share-banner-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 14px; }
+    .coc-tool.dmg-calc .dm-share-badge { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .05em; color: var(--coc-blue); background: rgba(56,189,248,.1); border: 1px solid rgba(56,189,248,.3); border-radius: 999px; padding: 4px 12px; margin-bottom: 8px; }
+    .coc-tool.dmg-calc .dm-share-banner h2 { font-size: 20px; font-weight: 800; color: var(--ink); margin-bottom: 6px; }
+    .coc-tool.dmg-calc .dm-share-desc { font-size: 13px; color: var(--ink-dim); line-height: 1.7; max-width: 600px; }
+    .coc-tool.dmg-calc .dm-share-config { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 15px; padding-top: 14px; border-top: 1px dashed var(--coc-stroke); }
+    .coc-tool.dmg-calc .dm-share-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 9px; flex-shrink: 0; }
+    .coc-tool.dmg-calc .dm-share-back { flex-shrink: 0; }
+  </style>
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tactical.css?v=20260827" />
+  <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828j" />
+</head>
+<body class="coc-tool dmg-calc">
+  <a class="tz-skip-link" href="#mainContent">跳到主要内容</a>
+  <div class="bg-mesh" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="https://wjtianze.github.io/index.html" aria-label="天择网首页">
+        <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/></svg></span>
+        <span class="logo-text">天择网</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-label="菜单" data-ui-icon="menu"></button>
+      <nav class="nav" aria-label="主导航"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a><a href="https://wjtianze.github.io/contact/index.html"><span>联系开发者</span></a></nav>
+    </div>
+  </header>
+
+  <main class="coc-console" id="mainContent" tabindex="-1">
+    <div class="coc-tool-layout wrap">
+    <section class="page-head coc-tool-brief" aria-labelledby="cocDamageTitle">
+      <div class="crumb reveal in">
+        <a href="https://wjtianze.github.io/index.html">主页</a> <span>›</span>
+        <a href="https://wjtianze.github.io/coc/index.html">COC 专区</a> <span>›</span>
+        <span>伤害计算器</span>
+      </div>
+      <div class="coc-kicker reveal in d1">家乡村庄 · 闪震计算</div>
+      <h1 class="reveal in d1" id="cocDamageTitle">法术伤害 <span class="grad">计算器</span></h1>
+      <p class="reveal in d2">设定雷电、地震、英雄装备与目标建筑等级，比较法术格内的最高伤害，或反推摧毁目标所需的最少法术。还可从村庄存档导入等级，并把建筑工人小屋的修复速度计入容错时间；全部计算在本机完成。</p>
+      <div class="coc-brief-notes reveal in d2" aria-label="计算器特性">
+        <span data-ui-icon="lightning">闪震、装备与回血统一计算</span>
+        <span data-ui-icon="download">可从本地村庄存档导入等级</span>
+        <span data-ui-icon="globe">分享链接只读，不改本机数据</span>
+      </div>
+    </section>
+
+    <div class="coc-tool-content">
+    <!-- 分享查看模式横幅（默认隐藏，仅通过分享链接打开时显示） -->
+    <section class="section" id="dmShareView" hidden style="padding-top:18px;">
+      <div class="card dm-share-banner">
+        <div class="dm-share-banner-head">
+          <div>
+            <div class="dm-share-badge" data-ui-icon="globe">分享查看模式</div>
+            <h2 id="dmShareTitle">好友分享的计算结果</h2>
+            <p class="dm-share-desc" id="dmShareDesc">你正在查看好友通过天择网伤害计算器分享的配置与计算结果。<b style="color:var(--ink);">查看本身只读</b>：只有点击“复制到我的计算器”后，才会用这份配置更新你的伤害计算器主页。</p>
+          </div>
+          <div class="dm-share-actions">
+            <button class="btn btn--primary" id="dmShareCopy" type="button"><span data-ui-icon="copy">复制到我的计算器</span></button>
+            <a class="btn dm-share-back" id="dmShareBack" href="#"><span data-ui-icon="left">保留原配置并返回</span></a>
+          </div>
+        </div>
+        <div class="dm-share-config" id="dmShareConfig"></div>
+      </div>
+    </section>
+
+    <!-- 法术机制说明 -->
+    <section class="section" id="dmMechSection" style="padding-top:18px;">
+      <div class="card reveal dm-mech">
+        <div class="section-head" style="margin-bottom:6px;">
+          <h2><span class="bar"></span>法术机制说明</h2>
+        </div>
+        <div class="dm-mech-grid">
+          <div class="dm-mech-card">
+            <h4 data-ui-icon="lightning">雷电法术（固定伤害）</h4>
+            <p>每次施放对目标建筑造成<b style="color:var(--ink);">固定数值</b>的生命值扣除，伤害不随施放次数变化，等于该等级雷电法术的面板伤害值。</p>
+            <div class="dm-formula">总伤害 = 数量 × 该等级面板伤害</div>
+          </div>
+          <div class="dm-mech-card">
+            <h4 data-ui-icon="globe">地震法术（百分比伤害）</h4>
+            <p>普通建筑按最大生命值造成百分比伤害，对同一建筑重复施放时递减。<b style="color:var(--ink);">城墙不逐次衰减：若当前等级的全额伤害为 x%，前 3 次各造成 x%，第 4 次补足剩余生命并摧毁城墙。</b></p>
+            <div class="dm-formula">普通建筑第 n 次 = 全额 × 1/(2n−1)；城墙前 3 次各为 x%，第 4 次为 (100−3x)%</div>
+            <p style="font-size:12px; color:var(--ink-faint); margin-top:8px;">该规则随法术等级读取 x：普通建筑第 2 次 = 1/3、第 3 次 = 1/5……例如 5 级地震的 x = 29%，对城墙四次依次为 29%、29%、29%、13%，合计 100%。</p>
+          </div>
+          <div class="dm-mech-card">
+            <h4 data-ui-icon="shield">英雄装备（技能伤害）</h4>
+            <p>装备主动技能提供额外固定伤害，不占用法术空间。此处取数据中的 <b style="color:var(--ink);">技能伤害</b>（SkillDamage，来自装备 main/extra 技能的直接伤害值，非 DPS），已设定等级的装备伤害将自动累加。</p>
+            <div class="dm-formula">装备总伤害 = Σ 各已设装备当前等级技能伤害</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 等级设置 -->
+    <section class="section" id="dmSetup">
+      <div class="card reveal" style="padding:24px 28px;">
+        <div class="section-head" style="margin-bottom:6px;">
+          <h2><span class="bar"></span>等级设置</h2>
+          <span class="more">设定装备 / 法术 / 建筑等级</span>
+        </div>
+        <p class="dm-subhead">支持手动逐项设定，或在「COC 专区首页」解析村庄后，回到本页一键导入装备、法术、建筑等级。</p>
+
+        <!-- 导入区：从村庄存档分析读取 -->
+        <div class="dm-import-area">
+          <label class="coc-section-label">从村庄存档导入（装备 + 法术 + 建筑等级）</label>
+          <div class="dm-import-actions">
+            <button class="btn" id="dmImportBtn"><span>从村庄存档导入</span></button>
+            <button class="btn btn--sm" id="dmClearLvlsBtn"><span>清空全部等级</span></button>
+            <span class="dm-import-note">先在「<a href="https://wjtianze.github.io/coc/index.html" style="color:var(--coc-blue);">COC 专区首页</a>」粘贴并解析村庄 JSON，本页会自动读取其结果一键填充等级。</span>
+          </div>
+          <div class="v-error" id="dmImportError" role="alert" aria-live="assertive"></div>
+        </div>
+
+        <!-- 装备等级（按英雄分组） -->
+        <div class="section-head" style="margin:22px 0 10px;">
+          <h3 class="dm-panel-title" data-ui-icon="shield">英雄装备等级</h3>
+        </div>
+        <p class="dm-subhead">仅列出技能带直接伤害的装备。设定等级后，<b style="color:var(--ink);">勾选</b>装备才会将其技能伤害计入总伤害（默认全不勾选）；取消勾选即不计入，无需把等级调回「未设」。</p>
+        <div id="dmEquipGroups" class="dm-eq-groups"></div>
+        <div class="dm-eq-total" id="dmEquipTotal">装备总伤害：0（未设定任何装备等级）</div>
+
+        <!-- 法术等级 -->
+        <div class="section-head" style="margin:26px 0 10px;">
+          <h3 class="dm-panel-title" data-ui-icon="sparkle">法术等级</h3>
+        </div>
+        <div class="dm-calc-row" style="margin-bottom:0;">
+          <div class="dm-field">
+            <label for="dmLightLvl" data-ui-icon="lightning">雷电法术等级</label>
+            <select id="dmLightLvl" name="lightning_level" autocomplete="off" class="dm-lvl-select"></select>
+          </div>
+          <div class="dm-field">
+            <label for="dmQuakeLvl" data-ui-icon="globe">地震法术等级</label>
+            <select id="dmQuakeLvl" name="earthquake_level" autocomplete="off" class="dm-lvl-select"></select>
+          </div>
+        </div>
+
+        <!-- 建筑等级 -->
+        <div class="section-head" style="margin:26px 0 10px;">
+          <h3 class="dm-panel-title" data-ui-icon="home">建筑等级</h3>
+        </div>
+        <div class="dm-th-fill">
+          <label>大本营等级
+            <select id="dmTHLvl" name="town_hall_level" autocomplete="off" class="dm-lvl-select"></select>
+          </label>
+          <button class="btn btn--sm" id="dmFillTHBtn"><span>按此大本营一键填充所有建筑为最高可支持等级</span></button>
+          <span class="dm-import-note">依据数据中各等级的 requiredTownHallLevel 字段</span>
+        </div>
+        <div id="dmBuildGroups"></div>
+
+        <div class="section-head" style="margin:26px 0 10px;">
+          <h3 class="dm-panel-title" data-ui-icon="settings">建筑工人小屋回血量计算</h3>
+        </div>
+        <p class="dm-subhead">设置实际参与修复目标建筑的小屋数量与各自等级。每座小屋按自身等级读取数据中的<b style="color:var(--ink);">每秒回复量</b>（BuilderRepairPerSecond），求和得到总回复速度。然后用当前法术方案（默认 11 格法术 + 选定目标建筑）相对目标生命值的<b style="color:var(--ink);">溢出伤害</b>除以总回复速度，得到<b style="color:var(--ink);">回血容错时间</b>（秒）—— 即溢出伤害能"白嫖"这些建筑工人小屋回复多少秒。从 COC 专区首页一键导入时会自动填入实际的小屋数量与等级。</p>
+        <div class="dm-builder-box">
+          <div class="dm-builder-head">
+            <label for="dmBuilderCount">参与回血的小屋数量<input id="dmBuilderCount" name="builder_hut_count" type="number" inputmode="numeric" autocomplete="off" min="0" max="6" value="0" /></label>
+            <div class="dm-builder-total" id="dmBuilderTotal">总回复量：0 生命值/秒</div>
+          </div>
+          <div class="dm-builder-levels" id="dmBuilderLevels"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 目标建筑选择（共享） -->
+    <section class="section" id="dmTargetSection" style="padding-top:6px;">
+      <div class="card reveal" style="padding:24px 28px;">
+        <div class="section-head" style="margin-bottom:6px;">
+          <h2><span class="bar"></span>目标建筑</h2>
+          <span class="more">下方两个计算器共用此目标</span>
+        </div>
+        <p class="dm-subhead">选择要计算的目标建筑，其等级取自上方建筑等级设置，生命值作为地震百分比伤害的基准。</p>
+        <div class="dm-calc-row" style="margin-bottom:0;">
+          <div class="dm-field">
+            <label for="dmTargetBuild">目标建筑</label>
+            <select id="dmTargetBuild" name="target_building" autocomplete="off"></select>
+          </div>
+          <div class="dm-target-info" id="dmTargetInfo">—</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 两个计算器（标签切换） -->
+    <section class="section" style="padding-top:6px;">
+      <div class="card reveal" style="padding:24px 28px;">
+        <div class="dm-tabs" role="tablist" aria-label="伤害计算模式" aria-orientation="horizontal">
+          <button type="button" class="dm-tab active" id="dmTabMax" data-tab="max" role="tab" aria-controls="dmPaneMax" aria-selected="true" tabindex="0"><span><b class="dm-tab-index">01</b>最高伤害</span></button>
+          <button type="button" class="dm-tab" id="dmTabMin" data-tab="min" role="tab" aria-controls="dmPaneMin" aria-selected="false" tabindex="-1"><span><b class="dm-tab-index">02</b>最少法术</span></button>
+          <button type="button" class="dm-tab" id="dmTabCustom" data-tab="custom" role="tab" aria-controls="dmPaneCustom" aria-selected="false" tabindex="-1"><span><b class="dm-tab-index">03</b>自定义闪震</span></button>
+        </div>
+
+        <!-- ① 最高伤害 -->
+        <div class="dm-tab-pane active" id="dmPaneMax" role="tabpanel" aria-labelledby="dmTabMax" tabindex="0">
+          <p class="dm-subhead">给定法术空间上限，计算在该空间内对目标建筑能造成的最高伤害及最优法术配置。</p>
+          <div class="dm-calc-row">
+            <div class="dm-field">
+              <label for="dmSpaceMax">法术空间上限</label>
+              <input type="number" id="dmSpaceMax" name="spell_space" inputmode="numeric" autocomplete="off" min="0" max="200" value="11" />
+            </div>
+            <button class="btn" id="dmCalcMaxBtn"><span>计算最高伤害</span></button>
+          </div>
+          <div class="dm-result" id="dmResultMax"></div>
+        </div>
+
+        <!-- ② 最少法术 -->
+        <div class="dm-tab-pane" id="dmPaneMin" role="tabpanel" aria-labelledby="dmTabMin" tabindex="0" hidden>
+          <p class="dm-subhead">给定目标建筑，计算将其彻底摧毁（总伤害 ≥ 生命值）所需的最少法术空间及搭配方案。</p>
+          <div class="dm-calc-row">
+            <button class="btn" id="dmCalcMinBtn"><span>计算最少法术</span></button>
+          </div>
+          <div class="dm-result" id="dmResultMin"></div>
+        </div>
+
+        <!-- ③ 自定义闪震数量 -->
+        <div class="dm-tab-pane" id="dmPaneCustom" role="tabpanel" aria-labelledby="dmTabCustom" tabindex="0" hidden>
+          <p class="dm-subhead">自定义雷电与地震的数量（不搜索最优解），按当前雷电/地震等级与目标建筑等级，精确给出总伤害、城墙规则细节和回血容错时间。</p>
+          <div class="dm-calc-row">
+            <div class="dm-field">
+              <label for="dmCustomLight" data-ui-icon="lightning">雷电数量</label>
+              <input type="number" id="dmCustomLight" name="custom_lightning_count" inputmode="numeric" autocomplete="off" min="0" max="200" value="4" />
+            </div>
+            <div class="dm-field">
+              <label for="dmCustomQuake" data-ui-icon="globe">地震数量</label>
+              <input type="number" id="dmCustomQuake" name="custom_earthquake_count" inputmode="numeric" autocomplete="off" min="0" max="80" value="4" />
+            </div>
+            <div class="dm-field">
+              <label>总法术空间</label>
+              <div class="dm-target-info" id="dmCustomSpace" style="padding:9px 0; font-size:14px; color:var(--ink);">—</div>
+            </div>
+            <button class="btn" id="dmCalcCustomBtn"><span>计算伤害</span></button>
+          </div>
+          <div class="dm-result" id="dmResultCustom"></div>
+        </div>
+      </div>
+    </section>
+    </div>
+    </div>
+  </main>
+
+  <footer class="coc-fan-notice">本页是非官方玩家内容，未经 Supercell 认可或赞助。详见 <a href="https://supercell.com/en/fan-content-policy/" target="_blank" rel="noopener noreferrer">Supercell 玩家内容政策</a>。</footer>
+
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260828j-v5.3.0"></script>
+  <script defer src="https://wjtianze.github.io/coc/shared/game-assets.js?v=20260830b"></script>
+  <script defer src="https://wjtianze.github.io/coc/dmg-calc/app.js?v=20260830a"></script>
+</body>
+</html>

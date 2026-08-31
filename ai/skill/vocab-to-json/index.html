@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>词库转 JSON · 完整使用教程 — 天择网</title>
+  <meta name="description" content="把 TXT、CSV、Excel、Word、PDF 或 Markdown 词库整理为天择背单词标准 JSON 的完整教程，包含字段、去重、校验、导入和故障排查。" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828j-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/workspace-pages.css?v=20260828j-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/ai-manual.css?v=20260828a-v5.3.0" />
+  <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828j" />
+</head>
+<body class="ai-manual-page" data-workspace-page="vocab-skill">
+  <div class="bg-mesh"></div>
+  <header class="topbar"><div class="wrap topbar-inner"><a class="brand" href="https://wjtianze.github.io/index.html" aria-label="天择网首页"><span class="logo-mark" aria-hidden="true"></span><span class="logo-text">天择网</span></a><button class="nav-toggle" type="button" aria-label="菜单" data-ui-icon="menu"></button><nav class="nav" aria-label="主导航"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html" class="active"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a></nav></div></header>
+  <main id="main-content">
+    <section class="ai-doc-hero">
+      <div class="ai-doc-breadcrumb"><a href="https://wjtianze.github.io/ai/skill/index.html">项目目录</a><span>/</span><span>词库转 JSON</span></div>
+      <div class="ai-doc-kicker">词库整理技能 · TXT · CSV · XLSX · DOCX · PDF · MARKDOWN</div>
+      <h1>把零散词表整理成可以直接学习的标准词库</h1>
+      <p>它会识别单词、词性、音标、多个释义、例句和标签，合并重复项并保留特殊字符，最后生成天择背单词可以导入的 JSON。</p>
+      <div class="ai-doc-tags"><span>多格式输入</span><span>一词多义</span><span>自动去重</span><span>导入前校验</span></div>
+      <div class="ai-doc-actions"><a class="btn" href="https://wjtianze.github.io/english/words/index.html" data-ui-icon="book">打开词汇训练</a><a class="btn btn--ghost" href="#convert" data-ui-icon="right">查看转换步骤</a></div>
+    </section>
+    <div class="ai-doc-layout">
+      <aside class="ai-doc-nav" aria-label="教程目录"><strong>转换教程</strong><a href="#prepare">整理源文件</a><a href="#convert">开始转换</a><a href="#schema">字段说明</a><a href="#merge">去重规则</a><a href="#verify">导入前检查</a><a href="#import">导入学习</a><a href="#trouble">故障排查</a><a href="#privacy">隐私与维护</a></aside>
+      <article class="ai-doc-body">
+        <section class="ai-doc-section" id="prepare"><h2>先把源文件整理到“人能看懂”</h2><p>格式不必统一，但每条记录至少要能辨认出单词。表格最好一行一个词；纯文本可一行一个词，也可以用制表符分隔单词、词性和释义。</p><div class="ai-doc-table-wrap"><table class="ai-doc-table"><thead><tr><th>格式</th><th>推荐结构</th><th>注意</th></tr></thead><tbody><tr><td>TXT / Markdown</td><td>每行一个词，后跟释义或列表</td><td>避免把整篇文章当词表</td></tr><tr><td>CSV / Excel</td><td>单词、词性、释义、音标、例句分列</td><td>第一行保留清晰表头</td></tr><tr><td>Word</td><td>表格或规则列表</td><td>批注和修订先处理</td></tr><tr><td>PDF</td><td>可选中文字的词表</td><td>扫描件需先做文字识别并人工抽查</td></tr></tbody></table></div><p>如果同一列混有音标、页码和释义，先说明识别规则。难以判断的内容应保留原文并标记待确认，不要让 AI 猜成确定结果。</p></section>
+        <section class="ai-doc-section" id="convert"><h2>使用步骤：在 Codex 中开始转换</h2><ol><li>上传或指定词库文件。</li><li>说明目标是“天择背单词标准 JSON”。</li><li>指出已有列的含义、需要保留的标签和是否允许补充释义。</li><li>要求先生成校验报告，再输出最终 JSON。</li><li>抽查报告后，把最终文件导入词汇训练。</li></ol><div class="ai-doc-code">把这份 Excel 词库转换成天择背单词标准 JSON。A 列是单词，B 列是词性，C 列可能包含多个中文释义，D 列是例句。保留原内容，不确定的字段留空；先报告重复项和异常行，再输出文件。</div><p>只有单词、没有释义时，可以明确要求 AI 补写；如果已有释义，则默认以原词库为准，不应悄悄重写。</p></section>
+        <section class="ai-doc-section" id="schema"><h2>输出结构与标准 JSON 字段</h2><div class="ai-doc-code">[
+  {
+    "word": "accommodate",
+    "phonetic": "/əˈkɒmədeɪt/",
+    "pos": "v.",
+    "meaning": ["容纳；提供空间", "迁就；照顾", "适应"],
+    "examples": [{ "en": "The hall can accommodate 500 people.", "zh": "大厅可容纳五百人。" }],
+    "tags": ["CET-6"]
+  }
+]</div><div class="ai-doc-table-wrap"><table class="ai-doc-table"><thead><tr><th>字段</th><th>类型</th><th>规则</th></tr></thead><tbody><tr><td>word</td><td>字符串</td><td>必填，去除首尾空格，保留连字符和撇号</td></tr><tr><td>phonetic</td><td>字符串</td><td>可空，保留音标符号原样</td></tr><tr><td>pos</td><td>字符串</td><td>可空，同一词多词性可按来源合并</td></tr><tr><td>meaning</td><td>字符串数组</td><td>每个释义独立，不把数组写成一整段</td></tr><tr><td>examples</td><td>对象数组</td><td>英文和中文分别放入 en、zh</td></tr><tr><td>tags</td><td>字符串数组</td><td>考试、章节或自定义分类</td></tr></tbody></table></div></section>
+        <section class="ai-doc-section" id="merge"><h2>重复项如何合并</h2><p>单词比较时忽略首尾空格和普通大小写，但不随意删除连字符或撇号。相同单词的非空字段合并，释义、例句和标签按内容去重，并保留首次出现顺序。</p><ul class="ai-checklist"><li>同一拼写但词性不同：保留所有词性和各自释义。</li><li>大小写承载专名含义：保留原写法并标记人工确认。</li><li>释义近似但不完全相同：不要仅凭相似度删除。</li><li>音标冲突：保留来源或列入异常报告。</li><li>空记录、页眉、页码和纯标点行：排除并计数。</li></ul></section>
+        <section class="ai-doc-section" id="verify"><h2>导入前必须检查</h2><ol><li>JSON 能正常解析，顶层是数组，每项都是对象。</li><li>每项都有非空 <code>word</code>，<code>meaning</code>、<code>examples</code> 和 <code>tags</code> 类型正确。</li><li>没有“undefined”“null”字符串、乱码或被替换的音标字符。</li><li>总记录数与“源记录－排除项－合并项”能够对上。</li><li>随机抽查开头、中间、结尾以及所有异常行。</li><li>用天择背单词试导入一小份，再导入完整词库。</li></ol><div class="ai-doc-note"><strong>校验报告应写清：源记录数、输出记录数、重复组、排除行、缺少释义和冲突字段。</strong>只有“转换成功”四个字不够。</div></section>
+        <section class="ai-doc-section" id="import"><h2>导入并开始四流程学习</h2><ol><li>打开<a href="https://wjtianze.github.io/english/words/index.html">天择背单词</a>，进入词库管理。</li><li>选择“导入 JSON”，选中转换后的文件。</li><li>查看导入预览，确认新增、合并、跳过和错误数量。</li><li>确认后建立学习批次，按英译中预习、中译英回忆、拼写和语境四个流程学习。</li></ol><p>如果只是临时试用，先导入三到五十个词。确认释义显示、例句和标签都正确后，再导入整本词库。</p></section>
+        <section class="ai-doc-section" id="trouble"><h2>常见问题</h2><h3>PDF 只提取出乱码</h3><p>它可能是扫描图片或使用特殊字体。先做文字识别，再与页面截图抽查；无法可靠识别的页不要自动补猜。</p><h3>Excel 多个工作表混在一起</h3><p>明确需要哪些工作表，并给每张表设置来源标签。表头不同的工作表先各自映射，再合并。</p><h3>导入时提示字段错误</h3><p>确认顶层不是对象包装，释义和标签是数组，例句是含 <code>en</code>、<code>zh</code> 的对象数组，并移除尾随逗号。</p><h3>重复词没有合并</h3><p>检查不可见空格、全角字符、连字符变体和大小写。规范化只用于比较，最终显示仍应保留正确拼写。</p></section>
+        <section class="ai-doc-section" id="privacy"><h2>隐私、版权和词库维护</h2><p>转换私人笔记或付费教材词表时，不要公开原文件和完整转换结果。输出前删除姓名、学号、批注和其它个人信息；分享给别人前确认你有权分发内容。</p><p>以后补充单词时，继续使用同一字段结构，并保留一份未合并的源词库和转换报告。这样出现误合并或释义问题时，能够回到具体来源修正，而不是在最终 JSON 里反复手工改。</p></section>
+      </article>
+    </div>
+  </main>
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260828j-v5.3.0"></script>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#102947" />
+  <title>升级规划器 · COC 专区 · 天择网</title>
+  <meta name="description" content="基于村庄存档的升级规划器，单级拆分+前置依赖，稳本/速本模式，甘特图缩放滚动，待规划区拖拽安排。" />
+  <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";var c={cold:"#102947",mid:"#123133",warm:"#3a2918",porcelain:"#edf3f7",ink:"#071417"},m=document.querySelector("meta[name=theme-color]");if(m)m.content=c[p];}catch(e){}})();</script>
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260828j-v5.3.0" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tools.css?v=20260830a" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-workspace.css?v=20260801-v4.1.6" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/coc/planner/priority.css?v=20260830a" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/coc-tactical.css?v=20260827" />
+  <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828j" />
+</head>
+<body class="coc-tool coc-planner-tool">
+  <a class="tz-skip-link" href="#mainContent">跳到主要内容</a>
+  <div class="bg-mesh" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="https://wjtianze.github.io/index.html" aria-label="天择网首页">
+        <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l2.6 6.2L21 9l-5 4.4L17.6 21 12 17.3 6.4 21 8 13.4 3 9l6.4-.8L12 2z" fill="#fff"/></svg></span>
+        <span class="logo-text">天择网</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-label="菜单" data-ui-icon="menu"></button>
+      <nav class="nav" aria-label="主导航"><a href="https://wjtianze.github.io/index.html"><span>首页</span></a><a href="https://wjtianze.github.io/news/index.html"><span>新闻</span></a><a href="https://wjtianze.github.io/blog/index.html"><span>博客</span></a><a href="https://wjtianze.github.io/open/index.html"><span>数据开源</span></a><a href="https://wjtianze.github.io/ai/index.html"><span>AI 专区</span></a><a href="https://wjtianze.github.io/coc/index.html"><span>COC 专区</span></a><a href="https://wjtianze.github.io/game/index.html"><span>游戏专区</span></a><a href="https://wjtianze.github.io/english/index.html"><span>英语专区</span></a><a href="https://wjtianze.github.io/os/index.html"><span>天择OS</span></a><a href="https://wjtianze.github.io/contact/index.html"><span>联系开发者</span></a></nav>
+    </div>
+  </header>
+
+  <main class="coc-console" id="mainContent" tabindex="-1">
+    <div class="coc-tool-layout wrap">
+    <section class="page-head coc-tool-brief" aria-labelledby="cocPlannerTitle">
+      <div class="crumb reveal in">
+        <a href="https://wjtianze.github.io/index.html">主页</a> <span>›</span>
+        <a href="https://wjtianze.github.io/coc/index.html">COC 专区</a> <span>›</span>
+        <span>升级规划器</span>
+      </div>
+      <div class="coc-kicker reveal in d1">升级规划 · 稳本 / 速本</div>
+      <h1 class="reveal in d1" id="cocPlannerTitle">升级 <span class="grad">规划器</span></h1>
+      <p class="reveal in d2">读取首页保存的村庄数据，把每一级升级排进时间轴，并自动处理实验室、英雄殿堂、战宠小屋与同单位逐级升级等前置条件。稳本、速本两套方案独立保存，也可拖动任务微调。</p>
+      <div class="coc-brief-notes reveal in d2" aria-label="规划器特性">
+        <span data-ui-icon="tree">自动处理逐级与建筑前置</span>
+        <span data-ui-icon="settings">稳本、速本两套排程逻辑</span>
+        <span data-ui-icon="cursor">支持拖拽与键盘移除任务</span>
+      </div>
+    </section>
+
+    <div class="coc-tool-content">
+    <section class="section" style="padding-top:18px;">
+      <div class="card reveal" style="padding:22px 28px;" id="vpSource"><div class="v-metrics" id="vpMetricsWrap"></div></div>
+    </section>
+
+    <section class="section" id="vpNoData" style="display:none;">
+      <div class="card reveal vp-nodata">
+        <div class="coc-empty-icon" data-ui-icon="folder" aria-hidden="true"></div>
+        <h3>尚未载入村庄数据</h3>
+        <p>请先前往「COC 专区首页」粘贴并解析你的村庄 JSON，解析后数据会自动带到本页。</p>
+        <a class="btn" href="https://wjtianze.github.io/coc/index.html" style="margin-top:14px; display:inline-block;"><span data-ui-icon="right">前往 COC 专区首页</span></a>
+      </div>
+    </section>
+
+    <section class="section" id="vpBody" style="display:none;">
+      <div class="card vp-coverage-notice" id="vpCoverageNotice" role="status" style="display:none;margin-bottom:16px;padding:16px 18px;border-color:rgba(245,158,11,.45);background:rgba(245,158,11,.08);"></div>
+      <div class="vp-opt-bar">
+        <div class="vp-opt-group">
+          <span class="vog-title">可选加成</span>
+          <label><input type="checkbox" id="vpGobWorker"> 哥布林建筑工人（家乡村庄建筑工人 +1）</label>
+          <label><input type="checkbox" id="vpGobLab"> 哥布林研究工人（家乡村庄实验室 +1）</label>
+        </div>
+        <div class="vp-opt-group">
+          <span class="vog-title">规划模式</span>
+          <div class="vp-mode" role="group" aria-label="规划模式">
+            <button class="vp-mode-btn active" data-mode="steady" aria-pressed="true">稳本模式</button>
+            <button class="vp-mode-btn" data-mode="rush" aria-pressed="false">速本模式</button>
+          </div>
+        </div>
+      </div>
+      <div class="vp-mode-desc" id="vpModeDesc"></div>
+
+      <section class="vp-army-priority" aria-labelledby="vpArmyPriorityTitle">
+        <div class="vp-army-head">
+          <div>
+            <span class="vog-title">常用配兵优先级</span>
+            <h2 id="vpArmyPriorityTitle">让排程先升级你真正会用的单位</h2>
+            <p>粘贴游戏内“分享配兵”链接，或在下方手动勾选。常用兵种、法术和攻城机器优先进入实验室队列，常用战宠优先进入战宠小屋队列；莱希与大牦仍固定最后。建筑工人数少于已解锁英雄数时，常用英雄会先升级。</p>
+          </div>
+        </div>
+        <div class="vp-army-import">
+          <label class="sr-only" for="vpArmyLink">游戏配兵链接</label>
+          <input id="vpArmyLink" name="army_link" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="粘贴配兵链接，例如 https://link.clashofclans.com/…&army=…" />
+          <button class="btn btn--sm btn--primary" id="vpImportArmy" type="button">导入配兵链接</button>
+        </div>
+        <p class="vp-army-status" id="vpArmyStatus" role="status" aria-live="polite"></p>
+        <div class="vp-army-groups" id="vpArmyGroups" aria-label="自定义常用单位"></div>
+        <div class="vp-army-actions">
+          <button class="btn btn--sm btn--primary" id="vpApplyArmy" type="button">保存并重建两套方案</button>
+          <button class="btn btn--sm" id="vpClearArmy" type="button">清空常用配兵</button>
+          <span class="vp-army-summary" id="vpArmySummary"></span>
+        </div>
+      </section>
+
+      <section class="vp-snapshot-console" aria-labelledby="vpSnapshotTitle">
+        <div class="vp-snapshot-head">
+          <div>
+            <span class="vog-title">双方案快照</span>
+            <h2 id="vpSnapshotTitle">稳本与速本方案</h2>
+          </div>
+          <div class="vp-snapshot-actions">
+            <button class="btn btn--sm btn--primary" id="vpSavePlan" type="button" data-ui-icon="save">保存当前方案</button>
+            <button class="btn btn--sm" id="vpRebuildPlan" type="button" data-ui-icon="refresh">重建当前方案</button>
+            <button class="btn btn--sm" id="vpCopyPlan" type="button" data-ui-icon="copy">复制到另一方案</button>
+            <button class="btn btn--sm" id="vpExportJson" type="button" data-ui-icon="download">导出 JSON</button>
+            <button class="btn btn--sm" id="vpExportIcs" type="button" data-ui-icon="calendar">导出日历</button>
+          </div>
+        </div>
+        <p class="vp-snapshot-status" id="vpSnapshotStatus" role="status" aria-live="polite"></p>
+        <div class="vp-compare" id="vpCompare" aria-label="稳本与速本方案指标对比">
+          <article data-compare-mode="steady"><span>稳本方案</span><b>正在计算</b><small>—</small></article>
+          <article data-compare-mode="rush"><span>速本方案</span><b>正在计算</b><small>—</small></article>
+        </div>
+      </section>
+
+      <div class="vp-tabs" role="tablist" aria-label="村庄世界" style="margin-top:18px;">
+        <button class="vp-tab active" data-world="home" role="tab" id="vpTabHome" aria-selected="true" aria-controls="vpHome" data-ui-icon="home">家乡村庄</button>
+        <button class="vp-tab" data-world="bb" role="tab" id="vpTabBB" aria-selected="false" aria-controls="vpBB" data-ui-icon="moon">建筑大师基地</button>
+      </div>
+
+      <div class="vp-pane active" id="vpHome" role="tabpanel" aria-labelledby="vpTabHome">
+        <div class="vp-toolbar">
+          <button class="btn btn--sm btn--primary" id="vpAutoHome"><span>一键全排程</span></button>
+          <button class="btn btn--sm" id="vpClearHome"><span>清空规划</span></button>
+          <span class="vp-info" id="vpInfoHome" role="status" aria-live="polite"></span>
+          <div class="vp-zoom">
+            <button class="vp-zoom-btn" id="vpZoomOutHome" type="button" title="缩小" aria-label="缩小家乡村庄时间轴" data-ui-icon="left"></button>
+            <span class="vp-zoom-label" id="vpZoomLabelHome">100%</span>
+            <button class="vp-zoom-btn" id="vpZoomInHome" type="button" title="放大" aria-label="放大家乡村庄时间轴" data-ui-icon="right"></button>
+            <button class="vp-zoom-btn" id="vpZoomResetHome" title="重置" style="width:auto;padding:0 10px;font-size:12px;">重置</button>
+          </div>
+        </div>
+        <div class="v-gantt-wrap" id="vpGanttWrapHome" tabindex="0" aria-label="家乡村庄升级甘特图，可横向滚动"><svg class="v-gantt" id="vpGanttHome" viewBox="0 0 1000 200" width="100%"></svg></div>
+        <div class="v-planner-stats" id="vpStatsHome"></div>
+        <div class="vp-pending" id="vpPendingHome">
+          <div class="vp-pending-head"><span data-ui-icon="download">待规划任务（点击或拖到上方甘特图即可安排）</span><b id="vpPendingCountHome"></b></div>
+          <div class="vp-pending-grid" id="vpPendingGridHome" aria-label="家乡村庄待规划任务"></div>
+        </div>
+      </div>
+
+      <div class="vp-pane" id="vpBB" role="tabpanel" aria-labelledby="vpTabBB" hidden>
+        <div class="vp-toolbar">
+          <button class="btn btn--sm btn--primary" id="vpAutoBB"><span>一键全排程</span></button>
+          <button class="btn btn--sm" id="vpClearBB"><span>清空规划</span></button>
+          <span class="vp-info" id="vpInfoBB" role="status" aria-live="polite"></span>
+          <div class="vp-zoom">
+            <button class="vp-zoom-btn" id="vpZoomOutBB" type="button" title="缩小" aria-label="缩小建筑大师基地时间轴" data-ui-icon="left"></button>
+            <span class="vp-zoom-label" id="vpZoomLabelBB">100%</span>
+            <button class="vp-zoom-btn" id="vpZoomInBB" type="button" title="放大" aria-label="放大建筑大师基地时间轴" data-ui-icon="right"></button>
+            <button class="vp-zoom-btn" id="vpZoomResetBB" title="重置" style="width:auto;padding:0 10px;font-size:12px;">重置</button>
+          </div>
+        </div>
+        <div class="v-gantt-wrap" id="vpGanttWrapBB" tabindex="0" aria-label="建筑大师基地升级甘特图，可横向滚动"><svg class="v-gantt" id="vpGanttBB" viewBox="0 0 1000 200" width="100%"></svg></div>
+        <div class="v-planner-stats" id="vpStatsBB"></div>
+        <div class="vp-pending" id="vpPendingBB">
+          <div class="vp-pending-head"><span data-ui-icon="download">待规划任务（点击或拖到上方甘特图即可安排）</span><b id="vpPendingCountBB"></b></div>
+          <div class="vp-pending-grid" id="vpPendingGridBB" aria-label="建筑大师基地待规划任务"></div>
+        </div>
+      </div>
+
+      <p class="v-planner-hint">每级一个滑块，前置依赖自动处理：同单位必须逐级升级；兵种/法术/攻城机器需实验室达到对应等级，战宠需战宠小屋等级，英雄需英雄殿堂等级；超级充能接在所属建筑满级之后，并沿用该建筑的优先档。建筑工人严格按实验室 → 第一优先级 → 第二优先级 → 英雄 → 其它分阶段执行，上一阶段全部结束后才进入下一阶段；同档由多名建筑工人按短时长到长时长分配。下方「待规划区」可点击或拖拽安排；甘特图里的滑块可拖回，也可按 Delete / Backspace 移除。</p>
+    </section>
+    </div>
+    </div>
+  </main>
+
+  <footer class="coc-fan-notice">本页是非官方玩家内容，未经 Supercell 认可或赞助。详见 <a href="https://supercell.com/en/fan-content-policy/" target="_blank" rel="noopener noreferrer">Supercell 玩家内容政策</a>。</footer>
+
+  <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260828j-v5.3.0"></script>
+  <script defer src="https://wjtianze.github.io/coc/planner/storage.js?v=20260820a"></script>
+  <script defer src="https://wjtianze.github.io/coc/planner/priority.js?v=20260823a"></script>
+  <script defer src="https://wjtianze.github.io/coc/shared/game-assets.js?v=20260830b"></script>
+  <script defer src="https://wjtianze.github.io/coc/planner/app.js?v=20260830a"></script>
+</body>
+</html>
