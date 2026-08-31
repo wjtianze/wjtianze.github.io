@@ -15699,6 +15699,7 @@ const TZ_TREE = [
     { name: 'COC 教程', icon: '📖', url: 'coc/tutorial/index.html' },
     { name: '国际服安装', icon: '📥', url: 'coc/install/index.html' }
   ]},
+  { name: '达尔文小屋', icon: '🌳', url: 'darwin/index.html' },
   { name: '游戏专区', icon: '🎮', url: 'game/index.html', children: [
     { name: '绩点战争：GPA 4.3', icon: '⚔️', url: 'game/gpa-card/index.html' }
   ]},

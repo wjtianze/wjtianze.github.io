@@ -520,6 +520,7 @@ img { max-width: 100%; display: block; }
 }
 html[data-zone="ai"] { --tz-section-bg-image: url("../img/section-bg/source/ai-20260828.webp"); --tz-section-bg-mobile-image: url("../img/section-bg/mobile/ai-20260828.webp"); --tz-section-bg-position: center top; --tz-section-bg-size: cover; }
 html[data-zone="coc"] { --tz-section-bg-image: url("../img/section-bg/source/coc-20260828.webp"); --tz-section-bg-mobile-image: url("../img/section-bg/mobile/coc-20260828.webp"); }
+html[data-zone="darwin"] { --tz-section-bg-image: url("../img/section-bg/source/darwin.webp"); --tz-section-bg-mobile-image: url("../img/section-bg/mobile/darwin.webp"); --tz-section-bg-position: center top; --tz-section-bg-position-mobile: center top; }
 html[data-zone="english"] { --tz-section-bg-image: url("../img/section-bg/source/english-20260828.webp"); --tz-section-bg-mobile-image: url("../img/section-bg/mobile/english-20260828.webp"); }
 html[data-zone="game"] { --tz-section-bg-image: url("../img/section-bg/source/game-20260828.webp"); --tz-section-bg-mobile-image: url("../img/section-bg/mobile/game-20260828.webp"); }
 html[data-zone="os"] { --tz-section-bg-image: url("../img/section-bg/source/os.webp?v=20260828-refactor1"); --tz-section-bg-mobile-image: url("../img/section-bg/mobile/os.webp?v=20260828-refactor1"); }

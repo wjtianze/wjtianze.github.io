@@ -152,6 +152,7 @@
     var zone = "home";
     if (/^\/ai(?:\/|$)/.test(path)) zone = "ai";
     else if (/^\/coc(?:\/|$)/.test(path)) zone = "coc";
+    else if (/^\/darwin(?:\/|$)/.test(path)) zone = "darwin";
     else if (/^\/(?:english|words)(?:\/|$)/.test(path)) zone = "english";
     else if (/^\/game(?:\/|$)/.test(path)) zone = "game";
     else if (/^\/os(?:\/|$)/.test(path)) zone = "os";
@@ -426,6 +427,7 @@
       { id: "open", label: "开源", icon: "unlock", href: "open/index.html" },
       { id: "ai", label: "AI", icon: "ai", href: "ai/index.html" },
       { id: "coc", label: "COC", icon: "shield", href: "coc/index.html" },
+      { id: "darwin", label: "达尔文", icon: "tree", href: "darwin/index.html" },
       { id: "game", label: "游戏", icon: "gamepad", href: "game/index.html" },
       { id: "english", label: "英语", icon: "book", href: "english/index.html" },
       { id: "os", label: "天择OS", icon: "monitor", href: "os/index.html" },
@@ -811,6 +813,7 @@
     blog: { label: "博客", code: "BLOG", icon: "pen" },
     open: { label: "数据开源", code: "OPEN", icon: "unlock" },
     ai: { label: "AI 专区", code: "AI", icon: "ai" },
+    darwin: { label: "达尔文小屋", code: "达尔文", icon: "tree" },
     contact: { label: "联系", code: "CONTACT", icon: "user" },
     english: { label: "英语专区", code: "ENGLISH", icon: "book" },
     game: { label: "游戏专区", code: "GAME", icon: "gamepad" },
@@ -1288,6 +1291,7 @@
       "/open/": 30,
       "/ai/": 40,
       "/coc/": 50,
+      "/darwin/": 55,
       "/game/": 60,
       "/english/": 70,
       "/os/": 80,
@@ -1312,6 +1316,7 @@
       "/coc/planner/": "升级规划器",
       "/coc/tutorial/": "COC 教程",
       "/coc/village/": "村庄分析旧入口",
+      "/darwin/": "达尔文小屋",
       "/game/": "游戏专区",
       "/game/gpa-card/": "绩点战争",
       "/english/": "英语专区",
@@ -1327,6 +1332,7 @@
       open: "unlock",
       ai: "ai",
       coc: "shield",
+      darwin: "tree",
       game: "gamepad",
       english: "book",
       words: "book",
