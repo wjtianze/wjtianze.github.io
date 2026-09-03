@@ -1,6 +1,6 @@
 {
-  "schemaVersion": 1,
-  "updatedAt": "2026-08-31",
+  "schemaVersion": 2,
+  "updatedAt": "2026-09-03",
   "entrants": [
     {
       "id": "wu-jing-tian-ze",
@@ -64,8 +64,46 @@
       "townHall": 18,
       "group": "high",
       "registrationOrder": 9
+    },
+    {
+      "id": "ta-zhai-cun-liang-ge",
+      "nickname": "塔寨村梁哥",
+      "townHall": 15,
+      "group": "middle",
+      "registrationOrder": 10
+    },
+    {
+      "id": "li-xi",
+      "nickname": "黎夕",
+      "townHall": 14,
+      "group": "middle",
+      "registrationOrder": 11
+    },
+    {
+      "id": "sai-ya-ren",
+      "nickname": "赛亚人",
+      "townHall": 11,
+      "group": "low",
+      "registrationOrder": 12
+    },
+    {
+      "id": "yu-shan-yi",
+      "nickname": "屿山驿",
+      "townHall": 11,
+      "group": "low",
+      "registrationOrder": 13
     }
   ],
+  "rewards": {
+    "finalized": false,
+    "groupSlots": {
+      "low": 1,
+      "middle": 3,
+      "high": 1
+    },
+    "lotterySlots": 1,
+    "lotteryWinnerEntrantIds": []
+  },
   "matches": [
     {
       "id": "high-001",
@@ -82,6 +120,72 @@
       },
       "right": {
         "entrantId": "xiao-mo",
+        "attacks": [
+          { "stars": 3, "destruction": 100 },
+          { "stars": 3, "destruction": 100 },
+          { "stars": 3, "destruction": 100 }
+        ]
+      }
+    },
+    {
+      "id": "middle-001",
+      "group": "middle",
+      "status": "completed",
+      "playedAt": "",
+      "left": {
+        "entrantId": "wu-jing-tian-ze",
+        "attacks": [
+          { "stars": 1, "destruction": 89 },
+          { "stars": 1, "destruction": 87 },
+          { "stars": 2, "destruction": 88 }
+        ]
+      },
+      "right": {
+        "entrantId": "ta-zhai-cun-liang-ge",
+        "attacks": [
+          { "stars": 3, "destruction": 100 },
+          { "stars": 3, "destruction": 100 },
+          { "stars": 3, "destruction": 100 }
+        ]
+      }
+    },
+    {
+      "id": "middle-002",
+      "group": "middle",
+      "status": "completed",
+      "playedAt": "",
+      "left": {
+        "entrantId": "simple",
+        "attacks": [
+          { "stars": 2, "destruction": 71 },
+          { "stars": 1, "destruction": 56 },
+          { "stars": 1, "destruction": 55 }
+        ]
+      },
+      "right": {
+        "entrantId": "ta-zhai-cun-liang-ge",
+        "attacks": [
+          { "stars": 3, "destruction": 100 },
+          { "stars": 3, "destruction": 100 },
+          { "stars": 3, "destruction": 100 }
+        ]
+      }
+    },
+    {
+      "id": "middle-003",
+      "group": "middle",
+      "status": "completed",
+      "playedAt": "",
+      "left": {
+        "entrantId": "simple",
+        "attacks": [
+          { "stars": 2, "destruction": 87 },
+          { "stars": 3, "destruction": 100 },
+          { "stars": 2, "destruction": 84 }
+        ]
+      },
+      "right": {
+        "entrantId": "wu-jing-tian-ze",
         "attacks": [
           { "stars": 3, "destruction": 100 },
           { "stars": 3, "destruction": 100 },

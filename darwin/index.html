@@ -8,7 +8,7 @@
   <meta name="description" content="达尔文小屋《部落冲突》国际服部落官网，实时展示本部与二部的部落战战况，以及第一届达尔文杯三个组别的报名名单、得分排名、对局日志和完整赛事章程。" />
   <script>(function(){try{var k="tz_site_palette",ks=[k,"tz_site_theme","tz_palette","tianze_site_palette"],p="",i=0;for(;i<ks.length&&!p;i++)p=localStorage.getItem(ks[i])||"";if(p&&(/^[{\"]/.test(p)))try{var j=JSON.parse(p);p=typeof j==="string"?j:(j&&(j.palette||j.theme||j.id||j.value))||p;}catch(_e){}p=String(p||"cold").trim().toLowerCase().replace(/^(?:theme|palette)[\s:_-]+/,"");var a={default:"cold",classic:"cold",cool:"cold",blue:"cold",purple:"cold","冷色":"cold",standard:"mid",middle:"mid",neutral:"mid",green:"mid","标准":"mid","标准色":"mid",orange:"warm",gold:"warm",amber:"warm","暖色":"warm",light:"porcelain",white:"porcelain",cloud:"porcelain","porcelain-light":"porcelain","明亮":"porcelain","云瓷":"porcelain",dark:"ink",black:"ink","ink-dark":"ink","墨色":"ink","墨潮":"ink"};p=a[p]||p;if(!/^(cold|mid|warm|porcelain|ink)$/.test(p))p="cold";try{localStorage.setItem(k,p);}catch(_e){}var d=document.documentElement;d.setAttribute("data-palette",p);d.style.colorScheme=p==="porcelain"?"light":"dark";}catch(e){}})();</script>
   <link rel="stylesheet" href="https://wjtianze.github.io/assets/css/style.css?v=20260831a" />
-  <link rel="stylesheet" href="https://wjtianze.github.io/darwin/darwin.css?v=20260831a" />
+  <link rel="stylesheet" href="https://wjtianze.github.io/darwin/darwin.css?v=20260903c" />
   <link rel="icon" type="image/png" href="https://wjtianze.github.io/assets/img/brand/tianze-mark.png?rev=20260828j" />
 </head>
 <body class="darwin-page">
@@ -28,15 +28,38 @@
 
   <main id="mainContent" tabindex="-1">
     <section class="darwin-hero wrap" aria-labelledby="darwinTitle">
-      <div class="darwin-hero-copy">
+      <header class="darwin-hero-copy">
         <p class="darwin-kicker">《部落冲突》国际服部落</p>
         <h1 id="darwinTitle">达尔文小屋</h1>
-        <p class="darwin-lead">在一场场对战中彼此磨合，也让每一种打法都有继续进化的空间。这里集中呈现本部、二部的实时战况与部落内部赛事。</p>
-        <div class="darwin-hero-actions">
-          <a class="darwin-button darwin-button--primary" href="#warRoom">查看实时部落战</a>
-          <a class="darwin-button" href="#darwinCup">进入第一届达尔文杯</a>
-        </div>
+        <p class="darwin-lead">本部、二部实时战况与第一届达尔文杯，一屏掌握概况，向下查看全部细节。</p>
+      </header>
+      <div class="darwin-overview-grid" aria-label="部落战与达尔文杯概况">
+        <article class="darwin-overview-card" aria-labelledby="warOverviewTitle">
+          <header><div><small>本部与二部</small><h2 id="warOverviewTitle">部落战概况</h2></div><span class="darwin-live-status" id="warOverviewStatus" role="status" aria-live="polite"><i aria-hidden="true"></i>等待连接</span></header>
+          <div class="darwin-overview-war-list" id="warOverviewCards" aria-live="polite">
+            <article class="darwin-overview-war-row"><div class="darwin-overview-war-name"><small>本部</small><strong>达尔文小屋</strong></div><p class="darwin-overview-war-message">正在读取…</p></article>
+            <article class="darwin-overview-war-row"><div class="darwin-overview-war-name"><small>二部</small><strong>达尔文小屋二部</strong></div><p class="darwin-overview-war-message">正在读取…</p></article>
+          </div>
+          <footer><a href="#warRoom">查看完整战况</a><span>约每 5 分钟刷新</span></footer>
+        </article>
+        <article class="darwin-overview-card" aria-labelledby="cupOverviewTitle">
+          <header><div><small>第一届赛事</small><h2 id="cupOverviewTitle">达尔文杯概况</h2></div><span class="darwin-overview-phase" id="cupPhase">正在读取</span></header>
+          <div class="darwin-overview-cup">
+            <div class="darwin-overview-countdown"><span id="cupClockLabel">距离比赛结束</span><strong id="cupCountdown">正在计算</strong></div>
+            <dl><div><dt>报名</dt><dd><b id="cupEntrantCount">—</b> 人</dd></div><div><dt>已登记对局</dt><dd><b id="cupMatchCount">—</b> 场</dd></div><div><dt>额外奖励</dt><dd><b id="cupRewardCount">—</b> 份</dd></div></dl>
+          </div>
+          <div class="darwin-overview-rankings" id="cupOverviewRankings" aria-label="达尔文杯三组当前排名" aria-live="polite"><p>正在读取排名…</p></div>
+          <footer><a href="#darwinCup">查看排名与对局</a><span>比赛至 9 月 11 日 16:00</span></footer>
+        </article>
       </div>
+      <div class="darwin-overview-actions">
+        <button class="darwin-button darwin-button--primary" id="copyCupBrief" type="button" disabled>复制达尔文杯简报</button>
+        <span id="cupBriefStatus" role="status" aria-live="polite">正在汇总赛事数据</span>
+      </div>
+    </section>
+
+    <section class="darwin-clan-directory wrap" aria-labelledby="clanDirectoryTitle">
+      <header class="darwin-section-head"><div><p>部落入口</p><h2 id="clanDirectoryTitle">本部与二部</h2></div></header>
       <aside class="darwin-clan-ledger" aria-label="达尔文小屋部落名册">
         <article class="darwin-clan-id">
           <div><span>本部</span><strong>达尔文小屋</strong></div>
@@ -81,18 +104,13 @@
             <h2 id="cupTitle">达尔文杯</h2>
             <p>自由约战，按大本营等级分组；总胜利之星优先，总摧毁率决定同星次序。</p>
           </div>
-          <aside class="darwin-countdown" aria-labelledby="cupClockLabel">
-            <span id="cupClockLabel">距离报名截止</span>
-            <strong id="cupCountdown">正在计算</strong>
-            <small id="cupPhase">报名进行中</small>
-          </aside>
         </header>
 
         <dl class="darwin-cup-dates" aria-label="达尔文杯时间安排">
           <div><dt>报名截止</dt><dd><time datetime="2026-09-03T12:00:00+08:00">9 月 3 日 12:00</time></dd></div>
           <div><dt>比赛开始</dt><dd><time datetime="2026-09-03T16:00:00+08:00">9 月 3 日 16:00</time></dd></div>
           <div><dt>比赛结束</dt><dd><time datetime="2026-09-11T16:00:00+08:00">9 月 11 日 16:00</time></dd></div>
-          <div><dt>冠军奖励</dt><dd>每组 1 个联赛额外奖励名额</dd></div>
+          <div><dt>额外奖励</dt><dd>共 6 份：组内名次 5 份，随机抽奖 1 份</dd></div>
         </dl>
 
         <section class="darwin-score-primer" aria-labelledby="scorePrimerTitle">
@@ -102,6 +120,12 @@
             <article><span>02</span><h4>先比星数</h4><p>总胜利之星更多者在前；星数相同时，再比较总摧毁率。</p></article>
             <article><span>03</span><h4>跨两本修正</h4><p>高两本进攻低两本时采用电竞难度，并从每次实际成绩扣 1 星、20% 摧毁率，最低为 0。</p></article>
           </div>
+        </section>
+
+        <section class="darwin-reward-preview" aria-labelledby="rewardPreviewTitle">
+          <header><div><p>额外奖励预览</p><h3 id="rewardPreviewTitle">当前奖励区</h3></div><span id="rewardSlotCount">共 6 份</span></header>
+          <div class="darwin-reward-grid" id="rewardPreview" aria-live="polite"><p class="darwin-empty">正在读取奖励分配</p></div>
+          <p class="darwin-reward-note">金色高亮表示按当前成绩进入奖励区；比赛尚未结束，名次仍会变化。以上为预览版分配，一切以群主最终确认为准，尚未核定或发放。</p>
         </section>
 
         <section class="darwin-groups" aria-labelledby="groupsTitle">
@@ -132,7 +156,7 @@
         </section>
 
         <section class="darwin-rulebook" id="rules" aria-labelledby="rulesTitle">
-          <header class="darwin-section-head"><div><p>2026 年 8 月 29 日发布</p><h3 id="rulesTitle">第一届“达尔文杯”赛事章程</h3></div><span>达尔文小屋首领</span></header>
+          <header class="darwin-section-head"><div><p>2026 年 8 月 29 日发布 · 9 月 3 日修订</p><h3 id="rulesTitle">第一届“达尔文杯”赛事章程</h3></div><span>达尔文小屋首领</span></header>
           <p class="darwin-rulebook-intro">为丰富“达尔文小屋”部落内部活动，增加成员之间的交流与竞技体验，也为了联赛额外奖励名额的分配，现举办第一届“达尔文杯”部落冲突赛事。</p>
 
           <details open><summary><b>一</b>参赛对象</summary><div><ol><li>本比赛面向“达尔文小屋”部落内所有大本营等级达到 10 本及以上的成员。</li><li>符合条件的成员均可自由报名参加比赛。</li></ol></div></details>
@@ -141,7 +165,7 @@
           <details open><summary><b>四</b>比赛赛制</summary><div><p>本届比赛采用自由约战制。</p><ol><li>同一组别内任意两名参赛账号均可相互发起约战。</li><li>不同组别之间的约战不得计入本届比赛成绩。</li><li>任意两个参赛账号之间只能进行一场正式对局，不得重复计分。</li><li>每场正式对局中，双方各拥有三次进攻机会，即甲方进攻乙方三次，乙方进攻甲方三次。</li><li>三次进攻所用配兵可以相同，也可以不同。</li><li>防守方三次防守所用阵型可以相同，也可以不同。</li><li>每次进攻独立计算实际胜利之星和摧毁率，并按本章程计入总成绩。</li></ol></div></details>
           <details open><summary><b>五</b>成绩计算与排名</summary><div><p>参赛者总胜利之星＝比赛期间所有有效进攻中计入成绩的胜利之星之和；参赛者总摧毁率＝比赛期间所有有效进攻中计入成绩的摧毁率之和。</p><p>完成多场约战时，全部有效进攻成绩累加。由于每两个账号之间只能进行一场正式对局，完成的有效约战越多，可获得的总分上限越高。</p><ol><li>第一顺位：总胜利之星。</li><li>第二顺位：总摧毁率。</li></ol><p>总胜利之星较多者排名靠前；星数相同时，总摧毁率较高者排名靠前。</p></div></details>
           <details open><summary><b>六</b>不同大本营等级的难度规则</summary><div><div class="darwin-difficulty-table" role="table" aria-label="不同大本营等级之间的对局难度"><div role="row"><b role="cell">进攻方相对防守方</b><b role="cell">对局难度与计分</b></div><div role="row"><span role="cell">低两个大本营等级</span><span role="cell">普通</span></div><div role="row"><span role="cell">低一个大本营等级</span><span role="cell">传奇杯 3</span></div><div role="row"><span role="cell">等级相同</span><span role="cell">传奇杯 1</span></div><div role="row"><span role="cell">高一个大本营等级</span><span role="cell">电竞</span></div><div role="row"><span role="cell">高两个大本营等级</span><span role="cell">电竞；每次实际成绩扣 1 星和 20% 摧毁率</span></div></div><p>扣除后低于 0 的项目按 0 计算，不计负分。例如：3 星 100% 计为 2 星 80%；2 星 80% 计为 1 星 60%；1 星 50% 计为 0 星 30%。</p><p>难度按每一次进攻的攻守双方关系分别确定。例如 13 本对 15 本：13 本进攻时用“普通”；15 本进攻时用“电竞”，并逐次扣除 1 星和 20% 摧毁率。</p></div></details>
-          <details><summary><b>七</b>比赛奖励</summary><div><p>比赛于 2026 年 9 月 11 日 16:00 正式截止。赛后分别统计三个组别的总胜利之星和总摧毁率，并按章程确定最终排名。</p><ul><li>低本组冠军：1 个部落联赛额外奖励名额。</li><li>中本组冠军：1 个部落联赛额外奖励名额。</li><li>高本组冠军：1 个部落联赛额外奖励名额。</li></ul><p>本届赛事共设置 3 个联赛额外奖励名额，分别授予三个组别的冠军。</p></div></details>
+          <details><summary><b>七</b>比赛奖励</summary><div><p>比赛于 2026 年 9 月 11 日 16:00 正式截止。赛后分别统计三个组别的总胜利之星和总摧毁率，并按章程确定最终排名。</p><ul><li>低本组冠军：1 份部落联赛额外奖励。</li><li>中本组前三名：共 3 份部落联赛额外奖励。</li><li>高本组冠军：1 份部落联赛额外奖励。</li><li>剩余名额：1 份随机抽奖。</li></ul><p>本届赛事共设置 6 份额外奖励。页面中的金色高亮仅表示当前成绩对应的奖励区，并非最终结果；随机抽奖结果另行登记。以上为预览版分配，一切以群主最终确认为准，尚未核定或发放。</p></div></details>
           <details><summary><b>八</b>附则</summary><div><ol><li>所有参赛成员应按章程完成约战和成绩统计，不得通过重复约战、虚报战绩等方式获得额外成绩。</li><li>本届比赛以账号为报名、参赛和排名单位；同一成员的多个账号分别独立计分，不合并。</li><li>大本营等级及参赛组别一经报名确认，赛事期间不因升本改变。</li><li>未明确规定的特殊情况，由赛事组织者根据公平竞赛原则处理。</li><li>本章程适用于第一届“达尔文杯”部落冲突赛事，自发布之日起生效。</li></ol></div></details>
         </section>
       </div>
@@ -152,7 +176,7 @@
 
   <div class="darwin-toast" id="darwinToast" role="status" aria-live="polite" hidden></div>
   <script defer src="https://wjtianze.github.io/assets/js/main.js?v=20260831a"></script>
-  <script defer src="https://wjtianze.github.io/darwin/scoring.js?v=20260831a"></script>
-  <script defer src="https://wjtianze.github.io/darwin/darwin.js?v=20260831a"></script>
+  <script defer src="https://wjtianze.github.io/darwin/scoring.js?v=20260903c"></script>
+  <script defer src="https://wjtianze.github.io/darwin/darwin.js?v=20260903c"></script>
 </body>
 </html>

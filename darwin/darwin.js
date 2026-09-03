@@ -21,6 +21,7 @@
   var warBusy = false;
   var lastWarFetch = 0;
   var toastTimer = 0;
+  var latestEventData = null;
 
   function byId(id) { return document.getElementById(id); }
   function element(tag, className, text) {
@@ -44,25 +45,41 @@
     toastTimer = root.setTimeout(function () { toast.hidden = true; }, 2300);
   }
 
+  function legacyCopyText(value) {
+    var field = document.createElement("textarea");
+    field.value = value;
+    field.setAttribute("readonly", "");
+    field.style.position = "fixed";
+    field.style.left = "-9999px";
+    field.style.top = "0";
+    document.body.appendChild(field);
+    field.focus();
+    field.select();
+    field.setSelectionRange(0, field.value.length);
+    var copied = false;
+    try { copied = document.execCommand("copy"); } catch (_error) {}
+    field.remove();
+    return copied;
+  }
+
+  function copyText(value) {
+    var text = String(value || "");
+    if (!text) return Promise.reject(new Error("没有可复制的内容"));
+    var legacyCopied = legacyCopyText(text);
+    if (root.navigator && root.navigator.clipboard && root.isSecureContext) {
+      return root.navigator.clipboard.writeText(text).catch(function (error) {
+        if (legacyCopied) return;
+        throw error;
+      });
+    }
+    return legacyCopied ? Promise.resolve() : Promise.reject(new Error("clipboard unavailable"));
+  }
+
   function bindCopyButtons() {
     document.querySelectorAll("[data-copy-tag]").forEach(function (button) {
       button.addEventListener("click", function () {
         var tag = button.getAttribute("data-copy-tag");
-        var task = root.navigator && root.navigator.clipboard && root.isSecureContext
-          ? root.navigator.clipboard.writeText(tag)
-          : Promise.reject(new Error("clipboard unavailable"));
-        task.then(function () { showToast("已复制部落标签 " + tag); }).catch(function () {
-          var field = document.createElement("textarea");
-          field.value = tag;
-          field.style.position = "fixed";
-          field.style.opacity = "0";
-          document.body.appendChild(field);
-          field.select();
-          var copied = false;
-          try { copied = document.execCommand("copy"); } catch (_error) {}
-          field.remove();
-          showToast(copied ? "已复制部落标签 " + tag : "部落标签：" + tag);
-        });
+        copyText(tag).then(function () { showToast("已复制部落标签 " + tag); }).catch(function () { showToast("部落标签：" + tag); });
       });
     });
   }
@@ -111,22 +128,36 @@
     }
   }
 
-  function rosterNode(entrants) {
+  function rewardBadgeText(entrantId, preview) {
+    var groupId = Object.keys(preview.groupEntrantIds).find(function (key) {
+      return preview.groupEntrantIds[key].indexOf(entrantId) !== -1;
+    });
+    if (groupId) return preview.finalized ? "额外奖励" : "当前奖励区";
+    if (preview.lotteryWinnerEntrantIds.indexOf(entrantId) !== -1) return preview.finalized ? "抽奖奖励" : "抽奖名额";
+    return "";
+  }
+
+  function rosterNode(entrants, rewardPreview) {
     if (!entrants.length) return element("p", "darwin-empty", "本组暂时无人报名");
     var list = element("ol", "darwin-roster");
     entrants.slice().sort(function (left, right) {
       return finite(left.registrationOrder, 9999) - finite(right.registrationOrder, 9999);
     }).forEach(function (entrant) {
       var item = element("li");
+      var badgeText = rewardBadgeText(entrant.id, rewardPreview);
+      if (badgeText) item.classList.add("is-reward-zone");
       item.appendChild(element("em", "", String(entrant.registrationOrder).padStart(2, "0")));
-      item.appendChild(element("strong", "", entrant.nickname));
-      item.appendChild(element("span", "", entrant.townHall + " 本"));
+      var name = element("span", "darwin-roster-name");
+      name.appendChild(element("strong", "", entrant.nickname));
+      if (badgeText) name.appendChild(element("small", "darwin-reward-badge", badgeText));
+      item.appendChild(name);
+      item.appendChild(element("span", "darwin-roster-townhall", entrant.townHall + " 本"));
       list.appendChild(item);
     });
     return list;
   }
 
-  function rankingNode(rows) {
+  function rankingNode(rows, rewardPreview) {
     if (!rows.length) return element("p", "darwin-empty", "本组暂时没有排名数据");
     var wrapper = element("div", "darwin-ranking-wrap");
     var table = element("table", "darwin-ranking");
@@ -139,10 +170,13 @@
     var body = element("tbody");
     rows.forEach(function (row) {
       var tr = element("tr");
+      var badgeText = rewardBadgeText(row.entrant.id, rewardPreview);
+      if (badgeText) tr.classList.add("is-reward-zone");
       tr.appendChild(element("td", "", row.rank === null ? "—" : String(row.rank)));
       var name = element("td");
       name.appendChild(element("strong", "", row.entrant.nickname));
       name.appendChild(element("small", "", row.hasResult ? row.entrant.townHall + " 本" : row.entrant.townHall + " 本 · 尚未比赛"));
+      if (badgeText) name.appendChild(element("span", "darwin-reward-badge", badgeText));
       tr.appendChild(name);
       tr.appendChild(element("td", "", String(row.stars)));
       tr.appendChild(element("td", "", percent(row.destruction)));
@@ -152,6 +186,93 @@
     table.appendChild(body);
     wrapper.appendChild(table);
     return wrapper;
+  }
+
+  function rewardCard(kicker, rule, entrantIds, entrants, emptyText) {
+    var entrantsById = entrants.reduce(function (map, entrant) { map[entrant.id] = entrant; return map; }, Object.create(null));
+    var names = entrantIds.map(function (entrantId) { return entrantsById[entrantId]; }).filter(Boolean).map(function (entrant) { return entrant.nickname; });
+    var card = element("article", "darwin-reward-card");
+    card.appendChild(element("small", "", kicker));
+    card.appendChild(element("strong", "", rule));
+    card.appendChild(element("p", "", names.length ? "当前：" + names.join("、") : emptyText));
+    return card;
+  }
+
+  function renderRewardPreview(preview, entrants) {
+    var host = byId("rewardPreview");
+    if (!host) return;
+    host.replaceChildren();
+    ["low", "middle", "high"].forEach(function (groupId) {
+      var group = root.DarwinCupScoring.GROUPS[groupId];
+      var slots = preview.groupSlots[groupId];
+      var rule = slots === 1 ? "冠军 · 1 份" : "前 " + slots + " 名 · " + slots + " 份";
+      host.appendChild(rewardCard(group.name, rule, preview.groupEntrantIds[groupId], entrants, "排名尚未产生"));
+    });
+    host.appendChild(rewardCard("剩余名额", "随机抽奖 · " + preview.lotterySlots + " 份", preview.lotteryWinnerEntrantIds, entrants, "尚未抽取"));
+    var slotCount = byId("rewardSlotCount");
+    if (slotCount) slotCount.textContent = "共 " + preview.totalSlots + " 份";
+  }
+
+  function renderCupOverviewRankings(data, preview) {
+    var host = byId("cupOverviewRankings");
+    if (!host) return;
+    host.replaceChildren();
+    ["low", "middle", "high"].forEach(function (groupId) {
+      var group = root.DarwinCupScoring.GROUPS[groupId];
+      var section = element("section", "darwin-overview-rank-group");
+      var heading = element("h3", "", group.name);
+      heading.appendChild(element("span", "", "当前排名"));
+      section.appendChild(heading);
+      var rows = root.DarwinCupScoring.standingsFor(groupId, data.entrants, data.matches).filter(function (row) { return row.hasResult; }).slice(0, 3);
+      if (!rows.length) {
+        section.appendChild(element("p", "darwin-overview-rank-empty", "暂无成绩"));
+      } else {
+        var list = element("ol");
+        rows.forEach(function (row) {
+          var item = element("li");
+          if (preview.groupEntrantIds[groupId].indexOf(row.entrant.id) !== -1) item.classList.add("is-reward-zone");
+          item.appendChild(element("em", "", String(row.rank)));
+          item.appendChild(element("strong", "", row.entrant.nickname));
+          item.appendChild(element("span", "", row.stars + " 星 · " + percent(row.destruction)));
+          list.appendChild(item);
+        });
+        section.appendChild(list);
+      }
+      host.appendChild(section);
+    });
+  }
+
+  function buildCupBrief() {
+    if (!latestEventData) return "赛事数据暂未取得，请稍后刷新页面。";
+    return root.DarwinCupScoring.buildCupBrief(latestEventData, new Date());
+  }
+
+  function updateCupBriefAvailability() {
+    var button = byId("copyCupBrief");
+    var status = byId("cupBriefStatus");
+    if (button) button.disabled = !latestEventData;
+    if (!status) return;
+    status.textContent = latestEventData ? "赛事数据已就绪" : "正在汇总赛事数据";
+  }
+
+  function bindCupBriefButton() {
+    var button = byId("copyCupBrief");
+    if (!button) return;
+    button.addEventListener("click", function () {
+      var brief = "";
+      try { brief = buildCupBrief(); }
+      catch (error) {
+        showToast("简报生成失败，请刷新页面后重试");
+        return;
+      }
+      copyText(brief).then(function () {
+        showToast("达尔文杯简报已复制，可以直接粘贴到群聊");
+        var status = byId("cupBriefStatus");
+        if (status) status.textContent = "达尔文杯简报已复制";
+      }).catch(function () {
+        showToast("复制失败，请检查浏览器剪贴板权限");
+      });
+    });
   }
 
   function attackChip(side, attack, index) {
@@ -204,6 +325,16 @@
     if (!scoring) throw new Error("赛事计分模块没有加载");
     var errors = scoring.validateData(data);
     if (errors.length) throw new Error(errors[0]);
+    latestEventData = data;
+    var rewardPreview = scoring.rewardPreview(data);
+    renderRewardPreview(rewardPreview, data.entrants);
+    renderCupOverviewRankings(data, rewardPreview);
+    var cupEntrantCount = byId("cupEntrantCount");
+    var cupMatchCount = byId("cupMatchCount");
+    var cupRewardCount = byId("cupRewardCount");
+    if (cupEntrantCount) cupEntrantCount.textContent = String(data.entrants.length);
+    if (cupMatchCount) cupMatchCount.textContent = String(data.matches.filter(function (match) { return match.status !== "void"; }).length);
+    if (cupRewardCount) cupRewardCount.textContent = String(rewardPreview.totalSlots);
     ["low", "middle", "high"].forEach(function (groupId) {
       var group = document.querySelector('[data-group="' + groupId + '"]');
       if (!group) return;
@@ -211,11 +342,12 @@
       var matches = data.matches.filter(function (match) { return match.group === groupId && match.status !== "void"; });
       group.querySelector("[data-group-count]").textContent = String(entrants.length);
       group.querySelector("[data-match-count]").textContent = String(matches.length);
-      group.querySelector("[data-roster]").replaceChildren(rosterNode(entrants));
-      group.querySelector("[data-ranking]").replaceChildren(rankingNode(scoring.standingsFor(groupId, data.entrants, data.matches)));
+      group.querySelector("[data-roster]").replaceChildren(rosterNode(entrants, rewardPreview));
+      group.querySelector("[data-ranking]").replaceChildren(rankingNode(scoring.standingsFor(groupId, data.entrants, data.matches), rewardPreview));
       group.querySelector("[data-match-log]").replaceChildren(matchLogNode(matches, data.entrants));
     });
     byId("cupUpdatedAt").textContent = "赛事数据更新于 " + formatCalendarDate(data.updatedAt) + " · 每分钟检查更新";
+    updateCupBriefAvailability();
   }
 
   function loadEventData() {
@@ -229,6 +361,7 @@
       .catch(function (error) {
         var status = byId("cupUpdatedAt");
         if (status) status.textContent = "赛事数据暂时无法读取：" + error.message;
+        updateCupBriefAvailability();
       });
   }
 
@@ -289,6 +422,38 @@
     var clan = war && war.clan || {};
     var opponent = war && war.opponent || {};
     return normalizeTag(opponent.tag) === normalizeTag(clanTag) ? { own: opponent, other: clan } : { own: clan, other: opponent };
+  }
+
+  function renderWarOverviewRow(clan, war) {
+    var card = element("article", "darwin-overview-war-row");
+    var identity = element("div", "darwin-overview-war-name");
+    identity.appendChild(element("small", "", clan.label));
+    identity.appendChild(element("strong", "", clan.name));
+    card.appendChild(identity);
+    if (!war || war.error) {
+      card.appendChild(element("p", "darwin-overview-war-message", war && String(war.error.message || war.error) || "暂时无法读取"));
+      return card;
+    }
+    var state = String(war.state || "notInWar");
+    if (state === "notInWar" || state === "matchmaking" || !war.clan || !war.opponent) {
+      card.appendChild(element("p", "darwin-overview-war-message", WAR_STATES[state] || state));
+      return card;
+    }
+    var teams = ownTeams(war, clan.tag);
+    var result = element("div", "darwin-overview-war-result");
+    result.appendChild(element("b", "", finite(teams.own.stars, 0) + " : " + finite(teams.other.stars, 0)));
+    result.appendChild(element("span", "", (WAR_STATES[state] || state) + " · 对 " + (teams.other.name || "对手")));
+    card.appendChild(result);
+    return card;
+  }
+
+  function renderWarOverview(rows, errorMessage) {
+    var host = byId("warOverviewCards");
+    if (!host) return;
+    host.replaceChildren();
+    CLANS.forEach(function (clan, index) {
+      host.appendChild(renderWarOverviewRow(clan, errorMessage ? { error: errorMessage } : warForClan(rows, clan, index)));
+    });
   }
 
   function renderWarCard(clan, war) {
@@ -356,14 +521,16 @@
     CLANS.forEach(function (clan) {
       host.appendChild(renderWarCard(clan, { error: message }));
     });
+    renderWarOverview([], message);
   }
   function setWarStatus(text, state) {
-    var status = byId("warServiceStatus");
-    if (!status) return;
-    status.className = "darwin-live-status" + (state ? " is-" + state : "");
-    var dot = element("i");
-    dot.setAttribute("aria-hidden", "true");
-    status.replaceChildren(dot, document.createTextNode(text));
+    [byId("warServiceStatus"), byId("warOverviewStatus")].forEach(function (status) {
+      if (!status) return;
+      status.className = "darwin-live-status" + (state ? " is-" + state : "");
+      var dot = element("i");
+      dot.setAttribute("aria-hidden", "true");
+      status.replaceChildren(dot, document.createTextNode(text));
+    });
   }
   function responseMessage(body, response) {
     var value = body && (body.error && (body.error.message || body.error) || body.message || body.detail);
@@ -404,6 +571,7 @@
       if (!rows.length) throw new Error("查询服务没有返回可识别的部落战数据");
       host.replaceChildren();
       CLANS.forEach(function (clan, index) { host.appendChild(renderWarCard(clan, warForClan(rows, clan, index))); });
+      renderWarOverview(rows);
       lastWarFetch = Date.now();
       setWarStatus("实时服务在线", "online");
       byId("warUpdatedAt").textContent = "最近刷新：" + new Intl.DateTimeFormat("zh-CN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).format(new Date(lastWarFetch));
@@ -420,6 +588,8 @@
 
   function init() {
     bindCopyButtons();
+    bindCupBriefButton();
+    updateCupBriefAvailability();
     updateCupClock();
     loadEventData();
     root.setInterval(updateCupClock, 1000);
@@ -433,7 +603,11 @@
     root.setTimeout(fetchWars, 350);
   }
 
-  root.__darwinSiteTest = Object.freeze({ normalizeWarPayload: normalizeWarPayload, normalizeTag: normalizeTag });
+  root.__darwinSiteTest = Object.freeze({
+    normalizeWarPayload: normalizeWarPayload,
+    normalizeTag: normalizeTag,
+    buildCupBrief: buildCupBrief
+  });
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, { once: true });
   else init();
 })(window);

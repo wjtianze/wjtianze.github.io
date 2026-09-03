@@ -20,19 +20,25 @@
 .darwin-page .wrap { width: min(100%, 1240px); margin-inline: auto; }
 
 .darwin-hero {
-  min-height: 650px;
+  min-height: calc(100svh - 68px);
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(340px, .8fr);
-  align-items: center;
-  gap: clamp(36px, 7vw, 92px);
-  padding-top: clamp(72px, 9vw, 128px);
-  padding-bottom: clamp(64px, 8vw, 110px);
+  grid-template-rows: auto auto auto;
+  align-content: center;
+  gap: clamp(14px, 2.2vh, 22px);
+  padding-top: clamp(26px, 4vh, 42px);
+  padding-bottom: clamp(24px, 3.6vh, 38px);
 }
 
-.darwin-hero-copy { max-width: 680px; }
+.darwin-hero-copy {
+  display: grid;
+  grid-template-columns: minmax(340px, .72fr) minmax(0, 1.28fr);
+  align-items: end;
+  gap: 4px clamp(32px, 5vw, 68px);
+}
 .darwin-kicker,
 .darwin-section-head > div > p,
-.darwin-score-primer > header > p {
+.darwin-score-primer > header > p,
+.darwin-reward-preview > header > div > p {
   margin: 0 0 14px;
   color: var(--darwin-amber-strong);
   font-size: 12px;
@@ -40,9 +46,10 @@
   letter-spacing: .18em;
 }
 .darwin-hero h1 {
+  grid-column: 1;
   margin: 0;
   font-family: "STSong", "SimSun", "Songti SC", serif;
-  font-size: clamp(64px, 8vw, 116px);
+  font-size: clamp(52px, 6vw, 82px);
   font-weight: 700;
   line-height: .98;
   letter-spacing: -.055em;
@@ -50,13 +57,14 @@
   text-wrap: balance;
 }
 .darwin-lead {
-  max-width: 610px;
-  margin: 26px 0 0;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  max-width: 620px;
+  margin: 0 0 7px;
   color: var(--ink-dim);
-  font-size: clamp(16px, 1.5vw, 19px);
-  line-height: 1.85;
+  font-size: clamp(14px, 1.25vw, 17px);
+  line-height: 1.7;
 }
-.darwin-hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
 .darwin-button {
   min-height: 44px;
   display: inline-flex;
@@ -81,8 +89,55 @@
 .darwin-button--primary:focus-visible { background: var(--darwin-amber-strong); color: #08131b; }
 .darwin-button--small { min-height: 36px; padding: 7px 12px; font-size: 12px; }
 
-.darwin-clan-ledger { border-top: 1px solid var(--darwin-line); }
-.darwin-clan-id { padding: 22px 0; border-bottom: 1px solid var(--darwin-line); }
+.darwin-overview-grid { min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.darwin-overview-card { min-width: 0; display: flex; flex-direction: column; border: 1px solid var(--darwin-line); border-top: 3px solid var(--darwin-amber); background: var(--darwin-surface); box-shadow: 0 18px 46px rgba(0, 0, 0, .18); }
+.darwin-overview-card > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding: 15px 18px 13px; border-bottom: 1px solid var(--darwin-line); }
+.darwin-overview-card > header small { color: var(--darwin-amber-strong); font-size: 10px; font-weight: 700; letter-spacing: .12em; }
+.darwin-overview-card > header h2 { margin: 3px 0 0; color: var(--ink); font: 600 24px/1.15 "STSong", "SimSun", "Songti SC", serif; }
+.darwin-overview-card > footer { display: flex; justify-content: space-between; gap: 16px; margin-top: auto; padding: 10px 18px; border-top: 1px solid var(--darwin-line); color: var(--ink-faint); font-size: 10px; }
+.darwin-overview-card > footer a { color: var(--darwin-amber-strong); font-weight: 700; text-underline-offset: 4px; }
+.darwin-overview-war-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); min-height: 0; }
+.darwin-overview-war-row { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 17px 18px; }
+.darwin-overview-war-row + .darwin-overview-war-row { border-left: 1px solid var(--darwin-line); }
+.darwin-overview-war-name small { display: block; color: var(--darwin-amber-strong); font-size: 9px; font-weight: 700; }
+.darwin-overview-war-name strong { display: block; overflow: hidden; margin-top: 3px; color: var(--ink); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.darwin-overview-war-result { min-width: 94px; text-align: right; }
+.darwin-overview-war-result b { display: block; color: var(--darwin-amber-strong); font: 750 21px/1 ui-monospace, "Cascadia Mono", Consolas, monospace; }
+.darwin-overview-war-result span,
+.darwin-overview-war-message { display: block; overflow: hidden; margin: 5px 0 0; color: var(--ink-faint); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.darwin-overview-war-message { max-width: 150px; text-align: right; }
+.darwin-overview-phase { flex: none; padding: 5px 8px; border: 1px solid color-mix(in srgb, var(--darwin-amber) 48%, transparent); color: var(--darwin-amber-strong); font-size: 10px; font-weight: 700; }
+.darwin-overview-cup { min-height: 0; display: grid; grid-template-columns: minmax(170px, .8fr) minmax(0, 1.2fr); align-items: stretch; }
+.darwin-overview-countdown { display: grid; align-content: center; padding: 15px 18px; border-right: 1px solid var(--darwin-line); }
+.darwin-overview-countdown span { color: var(--ink-faint); font-size: 10px; }
+.darwin-overview-countdown strong { display: block; margin-top: 6px; color: var(--darwin-amber-strong); font: 650 19px/1.3 ui-monospace, "Cascadia Mono", Consolas, monospace; white-space: nowrap; }
+.darwin-overview-cup dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; }
+.darwin-overview-cup dl div { min-width: 0; display: grid; align-content: center; padding: 15px 12px; text-align: center; }
+.darwin-overview-cup dl div + div { border-left: 1px solid var(--darwin-line); }
+.darwin-overview-cup dt { color: var(--ink-faint); font-size: 9px; }
+.darwin-overview-cup dd { margin: 5px 0 0; color: var(--ink-dim); font-size: 10px; }
+.darwin-overview-cup dd b { color: var(--ink); font: 750 22px/1 ui-monospace, "Cascadia Mono", Consolas, monospace; }
+.darwin-overview-rankings { flex: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--darwin-line); }
+.darwin-overview-rankings > p { grid-column: 1 / -1; align-self: center; margin: 0; color: var(--ink-faint); font-size: 10px; text-align: center; }
+.darwin-overview-rank-group { min-width: 0; padding: 13px 14px 14px; }
+.darwin-overview-rank-group + .darwin-overview-rank-group { border-left: 1px solid var(--darwin-line); }
+.darwin-overview-rank-group h3 { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; margin: 0 0 9px; color: var(--ink); font-size: 14px; }
+.darwin-overview-rank-group h3 span { color: var(--ink-faint); font-size: 9px; font-weight: 500; }
+.darwin-overview-rank-group ol { margin: 0; padding: 0; list-style: none; }
+.darwin-overview-rank-group li { min-width: 0; display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 2px 7px; padding: 6px 8px; color: var(--ink-dim); }
+.darwin-overview-rank-group li.is-reward-zone { background: linear-gradient(90deg, color-mix(in srgb, var(--darwin-amber) 18%, transparent), transparent); box-shadow: inset 2px 0 var(--darwin-amber); }
+.darwin-overview-rank-group em { grid-row: 1 / span 2; align-self: center; color: var(--darwin-amber-strong); font: 700 13px/1 ui-monospace, monospace; }
+.darwin-overview-rank-group strong { overflow: hidden; color: var(--ink); font-size: 15px; text-overflow: ellipsis; white-space: nowrap; }
+.darwin-overview-rank-group li span { color: var(--ink-faint); font-size: 10px; white-space: nowrap; }
+.darwin-overview-rank-empty { margin: 24px 0 0; color: var(--ink-faint); font-size: 12px; text-align: center; }
+.darwin-overview-actions { display: flex; align-items: center; justify-content: flex-end; gap: 14px; }
+.darwin-overview-actions span { color: var(--ink-faint); font-size: 10px; }
+.darwin-overview-actions .darwin-button:disabled { opacity: .55; cursor: wait; }
+
+.darwin-clan-directory { padding-top: 68px; scroll-margin-top: 82px; }
+.darwin-clan-ledger { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--darwin-line); border-bottom: 1px solid var(--darwin-line); }
+.darwin-clan-id { padding: 22px 24px; }
+.darwin-clan-id + .darwin-clan-id { border-left: 1px solid var(--darwin-line); }
 .darwin-clan-id > div:first-child { display: flex; align-items: baseline; justify-content: space-between; gap: 18px; }
 .darwin-clan-id span { color: var(--darwin-amber-strong); font-size: 12px; font-weight: 750; letter-spacing: .12em; }
 .darwin-clan-id strong { color: var(--ink); font-size: 18px; }
@@ -153,7 +208,20 @@
 .darwin-primer-grid h4 { margin: 15px 0 7px; color: var(--ink); font-size: 15px; }
 .darwin-primer-grid p { color: var(--ink-faint); font-size: 12px; }
 
-.darwin-groups { margin-top: 92px; }
+.darwin-reward-preview { margin-top: 68px; border: 1px solid var(--darwin-line); border-top: 3px solid var(--darwin-amber); background: var(--darwin-surface-soft); }
+.darwin-reward-preview > header { display: flex; align-items: end; justify-content: space-between; gap: 20px; padding: 20px 22px; border-bottom: 1px solid var(--darwin-line); }
+.darwin-reward-preview > header > div > p { margin-bottom: 7px; }
+.darwin-reward-preview > header h3 { margin: 0; color: var(--ink); font: 600 28px/1.2 "STSong", "SimSun", "Songti SC", serif; }
+.darwin-reward-preview > header > span { color: var(--darwin-amber-strong); font: 700 13px/1 ui-monospace, monospace; }
+.darwin-reward-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.darwin-reward-card { min-width: 0; padding: 18px 20px; }
+.darwin-reward-card + .darwin-reward-card { border-left: 1px solid var(--darwin-line); }
+.darwin-reward-card small { color: var(--ink-faint); font-size: 10px; letter-spacing: .1em; }
+.darwin-reward-card strong { display: block; margin-top: 8px; color: var(--ink); font-size: 14px; }
+.darwin-reward-card p { margin-top: 9px; color: var(--darwin-amber-strong); font-size: 11px; line-height: 1.6; }
+.darwin-reward-note { padding: 12px 20px; border-top: 1px solid var(--darwin-line); color: var(--ink-faint); font-size: 10px; line-height: 1.65; }
+
+.darwin-groups { margin-top: 72px; }
 .darwin-section-head--groups .darwin-data-time { margin: 0; }
 .darwin-group-jump { position: sticky; top: 64px; z-index: 4; display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--darwin-line); background: var(--darwin-surface); backdrop-filter: blur(10px); }
 .darwin-group-jump a { padding: 14px 18px; border-right: 1px solid var(--darwin-line); color: var(--ink); font-size: 13px; font-weight: 700; text-decoration: none; }
@@ -177,15 +245,20 @@
 .darwin-roster { list-style: none; }
 .darwin-roster li { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; gap: 9px; padding: 10px 0; border-top: 1px solid var(--darwin-line); }
 .darwin-roster li:last-child { border-bottom: 1px solid var(--darwin-line); }
+.darwin-roster li.is-reward-zone { margin-inline: -8px; padding-inline: 8px; border-left: 2px solid var(--darwin-amber); background: linear-gradient(90deg, color-mix(in srgb, var(--darwin-amber) 15%, transparent), transparent 84%); }
 .darwin-roster em { color: var(--ink-faint); font: normal 11px/1 ui-monospace, monospace; }
-.darwin-roster strong { overflow: hidden; color: var(--ink); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
-.darwin-roster span { color: var(--darwin-amber-strong); font-size: 11px; white-space: nowrap; }
+.darwin-roster-name { min-width: 0; }
+.darwin-roster-name strong { display: block; overflow: hidden; color: var(--ink); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.darwin-roster-townhall { color: var(--darwin-amber-strong); font-size: 11px; white-space: nowrap; }
+.darwin-reward-badge { display: inline-flex; width: fit-content; margin-top: 4px; padding: 2px 5px; border: 1px solid color-mix(in srgb, var(--darwin-amber) 58%, transparent); background: color-mix(in srgb, var(--darwin-amber) 13%, transparent); color: var(--darwin-amber-strong); font-size: 8px; font-weight: 750; line-height: 1.2; white-space: nowrap; }
 .darwin-ranking-wrap { overflow-x: auto; }
 .darwin-ranking { width: 100%; border-collapse: collapse; font-size: 12px; }
 .darwin-ranking th { padding: 8px 7px; border-bottom: 1px solid var(--darwin-line); color: var(--ink-faint); font-size: 10px; font-weight: 600; text-align: right; white-space: nowrap; }
 .darwin-ranking th:nth-child(2),
 .darwin-ranking td:nth-child(2) { text-align: left; }
 .darwin-ranking td { padding: 10px 7px; border-bottom: 1px solid var(--darwin-line); color: var(--ink-dim); text-align: right; }
+.darwin-ranking tr.is-reward-zone { background: linear-gradient(90deg, color-mix(in srgb, var(--darwin-amber) 17%, transparent), color-mix(in srgb, var(--darwin-amber) 5%, transparent)); }
+.darwin-ranking tr.is-reward-zone td:first-child { box-shadow: inset 2px 0 var(--darwin-amber); }
 .darwin-ranking td:first-child { color: var(--darwin-amber-strong); font-weight: 800; }
 .darwin-ranking strong { color: var(--ink); }
 .darwin-ranking small { display: block; color: var(--ink-faint); font-size: 9px; }
@@ -237,10 +310,15 @@
 @keyframes darwinScan { 0%, 100% { transform: scaleX(.4); opacity: .3; } 50% { transform: scaleX(1); opacity: 1; } }
 
 @media (max-width: 980px) {
-  .darwin-hero { min-height: auto; grid-template-columns: 1fr; gap: 48px; padding-top: 90px; }
-  .darwin-clan-ledger { display: grid; grid-template-columns: repeat(2, 1fr); }
-  .darwin-clan-id { padding-right: 22px; }
-  .darwin-clan-id + .darwin-clan-id { padding-left: 22px; border-left: 1px solid var(--darwin-line); }
+  .darwin-hero-copy { grid-template-columns: minmax(300px, .85fr) minmax(0, 1.15fr); gap: 4px 30px; }
+  .darwin-overview-war-list { grid-template-columns: 1fr; }
+  .darwin-overview-war-row { padding-block: 11px; }
+  .darwin-overview-war-row + .darwin-overview-war-row { border-top: 1px solid var(--darwin-line); border-left: 0; }
+  .darwin-overview-cup { grid-template-columns: 1fr; }
+  .darwin-overview-countdown { padding-block: 11px; border-right: 0; border-bottom: 1px solid var(--darwin-line); }
+  .darwin-reward-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .darwin-reward-card:nth-child(3) { border-top: 1px solid var(--darwin-line); border-left: 0; }
+  .darwin-reward-card:nth-child(4) { border-top: 1px solid var(--darwin-line); }
   .darwin-cup-head { grid-template-columns: 1fr; align-items: start; }
   .darwin-cup-dates { grid-template-columns: repeat(2, 1fr); }
   .darwin-cup-dates div:nth-child(2) { border-right: 0; }
@@ -254,13 +332,48 @@
 @media (max-width: 720px) {
   .darwin-page { background-attachment: scroll; background-image: var(--tz-section-bg-mobile-image); background-position: center top; }
   .darwin-page main { padding-top: 62px; }
-  .darwin-hero { padding-top: 70px; padding-bottom: 68px; }
-  .darwin-hero h1 { font-size: clamp(54px, 19vw, 76px); }
-  .darwin-lead { font-size: 15px; }
-  .darwin-hero-actions { display: grid; grid-template-columns: 1fr; }
+  .darwin-hero { min-height: calc(100svh - 62px); gap: 10px; padding-top: 14px; padding-bottom: 14px; }
+  .darwin-hero-copy { display: block; }
+  .darwin-hero-copy .darwin-kicker { margin-bottom: 4px; font-size: 9px; }
+  .darwin-hero h1 { font-size: clamp(42px, 14vw, 58px); }
+  .darwin-lead { margin-top: 5px; font-size: 11px; line-height: 1.45; }
+  .darwin-overview-grid { grid-template-columns: 1fr; gap: 9px; }
+  .darwin-overview-card > header { align-items: center; padding: 8px 11px; }
+  .darwin-overview-card > header small { font-size: 8px; }
+  .darwin-overview-card > header h2 { font-size: 17px; }
+  .darwin-overview-card > footer { padding: 7px 11px; font-size: 8px; }
+  .darwin-overview-war-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .darwin-overview-war-row { display: block; padding: 8px 10px; }
+  .darwin-overview-war-row + .darwin-overview-war-row { border-top: 0; border-left: 1px solid var(--darwin-line); }
+  .darwin-overview-war-name strong { font-size: 10px; }
+  .darwin-overview-war-result { min-width: 0; margin-top: 6px; text-align: left; }
+  .darwin-overview-war-result b { font-size: 16px; }
+  .darwin-overview-war-result span,
+  .darwin-overview-war-message { max-width: 100%; margin-top: 3px; font-size: 7px; text-align: left; }
+  .darwin-overview-phase { padding: 3px 5px; font-size: 8px; }
+  .darwin-overview-cup { grid-template-columns: minmax(120px, .8fr) minmax(0, 1.2fr); }
+  .darwin-overview-countdown { padding: 9px 10px; border-right: 1px solid var(--darwin-line); border-bottom: 0; }
+  .darwin-overview-countdown span { font-size: 8px; }
+  .darwin-overview-countdown strong { margin-top: 3px; font-size: 13px; }
+  .darwin-overview-cup dl div { padding: 8px 4px; }
+  .darwin-overview-cup dt { font-size: 7px; }
+  .darwin-overview-cup dd { margin-top: 3px; font-size: 8px; }
+  .darwin-overview-cup dd b { font-size: 16px; }
+  .darwin-overview-rank-group { padding: 6px 6px 7px; }
+  .darwin-overview-rank-group h3 { margin-bottom: 3px; font-size: 8px; }
+  .darwin-overview-rank-group h3 span { display: none; }
+  .darwin-overview-rank-group li { grid-template-columns: 13px minmax(0, 1fr); gap: 1px 3px; padding: 3px; }
+  .darwin-overview-rank-group em,
+  .darwin-overview-rank-group strong { font-size: 9px; }
+  .darwin-overview-rank-group li span { font-size: 7px; }
+  .darwin-overview-rank-empty { margin-top: 11px; font-size: 8px; }
+  .darwin-overview-actions { justify-content: stretch; }
+  .darwin-overview-actions .darwin-button { min-height: 36px; flex: 1; padding-block: 7px; font-size: 11px; }
+  .darwin-overview-actions span { display: none; }
+  .darwin-clan-directory { padding-top: 54px; }
   .darwin-clan-ledger { display: block; }
-  .darwin-clan-id { padding-right: 0; }
-  .darwin-clan-id + .darwin-clan-id { padding-left: 0; border-left: 0; }
+  .darwin-clan-id { padding-inline: 0; }
+  .darwin-clan-id + .darwin-clan-id { border-top: 1px solid var(--darwin-line); border-left: 0; }
   .darwin-section { padding-bottom: 68px; }
   .darwin-section-head { align-items: flex-start; flex-direction: column; }
   .darwin-live-control { width: 100%; justify-content: space-between; }
@@ -269,12 +382,15 @@
   .darwin-war-score { gap: 10px; }
   .darwin-war-team strong { font-size: 13px; }
   .darwin-cup { padding: 76px 0 86px; }
-  .darwin-countdown { min-width: 0; }
   .darwin-cup-dates { grid-template-columns: 1fr; }
   .darwin-cup-dates div { border-right: 0; border-bottom: 1px solid var(--darwin-line); }
   .darwin-cup-dates div:last-child { border-bottom: 0; }
   .darwin-primer-grid { grid-template-columns: 1fr; }
   .darwin-primer-grid article { border-right: 0; }
+  .darwin-reward-preview > header { align-items: flex-start; padding-inline: 16px; }
+  .darwin-reward-grid { grid-template-columns: 1fr; }
+  .darwin-reward-card + .darwin-reward-card { border-top: 1px solid var(--darwin-line); border-left: 0; }
+  .darwin-reward-note { padding-inline: 16px; }
   .darwin-groups { margin-top: 72px; }
   .darwin-group-jump { top: 62px; overflow-x: auto; grid-template-columns: repeat(3, minmax(125px, 1fr)); }
   .darwin-group-jump a { padding-inline: 12px; white-space: nowrap; }
